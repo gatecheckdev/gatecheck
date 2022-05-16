@@ -1,0 +1,4 @@
+# Default behavior for text files
+* text=auto
+
+*.go text eol=lf
