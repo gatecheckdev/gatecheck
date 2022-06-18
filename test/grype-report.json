@@ -29411,9 +29411,9 @@
  "source": {
   "type": "image",
   "target": {
-   "userInput": ".ci_artifacts/build-image/signal-ui-3d82ea02.tar",
-   "imageID": "8b80259730cd7aae",
-   "manifestDigest": "sha256:8ca323a77c1165bea9b8ca83ffa26f72a5851bb2d2864254972f1cfdfcad8844",
+   "userInput": ".ci_artifacts/build-image/test-app-ui-3d82ea02.tar",
+   "imageID": "8b80259730cd777e",
+   "manifestDigest": "sha256:8ca323a77c1165bea9b8ca83ffa26f72a5851bb2d2864254972f1cfdfcaa8844",
    "mediaType": "",
    "tags": [],
    "imageSize": 0,
