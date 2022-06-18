@@ -74,7 +74,10 @@ func TestAssetWriter(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		t.Log(newAsset)
+		if newAsset.Label != "grype-scan" {
+			t.Log(newAsset)
+			t.Fatal("expected label name")
+		}
 	})
 }
 
