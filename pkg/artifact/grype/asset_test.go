@@ -31,13 +31,13 @@ func TestAssetReader(t *testing.T) {
 	scanFile, _ := os.Open(TestGrypeReport)
 	scan, _ := grype.NewScanReportReader(scanFile).ReadScan()
 
-	asset := grype.NewAsset("grype-scan").WithScan(*scan)
+	asset := grype.NewAsset("grype-scan").WithScan(scan)
 
 	buf := new(bytes.Buffer)
 
 	_ = grype.NewAssetWriter(buf).WriteAsset(asset)
 
-	if buf.Len() < 1000 {
+	if buf.Len() < 50 {
 		t.Fatal("Asset size after writing bytes is too small")
 	}
 }
@@ -46,14 +46,14 @@ func TestAssetWriter(t *testing.T) {
 	scanFile, _ := os.Open(TestGrypeReport)
 	scan, _ := grype.NewScanReportReader(scanFile).ReadScan()
 
-	asset := grype.NewAsset("grype-scan").WithScan(*scan)
+	asset := grype.NewAsset("grype-scan").WithScan(scan)
 
 	buf := new(bytes.Buffer)
 	if err := grype.NewAssetWriter(buf).WriteAsset(asset); err != nil {
 		t.Fatal(err)
 	}
 
-	if buf.Len() < 1000 {
+	if buf.Len() < 50 {
 		t.Fatal("not enough expected written asset bytes")
 	}
 
@@ -64,7 +64,7 @@ func TestAssetWriter(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		if len(assetBytes) < 1000 {
+		if len(assetBytes) < 50 {
 			t.Log(string(assetBytes))
 			t.Fatal("Asset size is too small,")
 		}
@@ -86,5 +86,19 @@ func TestAssetReader_badJson(t *testing.T) {
 
 	if _, err := grype.NewAssetReader(buf).ReadAsset(); err == nil {
 		t.Fatal("expected error for bad json decoding")
+	}
+}
+
+func TestScanReportWriter_WriteScan(t *testing.T) {
+	scanFile, _ := os.Open(TestGrypeReport)
+	scan, _ := grype.NewScanReportReader(scanFile).ReadScan()
+
+	buf := new(bytes.Buffer)
+	if err := grype.NewScanReportWriter(buf).WriteScan(scan); err != nil {
+		t.Fatal(err)
+	}
+
+	if buf.Len() < 600000 {
+		t.Fatal("Scan report too small")
 	}
 }

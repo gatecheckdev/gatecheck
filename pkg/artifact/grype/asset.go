@@ -2,17 +2,16 @@ package grype
 
 import (
 	"bytes"
-	"compress/gzip"
-	"encoding/base64"
+	"crypto/sha256"
 	"encoding/json"
-	"fmt"
 	"io"
 	"time"
 )
 
 type Asset struct {
-	Label string `json:"label"`
-	scan  ScanReport
+	Label            string `json:"label"`
+	ScanReportDigest []byte `json:"scanReportDigest"`
+	scan             ScanReport
 }
 
 func NewAsset(label string) *Asset {
@@ -21,12 +20,17 @@ func NewAsset(label string) *Asset {
 	}
 }
 
-func (a Asset) WithScan(s ScanReport) *Asset {
+func (a Asset) WithScan(s *ScanReport) *Asset {
 	// Save the scan
-	a.scan = s
+	a.scan = *s
 	// Encode scan as JSON
-	jsonBytes := new(bytes.Buffer)
-	_ = json.NewEncoder(jsonBytes).Encode(&s)
+	scanBuffer := new(bytes.Buffer)
+	_ = json.NewEncoder(scanBuffer).Encode(s)
+
+	// Hash the scan report JSON bytes
+	hashWriter := sha256.New()
+	hashWriter.Write(scanBuffer.Bytes())
+	a.ScanReportDigest = hashWriter.Sum(nil)
 
 	return &a
 }
@@ -40,30 +44,9 @@ func (r *AssetReader) Read(p []byte) (int, error) {
 }
 
 func (r *AssetReader) ReadAsset() (*Asset, error) {
-	// Create r data structure to decode the bytes into
-	assetData := struct {
-		Label   string `json:"label"`
-		Content string `json:"content"`
-	}{}
-	// Decode the assetData into the temp data structure
-	err := json.NewDecoder(r).Decode(&assetData)
-	if err != nil {
-		return nil, fmt.Errorf("error Decoding temp asset Data: %v", err)
-	}
-
-	// Decode the content from base64
-	decodedContent, err := base64.StdEncoding.DecodeString(assetData.Content)
-
-	// Create a zip reader used to unzip bytes
-	zipReader, _ := gzip.NewReader(bytes.NewBuffer(decodedContent))
-
-	// Read the unzipped bytes into a scan object
-	scan, err := NewScanReportReader(zipReader).ReadScan()
-
-	// Create a new asset, attach the decoded scan
-	asset := NewAsset(assetData.Label).WithScan(*scan)
-
-	return asset, err
+	asset := Asset{}
+	err := json.NewDecoder(r).Decode(&asset)
+	return &asset, err
 }
 
 func NewAssetReader(r io.Reader) *AssetReader {
@@ -79,29 +62,7 @@ func (w *AssetWriter) Write(p []byte) (int, error) {
 }
 
 func (w *AssetWriter) WriteAsset(a *Asset) error {
-	// Create data structure to write
-	asset := struct {
-		Label   string `json:"label"`
-		Content string `json:"content"`
-	}{
-		a.Label,
-		"",
-	}
-
-	// Zip the scan into a bytes buffer
-	contentBuffer := new(bytes.Buffer)
-	zipper, _ := gzip.NewWriterLevel(contentBuffer, gzip.BestCompression)
-
-	// Write the scan to the zipper
-	_ = NewScanReportWriter(zipper).WriteScan(a.scan)
-
-	_ = zipper.Close()
-
-	// Saved the zipped content
-	asset.Content = base64.StdEncoding.EncodeToString(contentBuffer.Bytes())
-
-	// Encode the temp structure to json
-	return json.NewEncoder(w).Encode(&asset)
+	return json.NewEncoder(w).Encode(a)
 }
 
 func NewAssetWriter(w io.Writer) *AssetWriter {
@@ -139,7 +100,7 @@ func (w *ScanReportWriter) Write(p []byte) (int, error) {
 	return w.writer.Write(p)
 }
 
-func (w *ScanReportWriter) WriteScan(scan ScanReport) error {
+func (w *ScanReportWriter) WriteScan(scan *ScanReport) error {
 	return json.NewEncoder(w).Encode(scan)
 }
 
