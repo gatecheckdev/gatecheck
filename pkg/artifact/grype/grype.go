@@ -31,6 +31,12 @@ func NewArtifact() *Artifact {
 
 // WithConfig sets the allowed values from config object
 func (a Artifact) WithConfig(config *Config) *Artifact {
+	a.Critical.Severity = "Critical"
+	a.High.Severity = "High"
+	a.Medium.Severity = "Medium"
+	a.Low.Severity = "Low"
+	a.Negligible.Severity = "Negligible"
+	a.Unknown.Severity = "Unknown"
 
 	a.Critical.Allowed = config.Critical
 	a.High.Allowed = config.High

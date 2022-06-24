@@ -16,7 +16,14 @@ func Test_VersionCmd(t *testing.T) {
 	if err != nil {
 		t.Fatal("No error expected for root command")
 	}
-	//if strings.Compare(actual.String(), expected) != 0 {
-	//	t.Fatalf("Expected -> '%v' Got -> '%v'", expected, actual.String())
-	//}
+
+}
+
+func Test_RootCmd(t *testing.T) {
+	actual := new(bytes.Buffer)
+	RootCmd.SetArgs([]string{})
+	t.Log(actual)
+	if err := RootCmd.Execute(); err != nil {
+		t.Fatal(err)
+	}
 }
