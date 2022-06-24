@@ -1,0 +1,8 @@
+projectName: Test Project
+grype:
+  critical: 10
+  high: 10
+  medium: 10
+  low: 100
+  negligible: -1
+  unknown: -1
