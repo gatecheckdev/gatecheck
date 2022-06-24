@@ -6,13 +6,13 @@ import (
 	"io"
 )
 
-type basicConfig struct {
+type Config struct {
 	ProjectName string       `yaml:"ProjectName"`
 	Grype       grype.Config `yaml:"grype"`
 }
 
-func NewConfig(projectName string) *basicConfig {
-	return &basicConfig{
+func NewConfig(projectName string) *Config {
+	return &Config{
 		ProjectName: projectName,
 		Grype:       *grype.NewConfig(-1),
 	}
@@ -30,7 +30,7 @@ func (w *Writer) Write(p []byte) (int, error) {
 	return w.writer.Write(p)
 }
 
-func (w *Writer) WriteConfig(c *basicConfig) error {
+func (w *Writer) WriteConfig(c *Config) error {
 	return yaml.NewEncoder(w).Encode(c)
 }
 
@@ -46,8 +46,8 @@ func (r *Reader) Read(p []byte) (int, error) {
 	return r.reader.Read(p)
 }
 
-func (r *Reader) ReadConfig() (*basicConfig, error) {
-	config := &basicConfig{}
+func (r *Reader) ReadConfig() (*Config, error) {
+	config := &Config{}
 	err := yaml.NewDecoder(r).Decode(config)
 	return config, err
 }

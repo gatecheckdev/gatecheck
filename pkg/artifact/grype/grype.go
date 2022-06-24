@@ -72,7 +72,7 @@ func (a Artifact) WithAsset(asset *Asset) *Artifact {
 // String human-readable formatted table
 func (a Artifact) String() string {
 	var out strings.Builder
-	out.WriteString("standardGrype Image Scan Report\n")
+	out.WriteString("Grype Image Scan Report\n")
 	out.WriteString(fmt.Sprintf("Scan Asset: %s\n", a.Asset.Label))
 	out.WriteString(fmt.Sprintf("%-10s | %-7s | %-7s | %-5s\n", "Severity", "Found", "Allowed", "Pass"))
 	out.WriteString(strings.Repeat("-", 38) + "\n")
