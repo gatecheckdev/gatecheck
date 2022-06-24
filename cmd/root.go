@@ -24,6 +24,10 @@ var RootCmd = &cobra.Command{
 	Long: `A tool used to collect job reports from various scans and
                    compare the findings to an expected threshold provided
                    gatecheck.yaml file.`,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		cmd.Printf(GatecheckLogo)
+		return nil
+	},
 }
 
 var versionCmd = &cobra.Command{
