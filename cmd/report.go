@@ -3,12 +3,14 @@ package cmd
 import (
 	"github.com/gatecheckdev/gatecheck/internal"
 	"github.com/gatecheckdev/gatecheck/pkg/artifact/grype"
+	"github.com/gatecheckdev/gatecheck/pkg/report"
 	"github.com/spf13/cobra"
 )
 
 // Flags
 var flagPipelineURL string
 var flagPipelineID string
+var flagProjectName string
 
 var reportCmd = &cobra.Command{
 	Use:   "report",
@@ -17,7 +19,8 @@ var reportCmd = &cobra.Command{
 
 var reportUpdateCmd = &cobra.Command{
 	Use:   "update",
-	Short: "the configuration thresholds on the report. Use --config flag to specify config",
+	Short: "the configuration thresholds and other values on the report.",
+	Long:  "Use any combination of flags --config, --url, --id, --name to edit the report",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		GateCheckConfig, GateCheckReport, err := internal.ConfigAndReportFrom(FlagConfigFile, FlagReportFile)
 
@@ -26,6 +29,15 @@ var reportUpdateCmd = &cobra.Command{
 		}
 
 		GateCheckReport = GateCheckReport.WithConfig(GateCheckConfig)
+		GateCheckReport = GateCheckReport.WithSettings(report.Settings{
+			ProjectName: flagProjectName,
+			PipelineId:  flagPipelineID,
+			PipelineUrl: flagPipelineURL,
+		})
+
+		cmd.Printf("Flag value: '%s'\n", flagPipelineURL)
+
+		cmd.Println(GateCheckReport)
 
 		return internal.ReportToFile(FlagReportFile, GateCheckReport)
 	},
@@ -76,11 +88,12 @@ var reportAddGrypeCmd = &cobra.Command{
 
 func init() {
 
-	reportAddCmd.PersistentFlags().StringVar(&flagPipelineURL, "url", "Pipeline URL",
+	reportCmd.PersistentFlags().StringVar(&flagPipelineURL, "url", "",
 		"The Pipeline URL for the report")
-
-	reportAddCmd.PersistentFlags().StringVar(&flagPipelineID, "id", "Pipeline ID",
+	reportCmd.PersistentFlags().StringVar(&flagPipelineID, "id", "",
 		"The Pipeline ID for the report")
+	reportCmd.PersistentFlags().StringVar(&flagProjectName, "name", "",
+		"The Project name for the report")
 
 	reportAddCmd.AddCommand(reportAddGrypeCmd)
 	reportCmd.AddCommand(reportAddCmd, reportPrintCmd, reportUpdateCmd)

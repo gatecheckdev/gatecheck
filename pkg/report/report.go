@@ -9,6 +9,12 @@ import (
 	"time"
 )
 
+type Settings struct {
+	ProjectName string
+	PipelineId  string
+	PipelineUrl string
+}
+
 type Report struct {
 	ProjectName string `json:"projectName"`
 	PipelineId  string `json:"pipelineId"`
@@ -30,6 +36,19 @@ func NewReport(projectName string) *Report {
 
 func (r Report) WithConfig(c *config.Config) *Report {
 	r.Artifacts.Grype = *r.Artifacts.Grype.WithConfig(&c.Grype)
+	return &r
+}
+
+func (r Report) WithSettings(s Settings) *Report {
+	if s.ProjectName != "" {
+		r.ProjectName = s.ProjectName
+	}
+	if s.PipelineId != "" {
+		r.PipelineId = s.PipelineId
+	}
+	if s.PipelineUrl != "" {
+		r.PipelineUrl = s.PipelineUrl
+	}
 	return &r
 }
 

@@ -4,24 +4,15 @@ import (
 	"bytes"
 	"errors"
 	"github.com/gatecheckdev/gatecheck/internal"
+	"github.com/gatecheckdev/gatecheck/pkg/config"
 	"io"
 	"os"
 	"path"
+	"strings"
 	"testing"
 )
 
-func TestAddGrypeCmd(t *testing.T) {
-	// Create a temp copy of the grype report
-	grypeFile, _ := os.Open("../test/grype-report.json")
-	tempGrypeFilename := path.Join(t.TempDir(), "grype-report.json")
-
-	tempGrypeFile, _ := os.Create(tempGrypeFilename)
-	if _, err := io.Copy(tempGrypeFile, grypeFile); err != nil {
-		t.Fatal(err)
-	}
-	_ = tempGrypeFile.Close()
-	_ = grypeFile.Close()
-
+func configTestCopy(t *testing.T) string {
 	// Create temp copy of the config
 	configFile, _ := os.Open("../test/gatecheck.yaml")
 
@@ -34,7 +25,46 @@ func TestAddGrypeCmd(t *testing.T) {
 	_ = tempConfigFile.Close()
 	_ = configFile.Close()
 
-	// Set up output capture
+	return tempConfigFilename
+}
+
+func grypeTestCopy(t *testing.T) string {
+	// Create a temp copy of the grype report
+	grypeFile, _ := os.Open("../test/grype-report.json")
+	tempGrypeFilename := path.Join(t.TempDir(), "grype-report.json")
+
+	tempGrypeFile, _ := os.Create(tempGrypeFilename)
+	if _, err := io.Copy(tempGrypeFile, grypeFile); err != nil {
+		t.Fatal(err)
+	}
+	_ = tempGrypeFile.Close()
+	_ = grypeFile.Close()
+
+	return tempGrypeFilename
+
+}
+
+func reportTestCopy(t *testing.T) string {
+	// Create a temp copy of the grype report
+	reportFile, _ := os.Open("../test/gatecheck-report.json")
+	tempReportFilename := path.Join(t.TempDir(), "gatecheck-report.json")
+
+	tempReportFile, _ := os.Create(tempReportFilename)
+	if _, err := io.Copy(tempReportFile, reportFile); err != nil {
+		t.Fatal(err)
+	}
+	_ = tempReportFile.Close()
+	_ = reportFile.Close()
+
+	return tempReportFilename
+}
+
+func TestAddGrypeCmd(t *testing.T) {
+
+	tempGrypeFilename := grypeTestCopy(t)
+	tempConfigFilename := configTestCopy(t)
+
+	// Set up output captureA
 	actual := new(bytes.Buffer)
 	RootCmd.SetOut(actual)
 	RootCmd.SetErr(actual)
@@ -91,27 +121,9 @@ func TestAddGrypeCmd(t *testing.T) {
 }
 
 func TestUpdateCmd(t *testing.T) {
-	// Create temp copy of the config
-	configFile, _ := os.Open("../test/gatecheck.yaml")
 
-	tempConfigFilename := path.Join(t.TempDir(), "gatecheck.yaml")
-	tempConfigFile, _ := os.Create(tempConfigFilename)
-
-	if _, err := io.Copy(tempConfigFile, configFile); err != nil {
-		t.Fatal(err)
-	}
-	_ = tempConfigFile.Close()
-	_ = configFile.Close()
-
-	reportFile, _ := os.Open("../test/gatecheck-report.json")
 	tempReportFilename := path.Join(t.TempDir(), "gatecheck-report.json")
-	tempReportFile, _ := os.Create(tempReportFilename)
-	if _, err := io.Copy(tempReportFile, reportFile); err != nil {
-		t.Fatal(err)
-	}
-
-	_ = tempReportFile.Close()
-	_ = reportFile.Close()
+	tempConfigFilename := configTestCopy(t)
 
 	// Set up output capture
 	actual := new(bytes.Buffer)
@@ -141,33 +153,30 @@ func TestUpdateCmd(t *testing.T) {
 			t.Fatal("expected file not exists error")
 		}
 	})
+	t.Run("Update flags", func(t *testing.T) {
+		RootCmd.SetArgs([]string{"report", "update", "--config", tempConfigFilename, "--report", tempReportFilename,
+			"--url", "test.com/pipeline"})
+
+		err := RootCmd.Execute()
+		if err != nil {
+			t.Fatal(err)
+		}
+		r, err := internal.ReportFromFile(tempReportFilename, *config.NewConfig("Test"))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if strings.Compare(r.PipelineUrl, "test.com/pipeline") != 0 {
+			t.Logf("COMMAND OUTPUT: %s\n", actual)
+			t.Log(r)
+			t.Fatal("Pipeline url not updated")
+		}
+
+	})
 }
 
 func TestPrintCmd(t *testing.T) {
-	// Create temp copy of the config
-	configFile, _ := os.Open("../test/gatecheck.yaml")
-
-	tempConfigFilename := path.Join(t.TempDir(), "gatecheck.yaml")
-	tempConfigFile, _ := os.Create(tempConfigFilename)
-
-	if _, err := io.Copy(tempConfigFile, configFile); err != nil {
-		t.Fatal(err)
-	}
-	_ = tempConfigFile.Close()
-	_ = configFile.Close()
-
-	// Create temp copy of the report
-	reportFile, _ := os.Open("../test/gatecheck-report.json")
-
-	tempReportFilename := path.Join(t.TempDir(), "gatecheck-report.json")
-	tempReportFile, _ := os.Create(tempReportFilename)
-
-	if _, err := io.Copy(tempReportFile, reportFile); err != nil {
-		t.Fatal(err)
-	}
-
-	_ = reportFile.Close()
-	_ = tempReportFile.Close()
+	tempReportFilename := reportTestCopy(t)
+	tempConfigFilename := configTestCopy(t)
 
 	// Set up output capture
 	actual := new(bytes.Buffer)

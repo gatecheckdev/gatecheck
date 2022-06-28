@@ -6,6 +6,7 @@ import (
 	"github.com/gatecheckdev/gatecheck/pkg/config"
 	"github.com/gatecheckdev/gatecheck/pkg/report"
 	"os"
+	"strings"
 	"testing"
 )
 
@@ -56,4 +57,23 @@ func TestNewReport(t *testing.T) {
 	if err := report.NewWriter(os.Stdout).WriteReport(rep); err != nil {
 		t.Fatal(err)
 	}
+}
+
+func TestReport_WithSettings(t *testing.T) {
+	r := report.NewReport("Test Project Name")
+
+	r = r.WithSettings(report.Settings{ProjectName: "New Project Name"})
+	r = r.WithSettings(report.Settings{PipelineId: "ABC-12345"})
+	r = r.WithSettings(report.Settings{PipelineUrl: "pipeline.com"})
+
+	if strings.Compare(r.ProjectName, "New Project Name") != 0 {
+		t.Fatal("Unexpected Project Name")
+	}
+	if strings.Compare(r.PipelineId, "ABC-12345") != 0 {
+		t.Fatal("Unexpected Pipeline ID")
+	}
+	if strings.Compare(r.PipelineUrl, "pipeline.com") != 0 {
+		t.Fatal("Unexpected Pipeline URL")
+	}
+
 }

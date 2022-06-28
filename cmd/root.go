@@ -6,7 +6,7 @@ import (
 
 // Exit Codes
 
-const VersionNumber = "0.0.1"
+const VersionNumber = "0.0.2"
 
 // Flags
 
