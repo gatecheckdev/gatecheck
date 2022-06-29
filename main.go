@@ -11,8 +11,7 @@ import (
 const ExitSystemFail int = -1
 const ExitOk int = 0
 const ExitFileAccessFail int = 2
-
-//const ExitValidationFail = 1
+const ExitValidationFail = 1
 
 func main() {
 	err := cmd.RootCmd.Execute()
@@ -24,6 +23,10 @@ func main() {
 	if errors.Is(err, internal.ErrorFileExists) {
 		os.Exit(ExitFileAccessFail)
 	}
+	if errors.Is(err, internal.ErrorValidation) {
+		os.Exit(ExitValidationFail)
+	}
+
 	if err != nil {
 		os.Exit(ExitSystemFail)
 	}

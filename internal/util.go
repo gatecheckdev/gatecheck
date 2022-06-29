@@ -15,16 +15,21 @@ var ErrorFileExists = errors.New("file already exists")
 var ErrorFileNotExists = errors.New("file does not exists")
 var ErrorConfig = errors.New("error decoding the configuration file")
 var ErrorDecode = errors.New("error decoding a file")
+var ErrorValidation = errors.New("report failed validation")
 
 func ConfigAndReportFrom(configFile string, reportFile string) (*config.Config, *report.Report, error) {
 	GateCheckConfig, err := ConfigFromFile(configFile)
 	if err != nil {
 		return nil, nil, err
 	}
-	GateCheckReport, err := ReportFromFile(reportFile, *GateCheckConfig)
+	GateCheckReport, err := ReportFromFile(reportFile)
+
 	if err != nil {
 		return nil, nil, err
 	}
+
+	GateCheckReport = GateCheckReport.WithConfig(GateCheckConfig)
+
 	return GateCheckConfig, GateCheckReport, nil
 }
 
@@ -46,12 +51,12 @@ func ConfigFromFile(configFile string) (*config.Config, error) {
 	return loadedConfig, nil
 }
 
-func ReportFromFile(reportFile string, c config.Config) (*report.Report, error) {
+func ReportFromFile(reportFile string) (*report.Report, error) {
 
 	f, err := os.Open(reportFile)
 	// If the file doesn't exist, return a new report
 	if errors.Is(err, os.ErrNotExist) {
-		newReport := report.NewReport(c.ProjectName).WithConfig(&c)
+		newReport := report.NewReport("").WithConfig(config.NewConfig(""))
 		return newReport, nil
 	}
 

@@ -4,65 +4,17 @@ import (
 	"bytes"
 	"errors"
 	"github.com/gatecheckdev/gatecheck/internal"
-	"github.com/gatecheckdev/gatecheck/pkg/config"
-	"io"
+	"github.com/gatecheckdev/gatecheck/internal/testutil"
 	"os"
 	"path"
 	"strings"
 	"testing"
 )
 
-func configTestCopy(t *testing.T) string {
-	// Create temp copy of the config
-	configFile, _ := os.Open("../test/gatecheck.yaml")
-
-	tempConfigFilename := path.Join(t.TempDir(), "gatecheck.yaml")
-	tempConfigFile, _ := os.Create(tempConfigFilename)
-
-	if _, err := io.Copy(tempConfigFile, configFile); err != nil {
-		t.Fatal(err)
-	}
-	_ = tempConfigFile.Close()
-	_ = configFile.Close()
-
-	return tempConfigFilename
-}
-
-func grypeTestCopy(t *testing.T) string {
-	// Create a temp copy of the grype report
-	grypeFile, _ := os.Open("../test/grype-report.json")
-	tempGrypeFilename := path.Join(t.TempDir(), "grype-report.json")
-
-	tempGrypeFile, _ := os.Create(tempGrypeFilename)
-	if _, err := io.Copy(tempGrypeFile, grypeFile); err != nil {
-		t.Fatal(err)
-	}
-	_ = tempGrypeFile.Close()
-	_ = grypeFile.Close()
-
-	return tempGrypeFilename
-
-}
-
-func reportTestCopy(t *testing.T) string {
-	// Create a temp copy of the grype report
-	reportFile, _ := os.Open("../test/gatecheck-report.json")
-	tempReportFilename := path.Join(t.TempDir(), "gatecheck-report.json")
-
-	tempReportFile, _ := os.Create(tempReportFilename)
-	if _, err := io.Copy(tempReportFile, reportFile); err != nil {
-		t.Fatal(err)
-	}
-	_ = tempReportFile.Close()
-	_ = reportFile.Close()
-
-	return tempReportFilename
-}
-
 func TestAddGrypeCmd(t *testing.T) {
 
-	tempGrypeFilename := grypeTestCopy(t)
-	tempConfigFilename := configTestCopy(t)
+	tempGrypeFilename := testutil.GrypeTestCopy(t)
+	tempConfigFilename := testutil.ConfigTestCopy(t)
 
 	// Set up output captureA
 	actual := new(bytes.Buffer)
@@ -123,7 +75,7 @@ func TestAddGrypeCmd(t *testing.T) {
 func TestUpdateCmd(t *testing.T) {
 
 	tempReportFilename := path.Join(t.TempDir(), "gatecheck-report.json")
-	tempConfigFilename := configTestCopy(t)
+	tempConfigFilename := testutil.ConfigTestCopy(t)
 
 	// Set up output capture
 	actual := new(bytes.Buffer)
@@ -161,7 +113,7 @@ func TestUpdateCmd(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		r, err := internal.ReportFromFile(tempReportFilename, *config.NewConfig("Test"))
+		r, err := internal.ReportFromFile(tempReportFilename)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -175,8 +127,8 @@ func TestUpdateCmd(t *testing.T) {
 }
 
 func TestPrintCmd(t *testing.T) {
-	tempReportFilename := reportTestCopy(t)
-	tempConfigFilename := configTestCopy(t)
+	tempReportFilename := testutil.ReportTestCopy(t)
+	tempConfigFilename := testutil.ConfigTestCopy(t)
 
 	// Set up output capture
 	actual := new(bytes.Buffer)

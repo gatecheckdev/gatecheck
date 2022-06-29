@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"github.com/gatecheckdev/gatecheck/internal"
+	"github.com/gatecheckdev/gatecheck/internal/testutil"
 	"github.com/gatecheckdev/gatecheck/pkg/config"
 	"github.com/gatecheckdev/gatecheck/pkg/report"
 	"io"
@@ -69,18 +70,16 @@ func TestConfigFromFile(t *testing.T) {
 }
 
 func TestReportFromFile(t *testing.T) {
-	testConfig := config.NewConfig("Test Project")
 
 	t.Run("Nonexistent file", func(t *testing.T) {
 		fPath := path.Join(t.TempDir(), "gatecheck-report.json")
 
-		loadedReport, err := internal.ReportFromFile(fPath, *testConfig)
+		loadedReport, err := internal.ReportFromFile(fPath)
 		if err != nil {
+			t.Error("should generate a new report")
 			t.Fatal(err)
 		}
-		if strings.Compare(loadedReport.ProjectName, "Test Project") != 0 {
-			t.Fatalf("expected -> %s got -> %s\n", "Test Project", loadedReport.ProjectName)
-		}
+		t.Log(loadedReport)
 	})
 
 	t.Run("bad permissions", func(t *testing.T) {
@@ -88,7 +87,7 @@ func TestReportFromFile(t *testing.T) {
 		f, _ := os.Create(fPath)
 		_ = f.Chmod(0000)
 		_ = f.Close()
-		_, err := internal.ReportFromFile(fPath, *testConfig)
+		_, err := internal.ReportFromFile(fPath)
 		if errors.Is(err, internal.ErrorFileAccess) != true {
 			t.Error(err)
 			t.Fatal("expected File Access error")
@@ -103,7 +102,7 @@ func TestReportFromFile(t *testing.T) {
 		}
 		_ = f.Close()
 
-		_, err := internal.ReportFromFile(fPath, *testConfig)
+		_, err := internal.ReportFromFile(fPath)
 		if errors.Is(err, internal.ErrorDecode) != true {
 			t.Fatal("expected Error for bad JSON")
 		}
@@ -111,7 +110,7 @@ func TestReportFromFile(t *testing.T) {
 
 	t.Run("success, blank", func(t *testing.T) {
 		fPath := path.Join(t.TempDir(), "gatecheck-report.json")
-		loadedReported, err := internal.ReportFromFile(fPath, *testConfig)
+		loadedReported, err := internal.ReportFromFile(fPath)
 
 		if err != nil {
 			t.Fatal(err)
@@ -122,19 +121,9 @@ func TestReportFromFile(t *testing.T) {
 
 	t.Run("success", func(t *testing.T) {
 		// Create temp copy of the report
-		reportFile, _ := os.Open("../test/gatecheck-report.json")
+		tempReportFilename := testutil.ReportTestCopy(t)
 
-		tempReportFilename := path.Join(t.TempDir(), "gatecheck-report.json")
-		tempReportFile, _ := os.Create(tempReportFilename)
-
-		if _, err := io.Copy(tempReportFile, reportFile); err != nil {
-			t.Fatal(err)
-		}
-
-		_ = reportFile.Close()
-		_ = tempReportFile.Close()
-
-		loadedReport, err := internal.ReportFromFile(tempReportFilename, *testConfig)
+		loadedReport, err := internal.ReportFromFile(tempReportFilename)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -154,22 +143,9 @@ func TestReportToFile(t *testing.T) {
 
 	t.Run("success", func(t *testing.T) {
 		// Create temp copy of the report
-		reportFile, _ := os.Open("../test/gatecheck-report.json")
+		tempReportFilename := testutil.ReportTestCopy(t)
 
-		tempReportFilename := path.Join(t.TempDir(), "gatecheck-report.json")
-		tempReportFile, _ := os.Create(tempReportFilename)
-
-		if _, err := io.Copy(tempReportFile, reportFile); err != nil {
-			t.Fatal(err)
-		}
-
-		_ = reportFile.Close()
-		_ = tempReportFile.Close()
-
-		testConfig := config.NewConfig("Test Project")
-		t.Log(testConfig)
-
-		loadedReport, err := internal.ReportFromFile(tempReportFilename, *testConfig)
+		loadedReport, err := internal.ReportFromFile(tempReportFilename)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -178,7 +154,7 @@ func TestReportToFile(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		reloadedReport, err := internal.ReportFromFile(tempReportFilename, *testConfig)
+		reloadedReport, err := internal.ReportFromFile(tempReportFilename)
 		if err != nil {
 			t.Fatal(err)
 		}
