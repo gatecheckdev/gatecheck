@@ -13,3 +13,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Report pkg
 - internal utility file system functions
 - Initial CLI functions using Cobra
+- Validator for Grype
+ 
