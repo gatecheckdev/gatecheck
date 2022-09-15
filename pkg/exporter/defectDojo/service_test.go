@@ -296,9 +296,5 @@ func mockedGET(givenResponse interface{}) *APIClient {
 
 func mockAPIClient(handlerFunc func(http.ResponseWriter, *http.Request)) *APIClient {
 	server := httptest.NewServer(http.HandlerFunc(handlerFunc))
-	return &APIClient{
-		client: server.Client(),
-		key:    "abc123",
-		url:    server.URL,
-	}
+	return NewDefaultService("abc123", server.URL).WithClient(server.Client())
 }

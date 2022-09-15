@@ -1,7 +1,9 @@
 package exporter
 
-import "github.com/gatecheckdev/gatecheck/pkg/artifact/grype"
+import (
+	"io"
+)
 
 type Exporter interface {
-	ExportGrype(report *grype.ScanReport) error
+	ExportGrype(reportFile io.Reader) error
 }

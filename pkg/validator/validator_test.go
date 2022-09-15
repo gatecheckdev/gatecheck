@@ -5,11 +5,13 @@ import (
 	"github.com/gatecheckdev/gatecheck/internal/testutil"
 	"github.com/gatecheckdev/gatecheck/pkg/config"
 	"github.com/gatecheckdev/gatecheck/pkg/validator"
+	"os"
 	"testing"
 )
 
 func TestStdValidator_Validate(t *testing.T) {
-	reportFilename := testutil.ReportTestCopy(t)
+	rf, _ := os.Open("../../test/gatecheck-report.json")
+	reportFilename := testutil.ReportTestCopy(t, rf)
 
 	r, err := internal.ReportFromFile(reportFilename)
 	if err != nil {

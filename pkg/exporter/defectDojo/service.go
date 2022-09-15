@@ -51,6 +51,15 @@ type APIClient struct {
 	url    string
 }
 
+func NewDefaultService(k string, u string) *APIClient {
+	return &APIClient{client: http.DefaultClient, key: k, url: u}
+}
+
+func (c APIClient) WithClient(client *http.Client) *APIClient {
+	c.client = client
+	return &c
+}
+
 func (c APIClient) GetEngagements() ([]models.Engagement, error) {
 	return get[models.Engagement](c, c.url+"/api/v2/engagements/")
 }

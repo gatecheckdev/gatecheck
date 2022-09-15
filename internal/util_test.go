@@ -121,7 +121,11 @@ func TestReportFromFile(t *testing.T) {
 
 	t.Run("success", func(t *testing.T) {
 		// Create temp copy of the report
-		tempReportFilename := testutil.ReportTestCopy(t)
+		rf, err := os.Open("../test/gatecheck-report.json")
+		if err != nil {
+			t.Fatal(err)
+		}
+		tempReportFilename := testutil.ReportTestCopy(t, rf)
 
 		loadedReport, err := internal.ReportFromFile(tempReportFilename)
 		if err != nil {
@@ -143,7 +147,8 @@ func TestReportToFile(t *testing.T) {
 
 	t.Run("success", func(t *testing.T) {
 		// Create temp copy of the report
-		tempReportFilename := testutil.ReportTestCopy(t)
+		rf, _ := os.Open("../test/gatecheck-report.json")
+		tempReportFilename := testutil.ReportTestCopy(t, rf)
 
 		loadedReport, err := internal.ReportFromFile(tempReportFilename)
 		if err != nil {

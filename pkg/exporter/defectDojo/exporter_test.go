@@ -11,44 +11,39 @@ import (
 func TestExporter_ExportGrype(t *testing.T) {
 	errExpected := errors.New("mocked error")
 
-	e := Exporter{config: Config{ProductTypeName: "prod type 1",
-		ProductName: "prod 1", EngagementName: "engagement 1"}}
+	e := NewExporter(Config{ProductTypeName: "prod type 1", ProductName: "prod 1", EngagementName: "engagement 1"})
 
 	service := mockService{
 		errProductType: errExpected, getProductTypeValue: []models.ProductType{{Id: 1, Name: "prod type 1"}},
 		errProduct: errExpected, getProductValue: []models.Product{{Id: 1, ProdType: 1, Name: "prod 1"}},
 		errEngagement: errExpected, getEngagementValue: []models.Engagement{{Id: 1, Name: "engagement 1", Product: 1}},
 	}
-	
-	e.service = service
-	if err := e.ExportGrype(new(bytes.Buffer)); err == nil {
+
+	if err := e.WithService(service).ExportGrype(new(bytes.Buffer)); err == nil {
 		t.Fatal("Expected to fail getting product Type")
 	}
 	// turn off product type error
 	service.errProductType = nil
-	e.service = service
-	if err := e.ExportGrype(new(bytes.Buffer)); err == nil {
+	if err := e.WithService(service).ExportGrype(new(bytes.Buffer)); err == nil {
 		t.Fatal("Expected to fail getting product")
 	}
 
 	// turn off product error
 	service.errProduct = nil
-	e.service = service
-	if err := e.ExportGrype(new(bytes.Buffer)); err == nil {
+	if err := e.WithService(service).ExportGrype(new(bytes.Buffer)); err == nil {
 		t.Fatal("Expected to fail getting engagement")
 	}
 
 	// turn off engagement error, Provoke encode error
 	service.errEngagement = nil
-	e.service = service
-	if err := e.ExportGrype(bytes.NewBufferString("Some scan data")); err != nil {
+	if err := e.WithService(service).ExportGrype(bytes.NewBufferString("Some scan data")); err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestExporter_getProductType(t *testing.T) {
 	service := mockService{errProductType: errors.New("server down")}
-	e := Exporter{service: service}
+	e := NewExporter(Config{}).WithService(service)
 	_, err := e.getProductType("")
 	if err == nil {
 		t.Fatal("Expected error for bad service")
@@ -60,16 +55,14 @@ func TestExporter_getProductType(t *testing.T) {
 		{Name: "some prod type", Id: 3},
 	}}
 
-	e = Exporter{service: service}
-	productType, _ := e.getProductType("prod type")
+	productType, _ := e.WithService(service).getProductType("prod type")
 	if productType.Id != 2 {
 		t.Fatal("Expected ID 2")
 	}
 
 	service = mockService{postProductTypeValue: &models.ProductType{Id: 4}}
-	e = Exporter{service: service}
 	// provoke post
-	productType, err = e.getProductType("new prod type")
+	productType, err = e.WithService(service).getProductType("new prod type")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -80,9 +73,9 @@ func TestExporter_getProductType(t *testing.T) {
 
 func TestExporter_getProduct(t *testing.T) {
 	service := mockService{errProduct: errors.New("server down")}
-	e := Exporter{service: service}
-	_, err := e.getProduct(0, "")
-	if err == nil {
+	e := NewExporter(Config{}).WithService(service)
+
+	if _, err := e.getProduct(0, ""); err == nil {
 		t.Fatal("Expected error for bad service")
 	}
 
@@ -92,16 +85,14 @@ func TestExporter_getProduct(t *testing.T) {
 		{Name: "some product 1", Id: 3, ProdType: 1},
 	}}
 
-	e = Exporter{service: service}
-	product, _ := e.getProduct(1, "some product 1")
+	product, _ := e.WithService(service).getProduct(1, "some product 1")
 	if product.Id != 3 {
 		t.Fatal("Expected ID 3")
 	}
 
 	service = mockService{postProductValue: &models.Product{Id: 4, ProdType: 1}}
-	e = Exporter{service: service}
 	// provoke post
-	product, err = e.getProduct(1, "new product")
+	product, err := e.WithService(service).getProduct(1, "new product")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -113,7 +104,7 @@ func TestExporter_getProduct(t *testing.T) {
 func TestExporter_getEngagement(t *testing.T) {
 	service := mockService{errEngagement: errors.New("server down")}
 	e := Exporter{service: service}
-	_, err := e.getEngagement(0, "")
+	_, err := e.WithService(service).getEngagement(0, "")
 	if err == nil {
 		t.Fatal("Expected error for bad service")
 	}
@@ -124,16 +115,14 @@ func TestExporter_getEngagement(t *testing.T) {
 		{Name: "some engagement 1", Id: 3, Product: 1},
 	}}
 
-	e = Exporter{service: service}
-	product, _ := e.getEngagement(1, "some engagement 1")
+	product, _ := e.WithService(service).getEngagement(1, "some engagement 1")
 	if product.Id != 3 {
 		t.Fatal("Expected ID 3")
 	}
 
 	service = mockService{postEngagementValue: &models.Engagement{Id: 4, Product: 1}}
-	e = Exporter{service: service}
 	// provoke post
-	product, err = e.getEngagement(1, "new engagement")
+	product, err = e.WithService(service).getEngagement(1, "new engagement")
 	if err != nil {
 		t.Fatal(err)
 	}
