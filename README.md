@@ -1,4 +1,8 @@
 # Gate Check
+[![CICD Pipeline](https://github.com/gatecheckdev/gatecheck/actions/workflows/run-test.yaml/badge.svg?branch=main)](https://github.com/gatecheckdev/gatecheck/actions/workflows/run-test.yaml)
+[![Go Reference](https://pkg.go.dev/badge/github.com/gatecheckdev/gatecheck.svg)](https://pkg.go.dev/github.com/gatecheckdev/gatecheck)
+[![Go Report Card](https://goreportcard.com/badge/github.com/gatecheckdev/gatecheck)](https://goreportcard.com/report/github.com/gatecheckdev/gatecheck)
+
 
 ![Gate Check Logo](static/gatecheck-logo.png)
 
@@ -11,6 +15,7 @@ Gate Check is stateless so self-hosting and provisioning servers is not required
 
 - [X] Report Aggregation
 - [X] Vulnerability Threshold Configuration
+- [X] Report Exporting
 - [ ] Asset bundling
 - [ ] Artifact Integrity Verification
 - [ ] Whitelist Management
@@ -63,6 +68,10 @@ gatecheck report print --report gatecheck-report.json
 
 Exporting will take the report and upload it to a specific target location using the API.
 Custom exporters can be created by simply implementing the Exporter interface.
+
+```shell
+gatecheck export defect-dojo grype grype-report.json
+```
 
 ### Defect Dojo
 
