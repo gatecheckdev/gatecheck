@@ -1,6 +1,9 @@
 name: CICD
 on:
   pull_request:
+  push:
+    branches:
+      - main
 jobs:
   Describe:
     runs-on: ubuntu-latest
@@ -24,9 +27,6 @@ jobs:
           - ubuntu
           - macOS
         go:
-          - 15
-          - 16
-          - 17
           - 18
           - 19
     name: '${{ matrix.platform }} | 1.${{ matrix.go }}.x'
