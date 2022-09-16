@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"bytes"
+	"github.com/gatecheckdev/gatecheck/pkg/exporter/defectDojo"
 	"io"
 	"os"
 	"path"
@@ -12,13 +13,14 @@ func Test_ConfigInitCmd(t *testing.T) {
 	// Provoke an error with improper file name
 
 	actual := new(bytes.Buffer)
-	RootCmd.SetOut(actual)
-	RootCmd.SetErr(actual)
+	command := NewRootCmd(defectDojo.Exporter{})
+	command.SetOut(actual)
+	command.SetErr(actual)
 
 	t.Run("bad filename", func(t *testing.T) {
 		tempDir := "\000x"
-		RootCmd.SetArgs([]string{"config", "init", tempDir})
-		err := RootCmd.Execute()
+		command.SetArgs([]string{"config", "init", tempDir})
+		err := command.Execute()
 		if err == nil {
 			t.Fatal("Expected file access error")
 		}
@@ -30,8 +32,8 @@ func Test_ConfigInitCmd(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		RootCmd.SetArgs([]string{"config", "init", tempDir})
-		err := RootCmd.Execute()
+		command.SetArgs([]string{"config", "init", tempDir})
+		err := command.Execute()
 
 		if err == nil {
 			t.Fatal("Expected file access error")
@@ -41,9 +43,9 @@ func Test_ConfigInitCmd(t *testing.T) {
 	t.Run("directory", func(t *testing.T) {
 		tempDir := t.TempDir()
 
-		RootCmd.SetArgs([]string{"config", "init", tempDir})
+		command.SetArgs([]string{"config", "init", tempDir})
 		t.Log(tempDir)
-		err := RootCmd.Execute()
+		err := command.Execute()
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -66,8 +68,8 @@ func Test_ConfigInitCmd(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		RootCmd.SetArgs([]string{"config", "init", tempDir})
-		err := RootCmd.Execute()
+		command.SetArgs([]string{"config", "init", tempDir})
+		err := command.Execute()
 
 		if err == nil {
 			t.Fatal("Expected file access error")
@@ -79,16 +81,16 @@ func Test_ConfigInitCmd(t *testing.T) {
 		f, _ := os.Create(tempFile)
 		_, _ = io.Copy(f, bytes.NewBufferString("Sample Content"))
 
-		RootCmd.SetArgs([]string{"config", "init", tempFile})
-		if err := RootCmd.Execute(); err == nil {
+		command.SetArgs([]string{"config", "init", tempFile})
+		if err := command.Execute(); err == nil {
 			t.Fatal("expected error for pre-existing file")
 		}
 	})
 
 	t.Run("file", func(t *testing.T) {
 		tempDir := path.Join(t.TempDir(), "custom-name.yaml")
-		RootCmd.SetArgs([]string{"config", "init", tempDir})
-		err := RootCmd.Execute()
+		command.SetArgs([]string{"config", "init", tempDir})
+		err := command.Execute()
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -105,8 +107,8 @@ func Test_ConfigInitCmd(t *testing.T) {
 
 	t.Run("file with project name", func(t *testing.T) {
 		tempDir := path.Join(t.TempDir(), "custom-name.yaml")
-		RootCmd.SetArgs([]string{"config", "init", tempDir, "test project name"})
-		err := RootCmd.Execute()
+		command.SetArgs([]string{"config", "init", tempDir, "test project name"})
+		err := command.Execute()
 		if err != nil {
 			t.Fatal(err)
 		}

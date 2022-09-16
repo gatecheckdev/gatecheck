@@ -2,15 +2,17 @@ package cmd
 
 import (
 	"bytes"
+	"github.com/gatecheckdev/gatecheck/pkg/exporter/defectDojo"
 	"testing"
 )
 
 func Test_VersionCmd(t *testing.T) {
 	actual := new(bytes.Buffer)
-	RootCmd.SetOut(actual)
-	RootCmd.SetErr(actual)
-	RootCmd.SetArgs([]string{"version"})
-	err := RootCmd.Execute()
+	command := NewRootCmd(defectDojo.Exporter{})
+	command.SetOut(actual)
+	command.SetErr(actual)
+	command.SetArgs([]string{"version"})
+	err := command.Execute()
 
 	t.Log(actual)
 	if err != nil {
@@ -21,9 +23,10 @@ func Test_VersionCmd(t *testing.T) {
 
 func Test_RootCmd(t *testing.T) {
 	actual := new(bytes.Buffer)
-	RootCmd.SetArgs([]string{})
+	command := NewRootCmd(defectDojo.Exporter{})
+	command.SetArgs([]string{})
 	t.Log(actual)
-	if err := RootCmd.Execute(); err != nil {
+	if err := command.Execute(); err != nil {
 		t.Fatal(err)
 	}
 }
