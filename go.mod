@@ -1,6 +1,6 @@
 module github.com/gatecheckdev/gatecheck
 
-go 1.18
+go 1.19
 
 require (
 	github.com/anchore/grype v0.49.0
