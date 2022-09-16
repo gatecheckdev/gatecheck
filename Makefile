@@ -17,7 +17,7 @@ fmt:
 
 test: install_deps
 	$(info ******************** running tests ********************)
-	richgo test -v ./...
+	richgo test -cover -v ./...
 
 install_deps:
 	$(info ******************** downloading dependencies ********************)
