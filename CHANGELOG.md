@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [UNRELEASED]
 ### Removed
 - Debug prints in report command
+- Use of ioutil which was deprecated
+
+### Changed
+- Handle edge case of timezone not being able to load due to lack of tzdata pkg/exporter/defectDojo/exporter
 
 ## [0.0.2]
 ### Removed

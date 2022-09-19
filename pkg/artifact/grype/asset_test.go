@@ -3,7 +3,7 @@ package grype_test
 import (
 	"bytes"
 	"github.com/gatecheckdev/gatecheck/pkg/artifact/grype"
-	"io/ioutil"
+	"io"
 	"os"
 	"testing"
 )
@@ -58,7 +58,7 @@ func TestAssetWriter(t *testing.T) {
 	}
 
 	t.Run("Read from Writer", func(t *testing.T) {
-		assetBytes, err := ioutil.ReadAll(grype.NewAssetReader(buf))
+		assetBytes, err := io.ReadAll(grype.NewAssetReader(buf))
 
 		if err != nil {
 			t.Fatal(err)

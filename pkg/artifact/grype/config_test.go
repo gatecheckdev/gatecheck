@@ -3,7 +3,7 @@ package grype_test
 import (
 	"bytes"
 	"github.com/gatecheckdev/gatecheck/pkg/artifact/grype"
-	"io/ioutil"
+	"io"
 	"strings"
 	"testing"
 )
@@ -46,8 +46,11 @@ func TestNewConfigReader(t *testing.T) {
 		t.Fatalf("Expected -> %v, got -> %v", expectedConfig, config)
 	}
 
-	b, err := ioutil.ReadAll(grype.NewConfigReader(bytes.NewBufferString(testConfig)))
+	b, err := io.ReadAll(grype.NewConfigReader(bytes.NewBufferString(testConfig)))
 
+	if err != nil {
+		t.Fatal(err)
+	}
 	if len(b) < 50 {
 		t.Fatalf("Returned byte size is too small. Got -> %v\n", b)
 	}

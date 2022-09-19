@@ -131,6 +131,11 @@ func TestExporter_getEngagement(t *testing.T) {
 	}
 }
 
+func TestAutoGenDescription(t *testing.T) {
+	t.Log(autoGenDescription(Timezone))
+	t.Log(autoGenDescription("blah blah"))
+}
+
 type mockService struct {
 	errProductType       error
 	getProductTypeValue  []models.ProductType
