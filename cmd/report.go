@@ -36,8 +36,6 @@ func NewReportCmd(configFile *string, reportFile *string) *cobra.Command {
 				PipelineUrl: flagPipelineURL,
 			})
 
-			cmd.Printf("Flag value: '%s'\n", flagPipelineURL)
-
 			cmd.Println(GateCheckReport)
 
 			return internal.ReportToFile(*reportFile, GateCheckReport)
@@ -53,7 +51,7 @@ func NewReportCmd(configFile *string, reportFile *string) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			cmd.Println(GateCheckReport.String())
+			cmd.Println(GateCheckReport)
 			return nil
 		},
 	}
