@@ -49,9 +49,14 @@ func TestNewReport(t *testing.T) {
 	t.Run("With Config", func(t *testing.T) {
 		tempConfig := config.NewConfig("Test Project")
 		tempConfig.Grype.Low = 100
+		tempConfig.ProjectName = "Some project name"
 
 		rep = rep.WithConfig(tempConfig)
 		t.Log(rep)
+
+		if strings.Contains(rep.String(), tempConfig.ProjectName) != true {
+			t.Fatal("Project name not updated")
+		}
 	})
 
 	if err := report.NewWriter(os.Stdout).WriteReport(rep); err != nil {

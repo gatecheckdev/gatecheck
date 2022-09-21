@@ -35,6 +35,7 @@ func NewReport(projectName string) *Report {
 }
 
 func (r Report) WithConfig(c *config.Config) *Report {
+	r.ProjectName = c.ProjectName
 	r.Artifacts.Grype = *r.Artifacts.Grype.WithConfig(&c.Grype)
 	return &r
 }
