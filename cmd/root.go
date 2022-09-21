@@ -7,7 +7,7 @@ import (
 
 // Defaults
 
-const VersionNumber = "0.0.3"
+const VersionNumber = "0.0.4"
 const DefaultReportFile = "gatecheck-report.json"
 const DefaultConfigFile = "gatecheck.yaml"
 
