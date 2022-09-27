@@ -2,6 +2,7 @@ package report_test
 
 import (
 	"bytes"
+	"encoding/json"
 	"github.com/gatecheckdev/gatecheck/pkg/artifact/grype"
 	"github.com/gatecheckdev/gatecheck/pkg/config"
 	"github.com/gatecheckdev/gatecheck/pkg/report"
@@ -12,38 +13,41 @@ import (
 
 var TestGrypeReport = "../../test/grype-report.json"
 
-func TestWriterReader(t *testing.T) {
+func TestWriteAndReadReport(t *testing.T) {
 	buf := new(bytes.Buffer)
-	rep := report.NewReport("Test Gate Check Report")
-	_ = report.NewWriter(buf).WriteReport(rep)
+	rep := report.NewReport("Test Gatecheck Report")
 
-	rep2, err := report.NewReader(buf).ReadReport()
+	if err := json.NewEncoder(buf).Encode(rep); err != nil {
+		t.Fatal(err)
+	}
 
+	rep2 := new(report.Report)
+	err := json.NewDecoder(buf).Decode(rep2)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	if rep2.ProjectName != "Test Gate Check Report" {
+	if rep2.ProjectName != "Test Gatecheck Report" {
 		t.Fatal("Something went wrong")
-	}
-}
-
-func TestNewReport(t *testing.T) {
-	rep := report.NewReport("Test Gate Check Report")
-
-	scanFile, _ := os.Open(TestGrypeReport)
-
-	scan, err := grype.NewScanReportReader(scanFile).ReadScan()
-	if err != nil {
-		t.Fatal(err)
 	}
 
 	t.Run("With Scan", func(t *testing.T) {
+		scanFile, err := os.Open(TestGrypeReport)
+		if err != nil {
+			t.Fatal(err)
+		}
+		scan := new(grype.ScanReport)
+		if err := json.NewDecoder(scanFile).Decode(scan); err != nil {
+			t.Fatal(err)
+		}
+
 		grypeAsset := grype.NewAsset("grype-report.json").WithScan(scan)
 
 		rep.Artifacts.Grype = *grype.NewArtifact().
 			WithConfig(grype.NewConfig(-1)).
 			WithAsset(grypeAsset)
+
+		t.Log(rep)
 	})
 
 	t.Run("With Config", func(t *testing.T) {
@@ -58,10 +62,6 @@ func TestNewReport(t *testing.T) {
 			t.Fatal("Project name not updated")
 		}
 	})
-
-	if err := report.NewWriter(os.Stdout).WriteReport(rep); err != nil {
-		t.Fatal(err)
-	}
 }
 
 func TestReport_WithSettings(t *testing.T) {

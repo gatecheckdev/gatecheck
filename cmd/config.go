@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/gatecheckdev/gatecheck/internal"
 	"github.com/gatecheckdev/gatecheck/pkg/config"
@@ -40,7 +41,7 @@ func NewConfigCmd() *cobra.Command {
 			newConfig := config.NewConfig(projectName)
 
 			// Write the new configuration to file
-			_ = config.NewWriter(targetFile).WriteConfig(newConfig)
+			_ = json.NewEncoder(targetFile).Encode(newConfig)
 
 			_, _ = fmt.Fprintln(cmd.OutOrStderr(), "New configuration file crated")
 			return nil

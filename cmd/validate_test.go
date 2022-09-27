@@ -7,7 +7,9 @@ import (
 	"github.com/gatecheckdev/gatecheck/internal/testutil"
 	"github.com/gatecheckdev/gatecheck/pkg/config"
 	"github.com/gatecheckdev/gatecheck/pkg/exporter/defectDojo"
+	"gopkg.in/yaml.v3"
 	"os"
+	"path"
 	"testing"
 )
 
@@ -67,9 +69,10 @@ func TestValidateCmd(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if err := config.NewWriter(f).WriteConfig(c); err != nil {
+		if err := yaml.NewEncoder(f).Encode(c); err != nil {
 			t.Fatal(err)
 		}
+
 		_ = f.Close()
 
 		command.SetArgs([]string{"validate", "-c", tempConfigFilename, "-r", tempReportFilename})
@@ -79,7 +82,7 @@ func TestValidateCmd(t *testing.T) {
 		}
 
 	})
-	t.Run("successful validation", func(t *testing.T) {
+	t.Run("File access error", func(t *testing.T) {
 		cf, _ := os.Open("../test/gatecheck.yaml")
 		tempConfigFilename := testutil.ConfigTestCopy(t, cf)
 
@@ -91,6 +94,30 @@ func TestValidateCmd(t *testing.T) {
 			t.Error(err)
 			t.Fatal("expected file access error")
 		}
+	})
+
+	t.Run("Successful Validation", func(t *testing.T) {
+		c := config.NewConfig("Test Project")
+		tempConfigFilename := path.Join(os.TempDir(), "gatecheck.yaml")
+		f, err := os.Create(tempConfigFilename)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if err := yaml.NewEncoder(f).Encode(c); err != nil {
+			t.Fatal(err)
+		}
+		_ = f.Close()
+
+		rf, _ := os.Open("../test/gatecheck-report.json")
+		tempReportFilename := testutil.ReportTestCopy(t, rf)
+
+		command.SetArgs([]string{"validate", "-c", tempConfigFilename, "-r", tempReportFilename})
+
+		if err = command.Execute(); err != nil {
+			t.Fatal(err)
+		}
+
 	})
 
 }

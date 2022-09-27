@@ -3,7 +3,7 @@ package config_test
 import (
 	"bytes"
 	"github.com/gatecheckdev/gatecheck/pkg/config"
-	"strings"
+	"gopkg.in/yaml.v3"
 	"testing"
 )
 
@@ -17,40 +17,29 @@ grype:
   unknown: 6
 `
 
-func TestWriter(t *testing.T) {
-	someConfig := config.NewConfig("Test Project")
-	someConfig.Grype.Critical = 1
-	someConfig.Grype.High = 2
-	someConfig.Grype.Medium = 3
-	someConfig.Grype.Low = 4
-	someConfig.Grype.Negligible = 5
-	someConfig.Grype.Unknown = 6
+func TestNewConfig(t *testing.T) {
+	c := config.NewConfig("Test Project")
+	c.Grype.Critical = 1
+	c.Grype.High = 2
+	c.Grype.Medium = 3
+	c.Grype.Low = 4
+	c.Grype.Negligible = 5
+	c.Grype.Unknown = 6
+
 	buf := new(bytes.Buffer)
-	if err := config.NewWriter(buf).WriteConfig(someConfig); err != nil {
+	if err := yaml.NewEncoder(buf).Encode(c); err != nil {
 		t.Fatal(err)
 	}
 
-	if strings.Compare(buf.String(), configString) != 0 {
-		t.Fatalf("Expected -> '%v' Got -> '%v'", configString, buf.String())
-	}
-}
-
-func TestReader(t *testing.T) {
-	testConfig, err := config.NewReader(bytes.NewBufferString(configString)).ReadConfig()
-
-	if err != nil {
+	c2 := new(config.Config)
+	if err := yaml.NewDecoder(buf).Decode(c2); err != nil {
 		t.Fatal(err)
 	}
 
-	expectedConfig := config.NewConfig("Test Project")
-	expectedConfig.Grype.Critical = 1
-	expectedConfig.Grype.High = 2
-	expectedConfig.Grype.Medium = 3
-	expectedConfig.Grype.Low = 4
-	expectedConfig.Grype.Negligible = 5
-	expectedConfig.Grype.Unknown = 6
-
-	if *testConfig != *expectedConfig {
-		t.Fatalf("Expected -> '%v' Got -> '%v'", *expectedConfig, *testConfig)
+	if *c != *c2 {
+		t.Logf("%+v\n", *c)
+		t.Logf("%+v\n", *c2)
+		t.Fatal("Decoded Config does not match Encoded config")
 	}
+
 }

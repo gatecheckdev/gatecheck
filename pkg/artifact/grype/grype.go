@@ -1,10 +1,8 @@
 package grype
 
 import (
-	"encoding/json"
 	"fmt"
 	"github.com/gatecheckdev/gatecheck/pkg/artifact/fields"
-	"io"
 	"strings"
 )
 
@@ -90,40 +88,4 @@ func (a Artifact) String() string {
 	out.WriteString(a.Unknown.String())
 
 	return out.String()
-}
-
-type ArtifactWriter struct {
-	writer io.Writer
-}
-
-func (a *ArtifactWriter) Write(p []byte) (n int, err error) {
-	return a.writer.Write(p)
-}
-
-func (a *ArtifactWriter) WriteArtifact(artifact *Artifact) error {
-
-	return json.NewEncoder(a).Encode(artifact)
-}
-
-func NewArtifactWriter(w io.Writer) *ArtifactWriter {
-	return &ArtifactWriter{writer: w}
-}
-
-type ArtifactReader struct {
-	reader io.Reader
-}
-
-func (a *ArtifactReader) Read(p []byte) (n int, err error) {
-	return a.reader.Read(p)
-}
-
-func (a *ArtifactReader) ReadArtifact() (*Artifact, error) {
-
-	asset := &Artifact{}
-	err := json.NewDecoder(a).Decode(asset)
-	return asset, err
-}
-
-func NewArtifactReader(r io.Reader) *ArtifactReader {
-	return &ArtifactReader{reader: r}
 }

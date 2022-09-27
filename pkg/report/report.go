@@ -1,10 +1,8 @@
 package report
 
 import (
-	"encoding/json"
 	"github.com/gatecheckdev/gatecheck/pkg/artifact/grype"
 	"github.com/gatecheckdev/gatecheck/pkg/config"
-	"io"
 	"strings"
 	"time"
 )
@@ -61,39 +59,4 @@ func (r Report) String() string {
 	out.WriteString(divider)
 	out.WriteString(r.Artifacts.Grype.String())
 	return out.String()
-}
-
-type Writer struct {
-	writer io.Writer
-}
-
-func NewWriter(w io.Writer) *Writer {
-	return &Writer{writer: w}
-}
-
-func (w *Writer) Write(p []byte) (int, error) {
-	return w.writer.Write(p)
-}
-
-func (w *Writer) WriteReport(r *Report) error {
-
-	return json.NewEncoder(w).Encode(r)
-}
-
-type Reader struct {
-	reader io.Reader
-}
-
-func NewReader(r io.Reader) *Reader {
-	return &Reader{reader: r}
-}
-
-func (r *Reader) Read(p []byte) (int, error) {
-	return r.reader.Read(p)
-}
-
-func (r *Reader) ReadReport() (*Report, error) {
-	report := &Report{}
-	err := json.NewDecoder(r).Decode(report)
-	return report, err
 }

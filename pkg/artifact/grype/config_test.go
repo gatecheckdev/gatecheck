@@ -3,7 +3,7 @@ package grype_test
 import (
 	"bytes"
 	"github.com/gatecheckdev/gatecheck/pkg/artifact/grype"
-	"io"
+	"gopkg.in/yaml.v2"
 	"strings"
 	"testing"
 )
@@ -12,7 +12,7 @@ func TestNewConfigWriter(t *testing.T) {
 	config := grype.NewConfig(3)
 	outputBuf := new(bytes.Buffer)
 
-	if err := grype.NewConfigWriter(outputBuf).WriteConfig(config); err != nil {
+	if err := yaml.NewEncoder(outputBuf).Encode(config); err != nil {
 		t.Fatal(err)
 	}
 
@@ -27,9 +27,10 @@ func TestNewConfigWriter(t *testing.T) {
 func TestNewConfigReader(t *testing.T) {
 	testConfig := "critical: 1\nhigh: 2\nmedium: 3\nlow: 4\nnegligible: 5\nunknown: 6\n"
 
-	config, err := grype.NewConfigReader(bytes.NewBufferString(testConfig)).ReadConfig()
+	//config, err := grype.NewConfigReader(bytes.NewBufferString(testConfig)).ReadConfig()
 
-	if err != nil {
+	config := new(grype.Config)
+	if err := yaml.NewDecoder(bytes.NewBufferString(testConfig)).Decode(config); err != nil {
 		t.Fatal(err)
 	}
 
@@ -42,16 +43,7 @@ func TestNewConfigReader(t *testing.T) {
 		Unknown:    6,
 	}
 
-	if config != expectedConfig {
+	if *config != expectedConfig {
 		t.Fatalf("Expected -> %v, got -> %v", expectedConfig, config)
-	}
-
-	b, err := io.ReadAll(grype.NewConfigReader(bytes.NewBufferString(testConfig)))
-
-	if err != nil {
-		t.Fatal(err)
-	}
-	if len(b) < 50 {
-		t.Fatalf("Returned byte size is too small. Got -> %v\n", b)
 	}
 }

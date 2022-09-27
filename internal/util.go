@@ -1,11 +1,13 @@
 package internal
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/gatecheckdev/gatecheck/pkg/artifact/grype"
 	"github.com/gatecheckdev/gatecheck/pkg/config"
 	"github.com/gatecheckdev/gatecheck/pkg/report"
+	"gopkg.in/yaml.v3"
 	"os"
 	"path"
 )
@@ -17,22 +19,24 @@ var ErrorConfig = errors.New("error decoding the configuration file")
 var ErrorDecode = errors.New("error decoding a file")
 var ErrorValidation = errors.New("report failed validation")
 
+// ConfigAndReportFrom loads a Gatecheck config and report from given filenames
 func ConfigAndReportFrom(configFile string, reportFile string) (*config.Config, *report.Report, error) {
-	GateCheckConfig, err := ConfigFromFile(configFile)
+	gatecheckConfig, err := ConfigFromFile(configFile)
 	if err != nil {
 		return nil, nil, err
 	}
-	GateCheckReport, err := ReportFromFile(reportFile)
+	gatecheckReport, err := ReportFromFile(reportFile)
 
 	if err != nil {
 		return nil, nil, err
 	}
 
-	GateCheckReport = GateCheckReport.WithConfig(GateCheckConfig)
+	gatecheckReport = gatecheckReport.WithConfig(gatecheckConfig)
 
-	return GateCheckConfig, GateCheckReport, nil
+	return gatecheckConfig, gatecheckReport, nil
 }
 
+// ConfigFromFile loads a Gatecheck config from a given filename
 func ConfigFromFile(configFile string) (*config.Config, error) {
 	if _, err := os.Stat(configFile); err != nil {
 		return nil, fmt.Errorf("%w : %v", ErrorFileNotExists, err)
@@ -44,13 +48,15 @@ func ConfigFromFile(configFile string) (*config.Config, error) {
 		return nil, fmt.Errorf("%w : %v", ErrorFileAccess, err)
 	}
 
-	loadedConfig, err := config.NewReader(f).ReadConfig()
-	if err != nil {
+	loadedConfig := new(config.Config)
+	if err := yaml.NewDecoder(f).Decode(loadedConfig); err != nil {
 		return nil, fmt.Errorf("%w : %v", ErrorConfig, err)
 	}
+
 	return loadedConfig, nil
 }
 
+// ReportFromFile loads a Gatecheck report from a given filename
 func ReportFromFile(reportFile string) (*report.Report, error) {
 
 	f, err := os.Open(reportFile)
@@ -64,14 +70,15 @@ func ReportFromFile(reportFile string) (*report.Report, error) {
 		return nil, fmt.Errorf("%w : %v", ErrorFileAccess, err)
 	}
 
-	loadedReport, err := report.NewReader(f).ReadReport()
-	if err != nil {
+	loadedReport := new(report.Report)
+	if err := json.NewDecoder(f).Decode(loadedReport); err != nil {
 		return nil, fmt.Errorf("%w : %v", ErrorDecode, err)
 	}
 
 	return loadedReport, err
 }
 
+// ReportToFile saves a Gatecheck report to a file, given a filename
 func ReportToFile(reportFilename string, r *report.Report) error {
 	f, err := os.OpenFile(reportFilename, os.O_TRUNC|os.O_CREATE|os.O_WRONLY, 0644)
 
@@ -79,18 +86,20 @@ func ReportToFile(reportFilename string, r *report.Report) error {
 		return fmt.Errorf("%w : %v", ErrorFileAccess, err)
 	}
 
-	return report.NewWriter(f).WriteReport(r)
+	return json.NewEncoder(f).Encode(r)
 }
 
+// GrypeScanFromFile loads a report from a Grype Scan given the scan's filename
 func GrypeScanFromFile(scanFilename string) (*grype.ScanReport, error) {
 	f, err := os.Open(scanFilename)
 	if err != nil {
 		return nil, fmt.Errorf("%w : %v", ErrorFileAccess, err)
 	}
-	scan, err := grype.NewScanReportReader(f).ReadScan()
-	if err != nil {
+	scan := new(grype.ScanReport)
+	if err := json.NewDecoder(f).Decode(scan); err != nil {
 		return nil, fmt.Errorf("%w : %v", ErrorDecode, err)
 	}
+
 	return scan, nil
 }
 

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"github.com/gatecheckdev/gatecheck/pkg/artifact/grype"
+	"gopkg.in/yaml.v2"
 	"os"
 	"testing"
 )
@@ -14,8 +15,11 @@ func TestStandardArtifact_WithConfig(t *testing.T) {
 	artifact = artifact.WithConfig(grype.NewConfig(10))
 
 	configString := "critical: 10\nhigh: 10\nmedium: 10\nlow: 10\nnegligible: 10\nunknown: 10\n"
-	config, _ := grype.NewConfigReader(bytes.NewBufferString(configString)).ReadConfig()
-	secondArtifact := grype.NewArtifact().WithConfig(&config)
+	config := new(grype.Config)
+	if err := yaml.NewDecoder(bytes.NewBufferString(configString)).Decode(config); err != nil {
+		t.Fatal(err)
+	}
+	secondArtifact := grype.NewArtifact().WithConfig(config)
 
 	if artifact.Critical != secondArtifact.Critical {
 		t.Fatal("Artifact from config object and artifact from string do not match")
@@ -27,8 +31,16 @@ func TestStandardArtifact_WithConfig(t *testing.T) {
 func TestStandardArtifact_WithAsset(t *testing.T) {
 	artifact := grype.NewArtifact()
 
-	scanFile, _ := os.Open(TestGrypeReport)
-	scan, _ := grype.NewScanReportReader(scanFile).ReadScan()
+	scanFile, err := os.Open(TestGrypeReport)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	scan := new(grype.ScanReport)
+	if err := json.NewDecoder(scanFile).Decode(scan); err != nil {
+		t.Fatal(err)
+	}
+
 	asset := grype.NewAsset("grype-report.json").WithScan(scan)
 
 	artifact = artifact.WithAsset(asset)
@@ -37,11 +49,15 @@ func TestStandardArtifact_WithAsset(t *testing.T) {
 
 	t.Run("Write and Read Artifact", func(t *testing.T) {
 		buf := new(bytes.Buffer)
-		_ = grype.NewArtifactWriter(buf).WriteArtifact(artifact)
-		secondArtifact, err := grype.NewArtifactReader(buf).ReadArtifact()
-		if err != nil {
+		if err := json.NewEncoder(buf).Encode(artifact); err != nil {
 			t.Fatal(err)
 		}
+
+		secondArtifact := new(grype.Artifact)
+		if err := json.NewDecoder(buf).Decode(secondArtifact); err != nil {
+			t.Fatal(err)
+		}
+
 		t.Log(secondArtifact)
 	})
 
@@ -49,39 +65,13 @@ func TestStandardArtifact_WithAsset(t *testing.T) {
 		buf := new(bytes.Buffer)
 		artifact = artifact.WithConfig(grype.NewConfig(50)).WithAsset(asset)
 
-		if err := grype.NewArtifactWriter(buf).WriteArtifact(artifact); err != nil {
+		if err := json.NewEncoder(buf).Encode(artifact); err != nil {
+			t.Fatal(err)
+		}
+
+		if err := json.NewDecoder(buf).Decode(artifact); err != nil {
 			t.Fatal(err)
 		}
 		t.Log(artifact)
 	})
-}
-
-func TestStandardArtifact_MarshalJSON(t *testing.T) {
-	scanFile, _ := os.Open(TestGrypeReport)
-	scan, _ := grype.NewScanReportReader(scanFile).ReadScan()
-	asset := grype.NewAsset("grype-report.json").WithScan(scan)
-	artifact := grype.NewArtifact().
-		WithConfig(grype.NewConfig(-1)).
-		WithAsset(asset)
-
-	artifactBytes, _ := json.Marshal(artifact)
-
-	t.Log(string(artifactBytes))
-
-	t.Run("Unmarshal", func(t *testing.T) {
-		secondArtifact := grype.NewArtifact()
-
-		err := json.Unmarshal(artifactBytes, secondArtifact)
-
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		if secondArtifact.Critical != artifact.Critical {
-			t.Log(artifact)
-			t.Log(secondArtifact)
-			t.Fatal("Marshal and unmarshal does not match")
-		}
-	})
-
 }

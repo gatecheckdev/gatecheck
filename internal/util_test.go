@@ -2,6 +2,7 @@ package internal_test
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"github.com/gatecheckdev/gatecheck/internal"
 	"github.com/gatecheckdev/gatecheck/internal/testutil"
@@ -52,11 +53,15 @@ func TestConfigFromFile(t *testing.T) {
 	t.Run("Good Config", func(t *testing.T) {
 		configA := config.NewConfig("Test Config")
 		fPath := path.Join(t.TempDir(), "gatecheck.yaml")
-		f, _ := os.Create(fPath)
-
-		if err := config.NewWriter(f).WriteConfig(configA); err != nil {
+		f, err := os.Create(fPath)
+		if err != nil {
 			t.Fatal(err)
 		}
+
+		if err := json.NewEncoder(f).Encode(configA); err != nil {
+			t.Fatal(err)
+		}
+
 		_ = f.Close()
 
 		configB, err := internal.ConfigFromFile(fPath)
