@@ -5,8 +5,8 @@ import (
 )
 
 type Config struct {
-	ProjectName string       `yaml:"ProjectName"`
-	Grype       grype.Config `yaml:"grype"`
+	ProjectName string       `yaml:"ProjectName" json:"projectName"`
+	Grype       grype.Config `yaml:"grype" json:"grype"`
 }
 
 func NewConfig(projectName string) *Config {
