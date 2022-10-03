@@ -8,9 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Use json and yaml decoders and encoders instead of wrapping with the reader, writer pattern
 - Unit tests
+- fields/CVE to finding for use in other modules
 
 ### Added
 - JSON struct tags to config for additional support
+- Entity Documentation to README
+- 
 
 ## [0.0.4]
 ### Fixed
