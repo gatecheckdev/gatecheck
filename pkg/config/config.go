@@ -5,7 +5,7 @@ import (
 )
 
 type Config struct {
-	ProjectName string       `yaml:"ProjectName" json:"projectName"`
+	ProjectName string       `yaml:"projectName" json:"projectName"`
 	Grype       grype.Config `yaml:"grype" json:"grype"`
 }
 
