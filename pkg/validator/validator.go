@@ -32,7 +32,7 @@ func ValidateGrype(a grype.Artifact) error {
 	var sb strings.Builder
 	var validationError error = nil
 
-	testables := []fields.CVE{a.Critical, a.High, a.Medium, a.Low, a.Unknown, a.Negligible}
+	testables := []fields.Finding{a.Critical, a.High, a.Medium, a.Low, a.Unknown, a.Negligible}
 	for _, t := range testables {
 		if err := t.Test(); err != nil {
 			validationError = GrypeValidationError

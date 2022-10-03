@@ -21,7 +21,6 @@ func TestNewConfigWriter(t *testing.T) {
 	if strings.Compare(expectedConfig, outputBuf.String()) != 0 {
 		t.Fatalf("expected -> '%s', got -> '%s'\n", expectedConfig, outputBuf.String())
 	}
-
 }
 
 func TestNewConfigReader(t *testing.T) {

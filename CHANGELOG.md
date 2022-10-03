@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Use json and yaml decoders and encoders instead of wrapping with the reader, writer pattern
 - Unit tests
 
+### Added
+- JSON struct tags to config for additional support
+
 ## [0.0.4]
 ### Fixed
 - A new report command takes the project name from the config file

@@ -7,23 +7,23 @@ import (
 )
 
 type Artifact struct {
-	Critical   fields.CVE `json:"critical"`
-	High       fields.CVE `json:"high"`
-	Medium     fields.CVE `json:"medium"`
-	Low        fields.CVE `json:"low"`
-	Negligible fields.CVE `json:"negligible"`
-	Unknown    fields.CVE `json:"unknown"`
+	Critical   fields.Finding `json:"critical"`
+	High       fields.Finding `json:"high"`
+	Medium     fields.Finding `json:"medium"`
+	Low        fields.Finding `json:"low"`
+	Negligible fields.Finding `json:"negligible"`
+	Unknown    fields.Finding `json:"unknown"`
 	Asset      Asset
 }
 
 func NewArtifact() *Artifact {
 	return &Artifact{
-		Critical:   fields.CVE{Severity: "Critical"},
-		High:       fields.CVE{Severity: "High"},
-		Medium:     fields.CVE{Severity: "Medium"},
-		Low:        fields.CVE{Severity: "Low"},
-		Negligible: fields.CVE{Severity: "Negligible"},
-		Unknown:    fields.CVE{Severity: "Unknown"},
+		Critical:   fields.Finding{Severity: "Critical"},
+		High:       fields.Finding{Severity: "High"},
+		Medium:     fields.Finding{Severity: "Medium"},
+		Low:        fields.Finding{Severity: "Low"},
+		Negligible: fields.Finding{Severity: "Negligible"},
+		Unknown:    fields.Finding{Severity: "Unknown"},
 	}
 }
 
