@@ -22,7 +22,7 @@ func TestArtifact_WithConfig(t *testing.T) {
 	}
 }
 
-func TestArtifact_WithReport(t *testing.T) {
+func TestArtifact_WithScanReport(t *testing.T) {
 	report := new(entity.SemgrepScanReport)
 
 	// Slimmed down Semgrep Report
@@ -38,7 +38,7 @@ func TestArtifact_WithReport(t *testing.T) {
 	_ = json.NewDecoder(bytes.NewBufferString(reportString)).Decode(report)
 
 	a := NewArtifact().WithConfig(NewConfig(1))
-	a, err := a.WithReport(bytes.NewBufferString(reportString), "test-report")
+	a, err := a.WithScanReport(bytes.NewBufferString(reportString), "test-report")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -48,13 +48,13 @@ func TestArtifact_WithReport(t *testing.T) {
 	}
 
 	t.Run("bad-reader", func(t *testing.T) {
-		if _, err := NewArtifact().WithReport(new(badReader), ""); err == nil {
+		if _, err := NewArtifact().WithScanReport(new(badReader), ""); err == nil {
 			t.Fatal("Expected error for bad reader")
 		}
 	})
 
 	t.Run("bad-decode", func(t *testing.T) {
-		if _, err := NewArtifact().WithReport(bytes.NewBufferString("\\\\"), ""); err == nil {
+		if _, err := NewArtifact().WithScanReport(bytes.NewBufferString("\\\\"), ""); err == nil {
 			t.Fatal("Expected error for bad decode")
 		}
 	})

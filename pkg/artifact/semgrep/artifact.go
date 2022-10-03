@@ -40,8 +40,8 @@ func (a Artifact) WithConfig(config *Config) *Artifact {
 	return &a
 }
 
-// WithReport returns an Artifact with findings from a scan report
-func (a Artifact) WithReport(r io.Reader, reportName string) (*Artifact, error) {
+// WithScanReport returns an Artifact with findings from a scan report
+func (a Artifact) WithScanReport(r io.Reader, reportName string) (*Artifact, error) {
 	// Create a new asset from the scan report
 	asset, err := artifact.NewAsset(reportName, r)
 	if err != nil {
