@@ -1,8 +1,13 @@
 package grype
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
+	"github.com/gatecheckdev/gatecheck/pkg/artifact"
 	"github.com/gatecheckdev/gatecheck/pkg/artifact/fields"
+	"github.com/gatecheckdev/gatecheck/pkg/entity"
+	"io"
 	"strings"
 )
 
@@ -14,6 +19,7 @@ type Artifact struct {
 	Negligible fields.Finding `json:"negligible"`
 	Unknown    fields.Finding `json:"unknown"`
 	Asset      Asset
+	ScanReport *artifact.Asset
 }
 
 func NewArtifact() *Artifact {
@@ -46,7 +52,47 @@ func (a Artifact) WithConfig(config *Config) *Artifact {
 	return &a
 }
 
-// WithAsset returns an Artifact with the set found vulnerabilities
+// WithScanReport returns an Artifact with findings from a scan report. Builder function
+func (a Artifact) WithScanReport(r io.Reader, reportName string) (*Artifact, error) {
+	asset, err := artifact.NewAsset(reportName, r)
+	if err != nil {
+		return nil, err
+	}
+	a.ScanReport = asset
+
+	// Decode the report from asset content
+	report := new(entity.GrypeScanReport)
+
+	if err := json.NewDecoder(bytes.NewBuffer(asset.Content)).Decode(report); err != nil {
+		return nil, err
+	}
+
+	// Create a map of possible vulnerabilities in scan report
+	vulnerabilities := map[string]int{
+		"Critical":   0,
+		"High":       0,
+		"Medium":     0,
+		"Low":        0,
+		"Unknown":    0,
+		"Negligible": 0,
+	}
+
+	// Loop through each match in artifact report
+	for _, match := range report.Matches {
+		vulnerabilities[match.Vulnerability.Severity] += 1
+	}
+
+	a.Critical.Found = vulnerabilities["Critical"]
+	a.High.Found = vulnerabilities["High"]
+	a.Medium.Found = vulnerabilities["Medium"]
+	a.Low.Found = vulnerabilities["Low"]
+	a.Unknown.Found = vulnerabilities["Unknown"]
+	a.Negligible.Found = vulnerabilities["Negligible"]
+
+	return &a, nil
+}
+
+// Deprecated: WithAsset returns an Artifact with the set found vulnerabilities. Use WithScanReport which uses io.Reader
 func (a Artifact) WithAsset(asset *Asset) *Artifact {
 	vulnerabilities := map[string]int{
 		"Critical":   0,

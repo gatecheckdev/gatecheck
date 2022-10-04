@@ -2,14 +2,14 @@ package grype_test
 
 import (
 	"bytes"
-	"encoding/json"
+	"errors"
 	"github.com/gatecheckdev/gatecheck/pkg/artifact/grype"
 	"gopkg.in/yaml.v2"
 	"os"
 	"testing"
 )
 
-func TestStandardArtifact_WithConfig(t *testing.T) {
+func TestArtifact_WithConfig(t *testing.T) {
 	artifact := grype.NewArtifact()
 
 	artifact = artifact.WithConfig(grype.NewConfig(10))
@@ -28,50 +28,36 @@ func TestStandardArtifact_WithConfig(t *testing.T) {
 	t.Log(artifact)
 }
 
-func TestStandardArtifact_WithAsset(t *testing.T) {
-	artifact := grype.NewArtifact()
+func TestArtifact_WithScanReport(t *testing.T) {
 
 	scanFile, err := os.Open(TestGrypeReport)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	scan := new(grype.ScanReport)
-	if err := json.NewDecoder(scanFile).Decode(scan); err != nil {
-		t.Fatal(err)
+	grypeArtifact, err := grype.NewArtifact().WithScanReport(scanFile, "grype-report.json")
+
+	if grypeArtifact.ScanReport.Label != "grype-report.json" {
+		t.Log(grypeArtifact)
+		t.Fatal("Expected Scan Report Label to equal 'grype-report.json'")
 	}
 
-	asset := grype.NewAsset("grype-report.json").WithScan(scan)
-
-	artifact = artifact.WithAsset(asset)
-
-	t.Log(artifact)
-
-	t.Run("Write and Read Artifact", func(t *testing.T) {
-		buf := new(bytes.Buffer)
-		if err := json.NewEncoder(buf).Encode(artifact); err != nil {
-			t.Fatal(err)
+	t.Run("bad-reader", func(t *testing.T) {
+		if _, err := grypeArtifact.WithScanReport(new(badReader), ""); err == nil {
+			t.Fatal("Expected error for bad reader")
 		}
-
-		secondArtifact := new(grype.Artifact)
-		if err := json.NewDecoder(buf).Decode(secondArtifact); err != nil {
-			t.Fatal(err)
-		}
-
-		t.Log(secondArtifact)
 	})
 
-	t.Run("Write and Read Artifact Full", func(t *testing.T) {
-		buf := new(bytes.Buffer)
-		artifact = artifact.WithConfig(grype.NewConfig(50)).WithAsset(asset)
-
-		if err := json.NewEncoder(buf).Encode(artifact); err != nil {
-			t.Fatal(err)
+	t.Run("bad-decode", func(t *testing.T) {
+		if _, err := grypeArtifact.WithScanReport(bytes.NewBufferString("\\\\"), ""); err == nil {
+			t.Fatal("Expected error for bad decode")
 		}
-
-		if err := json.NewDecoder(buf).Decode(artifact); err != nil {
-			t.Fatal(err)
-		}
-		t.Log(artifact)
 	})
+
+}
+
+type badReader struct{}
+
+func (r badReader) Read([]byte) (int, error) {
+	return 0, errors.New("mock error")
 }
