@@ -1,11 +1,9 @@
 package cmd
 
 import (
-	"encoding/json"
-	"fmt"
-	"github.com/gatecheckdev/gatecheck/internal"
 	"github.com/gatecheckdev/gatecheck/pkg/config"
 	"github.com/spf13/cobra"
+	"gopkg.in/yaml.v3"
 )
 
 func NewConfigCmd() *cobra.Command {
@@ -31,7 +29,8 @@ func NewConfigCmd() *cobra.Command {
 				projectName = args[1]
 			}
 
-			targetFile, err := internal.NewFile(args[0], DefaultConfigFile)
+			// Create the file
+			targetFile, err := OpenOrCreateInDirectory(args[0], DefaultConfigFile)
 
 			if err != nil {
 				return err
@@ -40,10 +39,8 @@ func NewConfigCmd() *cobra.Command {
 			// Create a new configuration
 			newConfig := config.NewConfig(projectName)
 
-			// Write the new configuration to file
-			_ = json.NewEncoder(targetFile).Encode(newConfig)
-
-			_, _ = fmt.Fprintln(cmd.OutOrStderr(), "New configuration file crated")
+			// should not error on encoding if the file was opened successfully since using a new config
+			_ = yaml.NewEncoder(targetFile).Encode(newConfig)
 			return nil
 		},
 	}

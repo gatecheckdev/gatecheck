@@ -1,27 +1,23 @@
 package validator_test
 
 import (
-	"github.com/gatecheckdev/gatecheck/internal"
-	"github.com/gatecheckdev/gatecheck/internal/testutil"
 	"github.com/gatecheckdev/gatecheck/pkg/config"
+	"github.com/gatecheckdev/gatecheck/pkg/report"
 	"github.com/gatecheckdev/gatecheck/pkg/validator"
-	"os"
 	"testing"
 )
 
 func TestStdValidator_Validate(t *testing.T) {
-	rf, _ := os.Open("../../test/gatecheck-report.json")
-	reportFilename := testutil.ReportTestCopy(t, rf)
-
-	r, err := internal.ReportFromFile(reportFilename)
-	if err != nil {
-		t.Fatal(err)
-	}
+	r := report.NewReport("Test Report")
+	r.Artifacts.Grype.Critical.Found = 20
+	r.Artifacts.Grype.High.Found = 22
+	r.Artifacts.Grype.Medium.Found = 113
 
 	t.Run("All Vulnerabilities allowed", func(t *testing.T) {
 		// All vulnerabilities should be allowed
 		c := config.NewConfig("Test Project")
-		r.WithConfig(c)
+
+		r = r.WithConfig(c)
 		if err := validator.NewStdValidator(*r).Validate(); err != nil {
 			t.Fatal(err)
 		}

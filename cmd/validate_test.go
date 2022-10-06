@@ -3,15 +3,17 @@ package cmd
 import (
 	"bytes"
 	"errors"
-	"github.com/gatecheckdev/gatecheck/internal"
-	"github.com/gatecheckdev/gatecheck/internal/testutil"
+	"github.com/gatecheckdev/gatecheck/pkg/artifact/grype"
 	"github.com/gatecheckdev/gatecheck/pkg/config"
 	"github.com/gatecheckdev/gatecheck/pkg/exporter/defectDojo"
-	"gopkg.in/yaml.v3"
+	"io"
 	"os"
 	"path"
 	"testing"
 )
+
+const TestConfigFilename = "../test/gatecheck.yaml"
+const TestReportFilename = "../test/gatecheck-report.json"
 
 func TestValidateCmd(t *testing.T) {
 	actual := new(bytes.Buffer)
@@ -19,105 +21,131 @@ func TestValidateCmd(t *testing.T) {
 	command.SetOut(actual)
 	command.SetErr(actual)
 
-	t.Run("bad config", func(t *testing.T) {
+	t.Run("config-not-exists", func(t *testing.T) {
 		command.SetArgs([]string{"validate"})
-		err := command.Execute()
-		if errors.Is(err, internal.ErrorFileNotExists) != true {
+		if err := command.Execute(); errors.Is(err, ErrorFileNotExists) != true {
 			t.Error(err)
 			t.Fatal("Expected file not exists error")
 		}
 	})
 
-	t.Run("fail validation", func(t *testing.T) {
-		cf, _ := os.Open("../test/gatecheck.yaml")
-		rf, _ := os.Open("../test/gatecheck-report.json")
-		tempConfigFilename := testutil.ConfigTestCopy(t, cf)
-		tempReportFilename := testutil.ReportTestCopy(t, rf)
+	t.Run("fail-validation", func(t *testing.T) {
 
-		command.SetArgs([]string{"validate", "-c", tempConfigFilename, "-r", tempReportFilename})
+		command.SetArgs([]string{"validate", "-c", CopyToTemp(t, TestConfigFilename),
+			"-r", CopyToTemp(t, TestReportFilename)})
 
-		err := command.Execute()
-
-		if errors.Is(err, internal.ErrorValidation) != true {
-			t.Error(err)
-			t.Fatal("expected validation error")
+		if err := command.Execute(); errors.Is(err, ErrorValidation) != true {
+			t.Fatalf("Expected validation error, got %v", err)
 		}
+
 	})
+
 	t.Run("audit", func(t *testing.T) {
-		cf, _ := os.Open("../test/gatecheck.yaml")
-		rf, _ := os.Open("../test/gatecheck-report.json")
-		tempConfigFilename := testutil.ConfigTestCopy(t, cf)
-		tempReportFilename := testutil.ReportTestCopy(t, rf)
 
-		command.SetArgs([]string{"validate", "-c", tempConfigFilename, "-r", tempReportFilename, "-a"})
+		command.SetArgs([]string{"validate", "-c", CopyToTemp(t, TestConfigFilename),
+			"-r", CopyToTemp(t, TestReportFilename), "-a"})
 
-		err := command.Execute()
-
-		if err != nil {
-			t.Fatal(err)
-		}
-	})
-
-	t.Run("bad report", func(t *testing.T) {
-		cf, _ := os.Open("../test/gatecheck.yaml")
-		rf, _ := os.Open("../test/gatecheck-report.json")
-		tempConfigFilename := testutil.ConfigTestCopy(t, cf)
-		tempReportFilename := testutil.ReportTestCopy(t, rf)
-
-		c := config.NewConfig("Test Project")
-		f, err := os.Create(tempConfigFilename)
-		if err != nil {
-			t.Fatal(err)
-		}
-		if err := yaml.NewEncoder(f).Encode(c); err != nil {
-			t.Fatal(err)
-		}
-
-		_ = f.Close()
-
-		command.SetArgs([]string{"validate", "-c", tempConfigFilename, "-r", tempReportFilename})
-
-		if err = command.Execute(); err != nil {
+		if err := command.Execute(); err != nil {
 			t.Fatal(err)
 		}
 
 	})
-	t.Run("File access error", func(t *testing.T) {
-		cf, _ := os.Open("../test/gatecheck.yaml")
-		tempConfigFilename := testutil.ConfigTestCopy(t, cf)
 
-		command.SetArgs([]string{"validate", "-c", tempConfigFilename, "-r", "\000x"})
-
-		err := command.Execute()
-
-		if errors.Is(err, internal.ErrorFileAccess) != true {
-			t.Error(err)
-			t.Fatal("expected file access error")
-		}
-	})
-
-	t.Run("Successful Validation", func(t *testing.T) {
+	t.Run("validation", func(t *testing.T) {
 		c := config.NewConfig("Test Project")
 		tempConfigFilename := path.Join(os.TempDir(), "gatecheck.yaml")
-		f, err := os.Create(tempConfigFilename)
-		if err != nil {
+
+		if err := OpenAndEncode(tempConfigFilename, YAML, c); err != nil {
 			t.Fatal(err)
 		}
 
-		if err := yaml.NewEncoder(f).Encode(c); err != nil {
+		command.SetArgs([]string{"validate", "-c", tempConfigFilename, "-r", CopyToTemp(t, TestReportFilename)})
+
+		if err := command.Execute(); err != nil {
 			t.Fatal(err)
 		}
-		_ = f.Close()
-
-		rf, _ := os.Open("../test/gatecheck-report.json")
-		tempReportFilename := testutil.ReportTestCopy(t, rf)
-
-		command.SetArgs([]string{"validate", "-c", tempConfigFilename, "-r", tempReportFilename})
-
-		if err = command.Execute(); err != nil {
-			t.Fatal(err)
-		}
-
 	})
 
+	t.Run("report-file-access", func(t *testing.T) {
+		command.SetArgs([]string{"validate", "-c", CopyToTemp(t, TestConfigFilename),
+			"-r", CreateMockFile(t, NoPermissions)})
+		
+		if err := command.Execute(); errors.Is(err, ErrorFileAccess) != true {
+			t.Fatalf("Expected file access error, got %v", err)
+		}
+	})
+
+}
+
+// Mock Functions
+
+func ConfigFile(t *testing.T) string {
+	c := config.NewConfig("test project")
+	c.Grype = *grype.NewConfig(10)
+	c.Grype.Low = 100
+	c.Grype.Negligible = -1
+	c.Grype.Unknown = -1
+	fPath := path.Join(t.TempDir(), "gatecheck-custom.yaml")
+	if err := OpenAndEncode(fPath, YAML, c); err != nil {
+		t.Fatal(err)
+	}
+	return fPath
+}
+
+func CopyToTemp(t *testing.T, src string) string {
+
+	srcFile, err := os.Open(src)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	fPath := path.Join(t.TempDir(), path.Base(srcFile.Name()))
+	destFile, err := os.Create(fPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := io.Copy(destFile, srcFile); err != nil {
+		t.Fatal(err)
+	}
+	return fPath
+}
+
+func GrypeTestCopy(t *testing.T, grypeFile io.ReadCloser) string {
+	// Create a temp copy of the grype report
+
+	tempGrypeFilename := path.Join(t.TempDir(), "grype-report.json")
+	tempGrypeFile, _ := os.Create(tempGrypeFilename)
+
+	if _, err := io.Copy(tempGrypeFile, grypeFile); err != nil {
+		t.Fatal(err)
+	}
+	if err := tempGrypeFile.Close(); err != nil {
+		t.Fatal(err)
+	}
+	if err := grypeFile.Close(); err != nil {
+		t.Fatal(err)
+	}
+
+	return tempGrypeFilename
+
+}
+
+func ReportTestCopy(t *testing.T, reportFile io.ReadCloser) string {
+	// Create a temp copy of the grype report
+
+	tempReportFilename := path.Join(t.TempDir(), "gatecheck-report.json")
+	tempReportFile, _ := os.Create(tempReportFilename)
+
+	if _, err := io.Copy(tempReportFile, reportFile); err != nil {
+		t.Fatal(err)
+	}
+	if err := tempReportFile.Close(); err != nil {
+		t.Fatal(err)
+	}
+	if err := reportFile.Close(); err != nil {
+		t.Fatal(err)
+	}
+
+	return tempReportFilename
 }

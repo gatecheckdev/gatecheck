@@ -1,8 +1,8 @@
 package cmd
 
 import (
-	"github.com/gatecheckdev/gatecheck/internal"
 	"github.com/gatecheckdev/gatecheck/pkg/config"
+	"github.com/gatecheckdev/gatecheck/pkg/report"
 	"github.com/gatecheckdev/gatecheck/pkg/validator"
 	"github.com/spf13/cobra"
 )
@@ -20,13 +20,13 @@ func NewValidateCmd(configFile *string, reportFile *string) *cobra.Command {
 			var err error
 
 			if flagIgnoreConfig == false {
-				GateCheckConfig, err = internal.ConfigFromFile(*configFile)
+				GateCheckConfig, err = OpenAndDecode[config.Config](*configFile, YAML)
 				if err != nil {
 					return err
 				}
 			}
 
-			GateCheckReport, err := internal.ReportFromFile(*reportFile)
+			GateCheckReport, err := OpenAndDecode[report.Report](*reportFile, JSON)
 			if err != nil {
 				return err
 			}
@@ -40,7 +40,7 @@ func NewValidateCmd(configFile *string, reportFile *string) *cobra.Command {
 				if flagAudit == true {
 					return nil
 				}
-				return internal.ErrorValidation
+				return ErrorValidation
 			}
 
 			return nil

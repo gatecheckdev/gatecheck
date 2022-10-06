@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Use json and yaml decoders and encoders instead of wrapping with the reader, writer pattern
 - Unit tests
 - fields/CVE to finding for use in other modules
+- Deprecated 'WithAsset' on Grype
+- Added 'WithScanReport' to Artifacts
+- Refactored the cmd to use the new IO functions
+- Refactor unit tests in cmd package to be more uniform
+- Removed test utility and internal packages in favor of IO functions
 
 ### Added
 - JSON struct tags to config for additional support
@@ -16,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Semgrep Artifact
 - Semgrep Entity
 - Generic Asset wrapper for files
+- cmd package now has a IO file to consolidate common operations
 
 ## [0.0.4]
 ### Fixed

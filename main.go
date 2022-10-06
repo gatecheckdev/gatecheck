@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/gatecheckdev/gatecheck/cmd"
-	"github.com/gatecheckdev/gatecheck/internal"
 	"github.com/gatecheckdev/gatecheck/pkg/exporter/defectDojo"
 	"os"
 	"time"
@@ -30,14 +29,14 @@ func main() {
 	command := cmd.NewRootCmd(e)
 	err := command.Execute()
 
-	if errors.Is(err, internal.ErrorFileAccess) {
+	if errors.Is(err, cmd.ErrorFileAccess) {
 		fmt.Println(err)
 		os.Exit(ExitFileAccessFail)
 	}
-	if errors.Is(err, internal.ErrorFileExists) {
+	if errors.Is(err, cmd.ErrorFileExists) {
 		os.Exit(ExitFileAccessFail)
 	}
-	if errors.Is(err, internal.ErrorValidation) {
+	if errors.Is(err, cmd.ErrorValidation) {
 		os.Exit(ExitValidationFail)
 	}
 

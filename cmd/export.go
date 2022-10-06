@@ -1,10 +1,8 @@
 package cmd
 
 import (
-	"fmt"
 	"github.com/gatecheckdev/gatecheck/pkg/exporter"
 	"github.com/spf13/cobra"
-	"os"
 )
 
 func NewExportCmd(e exporter.Exporter) *cobra.Command {
@@ -25,9 +23,9 @@ func NewExportCmd(e exporter.Exporter) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 
 			// Open the file
-			f, err := os.Open(args[0])
+			f, err := Open(args[0])
 			if err != nil {
-				return fmt.Errorf("Could not open grype report '%s': %w\n", args[0], err)
+				return err
 			}
 
 			return e.ExportGrype(f)

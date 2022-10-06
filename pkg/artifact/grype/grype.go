@@ -18,7 +18,6 @@ type Artifact struct {
 	Low        fields.Finding `json:"low"`
 	Negligible fields.Finding `json:"negligible"`
 	Unknown    fields.Finding `json:"unknown"`
-	Asset      Asset
 	ScanReport *artifact.Asset
 }
 
@@ -92,38 +91,11 @@ func (a Artifact) WithScanReport(r io.Reader, reportName string) (*Artifact, err
 	return &a, nil
 }
 
-// Deprecated: WithAsset returns an Artifact with the set found vulnerabilities. Use WithScanReport which uses io.Reader
-func (a Artifact) WithAsset(asset *Asset) *Artifact {
-	vulnerabilities := map[string]int{
-		"Critical":   0,
-		"High":       0,
-		"Medium":     0,
-		"Low":        0,
-		"Unknown":    0,
-		"Negligible": 0,
-	}
-
-	// Loop through each match in artifact report
-	for _, match := range asset.scan.Matches {
-		vulnerabilities[match.Vulnerability.Severity] += 1
-	}
-
-	a.Critical.Found = vulnerabilities["Critical"]
-	a.High.Found = vulnerabilities["High"]
-	a.Medium.Found = vulnerabilities["Medium"]
-	a.Low.Found = vulnerabilities["Low"]
-	a.Unknown.Found = vulnerabilities["Unknown"]
-	a.Negligible.Found = vulnerabilities["Negligible"]
-
-	a.Asset = *asset
-	return &a
-}
-
 // String human-readable formatted table
 func (a Artifact) String() string {
 	var out strings.Builder
 	out.WriteString("Grype Image Scan Report\n")
-	out.WriteString(fmt.Sprintf("Scan Asset: %s\n", a.Asset.Label))
+	out.WriteString(fmt.Sprintf("Scan Asset: %s\n", a.ScanReport.Label))
 	out.WriteString(fmt.Sprintf("%-10s | %-7s | %-7s | %-5s\n", "Severity", "Found", "Allowed", "Pass"))
 	out.WriteString(strings.Repeat("-", 38) + "\n")
 	out.WriteString(a.Critical.String())

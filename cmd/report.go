@@ -1,10 +1,12 @@
 package cmd
 
 import (
-	"github.com/gatecheckdev/gatecheck/internal"
+	"fmt"
 	"github.com/gatecheckdev/gatecheck/pkg/artifact/grype"
+	"github.com/gatecheckdev/gatecheck/pkg/config"
 	"github.com/gatecheckdev/gatecheck/pkg/report"
 	"github.com/spf13/cobra"
+	"path"
 )
 
 func NewReportCmd(configFile *string, reportFile *string) *cobra.Command {
@@ -23,22 +25,29 @@ func NewReportCmd(configFile *string, reportFile *string) *cobra.Command {
 		Short: "the configuration thresholds and other values on the report.",
 		Long:  "Use any combination of flags --config, --url, --id, --name to edit the report",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			GateCheckConfig, GateCheckReport, err := internal.ConfigAndReportFrom(*configFile, *reportFile)
 
+			// Open the config file, expecting an error if the file doesn't exist
+			gatecheckConfig, err := OpenAndDecode[config.Config](*configFile, YAML)
 			if err != nil {
 				return err
 			}
 
-			GateCheckReport = GateCheckReport.WithConfig(GateCheckConfig)
-			GateCheckReport = GateCheckReport.WithSettings(report.Settings{
+			gatecheckReport, err := OpenAndDecodeOrCreate[report.Report](*reportFile, JSON)
+			if err != nil {
+				return err
+			}
+
+			gatecheckReport = gatecheckReport.WithConfig(gatecheckConfig)
+
+			gatecheckReport = gatecheckReport.WithSettings(report.Settings{
 				ProjectName: flagProjectName,
 				PipelineId:  flagPipelineID,
 				PipelineUrl: flagPipelineURL,
 			})
 
-			cmd.Println(GateCheckReport)
+			cmd.Println(gatecheckReport)
 
-			return internal.ReportToFile(*reportFile, GateCheckReport)
+			return OpenAndEncode(*reportFile, JSON, gatecheckReport)
 		},
 	}
 
@@ -47,11 +56,12 @@ func NewReportCmd(configFile *string, reportFile *string) *cobra.Command {
 		Short: "Print the Gate Check Report",
 		RunE: func(cmd *cobra.Command, args []string) error {
 
-			_, GateCheckReport, err := internal.ConfigAndReportFrom(*configFile, *reportFile)
+			gatecheckReport, err := OpenAndDecodeOrCreate[report.Report](*reportFile, JSON)
 			if err != nil {
 				return err
 			}
-			cmd.Println(GateCheckReport)
+
+			cmd.Println(gatecheckReport)
 			return nil
 		},
 	}
@@ -67,21 +77,34 @@ func NewReportCmd(configFile *string, reportFile *string) *cobra.Command {
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 
-			_, GateCheckReport, err := internal.ConfigAndReportFrom(*configFile, *reportFile)
+			// Decode the files into objects
+			gatecheckConfig, err := OpenAndDecode[config.Config](*configFile, YAML)
 			if err != nil {
 				return err
 			}
-			scan, err := internal.GrypeScanFromFile(args[0])
+
+			gatecheckReport, err := OpenAndDecodeOrCreate[report.Report](*reportFile, JSON)
 			if err != nil {
 				return err
 			}
+
+			grypeScanFile, err := Open(args[0])
+			if err != nil {
+				return err
+			}
+
+			// Create a grype artifact with the scan report
+			grypeArtifact, err := grype.NewArtifact().WithScanReport(grypeScanFile, path.Base(args[0]))
+			if err != nil {
+				return fmt.Errorf("%w : %v", ErrorDecode, err)
+			}
+			grypeArtifact = grypeArtifact.WithConfig(&gatecheckConfig.Grype)
 
 			// Create an Asset from the Grype Scan and add it to the report
-			asset := grype.NewAsset(args[0]).WithScan(scan)
-			GateCheckReport.Artifacts.Grype = *GateCheckReport.Artifacts.Grype.WithAsset(asset)
+			gatecheckReport.Artifacts.Grype = *grypeArtifact
 
 			// Write report to file
-			return internal.ReportToFile(*reportFile, GateCheckReport)
+			return OpenAndEncode(*reportFile, JSON, gatecheckReport)
 		},
 	}
 

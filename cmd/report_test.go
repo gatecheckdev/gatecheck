@@ -3,21 +3,17 @@ package cmd
 import (
 	"bytes"
 	"errors"
-	"github.com/gatecheckdev/gatecheck/internal"
-	"github.com/gatecheckdev/gatecheck/internal/testutil"
+	"github.com/gatecheckdev/gatecheck/pkg/config"
 	"github.com/gatecheckdev/gatecheck/pkg/exporter/defectDojo"
-	"os"
+	"github.com/gatecheckdev/gatecheck/pkg/report"
 	"path"
 	"strings"
 	"testing"
 )
 
-func TestAddGrypeCmd(t *testing.T) {
-	cf, _ := os.Open("../test/gatecheck.yaml")
-	gf, _ := os.Open("../test/grype-report.json")
-	tempConfigFilename := testutil.ConfigTestCopy(t, cf)
-	tempGrypeFilename := testutil.GrypeTestCopy(t, gf)
+const TestGrypeFilename = "../test/grype-report.json"
 
+func TestAddGrypeCmd(t *testing.T) {
 	// Set up output captureA
 	actual := new(bytes.Buffer)
 	command := NewRootCmd(defectDojo.Exporter{})
@@ -25,152 +21,175 @@ func TestAddGrypeCmd(t *testing.T) {
 	command.SetErr(actual)
 
 	t.Run("bad config", func(t *testing.T) {
-		command.SetArgs([]string{"report", "add", "grype", tempGrypeFilename})
+		command.SetArgs([]string{"report", "add", "grype", CopyToTemp(t, TestGrypeFilename)})
 
-		if err := command.Execute(); errors.Is(err, internal.ErrorFileNotExists) != true {
+		if err := command.Execute(); errors.Is(err, ErrorFileNotExists) != true {
 			t.Fatal(err)
 		}
 	})
 
 	t.Run("bad report", func(t *testing.T) {
-		tempReportFilename := path.Join(t.TempDir(), "bad-report.json")
-		f, _ := os.Create(tempReportFilename)
-		_, _ = f.WriteString("{BAD JSON")
-		_ = f.Close()
+		command.SetArgs([]string{"report", "add", "grype", "--config", CreateMockFile(t, BadDecode),
+			"--report", CopyToTemp(t, TestReportFilename), CopyToTemp(t, TestGrypeFilename)})
 
-		command.SetArgs([]string{"report", "add", "grype", "--config", tempConfigFilename,
-			"--report", tempReportFilename, tempGrypeFilename})
-
-		if err := command.Execute(); errors.Is(err, internal.ErrorDecode) != true {
-			t.Error(err)
-			t.Fatal("expected decode error")
+		if err := command.Execute(); errors.Is(err, ErrorDecode) != true {
+			t.Fatal(err)
 		}
 	})
 
-	t.Run("bad Scan", func(t *testing.T) {
-		tempReport := path.Join(t.TempDir(), "gatecheck-report.json")
-		tempBadScanFilename := path.Join(t.TempDir(), "bad-scan.json")
+	t.Run("bad-scan", func(t *testing.T) {
+		command.SetArgs([]string{"report", "add", "grype", "--config", CopyToTemp(t, TestConfigFilename),
+			"--report", CopyToTemp(t, TestReportFilename), CreateMockFile(t, BadDecode)})
 
-		f, _ := os.Open(tempBadScanFilename)
-		_, _ = f.WriteString("{BAD SCAN")
-		_ = f.Close()
+		if err := command.Execute(); errors.Is(err, ErrorDecode) != true {
+			t.Fatal(err)
+		}
+	})
 
-		command.SetArgs([]string{"report", "add", "grype", "--config", tempConfigFilename,
-			"--report", tempReport, tempBadScanFilename})
+	t.Run("report-file-access", func(t *testing.T) {
+		command.SetArgs([]string{"report", "add", "grype", "--config", CopyToTemp(t, TestConfigFilename),
+			"--report", CreateMockFile(t, NoPermissions), CreateMockFile(t, NoPermissions)})
 
-		if err := command.Execute(); errors.Is(err, internal.ErrorDecode) {
+		if err := command.Execute(); errors.Is(err, ErrorFileAccess) != true {
+			t.Fatal(err)
+		}
+	})
+
+	t.Run("file-access", func(t *testing.T) {
+		command.SetArgs([]string{"report", "add", "grype", "--config", CopyToTemp(t, TestConfigFilename),
+			"--report", CopyToTemp(t, TestReportFilename), CreateMockFile(t, NoPermissions)})
+
+		if err := command.Execute(); errors.Is(err, ErrorFileAccess) != true {
 			t.Fatal(err)
 		}
 	})
 
 	t.Run("success", func(t *testing.T) {
-		secondReportFilename := path.Join(t.TempDir(), "gatecheck-report.json")
+		newReportFilename := path.Join(t.TempDir(), "gatecheck-report.json")
 
-		command.SetArgs([]string{"report", "add", "grype", "--config", tempConfigFilename,
-			"--report", secondReportFilename, tempGrypeFilename})
+		command.SetArgs([]string{"report", "add", "grype", "--config", CopyToTemp(t, TestConfigFilename),
+			"--report", newReportFilename, CopyToTemp(t, TestGrypeFilename)})
 
 		if err := command.Execute(); err != nil {
 			t.Fatal(err)
+		}
+
+		// Check if the created file can be decoded
+		gatecheckReport, err := OpenAndDecode[report.Report](newReportFilename, JSON)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if len(gatecheckReport.Artifacts.Grype.ScanReport.Digest) == 0 {
+			t.Fatal("Scan Report Digest is blank")
 		}
 	})
 }
 
 func TestUpdateCmd(t *testing.T) {
-
-	tempReportFilename := path.Join(t.TempDir(), "gatecheck-report.json")
-	cf, _ := os.Open("../test/gatecheck.yaml")
-	tempConfigFilename := testutil.ConfigTestCopy(t, cf)
-	_ = cf.Close()
-
 	// Set up output capture
 	actual := new(bytes.Buffer)
 	command := NewRootCmd(defectDojo.Exporter{})
 	command.SetOut(actual)
 	command.SetErr(actual)
 
-	t.Run("success", func(t *testing.T) {
-		command.SetArgs([]string{"report", "update", "--config", tempConfigFilename,
-			"--report", tempReportFilename})
+	configFilename := CopyToTemp(t, TestConfigFilename)
+	reportFilename := CopyToTemp(t, TestReportFilename)
+	// Change the Critical Threshold
+	c, err := OpenAndDecode[config.Config](configFilename, YAML)
+	if err != nil {
+		t.Fatal(err)
+	}
+	c.Grype.Critical = 112
+	if err := OpenAndEncode(configFilename, YAML, c); err != nil {
+		t.Fatal(err)
+	}
+	t.Log(configFilename)
+	command.SetArgs([]string{"report", "update", "--config", configFilename, "--report", reportFilename})
+
+	if err := command.Execute(); err != nil {
+		t.Fatal(err)
+	}
+
+	// Check if the report was indeed update
+	r, err := OpenAndDecode[report.Report](reportFilename, JSON)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if r.Artifacts.Grype.Critical.Allowed != 112 {
+		t.Logf("%+v", r)
+		t.Fatal("Report was not updated as expected")
+	}
+
+	t.Run("config-file-access", func(t *testing.T) {
+		command.SetArgs([]string{"report", "update", "--config", "nofile.yaml"})
+
+		if err := command.Execute(); errors.Is(err, ErrorFileNotExists) != true {
+			t.Fatalf("Expected file not exists error, got %v", err)
+		}
+	})
+
+	t.Run("report-file-access", func(t *testing.T) {
+
+		command.SetArgs([]string{"report", "update", "--config", CopyToTemp(t, TestConfigFilename),
+			"--report", CreateMockFile(t, NoPermissions)})
+
+		if err := command.Execute(); errors.Is(err, ErrorFileAccess) != true {
+			t.Fatalf("Expected File Access error, got %v", err)
+		}
+	})
+
+	t.Run("config-file-encoding", func(t *testing.T) {
+
+		command.SetArgs([]string{"report", "update", "--config", CreateMockFile(t, BadDecode),
+			"--report", CopyToTemp(t, TestReportFilename)})
+
+		if err := command.Execute(); errors.Is(err, ErrorDecode) != true {
+			t.Fatalf("Expected Decode error, got %v", err)
+		}
+	})
+
+	t.Run("Update flags", func(t *testing.T) {
+		reportFilename := CopyToTemp(t, TestReportFilename)
+		command.SetArgs([]string{"report", "update", "--config", CopyToTemp(t, TestConfigFilename),
+			"--report", reportFilename, "--url", "test.com/pipeline"})
 
 		if err := command.Execute(); err != nil {
 			t.Fatal(err)
 		}
-		reportBytes, err := os.ReadFile(tempReportFilename)
+
+		r, err := OpenAndDecode[report.Report](reportFilename, JSON)
 		if err != nil {
 			t.Fatal(err)
 		}
-		t.Log(string(reportBytes))
-	})
 
-	t.Run("Bad config", func(t *testing.T) {
-		command.SetArgs([]string{"report", "update", "--config", "nofile.yaml"})
-
-		err := command.Execute()
-		if errors.Is(err, internal.ErrorFileNotExists) != true {
-			t.Error(err)
-			t.Fatal("expected file not exists error")
-		}
-	})
-	t.Run("Update flags", func(t *testing.T) {
-		command.SetArgs([]string{"report", "update", "--config", tempConfigFilename, "--report", tempReportFilename,
-			"--url", "test.com/pipeline"})
-
-		err := command.Execute()
-		if err != nil {
-			t.Fatal(err)
-		}
-		r, err := internal.ReportFromFile(tempReportFilename)
-		if err != nil {
-			t.Fatal(err)
-		}
 		if strings.Compare(r.PipelineUrl, "test.com/pipeline") != 0 {
 			t.Logf("COMMAND OUTPUT: %s\n", actual)
 			t.Log(r)
 			t.Fatal("Pipeline url not updated")
 		}
-
 	})
 }
 
 func TestPrintCmd(t *testing.T) {
-	f, err := os.Open("../test/gatecheck-report.json")
-	if err != nil {
-		t.Fatal(err)
-	}
-	cf, err := os.Open("../test/gatecheck.yaml")
-	if err != nil {
-		t.Fatal(err)
-	}
-	tempReportFilename := testutil.ReportTestCopy(t, f)
-	tempConfigFilename := testutil.ConfigTestCopy(t, cf)
-
 	// Set up output capture
 	actual := new(bytes.Buffer)
 	command := NewRootCmd(defectDojo.Exporter{})
 	command.SetOut(actual)
 	command.SetErr(actual)
 
-	command.SetArgs([]string{"report", "print", "--config", tempConfigFilename, "--report", tempReportFilename})
+	command.SetArgs([]string{"report", "print", "--config", CopyToTemp(t, TestConfigFilename),
+		"--report", CopyToTemp(t, TestReportFilename)})
 	if err := command.Execute(); err != nil {
 		t.Fatal(err)
 	}
 	t.Log(actual.String())
 
-	t.Run("bad config", func(t *testing.T) {
-		command.SetArgs([]string{"report", "print", "--config", "somefile.yaml"})
+	t.Run("bad-report", func(t *testing.T) {
+		command.SetArgs([]string{"report", "print", "--config", CopyToTemp(t, TestConfigFilename),
+			"--report", CreateMockFile(t, NoPermissions)})
 
-		if err := command.Execute(); errors.Is(err, internal.ErrorFileNotExists) != true {
-			t.Fatal(err)
-		}
-	})
-	t.Run("bad report", func(t *testing.T) {
-		tempReportFilename := path.Join(t.TempDir(), "bad-report.json")
-		f, _ := os.Create(tempReportFilename)
-		_, _ = f.WriteString("{BAD JSON")
-		_ = f.Close()
-		command.SetArgs([]string{"report", "print", "--config", tempConfigFilename, "--report", tempReportFilename})
-
-		if err := command.Execute(); errors.Is(err, internal.ErrorDecode) != true {
+		if err := command.Execute(); errors.Is(err, ErrorFileAccess) != true {
 			t.Fatal(err)
 		}
 	})

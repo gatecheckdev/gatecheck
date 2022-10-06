@@ -17,40 +17,35 @@ func TestWriteAndReadReport(t *testing.T) {
 	buf := new(bytes.Buffer)
 	rep := report.NewReport("Test Gatecheck Report")
 
-	if err := json.NewEncoder(buf).Encode(rep); err != nil {
-		t.Fatal(err)
-	}
+	t.Run("encoding", func(t *testing.T) {
+		if err := json.NewEncoder(buf).Encode(rep); err != nil {
+			t.Fatal(err)
+		}
+		rep2 := new(report.Report)
+		err := json.NewDecoder(buf).Decode(rep2)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if rep2.ProjectName != "Test Gatecheck Report" {
+			t.Logf("Encoded Report: %+v\n Decoded Report: %+v\n", rep, rep2)
+			t.Fatal("Encoding failed")
+		}
+	})
 
-	rep2 := new(report.Report)
-	err := json.NewDecoder(buf).Decode(rep2)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if rep2.ProjectName != "Test Gatecheck Report" {
-		t.Fatal("Something went wrong")
-	}
-
-	t.Run("With Scan", func(t *testing.T) {
+	t.Run("with-grype-scan", func(t *testing.T) {
 		scanFile, err := os.Open(TestGrypeReport)
 		if err != nil {
 			t.Fatal(err)
 		}
-		scan := new(grype.ScanReport)
-		if err := json.NewDecoder(scanFile).Decode(scan); err != nil {
-			t.Fatal(err)
-		}
 
-		grypeAsset := grype.NewAsset("grype-report.json").WithScan(scan)
-
-		rep.Artifacts.Grype = *grype.NewArtifact().
-			WithConfig(grype.NewConfig(-1)).
-			WithAsset(grypeAsset)
+		art := grype.NewArtifact().WithConfig(grype.NewConfig(-1))
+		art, err = art.WithScanReport(scanFile, "grype-report.json")
+		rep.Artifacts.Grype = *art
 
 		t.Log(rep)
 	})
 
-	t.Run("With Config", func(t *testing.T) {
+	t.Run("with-config", func(t *testing.T) {
 		tempConfig := config.NewConfig("Test Project")
 		tempConfig.Grype.Low = 100
 		tempConfig.ProjectName = "Some project name"

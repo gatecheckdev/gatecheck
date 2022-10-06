@@ -9,7 +9,7 @@ import (
 type Asset struct {
 	Label   string `json:"label"`
 	Digest  []byte `json:"scanReportDigest"`
-	Content []byte `json:"content"`
+	Content []byte `json:"-"`
 }
 
 func NewAsset(label string, r io.Reader) (*Asset, error) {
