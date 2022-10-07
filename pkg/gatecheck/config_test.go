@@ -15,6 +15,10 @@ grype:
   low: 4
   negligible: 5
   unknown: 6
+semgrep:
+	error: 1
+	warning: 2
+	info: 3
 `
 
 func TestNewConfig(t *testing.T) {
@@ -25,6 +29,10 @@ func TestNewConfig(t *testing.T) {
 	c.Grype.Low = 4
 	c.Grype.Negligible = 5
 	c.Grype.Unknown = 6
+
+	c.Semgrep.Error = 1
+	c.Semgrep.Warning = 2
+	c.Semgrep.Info = 3
 
 	buf := new(bytes.Buffer)
 	if err := yaml.NewEncoder(buf).Encode(c); err != nil {
