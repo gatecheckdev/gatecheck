@@ -2,8 +2,9 @@ package cmd
 
 import (
 	"bytes"
+	"errors"
 	"github.com/gatecheckdev/gatecheck/pkg/exporter/defectDojo"
-	"io"
+	"github.com/gatecheckdev/gatecheck/pkg/gatecheck"
 	"os"
 	"path"
 	"testing"
@@ -17,26 +18,14 @@ func Test_ConfigInitCmd(t *testing.T) {
 	command.SetOut(actual)
 	command.SetErr(actual)
 
-	t.Run("bad filename", func(t *testing.T) {
-		tempDir := "\000x"
-		command.SetArgs([]string{"config", "init", tempDir})
-		err := command.Execute()
-		if err == nil {
-			t.Fatal("Expected file access error")
+	t.Run("file-access", func(t *testing.T) {
+		command.SetArgs([]string{"config", "init", CreateMockFile(t, NoPermissions)})
+		if err := command.Execute(); errors.Is(err, ErrorFileAccess) != true {
+			t.Fatalf("Expected File Access error, %v", err)
 		}
-	})
-
-	t.Run("bad permissions", func(t *testing.T) {
-		tempDir := t.TempDir()
-		if err := os.Chmod(tempDir, 0000); err != nil {
-			t.Fatal(err)
-		}
-
-		command.SetArgs([]string{"config", "init", tempDir})
-		err := command.Execute()
-
-		if err == nil {
-			t.Fatal("Expected file access error")
+		command.SetArgs([]string{"config", "init", CreateMockFile(t, BadDescriptor)})
+		if err := command.Execute(); errors.Is(err, ErrorFileAccess) != true {
+			t.Fatalf("Expected File Access error, %v", err)
 		}
 	})
 
@@ -61,32 +50,6 @@ func Test_ConfigInitCmd(t *testing.T) {
 		}
 	})
 
-	t.Run("bad file permission", func(t *testing.T) {
-		tempDirPath := t.TempDir()
-		tempDir := path.Join(tempDirPath, "custom.yaml")
-		if err := os.Chmod(tempDirPath, 0000); err != nil {
-			t.Fatal(err)
-		}
-
-		command.SetArgs([]string{"config", "init", tempDir})
-		err := command.Execute()
-
-		if err == nil {
-			t.Fatal("Expected file access error")
-		}
-	})
-
-	t.Run("file already exists", func(t *testing.T) {
-		tempFile := path.Join(t.TempDir(), "custom.yaml")
-		f, _ := os.Create(tempFile)
-		_, _ = io.Copy(f, bytes.NewBufferString("Sample Content"))
-
-		command.SetArgs([]string{"config", "init", tempFile})
-		if err := command.Execute(); err == nil {
-			t.Fatal("expected error for pre-existing file")
-		}
-	})
-
 	t.Run("file", func(t *testing.T) {
 		tempDir := path.Join(t.TempDir(), "custom-name.yaml")
 		command.SetArgs([]string{"config", "init", tempDir})
@@ -106,20 +69,23 @@ func Test_ConfigInitCmd(t *testing.T) {
 	})
 
 	t.Run("file with project name", func(t *testing.T) {
-		tempDir := path.Join(t.TempDir(), "custom-name.yaml")
-		command.SetArgs([]string{"config", "init", tempDir, "test project name"})
+		fPath := path.Join(t.TempDir(), "custom-name.yaml")
+		command.SetArgs([]string{"config", "init", fPath, "test project name"})
 		err := command.Execute()
 		if err != nil {
 			t.Fatal(err)
 		}
 
-		fileInfo, err := os.Stat(tempDir)
+		_, err = os.Stat(fPath)
 		if err != nil {
 			t.Fatal(err)
 		}
 
-		if fileInfo.Size() < 70 {
-			t.Fatal("File size is unexpectedly small")
+		c, err := OpenAndDecode[gatecheck.Config](fPath, YAML)
+		if c.ProjectName != "test project name" {
+			t.Logf("%+v\n", c)
+			t.Fatal("Expected project name to be 'test project name'")
 		}
+
 	})
 }

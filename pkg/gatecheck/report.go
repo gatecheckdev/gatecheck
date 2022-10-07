@@ -1,13 +1,15 @@
-package report
+package gatecheck
 
 import (
-	"encoding/json"
+	"errors"
+	"fmt"
 	"github.com/gatecheckdev/gatecheck/pkg/artifact/grype"
-	"github.com/gatecheckdev/gatecheck/pkg/config"
-	"io"
+	"github.com/gatecheckdev/gatecheck/pkg/artifact/semgrep"
 	"strings"
 	"time"
 )
+
+var ErrorValidation = errors.New("report failed validation")
 
 type Settings struct {
 	ProjectName string
@@ -21,7 +23,8 @@ type Report struct {
 	PipelineUrl string `json:"pipelineUrl"`
 	Timestamp   string `json:"timestamp"`
 	Artifacts   struct {
-		Grype grype.Artifact `json:"grype"`
+		Grype   grype.Artifact   `json:"grype,omitempty"`
+		Semgrep semgrep.Artifact `json:"semgrep,omitempty"`
 	} `json:"artifacts"`
 }
 
@@ -34,9 +37,10 @@ func NewReport(projectName string) *Report {
 	}
 }
 
-func (r Report) WithConfig(c *config.Config) *Report {
+func (r Report) WithConfig(c *Config) *Report {
 	r.ProjectName = c.ProjectName
 	r.Artifacts.Grype = *r.Artifacts.Grype.WithConfig(&c.Grype)
+	r.Artifacts.Semgrep = *r.Artifacts.Semgrep.WithConfig(&c.Semgrep)
 	return &r
 }
 
@@ -53,6 +57,31 @@ func (r Report) WithSettings(s Settings) *Report {
 	return &r
 }
 
+// Validate calls the validate function for each artifact
+func (r Report) Validate() error {
+	var allErrors []error
+	var errorDescriptions []string
+	for _, artifact := range r.artifacts() {
+		if err := artifact.Validate(); err != nil {
+			allErrors = append(allErrors, err)
+			errorDescriptions = append(errorDescriptions, err.Error())
+		}
+	}
+	if len(allErrors) != 0 {
+		return fmt.Errorf("%w : %s", ErrorValidation,
+			strings.Join(errorDescriptions, "\n"))
+	}
+
+	return nil
+}
+
+func (r Report) artifacts() []Artifact {
+	return []Artifact{
+		r.Artifacts.Grype,
+		r.Artifacts.Semgrep,
+	}
+}
+
 func (r Report) String() string {
 	var out strings.Builder
 	divider := strings.Repeat("-", 25) + "\n"
@@ -60,40 +89,12 @@ func (r Report) String() string {
 	out.WriteString(r.PipelineUrl + "\n")
 	out.WriteString(divider)
 	out.WriteString(r.Artifacts.Grype.String())
+	out.WriteString(divider)
+	out.WriteString(r.Artifacts.Semgrep.String())
 	return out.String()
 }
 
-type Writer struct {
-	writer io.Writer
-}
-
-func NewWriter(w io.Writer) *Writer {
-	return &Writer{writer: w}
-}
-
-func (w *Writer) Write(p []byte) (int, error) {
-	return w.writer.Write(p)
-}
-
-func (w *Writer) WriteReport(r *Report) error {
-
-	return json.NewEncoder(w).Encode(r)
-}
-
-type Reader struct {
-	reader io.Reader
-}
-
-func NewReader(r io.Reader) *Reader {
-	return &Reader{reader: r}
-}
-
-func (r *Reader) Read(p []byte) (int, error) {
-	return r.reader.Read(p)
-}
-
-func (r *Reader) ReadReport() (*Report, error) {
-	report := &Report{}
-	err := json.NewDecoder(r).Decode(report)
-	return report, err
+type Artifact interface {
+	Validate() error
+	fmt.Stringer
 }

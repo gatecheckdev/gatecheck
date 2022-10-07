@@ -5,5 +5,13 @@ import (
 )
 
 type Exporter interface {
-	ExportGrype(reportFile io.Reader) error
+	Export(reportFile io.Reader, scanType ScanType) error
 }
+
+type ScanType string
+
+// Source for Scan Type Values https://demo.defectdojo.org/api/v2/doc/
+const (
+	Grype   ScanType = "Anchore Grype"
+	Semgrep          = "Semgrep JSON Report"
+)

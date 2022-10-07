@@ -1,31 +1,34 @@
 package grype
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/gatecheckdev/gatecheck/pkg/artifact"
 	"github.com/gatecheckdev/gatecheck/pkg/artifact/fields"
+	"github.com/gatecheckdev/gatecheck/pkg/entity"
 	"io"
 	"strings"
 )
 
 type Artifact struct {
-	Critical   fields.CVE `json:"critical"`
-	High       fields.CVE `json:"high"`
-	Medium     fields.CVE `json:"medium"`
-	Low        fields.CVE `json:"low"`
-	Negligible fields.CVE `json:"negligible"`
-	Unknown    fields.CVE `json:"unknown"`
-	Asset      Asset
+	Critical   fields.Finding `json:"critical"`
+	High       fields.Finding `json:"high"`
+	Medium     fields.Finding `json:"medium"`
+	Low        fields.Finding `json:"low"`
+	Negligible fields.Finding `json:"negligible"`
+	Unknown    fields.Finding `json:"unknown"`
+	ScanReport *artifact.Asset
 }
 
 func NewArtifact() *Artifact {
 	return &Artifact{
-		Critical:   fields.CVE{Severity: "Critical"},
-		High:       fields.CVE{Severity: "High"},
-		Medium:     fields.CVE{Severity: "Medium"},
-		Low:        fields.CVE{Severity: "Low"},
-		Negligible: fields.CVE{Severity: "Negligible"},
-		Unknown:    fields.CVE{Severity: "Unknown"},
+		Critical:   fields.Finding{Severity: "Critical"},
+		High:       fields.Finding{Severity: "High"},
+		Medium:     fields.Finding{Severity: "Medium"},
+		Low:        fields.Finding{Severity: "Low"},
+		Negligible: fields.Finding{Severity: "Negligible"},
+		Unknown:    fields.Finding{Severity: "Unknown"},
 	}
 }
 
@@ -48,8 +51,22 @@ func (a Artifact) WithConfig(config *Config) *Artifact {
 	return &a
 }
 
-// WithAsset returns an Artifact with the set found vulnerabilities
-func (a Artifact) WithAsset(asset *Asset) *Artifact {
+// WithScanReport returns an Artifact with findings from a scan report. Builder function
+func (a Artifact) WithScanReport(r io.Reader, reportName string) (*Artifact, error) {
+	asset, err := artifact.NewAsset(reportName, r)
+	if err != nil {
+		return nil, err
+	}
+	a.ScanReport = asset
+
+	// Decode the report from asset content
+	report := new(entity.GrypeScanReport)
+
+	if err := json.NewDecoder(bytes.NewBuffer(asset.Content)).Decode(report); err != nil {
+		return nil, err
+	}
+
+	// Create a map of possible vulnerabilities in scan report
 	vulnerabilities := map[string]int{
 		"Critical":   0,
 		"High":       0,
@@ -60,7 +77,7 @@ func (a Artifact) WithAsset(asset *Asset) *Artifact {
 	}
 
 	// Loop through each match in artifact report
-	for _, match := range asset.scan.Matches {
+	for _, match := range report.Matches {
 		vulnerabilities[match.Vulnerability.Severity] += 1
 	}
 
@@ -71,15 +88,21 @@ func (a Artifact) WithAsset(asset *Asset) *Artifact {
 	a.Unknown.Found = vulnerabilities["Unknown"]
 	a.Negligible.Found = vulnerabilities["Negligible"]
 
-	a.Asset = *asset
-	return &a
+	return &a, nil
+}
+
+func (a Artifact) Validate() error {
+	return fields.ValidateFindings([]fields.Finding{a.Critical, a.High, a.Medium,
+		a.Low, a.Unknown, a.Negligible})
 }
 
 // String human-readable formatted table
 func (a Artifact) String() string {
 	var out strings.Builder
 	out.WriteString("Grype Image Scan Report\n")
-	out.WriteString(fmt.Sprintf("Scan Asset: %s\n", a.Asset.Label))
+	if a.ScanReport != nil {
+		out.WriteString(fmt.Sprintf("Scan Asset: %s\n", a.ScanReport.Label))
+	}
 	out.WriteString(fmt.Sprintf("%-10s | %-7s | %-7s | %-5s\n", "Severity", "Found", "Allowed", "Pass"))
 	out.WriteString(strings.Repeat("-", 38) + "\n")
 	out.WriteString(a.Critical.String())
@@ -90,40 +113,4 @@ func (a Artifact) String() string {
 	out.WriteString(a.Unknown.String())
 
 	return out.String()
-}
-
-type ArtifactWriter struct {
-	writer io.Writer
-}
-
-func (a *ArtifactWriter) Write(p []byte) (n int, err error) {
-	return a.writer.Write(p)
-}
-
-func (a *ArtifactWriter) WriteArtifact(artifact *Artifact) error {
-
-	return json.NewEncoder(a).Encode(artifact)
-}
-
-func NewArtifactWriter(w io.Writer) *ArtifactWriter {
-	return &ArtifactWriter{writer: w}
-}
-
-type ArtifactReader struct {
-	reader io.Reader
-}
-
-func (a *ArtifactReader) Read(p []byte) (n int, err error) {
-	return a.reader.Read(p)
-}
-
-func (a *ArtifactReader) ReadArtifact() (*Artifact, error) {
-
-	asset := &Artifact{}
-	err := json.NewDecoder(a).Decode(asset)
-	return asset, err
-}
-
-func NewArtifactReader(r io.Reader) *ArtifactReader {
-	return &ArtifactReader{reader: r}
 }
