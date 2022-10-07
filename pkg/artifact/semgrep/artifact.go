@@ -70,6 +70,10 @@ func (a Artifact) WithScanReport(r io.Reader, reportName string) (*Artifact, err
 	return &a, nil
 }
 
+func (a Artifact) Validate() error {
+	return fields.ValidateFindings([]fields.Finding{a.Error, a.Warning, a.Info})
+}
+
 // String human-readable formatted table
 func (a Artifact) String() string {
 	var out strings.Builder
@@ -78,7 +82,7 @@ func (a Artifact) String() string {
 	if a.ScanReport != nil {
 		out.WriteString(fmt.Sprintf("Report: %s\n", a.ScanReport.Label))
 	}
-	
+
 	out.WriteString(fmt.Sprintf("%-10s | %-7s | %-7s | %-5s\n", "Severity", "Found", "Allowed", "Pass"))
 	out.WriteString(strings.Repeat("-", 38) + "\n")
 	out.WriteString(a.Error.String())

@@ -1,9 +1,8 @@
-package grype_test
+package grype
 
 import (
 	"bytes"
 	"errors"
-	"github.com/gatecheckdev/gatecheck/pkg/artifact/grype"
 	"gopkg.in/yaml.v2"
 	"os"
 	"testing"
@@ -12,16 +11,16 @@ import (
 const TestGrypeReportFilename = "../../../test/grype-report.json"
 
 func TestArtifact_WithConfig(t *testing.T) {
-	artifact := grype.NewArtifact()
+	artifact := NewArtifact()
 
-	artifact = artifact.WithConfig(grype.NewConfig(10))
+	artifact = artifact.WithConfig(NewConfig(10))
 
 	configString := "critical: 10\nhigh: 10\nmedium: 10\nlow: 10\nnegligible: 10\nunknown: 10\n"
-	config := new(grype.Config)
+	config := new(Config)
 	if err := yaml.NewDecoder(bytes.NewBufferString(configString)).Decode(config); err != nil {
 		t.Fatal(err)
 	}
-	secondArtifact := grype.NewArtifact().WithConfig(config)
+	secondArtifact := NewArtifact().WithConfig(config)
 
 	if artifact.Critical != secondArtifact.Critical {
 		t.Fatal("Artifact from config object and artifact from string do not match")
@@ -37,7 +36,7 @@ func TestArtifact_WithScanReport(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	grypeArtifact, err := grype.NewArtifact().WithScanReport(scanFile, "grype-report.json")
+	grypeArtifact, err := NewArtifact().WithScanReport(scanFile, "grype-report.json")
 
 	t.Log(grypeArtifact.String())
 
@@ -58,6 +57,20 @@ func TestArtifact_WithScanReport(t *testing.T) {
 		}
 	})
 }
+
+func TestArtifact_Validate(t *testing.T) {
+	artifact := NewArtifact()
+	artifact.Critical.Found = 50
+	if err := artifact.WithConfig(NewConfig(0)).Validate(); err == nil {
+		t.Fatal("No Vulnerabilities Allowed")
+	}
+
+	if err := artifact.WithConfig(NewConfig(-1)).Validate(); err != nil {
+		t.Fatalf("All Vulnerabilities Allowed but validation failed. %v", err)
+	}
+}
+
+// Mock objects
 
 type badReader struct{}
 

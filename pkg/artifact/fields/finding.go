@@ -3,6 +3,7 @@ package fields
 import (
 	"errors"
 	"fmt"
+	"strings"
 )
 
 // Finding abstracts the CVEs from any generic scan report
@@ -31,4 +32,20 @@ func (f Finding) String() string {
 		pass = "True"
 	}
 	return fmt.Sprintf("%-10s | %-7d | %-7d | %-5s\n", f.Severity, f.Found, f.Allowed, pass)
+}
+
+func ValidateFindings(findings []Finding) error {
+	var sb strings.Builder
+	var validationError error = nil
+
+	for _, t := range findings {
+		if err := t.Test(); err != nil {
+			validationError = errors.New("validation failed")
+			sb.WriteString(err.Error())
+		}
+	}
+	if validationError != nil {
+		return fmt.Errorf("%w \n%s", validationError, sb.String())
+	}
+	return nil
 }

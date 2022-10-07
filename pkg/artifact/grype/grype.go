@@ -91,6 +91,11 @@ func (a Artifact) WithScanReport(r io.Reader, reportName string) (*Artifact, err
 	return &a, nil
 }
 
+func (a Artifact) Validate() error {
+	return fields.ValidateFindings([]fields.Finding{a.Critical, a.High, a.Medium,
+		a.Low, a.Unknown, a.Negligible})
+}
+
 // String human-readable formatted table
 func (a Artifact) String() string {
 	var out strings.Builder

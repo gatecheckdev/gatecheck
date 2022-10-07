@@ -27,12 +27,8 @@ func TestArtifact_WithScanReport(t *testing.T) {
 
 	// Slimmed down Semgrep Report
 	reportString := `{"results":[
-{"extra":{"severity": "INFO"}},
-{"extra":{"severity": "INFO"}},
-{"extra":{"severity": "INFO"}},
-{"extra":{"severity": "WARNING"}},
-{"extra":{"severity": "WARNING"}},
-{"extra":{"severity": "ERROR"}}
+{"extra":{"severity": "INFO"}},{"extra":{"severity": "INFO"}},{"extra":{"severity": "INFO"}},
+{"extra":{"severity": "WARNING"}},{"extra":{"severity": "WARNING"}},{"extra":{"severity": "ERROR"}}
 ]}`
 
 	_ = json.NewDecoder(bytes.NewBufferString(reportString)).Decode(report)
@@ -59,6 +55,18 @@ func TestArtifact_WithScanReport(t *testing.T) {
 		}
 	})
 
+}
+
+func TestArtifact_Validate(t *testing.T) {
+	artifact := NewArtifact()
+	artifact.Error.Found = 50
+	if err := artifact.WithConfig(NewConfig(0)).Validate(); err == nil {
+		t.Fatal("No Vulnerabilities Allowed")
+	}
+
+	if err := artifact.WithConfig(NewConfig(-1)).Validate(); err != nil {
+		t.Fatalf("All Vulnerabilities Allowed but validation failed. %v", err)
+	}
 }
 
 type badReader struct{}
