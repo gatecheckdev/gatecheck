@@ -68,7 +68,7 @@ type SemgrepScanReport struct {
 					Location semgrepLocation `json:"location"`
 					Content  string          `json:"content"`
 				} `json:"taint_source"`
-				IntermediateVars struct {
+				IntermediateVars []struct {
 					Location semgrepLocation `json:"location"`
 					Content  string          `json:"content"`
 				} `json:"intermediate_vars"`

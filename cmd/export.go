@@ -32,7 +32,23 @@ func NewExportCmd(e exporter.Exporter) *cobra.Command {
 		},
 	}
 
-	defectDojoCmd.AddCommand(grypeToDojoCmd)
+	var semgrepToDojoCmd = &cobra.Command{
+		Use:   "semgrep <FILE>",
+		Short: "export a sempgrep --json file to Defect Dojo",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+
+			// Open the file
+			f, err := Open(args[0])
+			if err != nil {
+				return err
+			}
+
+			return e.Export(f, exporter.Semgrep)
+		},
+	}
+
+	defectDojoCmd.AddCommand(grypeToDojoCmd, semgrepToDojoCmd)
 	exportCmd.AddCommand(defectDojoCmd)
 	return exportCmd
 }

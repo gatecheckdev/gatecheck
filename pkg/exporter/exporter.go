@@ -10,6 +10,8 @@ type Exporter interface {
 
 type ScanType string
 
+// Source for Scan Type Values https://demo.defectdojo.org/api/v2/doc/
 const (
-	Grype ScanType = "Anchore Grype"
+	Grype   ScanType = "Anchore Grype"
+	Semgrep          = "Semgrep JSON Report"
 )

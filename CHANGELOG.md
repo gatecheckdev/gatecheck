@@ -25,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Semgrep Entity
 - Generic Asset wrapper for files
 - cmd package now has a IO file to consolidate common operations
+- Semgrep command to CLI
 
 ## [0.0.4]
 ### Fixed

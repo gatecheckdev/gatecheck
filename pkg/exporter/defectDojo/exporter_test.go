@@ -9,7 +9,7 @@ import (
 	"testing"
 )
 
-func TestExporter_ExportGrype(t *testing.T) {
+func TestExporter_export(t *testing.T) {
 	errExpected := errors.New("mocked error")
 
 	e := NewExporter(Config{ProductTypeName: "prod type 1", ProductName: "prod 1", EngagementName: "engagement 1"})
@@ -35,9 +35,14 @@ func TestExporter_ExportGrype(t *testing.T) {
 		t.Fatal("Expected to fail getting engagement")
 	}
 
-	// turn off engagement error, Provoke encode error
+	// turn off engagement error
 	service.errEngagement = nil
-	if err := e.WithService(service).Export(bytes.NewBufferString("Some scan data"), exporter.Grype); err != nil {
+	if err := e.WithService(service).Export(new(bytes.Buffer), exporter.Grype); err != nil {
+		t.Fatal(err)
+	}
+
+	// Semgrep Upload
+	if err := e.WithService(service).Export(new(bytes.Buffer), exporter.Semgrep); err != nil {
 		t.Fatal(err)
 	}
 }

@@ -1,0 +1,3912 @@
+{
+  "errors": [
+    {
+      "code": 3,
+      "level": "warn",
+      "message": "Syntax error at line frontend/src/app/Services/user.service.ts:14:\n `new?:` was unexpected",
+      "path": "frontend/src/app/Services/user.service.ts",
+      "spans": [
+        {
+          "end": {
+            "col": 8,
+            "line": 14
+          },
+          "file": "frontend/src/app/Services/user.service.ts",
+          "start": {
+            "col": 3,
+            "line": 14
+          }
+        }
+      ],
+      "type": "Syntax error"
+    },
+    {
+      "code": 2,
+      "level": "warn",
+      "message": "Timeout when running typescript.react.security.audit.react-unsanitized-property.react-unsanitized-property on frontend/src/assets/private/three.js:\n ",
+      "path": "frontend/src/assets/private/three.js",
+      "rule_id": "typescript.react.security.audit.react-unsanitized-property.react-unsanitized-property",
+      "type": "Timeout"
+    },
+    {
+      "code": 3,
+      "level": "warn",
+      "message": "Syntax error at line data/static/codefixes/tokenSaleChallenge_2.ts:19:\n `]` was unexpected",
+      "path": "data/static/codefixes/tokenSaleChallenge_2.ts",
+      "spans": [
+        {
+          "end": {
+            "col": 2,
+            "line": 19
+          },
+          "file": "data/static/codefixes/tokenSaleChallenge_2.ts",
+          "start": {
+            "col": 1,
+            "line": 19
+          }
+        }
+      ],
+      "type": "Syntax error"
+    },
+    {
+      "code": 3,
+      "level": "warn",
+      "message": "Syntax error at line data/static/codefixes/loginBenderChallenge_1.ts:1:\n `import {BasketModel} from \"../../../models/basket\";\n\nmodule.exports = function login () {\n  function afterLogin (user: { data: User, bid: number }, res: Response, next: NextFunction) {\n    BasketModel.findOrCreate({ where: { UserId: user.data.id } })\n      .then(([basket]: [BasketModel, boolean]) => {\n        const token = security.authorize(user)\n        user.bid = basket.id // keep track of original basket\n        security.authenticatedUsers.put(token, user)\n        res.json({ authentication: { token, bid: basket.id, umail: user.data.email } })\n      }).catch((error: Error) => {\n        next(error)\n      })\n  }\n\n  return (req: Request, res: Response, next: NextFunction) => {\n    if (req.body.email.match(/.*['-;].*/) || req.body.password.match(/.*['-;].*/)) {\n      res.status(451).send(res.__('SQL Injection detected.'))\n    }\n    models.sequelize.query(`SELECT * FROM Users WHERE email = '${req.body.email || ''}' AND password = '${security.hash(req.body.password || '')}' AND deletedAt IS NULL`, { model: models.User, plain: true })\n      .then((authenticatedUser: { data: User }) => {\n        const user = utils.queryResultToJson(authenticatedUser)\n        if (user.data?.id && user.data.totpSecret !== '') {\n          res.status(401).json({\n            status: 'totp_token_required',\n            data: {\n              tmpToken: security.authorize({\n                userId: user.data.id,\n                type: 'password_valid_needs_second_factor_token'\n              })\n            }\n          })\n        } else if (user.data?.id) {\n          afterLogin(user, res, next)\n        } else {\n          res.status(401).send(res.__('Invalid email or password.'))\n        }\n      }).catch((error: Error) => {\n        next(error)\n      })\n  }` was unexpected",
+      "path": "data/static/codefixes/loginBenderChallenge_1.ts",
+      "type": "Syntax error"
+    },
+    {
+      "code": 3,
+      "level": "warn",
+      "message": "Syntax error at line data/static/codefixes/loginJimChallenge_2.ts:1:\n `import {BasketModel} from \"../../../models/basket\";\n\nmodule.exports = function login () {\n  function afterLogin (user: { data: User, bid: number }, res: Response, next: NextFunction) {\n    BasketModel.findOrCreate({ where: { UserId: user.data.id } })\n      .then(([basket]: [BasketModel, boolean]) => {\n        const token = security.authorize(user)\n        user.bid = basket.id // keep track of original basket\n        security.authenticatedUsers.put(token, user)\n        res.json({ authentication: { token, bid: basket.id, umail: user.data.email } })\n      }).catch((error: Error) => {\n        next(error)\n      })\n  }\n\n  return (req: Request, res: Response, next: NextFunction) => {\n    models.sequelize.query(`SELECT * FROM Users WHERE email = '${req.body.email || ''}' AND password = '${security.hash(req.body.password || '')}' AND deletedAt IS NULL`, { model: models.User, plain: false })\n      .then((authenticatedUser: { data: User }) => {\n        const user = utils.queryResultToJson(authenticatedUser)\n        if (user.data?.id && user.data.totpSecret !== '') {\n          res.status(401).json({\n            status: 'totp_token_required',\n            data: {\n              tmpToken: security.authorize({\n                userId: user.data.id,\n                type: 'password_valid_needs_second_factor_token'\n              })\n            }\n          })\n        } else if (user.data?.id) {\n          afterLogin(user, res, next)\n        } else {\n          res.status(401).send(res.__('Invalid email or password.'))\n        }\n      }).catch((error: Error) => {\n        next(error)\n      })\n  }` was unexpected",
+      "path": "data/static/codefixes/loginJimChallenge_2.ts",
+      "type": "Syntax error"
+    },
+    {
+      "code": 3,
+      "level": "warn",
+      "message": "Syntax error at line data/static/codefixes/loginAdminChallenge_4_correct.ts:1:\n `import {BasketModel} from \"../../../models/basket\";\n\nmodule.exports = function login () {\n  function afterLogin (user: { data: User, bid: number }, res: Response, next: NextFunction) {\n    BasketModel.findOrCreate({ where: { UserId: user.data.id } })\n      .then(([basket]: [BasketModel, boolean]) => {\n        const token = security.authorize(user)\n        user.bid = basket.id // keep track of original basket\n        security.authenticatedUsers.put(token, user)\n        res.json({ authentication: { token, bid: basket.id, umail: user.data.email } })\n      }).catch((error: Error) => {\n        next(error)\n      })\n  }\n\n  return (req: Request, res: Response, next: NextFunction) => {\n    models.sequelize.query(`SELECT * FROM Users WHERE email = $1 AND password = $2 AND deletedAt IS NULL`,\n      { bind: [ req.body.email, security.hash(req.body.password) ], model: models.User, plain: true })\n      .then((authenticatedUser: { data: User }) => {\n        const user = utils.queryResultToJson(authenticatedUser)\n        if (user.data?.id && user.data.totpSecret !== '') {\n          res.status(401).json({\n            status: 'totp_token_required',\n            data: {\n              tmpToken: security.authorize({\n                userId: user.data.id,\n                type: 'password_valid_needs_second_factor_token'\n              })\n            }\n          })\n        } else if (user.data?.id) {\n          afterLogin(user, res, next)\n        } else {\n          res.status(401).send(res.__('Invalid email or password.'))\n        }\n      }).catch((error: Error) => {\n        next(error)\n      })\n  }` was unexpected",
+      "path": "data/static/codefixes/loginAdminChallenge_4_correct.ts",
+      "type": "Syntax error"
+    },
+    {
+      "code": 3,
+      "level": "warn",
+      "message": "Syntax error at line data/static/codefixes/loginAdminChallenge_2.ts:1:\n `import {BasketModel} from \"../../../models/basket\";\n\nmodule.exports = function login () {\n  function afterLogin (user: { data: User, bid: number }, res: Response, next: NextFunction) {\n    BasketModel.findOrCreate({ where: { UserId: user.data.id } })\n      .then(([basket]: [BasketModel, boolean]) => {\n        const token = security.authorize(user)\n        user.bid = basket.id // keep track of original basket\n        security.authenticatedUsers.put(token, user)\n        res.json({ authentication: { token, bid: basket.id, umail: user.data.email } })\n      }).catch((error: Error) => {\n        next(error)\n      })\n  }\n\n  return (req: Request, res: Response, next: NextFunction) => {\n    models.sequelize.query(`SELECT * FROM Users WHERE email = $1 AND password = '${security.hash(req.body.password || '')}' AND deletedAt IS NULL`,\n      { bind: [ req.body.email ], model: models.User, plain: true })\n      .then((authenticatedUser: { data: User }) => {\n        const user = utils.queryResultToJson(authenticatedUser)\n        if (user.data?.id && user.data.totpSecret !== '') {\n          res.status(401).json({\n            status: 'totp_token_required',\n            data: {\n              tmpToken: security.authorize({\n                userId: user.data.id,\n                type: 'password_valid_needs_second_factor_token'\n              })\n            }\n          })\n        } else if (user.data?.id) {\n          afterLogin(user, res, next)\n        } else {\n          res.status(401).send(res.__('Invalid email or password.'))\n        }\n      }).catch((error: Error) => {\n        next(error)\n      })\n  }` was unexpected",
+      "path": "data/static/codefixes/loginAdminChallenge_2.ts",
+      "type": "Syntax error"
+    },
+    {
+      "code": 3,
+      "level": "warn",
+      "message": "Syntax error at line data/static/codefixes/tokenSaleChallenge_3_correct.ts:14:\n `]` was unexpected",
+      "path": "data/static/codefixes/tokenSaleChallenge_3_correct.ts",
+      "spans": [
+        {
+          "end": {
+            "col": 2,
+            "line": 14
+          },
+          "file": "data/static/codefixes/tokenSaleChallenge_3_correct.ts",
+          "start": {
+            "col": 1,
+            "line": 14
+          }
+        }
+      ],
+      "type": "Syntax error"
+    },
+    {
+      "code": 3,
+      "level": "warn",
+      "message": "Syntax error at line data/static/codefixes/registerAdminChallenge_3_correct.ts:1:\n `/* Generated API endpoints */\n  finale.initialize({ app, sequelize })\n\n  const autoModels = [\n    { name: 'User', exclude: ['password', 'totpSecret'], model: UserModel },\n    { name: 'Product', exclude: [], model: ProductModel },\n    { name: 'Feedback', exclude: [], model: FeedbackModel },\n    { name: 'BasketItem', exclude: [], model: BasketItemModel },\n    { name: 'Challenge', exclude: [], model: ChallengeModel },\n    { name: 'Complaint', exclude: [], model: ComplaintModel },\n    { name: 'Recycle', exclude: [], model: RecycleModel },\n    { name: 'SecurityQuestion', exclude: [], model: SecurityQuestionModel },\n    { name: 'SecurityAnswer', exclude: [], model: SecurityAnswerModel },\n    { name: 'Address', exclude: [], model: AddressModel },\n    { name: 'PrivacyRequest', exclude: [], model: PrivacyRequestModel },\n    { name: 'Card', exclude: [], model: CardModel },\n    { name: 'Quantity', exclude: [], model: QuantityModel }\n  ]\n\n  for (const { name, exclude, model } of autoModels) {\n    const resource = finale.resource({\n      model,\n      endpoints: [`/api/${name}s`, `/api/${name}s/:id`],\n      excludeAttributes: exclude\n    })\n\n    // create a wallet when a new user is registered using API\n    if (name === 'User') {\n      resource.create.send.before((req: Request, res: Response, context: { instance: { id: any }, continue: any }) => {\n        WalletModel.create({ UserId: context.instance.id }).catch((err: unknown) => {\n          console.log(err)\n        })\n        context.instance.role = 'customer'\n        return context.continue\n      })\n    }` was unexpected",
+      "path": "data/static/codefixes/registerAdminChallenge_3_correct.ts",
+      "type": "Syntax error"
+    },
+    {
+      "code": 3,
+      "level": "warn",
+      "message": "Syntax error at line data/static/codefixes/loginJimChallenge_4.ts:1:\n `import {BasketModel} from \"../../../models/basket\";\n\nmodule.exports = function login () {\n  function afterLogin (user: { data: User, bid: number }, res: Response, next: NextFunction) {\n    BasketModel.findOrCreate({ where: { UserId: user.data.id } })\n      .then(([basket]: [BasketModel, boolean]) => {\n        const token = security.authorize(user)\n        user.bid = basket.id // keep track of original basket\n        security.authenticatedUsers.put(token, user)\n        res.json({ authentication: { token, bid: basket.id, umail: user.data.email } })\n      }).catch((error: Error) => {\n        next(error)\n      })\n  }\n\n  return (req: Request, res: Response, next: NextFunction) => {\n    if (req.body.email.match(/.*['-;].*/) || req.body.password.match(/.*['-;].*/)) {\n      res.status(451).send(res.__('SQL Injection detected.'))\n    }\n    models.sequelize.query(`SELECT * FROM Users WHERE email = '${req.body.email || ''}' AND password = '${security.hash(req.body.password || '')}' AND deletedAt IS NULL`, { model: models.User, plain: true })\n      .then((authenticatedUser: { data: User }) => {\n        const user = utils.queryResultToJson(authenticatedUser)\n        if (user.data?.id && user.data.totpSecret !== '') {\n          res.status(401).json({\n            status: 'totp_token_required',\n            data: {\n              tmpToken: security.authorize({\n                userId: user.data.id,\n                type: 'password_valid_needs_second_factor_token'\n              })\n            }\n          })\n        } else if (user.data?.id) {\n          afterLogin(user, res, next)\n        } else {\n          res.status(401).send(res.__('Invalid email or password.'))\n        }\n      }).catch((error: Error) => {\n        next(error)\n      })\n  }` was unexpected",
+      "path": "data/static/codefixes/loginJimChallenge_4.ts",
+      "type": "Syntax error"
+    },
+    {
+      "code": 3,
+      "level": "warn",
+      "message": "Syntax error at line data/static/codefixes/registerAdminChallenge_2.ts:1:\n `/* Generated API endpoints */\n  finale.initialize({ app, sequelize })\n\n  const autoModels = [\n    { name: 'Product', exclude: [], model: ProductModel },\n    { name: 'Feedback', exclude: [], model: FeedbackModel },\n    { name: 'BasketItem', exclude: [], model: BasketItemModel },\n    { name: 'Challenge', exclude: [], model: ChallengeModel },\n    { name: 'Complaint', exclude: [], model: ComplaintModel },\n    { name: 'Recycle', exclude: [], model: RecycleModel },\n    { name: 'SecurityQuestion', exclude: [], model: SecurityQuestionModel },\n    { name: 'SecurityAnswer', exclude: [], model: SecurityAnswerModel },\n    { name: 'Address', exclude: [], model: AddressModel },\n    { name: 'PrivacyRequest', exclude: [], model: PrivacyRequestModel },\n    { name: 'Card', exclude: [], model: CardModel },\n    { name: 'Quantity', exclude: [], model: QuantityModel }\n  ]\n\n  for (const { name, exclude, model } of autoModels) {\n    const resource = finale.resource({\n      model,\n      endpoints: [`/api/${name}s`, `/api/${name}s/:id`],\n      excludeAttributes: exclude\n    })` was unexpected",
+      "path": "data/static/codefixes/registerAdminChallenge_2.ts",
+      "type": "Syntax error"
+    },
+    {
+      "code": 3,
+      "level": "warn",
+      "message": "Syntax error at line data/static/codefixes/loginJimChallenge_3.ts:1:\n `import {BasketModel} from \"../../../models/basket\";\n\nmodule.exports = function login () {\n  function afterLogin (user: { data: User, bid: number }, res: Response, next: NextFunction) {\n    BasketModel.findOrCreate({ where: { UserId: user.data.id } })\n      .then(([basket]: [BasketModel, boolean]) => {\n        const token = security.authorize(user)\n        user.bid = basket.id // keep track of original basket\n        security.authenticatedUsers.put(token, user)\n        res.json({ authentication: { token, bid: basket.id, umail: user.data.email } })\n      }).catch((error: Error) => {\n        next(error)\n      })\n  }\n\n  return (req: Request, res: Response, next: NextFunction) => {\n    models.sequelize.query(`SELECT * FROM Users WHERE email = ? AND password = ? AND deletedAt IS NULL`,\n      { replacements: [ req.body.email, req.body.password ], model: models.User, plain: true })\n      .then((authenticatedUser: { data: User }) => {\n        const user = utils.queryResultToJson(authenticatedUser)\n        if (user.data?.id && user.data.totpSecret !== '') {\n          res.status(401).json({\n            status: 'totp_token_required',\n            data: {\n              tmpToken: security.authorize({\n                userId: user.data.id,\n                type: 'password_valid_needs_second_factor_token'\n              })\n            }\n          })\n        } else if (user.data?.id) {\n          afterLogin(user, res, next)\n        } else {\n          res.status(401).send(res.__('Invalid email or password.'))\n        }\n      }).catch((error: Error) => {\n        next(error)\n      })\n  }` was unexpected",
+      "path": "data/static/codefixes/loginJimChallenge_3.ts",
+      "type": "Syntax error"
+    },
+    {
+      "code": 3,
+      "level": "warn",
+      "message": "Syntax error at line data/static/codefixes/loginJimChallenge_1_correct.ts:1:\n `import {BasketModel} from \"../../../models/basket\";\n\nmodule.exports = function login () {\n  function afterLogin (user: { data: User, bid: number }, res: Response, next: NextFunction) {\n    BasketModel.findOrCreate({ where: { UserId: user.data.id } })\n      .then(([basket]: [BasketModel, boolean]) => {\n        const token = security.authorize(user)\n        user.bid = basket.id // keep track of original basket\n        security.authenticatedUsers.put(token, user)\n        res.json({ authentication: { token, bid: basket.id, umail: user.data.email } })\n      }).catch((error: Error) => {\n        next(error)\n      })\n  }\n\n  return (req: Request, res: Response, next: NextFunction) => {\n    models.sequelize.query(`SELECT * FROM Users WHERE email = $1 AND password = $2 AND deletedAt IS NULL`,\n      { bind: [ req.body.email, security.hash(req.body.password) ], model: models.User, plain: true })\n      .then((authenticatedUser: { data: User }) => {\n        const user = utils.queryResultToJson(authenticatedUser)\n        if (user.data?.id && user.data.totpSecret !== '') {\n          res.status(401).json({\n            status: 'totp_token_required',\n            data: {\n              tmpToken: security.authorize({\n                userId: user.data.id,\n                type: 'password_valid_needs_second_factor_token'\n              })\n            }\n          })\n        } else if (user.data?.id) {\n          afterLogin(user, res, next)\n        } else {\n          res.status(401).send(res.__('Invalid email or password.'))\n        }\n      }).catch((error: Error) => {\n        next(error)\n      })\n  }` was unexpected",
+      "path": "data/static/codefixes/loginJimChallenge_1_correct.ts",
+      "type": "Syntax error"
+    },
+    {
+      "code": 3,
+      "level": "warn",
+      "message": "Syntax error at line data/static/codefixes/loginBenderChallenge_2_correct.ts:1:\n `import {BasketModel} from \"../../../models/basket\";\n\nmodule.exports = function login () {\n  function afterLogin (user: { data: User, bid: number }, res: Response, next: NextFunction) {\n    BasketModel.findOrCreate({ where: { UserId: user.data.id } })\n      .then(([basket]: [BasketModel, boolean]) => {\n        const token = security.authorize(user)\n        user.bid = basket.id // keep track of original basket\n        security.authenticatedUsers.put(token, user)\n        res.json({ authentication: { token, bid: basket.id, umail: user.data.email } })\n      }).catch((error: Error) => {\n        next(error)\n      })\n  }\n\n  return (req: Request, res: Response, next: NextFunction) => {\n    models.sequelize.query(`SELECT * FROM Users WHERE email = $mail AND password = $pass AND deletedAt IS NULL`,\n      { bind: { mail: req.body.email, pass: security.hash(req.body.password) }, model: models.User, plain: true })\n      .then((authenticatedUser: { data: User }) => {\n        const user = utils.queryResultToJson(authenticatedUser)\n        if (user.data?.id && user.data.totpSecret !== '') {\n          res.status(401).json({\n            status: 'totp_token_required',\n            data: {\n              tmpToken: security.authorize({\n                userId: user.data.id,\n                type: 'password_valid_needs_second_factor_token'\n              })\n            }\n          })\n        } else if (user.data?.id) {\n          afterLogin(user, res, next)\n        } else {\n          res.status(401).send(res.__('Invalid email or password.'))\n        }\n      }).catch((error: Error) => {\n        next(error)\n      })\n  }` was unexpected",
+      "path": "data/static/codefixes/loginBenderChallenge_2_correct.ts",
+      "type": "Syntax error"
+    },
+    {
+      "code": 3,
+      "level": "warn",
+      "message": "Syntax error at line data/static/codefixes/loginBenderChallenge_3.ts:1:\n `import {BasketModel} from \"../../../models/basket\";\n\nmodule.exports = function login () {\n  function afterLogin (user: { data: User, bid: number }, res: Response, next: NextFunction) {\n    BasketModel.findOrCreate({ where: { UserId: user.data.id } })\n      .then(([basket]: [BasketModel, boolean]) => {\n        const token = security.authorize(user)\n        user.bid = basket.id // keep track of original basket\n        security.authenticatedUsers.put(token, user)\n        res.json({ authentication: { token, bid: basket.id, umail: user.data.email } })\n      }).catch((error: Error) => {\n        next(error)\n      })\n  }\n\n  return (req: Request, res: Response, next: NextFunction) => {\n    models.sequelize.query(`SELECT * FROM Users WHERE email = :mail AND password = '${security.hash(req.body.password || '')}' AND deletedAt IS NULL`,\n      { replacements: { mail: req.body.email }, model: models.User, plain: true })\n      .then((authenticatedUser: { data: User }) => {\n        const user = utils.queryResultToJson(authenticatedUser)\n        if (user.data?.id && user.data.totpSecret !== '') {\n          res.status(401).json({\n            status: 'totp_token_required',\n            data: {\n              tmpToken: security.authorize({\n                userId: user.data.id,\n                type: 'password_valid_needs_second_factor_token'\n              })\n            }\n          })\n        } else if (user.data?.id) {\n          afterLogin(user, res, next)\n        } else {\n          res.status(401).send(res.__('Invalid email or password.'))\n        }\n      }).catch((error: Error) => {\n        next(error)\n      })\n  }` was unexpected",
+      "path": "data/static/codefixes/loginBenderChallenge_3.ts",
+      "type": "Syntax error"
+    },
+    {
+      "code": 3,
+      "level": "warn",
+      "message": "Syntax error at line data/static/codefixes/tokenSaleChallenge_1.ts:18:\n `]` was unexpected",
+      "path": "data/static/codefixes/tokenSaleChallenge_1.ts",
+      "spans": [
+        {
+          "end": {
+            "col": 2,
+            "line": 18
+          },
+          "file": "data/static/codefixes/tokenSaleChallenge_1.ts",
+          "start": {
+            "col": 1,
+            "line": 18
+          }
+        }
+      ],
+      "type": "Syntax error"
+    },
+    {
+      "code": 3,
+      "level": "warn",
+      "message": "Syntax error at line data/static/codefixes/registerAdminChallenge_4.ts:1:\n `/* Generated API endpoints */\n  finale.initialize({ app, sequelize })\n\n  const autoModels = [\n    { name: 'User', exclude: ['password', 'totpSecret', 'role'], model: UserModel },\n    { name: 'Product', exclude: [], model: ProductModel },\n    { name: 'Feedback', exclude: [], model: FeedbackModel },\n    { name: 'BasketItem', exclude: [], model: BasketItemModel },\n    { name: 'Challenge', exclude: [], model: ChallengeModel },\n    { name: 'Complaint', exclude: [], model: ComplaintModel },\n    { name: 'Recycle', exclude: [], model: RecycleModel },\n    { name: 'SecurityQuestion', exclude: [], model: SecurityQuestionModel },\n    { name: 'SecurityAnswer', exclude: [], model: SecurityAnswerModel },\n    { name: 'Address', exclude: [], model: AddressModel },\n    { name: 'PrivacyRequest', exclude: [], model: PrivacyRequestModel },\n    { name: 'Card', exclude: [], model: CardModel },\n    { name: 'Quantity', exclude: [], model: QuantityModel }\n  ]\n\n  for (const { name, exclude, model } of autoModels) {\n    const resource = finale.resource({\n      model,\n      endpoints: [`/api/${name}s`, `/api/${name}s/:id`],\n      excludeAttributes: exclude\n    })\n\n    // create a wallet when a new user is registered using API\n    if (name === 'User') {\n      resource.create.send.before((req: Request, res: Response, context: { instance: { id: any }, continue: any }) => {\n        WalletModel.create({ UserId: context.instance.id }).catch((err: unknown) => {\n          console.log(err)\n        })\n        return context.continue\n      })\n    }` was unexpected",
+      "path": "data/static/codefixes/registerAdminChallenge_4.ts",
+      "type": "Syntax error"
+    },
+    {
+      "code": 3,
+      "level": "warn",
+      "message": "Syntax error at line data/static/codefixes/loginAdminChallenge_3.ts:1:\n `import {BasketModel} from \"../../../models/basket\";\n\nmodule.exports = function login () {\n  function afterLogin (user: { data: User, bid: number }, res: Response, next: NextFunction) {\n    BasketModel.findOrCreate({ where: { UserId: user.data.id } })\n      .then(([basket]: [BasketModel, boolean]) => {\n        const token = security.authorize(user)\n        user.bid = basket.id // keep track of original basket\n        security.authenticatedUsers.put(token, user)\n        res.json({ authentication: { token, bid: basket.id, umail: user.data.email } })\n      }).catch((error: Error) => {\n        next(error)\n      })\n  }\n\n  return (req: Request, res: Response, next: NextFunction) => {\n    models.sequelize.query(`SELECT * FROM Users WHERE email = $1 AND password = $2 AND deletedAt IS NULL`,\n      { bind: [ req.body.email, req.body.password ], model: models.User, plain: true })\n      .then((authenticatedUser: { data: User }) => {\n        const user = utils.queryResultToJson(authenticatedUser)\n        if (user.data?.id && user.data.totpSecret !== '') {\n          res.status(401).json({\n            status: 'totp_token_required',\n            data: {\n              tmpToken: security.authorize({\n                userId: user.data.id,\n                type: 'password_valid_needs_second_factor_token'\n              })\n            }\n          })\n        } else if (user.data?.id) {\n          afterLogin(user, res, next)\n        } else {\n          res.status(401).send(res.__('Invalid email or password.'))\n        }\n      }).catch((error: Error) => {\n        next(error)\n      })\n  }` was unexpected",
+      "path": "data/static/codefixes/loginAdminChallenge_3.ts",
+      "type": "Syntax error"
+    },
+    {
+      "code": 3,
+      "level": "warn",
+      "message": "Syntax error at line data/static/codefixes/loginBenderChallenge_4.ts:1:\n `import {BasketModel} from \"../../../models/basket\";\n\nmodule.exports = function login () {\n  function afterLogin (user: { data: User, bid: number }, res: Response, next: NextFunction) {\n    BasketModel.findOrCreate({ where: { UserId: user.data.id } })\n      .then(([basket]: [BasketModel, boolean]) => {\n        const token = security.authorize(user)\n        user.bid = basket.id // keep track of original basket\n        security.authenticatedUsers.put(token, user)\n        res.json({ authentication: { token, bid: basket.id, umail: user.data.email } })\n      }).catch((error: Error) => {\n        next(error)\n      })\n  }\n\n  return (req: Request, res: Response, next: NextFunction) => {\n    models.sequelize.query(`SELECT * FROM Users WHERE email = '${req.body.email || ''}' AND password = '${security.hash(req.body.password || '')}' AND deletedAt IS NULL`, { model: models.User, plain: false })\n      .then((authenticatedUser: { data: User }) => {\n        const user = utils.queryResultToJson(authenticatedUser)\n        if (user.data?.id && user.data.totpSecret !== '') {\n          res.status(401).json({\n            status: 'totp_token_required',\n            data: {\n              tmpToken: security.authorize({\n                userId: user.data.id,\n                type: 'password_valid_needs_second_factor_token'\n              })\n            }\n          })\n        } else if (user.data?.id) {\n          afterLogin(user, res, next)\n        } else {\n          res.status(401).send(res.__('Invalid email or password.'))\n        }\n      }).catch((error: Error) => {\n        next(error)\n      })\n  }` was unexpected",
+      "path": "data/static/codefixes/loginBenderChallenge_4.ts",
+      "type": "Syntax error"
+    },
+    {
+      "code": 3,
+      "level": "warn",
+      "message": "Syntax error at line data/static/codefixes/registerAdminChallenge_1.ts:1:\n `/* Generated API endpoints */\n  finale.initialize({ app, sequelize })\n\n  const autoModels = [\n    { name: 'User', exclude: ['password', 'totpSecret'], model: UserModel },\n    { name: 'Product', exclude: [], model: ProductModel },\n    { name: 'Feedback', exclude: [], model: FeedbackModel },\n    { name: 'BasketItem', exclude: [], model: BasketItemModel },\n    { name: 'Challenge', exclude: [], model: ChallengeModel },\n    { name: 'Complaint', exclude: [], model: ComplaintModel },\n    { name: 'Recycle', exclude: [], model: RecycleModel },\n    { name: 'SecurityQuestion', exclude: [], model: SecurityQuestionModel },\n    { name: 'SecurityAnswer', exclude: [], model: SecurityAnswerModel },\n    { name: 'Address', exclude: [], model: AddressModel },\n    { name: 'PrivacyRequest', exclude: [], model: PrivacyRequestModel },\n    { name: 'Card', exclude: [], model: CardModel },\n    { name: 'Quantity', exclude: [], model: QuantityModel }\n  ]\n\n  for (const { name, exclude, model } of autoModels) {\n    const resource = finale.resource({\n      model,\n      endpoints: [`/api/${name}s`, `/api/${name}s/:id`],\n      excludeAttributes: exclude\n    })\n\n    // create a wallet when a new user is registered using API\n    if (name === 'User') {\n      resource.create.send.before((req: Request, res: Response, context: { instance: { id: any }, continue: any }) => {\n        WalletModel.create({ UserId: context.instance.id }).catch((err: unknown) => {\n          console.log(err)\n        })\n        context.instance.role = context.instance.role ? context.instance.role : 'customer'\n        return context.continue\n      })\n    }` was unexpected",
+      "path": "data/static/codefixes/registerAdminChallenge_1.ts",
+      "type": "Syntax error"
+    },
+    {
+      "code": 3,
+      "level": "warn",
+      "message": "Syntax error at line data/static/codefixes/restfulXssChallenge_4.ts:57:\n `: any[]` was unexpected",
+      "path": "data/static/codefixes/restfulXssChallenge_4.ts",
+      "spans": [
+        {
+          "end": {
+            "col": 44,
+            "line": 57
+          },
+          "file": "data/static/codefixes/restfulXssChallenge_4.ts",
+          "start": {
+            "col": 37,
+            "line": 57
+          }
+        }
+      ],
+      "type": "Syntax error"
+    },
+    {
+      "code": 3,
+      "level": "warn",
+      "message": "Syntax error at line data/static/codefixes/restfulXssChallenge_3.ts:43:\n `: any[]` was unexpected",
+      "path": "data/static/codefixes/restfulXssChallenge_3.ts",
+      "spans": [
+        {
+          "end": {
+            "col": 44,
+            "line": 43
+          },
+          "file": "data/static/codefixes/restfulXssChallenge_3.ts",
+          "start": {
+            "col": 37,
+            "line": 43
+          }
+        }
+      ],
+      "type": "Syntax error"
+    },
+    {
+      "code": 3,
+      "level": "warn",
+      "message": "Syntax error at line data/static/codefixes/loginAdminChallenge_1.ts:1:\n `import {BasketModel} from \"../../../models/basket\";\n\nmodule.exports = function login () {\n  function afterLogin (user: { data: User, bid: number }, res: Response, next: NextFunction) {\n    BasketModel.findOrCreate({ where: { UserId: user.data.id } })\n      .then(([basket]: [BasketModel, boolean]) => {\n        const token = security.authorize(user)\n        user.bid = basket.id // keep track of original basket\n        security.authenticatedUsers.put(token, user)\n        res.json({ authentication: { token, bid: basket.id, umail: user.data.email } })\n      }).catch((error: Error) => {\n        next(error)\n      })\n  }\n\n  return (req: Request, res: Response, next: NextFunction) => {\n    if (req.body.email.match(/.*['-;].*/) || req.body.password.match(/.*['-;].*/)) {\n      res.status(451).send(res.__('SQL Injection detected.'))\n    }\n    models.sequelize.query(`SELECT * FROM Users WHERE email = '${req.body.email || ''}' AND password = '${security.hash(req.body.password || '')}' AND deletedAt IS NULL`, { model: models.User, plain: true })\n      .then((authenticatedUser: { data: User }) => {\n        const user = utils.queryResultToJson(authenticatedUser)\n        if (user.data?.id && user.data.totpSecret !== '') {\n          res.status(401).json({\n            status: 'totp_token_required',\n            data: {\n              tmpToken: security.authorize({\n                userId: user.data.id,\n                type: 'password_valid_needs_second_factor_token'\n              })\n            }\n          })\n        } else if (user.data?.id) {\n          afterLogin(user, res, next)\n        } else {\n          res.status(401).send(res.__('Invalid email or password.'))\n        }\n      }).catch((error: Error) => {\n        next(error)\n      })\n  }` was unexpected",
+      "path": "data/static/codefixes/loginAdminChallenge_1.ts",
+      "type": "Syntax error"
+    },
+    {
+      "code": 3,
+      "level": "warn",
+      "message": "Syntax error at line data/static/codefixes/restfulXssChallenge_2.ts:57:\n `: any[]` was unexpected",
+      "path": "data/static/codefixes/restfulXssChallenge_2.ts",
+      "spans": [
+        {
+          "end": {
+            "col": 45,
+            "line": 57
+          },
+          "file": "data/static/codefixes/restfulXssChallenge_2.ts",
+          "start": {
+            "col": 38,
+            "line": 57
+          }
+        }
+      ],
+      "type": "Syntax error"
+    }
+  ],
+  "paths": {
+    "_comment": "<add --verbose for a list of skipped paths>",
+    "scanned": [
+      ".codeclimate.yml",
+      ".dependabot/config.yml",
+      ".devcontainer.json",
+      ".dockerignore",
+      ".eslintrc.js",
+      ".github/CODEOWNERS",
+      ".github/FUNDING.yml",
+      ".github/ISSUE_TEMPLATE/bug-report.md",
+      ".github/ISSUE_TEMPLATE/challenge-idea.md",
+      ".github/ISSUE_TEMPLATE/config.yml",
+      ".github/ISSUE_TEMPLATE/feature-request.md",
+      ".github/PULL_REQUEST_TEMPLATE.md",
+      ".github/workflows/ci.yml",
+      ".github/workflows/codeql-analysis.yml",
+      ".github/workflows/greetings.yml",
+      ".github/workflows/lint-fixer.yml",
+      ".github/workflows/lock.yml",
+      ".github/workflows/rebase.yml",
+      ".github/workflows/release.yml",
+      ".github/workflows/stale.yml",
+      ".github/workflows/update-challenges-www.yml",
+      ".github/workflows/update-news-www.yml",
+      ".github/workflows/zap_scan.yml",
+      ".gitignore",
+      ".gitlab/auto-deploy-values.yaml",
+      ".gitlab-ci.yml",
+      ".gitpod.yml",
+      ".imgbotconfig",
+      ".mailmap",
+      ".npmrc",
+      ".zap/rules.tsv",
+      "CODE_OF_CONDUCT.md",
+      "CONTRIBUTING.md",
+      "Dockerfile",
+      "Dockerfile.arm",
+      "Gruntfile.js",
+      "HALL_OF_FAME.md",
+      "LICENSE",
+      "README.md",
+      "REFERENCES.md",
+      "SECURITY.md",
+      "SOLUTIONS.md",
+      "app.json",
+      "app.ts",
+      "config/7ms.yml",
+      "config/addo.yml",
+      "config/bodgeit.yml",
+      "config/ctf.yml",
+      "config/default.yml",
+      "config/fbctf.yml",
+      "config/juicebox.yml",
+      "config/mozilla.yml",
+      "config/oss.yml",
+      "config/quiet.yml",
+      "config/test.yml",
+      "config/tutorial.yml",
+      "config/unsafe.yml",
+      "config.schema.yml",
+      "crowdin.yaml",
+      "ctf.key",
+      "cypress/fixtures/example.json",
+      "cypress/integration/e2e/administration.spec.ts",
+      "cypress/integration/e2e/b2bOrder.spec.ts",
+      "cypress/integration/e2e/basket.spec.ts",
+      "cypress/integration/e2e/changePassword.spec.ts",
+      "cypress/integration/e2e/chatbot.spec.ts",
+      "cypress/integration/e2e/complain.spec.ts",
+      "cypress/integration/e2e/contact.spec.ts",
+      "cypress/integration/e2e/dataErasure.spec.ts",
+      "cypress/integration/e2e/dataExport.spec.ts",
+      "cypress/integration/e2e/deluxe.spec.ts",
+      "cypress/integration/e2e/directAccess.spec.ts",
+      "cypress/integration/e2e/forgedJwt.spec.ts",
+      "cypress/integration/e2e/forgotPassword.spec.ts",
+      "cypress/integration/e2e/geoStalking.spec.ts",
+      "cypress/integration/e2e/login.spec.ts",
+      "cypress/integration/e2e/metrics.spec.ts",
+      "cypress/integration/e2e/noSql.spec.ts",
+      "cypress/integration/e2e/privacyPolicy.spec.ts",
+      "cypress/integration/e2e/profile.spec.ts",
+      "cypress/integration/e2e/publicFtp.spec.ts",
+      "cypress/integration/e2e/redirect.spec.ts",
+      "cypress/integration/e2e/register.spec.ts",
+      "cypress/integration/e2e/restApi.spec.ts",
+      "cypress/integration/e2e/scoreBoard.spec.ts",
+      "cypress/integration/e2e/search.spec.ts",
+      "cypress/integration/e2e/tokenSale.spec.ts",
+      "cypress/integration/e2e/totpSetup.spec.ts",
+      "cypress/integration/e2e/trackOrder.spec.ts",
+      "cypress/plugins/index.ts",
+      "cypress/support/commands.ts",
+      "cypress/support/index.ts",
+      "cypress/support/setup.ts",
+      "cypress/tsconfig.json",
+      "cypress.json",
+      "data/chatbot/.gitkeep",
+      "data/datacache.ts",
+      "data/datacreator.ts",
+      "data/mongodb.ts",
+      "data/static/botDefaultTrainingData.json",
+      "data/static/challenges.yml",
+      "data/static/codefixes/.editorconfig",
+      "data/static/codefixes/accessLogDisclosureChallenge.info.yml",
+      "data/static/codefixes/accessLogDisclosureChallenge_1_correct.ts",
+      "data/static/codefixes/accessLogDisclosureChallenge_2.ts",
+      "data/static/codefixes/accessLogDisclosureChallenge_3.ts",
+      "data/static/codefixes/accessLogDisclosureChallenge_4.ts",
+      "data/static/codefixes/adminSectionChallenge.info.yml",
+      "data/static/codefixes/adminSectionChallenge_1_correct.ts",
+      "data/static/codefixes/adminSectionChallenge_2.ts",
+      "data/static/codefixes/adminSectionChallenge_3.ts",
+      "data/static/codefixes/adminSectionChallenge_4.ts",
+      "data/static/codefixes/changeProductChallenge.info.yml",
+      "data/static/codefixes/changeProductChallenge_1.ts",
+      "data/static/codefixes/changeProductChallenge_2.ts",
+      "data/static/codefixes/changeProductChallenge_3_correct.ts",
+      "data/static/codefixes/changeProductChallenge_4.ts",
+      "data/static/codefixes/dbSchemaChallenge.info.yml",
+      "data/static/codefixes/dbSchemaChallenge_1.ts",
+      "data/static/codefixes/dbSchemaChallenge_2_correct.ts",
+      "data/static/codefixes/dbSchemaChallenge_3.ts",
+      "data/static/codefixes/directoryListingChallenge.info.yml",
+      "data/static/codefixes/directoryListingChallenge_1_correct.ts",
+      "data/static/codefixes/directoryListingChallenge_2.ts",
+      "data/static/codefixes/directoryListingChallenge_3.ts",
+      "data/static/codefixes/directoryListingChallenge_4.ts",
+      "data/static/codefixes/exposedMetricsChallenge.info.yml",
+      "data/static/codefixes/exposedMetricsChallenge_1.ts",
+      "data/static/codefixes/exposedMetricsChallenge_2.ts",
+      "data/static/codefixes/exposedMetricsChallenge_3_correct.ts",
+      "data/static/codefixes/forgedReviewChallenge.info.yml",
+      "data/static/codefixes/forgedReviewChallenge_1.ts",
+      "data/static/codefixes/forgedReviewChallenge_2_correct.ts",
+      "data/static/codefixes/forgedReviewChallenge_3.ts",
+      "data/static/codefixes/localXssChallenge.info.yml",
+      "data/static/codefixes/localXssChallenge_1.ts",
+      "data/static/codefixes/localXssChallenge_2_correct.ts",
+      "data/static/codefixes/localXssChallenge_3.ts",
+      "data/static/codefixes/localXssChallenge_4.ts",
+      "data/static/codefixes/loginAdminChallenge.info.yml",
+      "data/static/codefixes/loginAdminChallenge_1.ts",
+      "data/static/codefixes/loginAdminChallenge_2.ts",
+      "data/static/codefixes/loginAdminChallenge_3.ts",
+      "data/static/codefixes/loginAdminChallenge_4_correct.ts",
+      "data/static/codefixes/loginBenderChallenge.info.yml",
+      "data/static/codefixes/loginBenderChallenge_1.ts",
+      "data/static/codefixes/loginBenderChallenge_2_correct.ts",
+      "data/static/codefixes/loginBenderChallenge_3.ts",
+      "data/static/codefixes/loginBenderChallenge_4.ts",
+      "data/static/codefixes/loginJimChallenge.info.yml",
+      "data/static/codefixes/loginJimChallenge_1_correct.ts",
+      "data/static/codefixes/loginJimChallenge_2.ts",
+      "data/static/codefixes/loginJimChallenge_3.ts",
+      "data/static/codefixes/loginJimChallenge_4.ts",
+      "data/static/codefixes/noSqlReviewsChallenge.info.yml",
+      "data/static/codefixes/noSqlReviewsChallenge_1.ts",
+      "data/static/codefixes/noSqlReviewsChallenge_2.ts",
+      "data/static/codefixes/noSqlReviewsChallenge_3_correct.ts",
+      "data/static/codefixes/redirectChallenge.info.yml",
+      "data/static/codefixes/redirectChallenge_1.ts",
+      "data/static/codefixes/redirectChallenge_2.ts",
+      "data/static/codefixes/redirectChallenge_3.ts",
+      "data/static/codefixes/redirectChallenge_4_correct.ts",
+      "data/static/codefixes/redirectCryptoCurrencyChallenge.info.yml",
+      "data/static/codefixes/redirectCryptoCurrencyChallenge_1.ts",
+      "data/static/codefixes/redirectCryptoCurrencyChallenge_2.ts",
+      "data/static/codefixes/redirectCryptoCurrencyChallenge_3_correct.ts",
+      "data/static/codefixes/redirectCryptoCurrencyChallenge_4.ts",
+      "data/static/codefixes/registerAdminChallenge.info.yml",
+      "data/static/codefixes/registerAdminChallenge_1.ts",
+      "data/static/codefixes/registerAdminChallenge_2.ts",
+      "data/static/codefixes/registerAdminChallenge_3_correct.ts",
+      "data/static/codefixes/registerAdminChallenge_4.ts",
+      "data/static/codefixes/resetPasswordBenderChallenge.info.yml",
+      "data/static/codefixes/resetPasswordBenderChallenge_1.yml",
+      "data/static/codefixes/resetPasswordBenderChallenge_2_correct.yml",
+      "data/static/codefixes/resetPasswordBenderChallenge_3.yml",
+      "data/static/codefixes/resetPasswordBjoernChallenge.info.yml",
+      "data/static/codefixes/resetPasswordBjoernChallenge_1_correct.yml",
+      "data/static/codefixes/resetPasswordBjoernChallenge_2.yml",
+      "data/static/codefixes/resetPasswordBjoernChallenge_3.yml",
+      "data/static/codefixes/resetPasswordBjoernOwaspChallenge.info.yml",
+      "data/static/codefixes/resetPasswordBjoernOwaspChallenge_1.yml",
+      "data/static/codefixes/resetPasswordBjoernOwaspChallenge_2_correct.yml",
+      "data/static/codefixes/resetPasswordBjoernOwaspChallenge_3.yml",
+      "data/static/codefixes/resetPasswordJimChallenge.info.yml",
+      "data/static/codefixes/resetPasswordJimChallenge_1.yml",
+      "data/static/codefixes/resetPasswordJimChallenge_2.yml",
+      "data/static/codefixes/resetPasswordJimChallenge_3_correct.yml",
+      "data/static/codefixes/resetPasswordMortyChallenge.info.yml",
+      "data/static/codefixes/resetPasswordMortyChallenge_1.ts",
+      "data/static/codefixes/resetPasswordMortyChallenge_2.ts",
+      "data/static/codefixes/resetPasswordMortyChallenge_3.ts",
+      "data/static/codefixes/resetPasswordMortyChallenge_4_correct.ts",
+      "data/static/codefixes/resetPasswordUvoginChallenge.info.yml",
+      "data/static/codefixes/resetPasswordUvoginChallenge_1.yml",
+      "data/static/codefixes/resetPasswordUvoginChallenge_2.yml",
+      "data/static/codefixes/resetPasswordUvoginChallenge_3_correct.yml",
+      "data/static/codefixes/restfulXssChallenge.info.yml",
+      "data/static/codefixes/restfulXssChallenge_1_correct.ts",
+      "data/static/codefixes/restfulXssChallenge_2.ts",
+      "data/static/codefixes/restfulXssChallenge_3.ts",
+      "data/static/codefixes/restfulXssChallenge_4.ts",
+      "data/static/codefixes/scoreBoardChallenge.info.yml",
+      "data/static/codefixes/scoreBoardChallenge_1_correct.ts",
+      "data/static/codefixes/scoreBoardChallenge_2.ts",
+      "data/static/codefixes/scoreBoardChallenge_3.ts",
+      "data/static/codefixes/tokenSaleChallenge.info.yml",
+      "data/static/codefixes/tokenSaleChallenge_1.ts",
+      "data/static/codefixes/tokenSaleChallenge_2.ts",
+      "data/static/codefixes/tokenSaleChallenge_3_correct.ts",
+      "data/static/codefixes/unionSqlInjectionChallenge.info.yml",
+      "data/static/codefixes/unionSqlInjectionChallenge_1.ts",
+      "data/static/codefixes/unionSqlInjectionChallenge_2_correct.ts",
+      "data/static/codefixes/unionSqlInjectionChallenge_3.ts",
+      "data/static/codefixes/xssBonusChallenge.info.yml",
+      "data/static/codefixes/xssBonusChallenge_1_correct.ts",
+      "data/static/codefixes/xssBonusChallenge_2.ts",
+      "data/static/codefixes/xssBonusChallenge_3.ts",
+      "data/static/codefixes/xssBonusChallenge_4.ts",
+      "data/static/deliveries.yml",
+      "data/static/i18n/ar_SA.json",
+      "data/static/i18n/az_AZ.json",
+      "data/static/i18n/bg_BG.json",
+      "data/static/i18n/ca_ES.json",
+      "data/static/i18n/cs_CZ.json",
+      "data/static/i18n/da_DK.json",
+      "data/static/i18n/de_CH.json",
+      "data/static/i18n/de_DE.json",
+      "data/static/i18n/el_GR.json",
+      "data/static/i18n/en.json",
+      "data/static/i18n/es_ES.json",
+      "data/static/i18n/et_EE.json",
+      "data/static/i18n/fi_FI.json",
+      "data/static/i18n/fr_FR.json",
+      "data/static/i18n/he_IL.json",
+      "data/static/i18n/hi_IN.json",
+      "data/static/i18n/hu_HU.json",
+      "data/static/i18n/id_ID.json",
+      "data/static/i18n/it_IT.json",
+      "data/static/i18n/ja_JP.json",
+      "data/static/i18n/ka_GE.json",
+      "data/static/i18n/ko_KR.json",
+      "data/static/i18n/lv_LV.json",
+      "data/static/i18n/my_MM.json",
+      "data/static/i18n/nl_NL.json",
+      "data/static/i18n/no_NO.json",
+      "data/static/i18n/pl_PL.json",
+      "data/static/i18n/pt_BR.json",
+      "data/static/i18n/pt_PT.json",
+      "data/static/i18n/ro_RO.json",
+      "data/static/i18n/ru_RU.json",
+      "data/static/i18n/si_LK.json",
+      "data/static/i18n/sv_SE.json",
+      "data/static/i18n/th_TH.json",
+      "data/static/i18n/tlh_AA.json",
+      "data/static/i18n/tr_TR.json",
+      "data/static/i18n/uk_UA.json",
+      "data/static/i18n/zh_CN.json",
+      "data/static/i18n/zh_HK.json",
+      "data/static/i18n/zh_TW.json",
+      "data/static/legal.md",
+      "data/static/locales.json",
+      "data/static/owasp_promo.vtt",
+      "data/static/securityQuestions.yml",
+      "data/static/users.yml",
+      "data/types.ts",
+      "docker-compose.test.yml",
+      "encryptionkeys/jwt.pub",
+      "encryptionkeys/premium.key",
+      "frontend/.browserslistrc",
+      "frontend/.editorconfig",
+      "frontend/.eslintrc.js",
+      "frontend/.gitignore",
+      "frontend/.npmrc",
+      "frontend/.stylelintrc.js",
+      "frontend/angular.json",
+      "frontend/package.json",
+      "frontend/src/app/Models/backup.model.ts",
+      "frontend/src/app/Models/challenge.model.ts",
+      "frontend/src/app/Models/deliveryMethod.model.ts",
+      "frontend/src/app/Models/product.model.ts",
+      "frontend/src/app/Models/review.model.ts",
+      "frontend/src/app/Models/securityQuestion.model.ts",
+      "frontend/src/app/Services/address.service.spec.ts",
+      "frontend/src/app/Services/address.service.ts",
+      "frontend/src/app/Services/administration.service.spec.ts",
+      "frontend/src/app/Services/administration.service.ts",
+      "frontend/src/app/Services/basket.service.spec.ts",
+      "frontend/src/app/Services/basket.service.ts",
+      "frontend/src/app/Services/captcha.service.spec.ts",
+      "frontend/src/app/Services/captcha.service.ts",
+      "frontend/src/app/Services/challenge.service.spec.ts",
+      "frontend/src/app/Services/challenge.service.ts",
+      "frontend/src/app/Services/chatbot.service.spec.ts",
+      "frontend/src/app/Services/chatbot.service.ts",
+      "frontend/src/app/Services/code-fixes.service.spec.ts",
+      "frontend/src/app/Services/code-fixes.service.ts",
+      "frontend/src/app/Services/code-snippet.service.spec.ts",
+      "frontend/src/app/Services/code-snippet.service.ts",
+      "frontend/src/app/Services/complaint.service.spec.ts",
+      "frontend/src/app/Services/complaint.service.ts",
+      "frontend/src/app/Services/configuration.service.spec.ts",
+      "frontend/src/app/Services/configuration.service.ts",
+      "frontend/src/app/Services/country-mapping.service.spec.ts",
+      "frontend/src/app/Services/country-mapping.service.ts",
+      "frontend/src/app/Services/data-subject.service.spec.ts",
+      "frontend/src/app/Services/data-subject.service.ts",
+      "frontend/src/app/Services/delivery.service.spec.ts",
+      "frontend/src/app/Services/delivery.service.ts",
+      "frontend/src/app/Services/feedback.service.spec.ts",
+      "frontend/src/app/Services/feedback.service.ts",
+      "frontend/src/app/Services/form-submit.service.spec.ts",
+      "frontend/src/app/Services/form-submit.service.ts",
+      "frontend/src/app/Services/image-captcha.service.spec.ts",
+      "frontend/src/app/Services/image-captcha.service.ts",
+      "frontend/src/app/Services/languages.service.spec.ts",
+      "frontend/src/app/Services/languages.service.ts",
+      "frontend/src/app/Services/local-backup.service.spec.ts",
+      "frontend/src/app/Services/local-backup.service.ts",
+      "frontend/src/app/Services/order-history.service.spec.ts",
+      "frontend/src/app/Services/order-history.service.ts",
+      "frontend/src/app/Services/payment.service.spec.ts",
+      "frontend/src/app/Services/payment.service.ts",
+      "frontend/src/app/Services/photo-wall.service.spec.ts",
+      "frontend/src/app/Services/photo-wall.service.ts",
+      "frontend/src/app/Services/product-review.service.spec.ts",
+      "frontend/src/app/Services/product-review.service.ts",
+      "frontend/src/app/Services/product.service.spec.ts",
+      "frontend/src/app/Services/product.service.ts",
+      "frontend/src/app/Services/quantity.service.spec.ts",
+      "frontend/src/app/Services/quantity.service.ts",
+      "frontend/src/app/Services/recycle.service.spec.ts",
+      "frontend/src/app/Services/recycle.service.ts",
+      "frontend/src/app/Services/request.interceptor.ts",
+      "frontend/src/app/Services/security-answer.service.spec.ts",
+      "frontend/src/app/Services/security-answer.service.ts",
+      "frontend/src/app/Services/security-question.service.spec.ts",
+      "frontend/src/app/Services/security-question.service.ts",
+      "frontend/src/app/Services/snack-bar-helper.service.spec.ts",
+      "frontend/src/app/Services/snack-bar-helper.service.ts",
+      "frontend/src/app/Services/socket-io.service.spec.ts",
+      "frontend/src/app/Services/socket-io.service.ts",
+      "frontend/src/app/Services/track-order.service.spec.ts",
+      "frontend/src/app/Services/track-order.service.ts",
+      "frontend/src/app/Services/two-factor-auth-service.spec.ts",
+      "frontend/src/app/Services/two-factor-auth-service.ts",
+      "frontend/src/app/Services/user.service.spec.ts",
+      "frontend/src/app/Services/user.service.ts",
+      "frontend/src/app/Services/vuln-lines.service.spec.ts",
+      "frontend/src/app/Services/vuln-lines.service.ts",
+      "frontend/src/app/Services/wallet.service.spec.ts",
+      "frontend/src/app/Services/wallet.service.ts",
+      "frontend/src/app/Services/window-ref.service.spec.ts",
+      "frontend/src/app/Services/window-ref.service.ts",
+      "frontend/src/app/about/about.component.html",
+      "frontend/src/app/about/about.component.scss",
+      "frontend/src/app/about/about.component.spec.ts",
+      "frontend/src/app/about/about.component.ts",
+      "frontend/src/app/accounting/accounting.component.html",
+      "frontend/src/app/accounting/accounting.component.scss",
+      "frontend/src/app/accounting/accounting.component.spec.ts",
+      "frontend/src/app/accounting/accounting.component.ts",
+      "frontend/src/app/address/address.component.html",
+      "frontend/src/app/address/address.component.scss",
+      "frontend/src/app/address/address.component.spec.ts",
+      "frontend/src/app/address/address.component.ts",
+      "frontend/src/app/address-create/address-create.component.html",
+      "frontend/src/app/address-create/address-create.component.scss",
+      "frontend/src/app/address-create/address-create.component.spec.ts",
+      "frontend/src/app/address-create/address-create.component.ts",
+      "frontend/src/app/address-select/address-select.component.html",
+      "frontend/src/app/address-select/address-select.component.scss",
+      "frontend/src/app/address-select/address-select.component.spec.ts",
+      "frontend/src/app/address-select/address-select.component.ts",
+      "frontend/src/app/administration/administration.component.html",
+      "frontend/src/app/administration/administration.component.scss",
+      "frontend/src/app/administration/administration.component.spec.ts",
+      "frontend/src/app/administration/administration.component.ts",
+      "frontend/src/app/app.component.html",
+      "frontend/src/app/app.component.scss",
+      "frontend/src/app/app.component.spec.ts",
+      "frontend/src/app/app.component.ts",
+      "frontend/src/app/app.guard.spec.ts",
+      "frontend/src/app/app.guard.ts",
+      "frontend/src/app/app.module.ts",
+      "frontend/src/app/app.routing.ts",
+      "frontend/src/app/basket/basket.component.html",
+      "frontend/src/app/basket/basket.component.scss",
+      "frontend/src/app/basket/basket.component.spec.ts",
+      "frontend/src/app/basket/basket.component.ts",
+      "frontend/src/app/challenge-solved-notification/challenge-solved-notification.component.html",
+      "frontend/src/app/challenge-solved-notification/challenge-solved-notification.component.scss",
+      "frontend/src/app/challenge-solved-notification/challenge-solved-notification.component.spec.ts",
+      "frontend/src/app/challenge-solved-notification/challenge-solved-notification.component.ts",
+      "frontend/src/app/challenge-status-badge/challenge-status-badge.component.html",
+      "frontend/src/app/challenge-status-badge/challenge-status-badge.component.scss",
+      "frontend/src/app/challenge-status-badge/challenge-status-badge.component.spec.ts",
+      "frontend/src/app/challenge-status-badge/challenge-status-badge.component.ts",
+      "frontend/src/app/change-password/change-password.component.html",
+      "frontend/src/app/change-password/change-password.component.scss",
+      "frontend/src/app/change-password/change-password.component.spec.ts",
+      "frontend/src/app/change-password/change-password.component.ts",
+      "frontend/src/app/chatbot/chatbot.component.html",
+      "frontend/src/app/chatbot/chatbot.component.scss",
+      "frontend/src/app/chatbot/chatbot.component.spec.ts",
+      "frontend/src/app/chatbot/chatbot.component.ts",
+      "frontend/src/app/code-area/code-area.component.html",
+      "frontend/src/app/code-area/code-area.component.scss",
+      "frontend/src/app/code-area/code-area.component.spec.ts",
+      "frontend/src/app/code-area/code-area.component.ts",
+      "frontend/src/app/code-fixes/code-fixes.component.html",
+      "frontend/src/app/code-fixes/code-fixes.component.scss",
+      "frontend/src/app/code-fixes/code-fixes.component.spec.ts",
+      "frontend/src/app/code-fixes/code-fixes.component.ts",
+      "frontend/src/app/code-snippet/code-snippet.component.html",
+      "frontend/src/app/code-snippet/code-snippet.component.scss",
+      "frontend/src/app/code-snippet/code-snippet.component.spec.ts",
+      "frontend/src/app/code-snippet/code-snippet.component.ts",
+      "frontend/src/app/complaint/complaint.component.html",
+      "frontend/src/app/complaint/complaint.component.scss",
+      "frontend/src/app/complaint/complaint.component.spec.ts",
+      "frontend/src/app/complaint/complaint.component.ts",
+      "frontend/src/app/contact/contact.component.html",
+      "frontend/src/app/contact/contact.component.scss",
+      "frontend/src/app/contact/contact.component.spec.ts",
+      "frontend/src/app/contact/contact.component.ts",
+      "frontend/src/app/data-export/data-export.component.html",
+      "frontend/src/app/data-export/data-export.component.scss",
+      "frontend/src/app/data-export/data-export.component.spec.ts",
+      "frontend/src/app/data-export/data-export.component.ts",
+      "frontend/src/app/delivery-method/delivery-method.component.html",
+      "frontend/src/app/delivery-method/delivery-method.component.scss",
+      "frontend/src/app/delivery-method/delivery-method.component.spec.ts",
+      "frontend/src/app/delivery-method/delivery-method.component.ts",
+      "frontend/src/app/deluxe-user/deluxe-user.component.html",
+      "frontend/src/app/deluxe-user/deluxe-user.component.scss",
+      "frontend/src/app/deluxe-user/deluxe-user.component.spec.ts",
+      "frontend/src/app/deluxe-user/deluxe-user.component.ts",
+      "frontend/src/app/error-page/error-page.component.html",
+      "frontend/src/app/error-page/error-page.component.scss",
+      "frontend/src/app/error-page/error-page.component.spec.ts",
+      "frontend/src/app/error-page/error-page.component.ts",
+      "frontend/src/app/feedback-details/feedback-details.component.html",
+      "frontend/src/app/feedback-details/feedback-details.component.scss",
+      "frontend/src/app/feedback-details/feedback-details.component.spec.ts",
+      "frontend/src/app/feedback-details/feedback-details.component.ts",
+      "frontend/src/app/forgot-password/forgot-password.component.html",
+      "frontend/src/app/forgot-password/forgot-password.component.scss",
+      "frontend/src/app/forgot-password/forgot-password.component.spec.ts",
+      "frontend/src/app/forgot-password/forgot-password.component.ts",
+      "frontend/src/app/last-login-ip/last-login-ip.component.html",
+      "frontend/src/app/last-login-ip/last-login-ip.component.scss",
+      "frontend/src/app/last-login-ip/last-login-ip.component.spec.ts",
+      "frontend/src/app/last-login-ip/last-login-ip.component.ts",
+      "frontend/src/app/login/login.component.html",
+      "frontend/src/app/login/login.component.scss",
+      "frontend/src/app/login/login.component.spec.ts",
+      "frontend/src/app/login/login.component.ts",
+      "frontend/src/app/navbar/navbar.component.html",
+      "frontend/src/app/navbar/navbar.component.scss",
+      "frontend/src/app/navbar/navbar.component.spec.ts",
+      "frontend/src/app/navbar/navbar.component.ts",
+      "frontend/src/app/oauth/oauth.component.html",
+      "frontend/src/app/oauth/oauth.component.scss",
+      "frontend/src/app/oauth/oauth.component.spec.ts",
+      "frontend/src/app/oauth/oauth.component.ts",
+      "frontend/src/app/order-completion/order-completion.component.html",
+      "frontend/src/app/order-completion/order-completion.component.scss",
+      "frontend/src/app/order-completion/order-completion.component.spec.ts",
+      "frontend/src/app/order-completion/order-completion.component.ts",
+      "frontend/src/app/order-history/order-history.component.html",
+      "frontend/src/app/order-history/order-history.component.scss",
+      "frontend/src/app/order-history/order-history.component.spec.ts",
+      "frontend/src/app/order-history/order-history.component.ts",
+      "frontend/src/app/order-summary/order-summary.component.html",
+      "frontend/src/app/order-summary/order-summary.component.scss",
+      "frontend/src/app/order-summary/order-summary.component.spec.ts",
+      "frontend/src/app/order-summary/order-summary.component.ts",
+      "frontend/src/app/payment/payment.component.html",
+      "frontend/src/app/payment/payment.component.scss",
+      "frontend/src/app/payment/payment.component.spec.ts",
+      "frontend/src/app/payment/payment.component.ts",
+      "frontend/src/app/payment-method/payment-method.component.html",
+      "frontend/src/app/payment-method/payment-method.component.scss",
+      "frontend/src/app/payment-method/payment-method.component.spec.ts",
+      "frontend/src/app/payment-method/payment-method.component.ts",
+      "frontend/src/app/photo-wall/mime-type.validator.ts",
+      "frontend/src/app/photo-wall/photo-wall.component.html",
+      "frontend/src/app/photo-wall/photo-wall.component.scss",
+      "frontend/src/app/photo-wall/photo-wall.component.spec.ts",
+      "frontend/src/app/photo-wall/photo-wall.component.ts",
+      "frontend/src/app/privacy-policy/privacy-policy.component.html",
+      "frontend/src/app/privacy-policy/privacy-policy.component.scss",
+      "frontend/src/app/privacy-policy/privacy-policy.component.spec.ts",
+      "frontend/src/app/privacy-policy/privacy-policy.component.ts",
+      "frontend/src/app/privacy-security/privacy-security.component.html",
+      "frontend/src/app/privacy-security/privacy-security.component.scss",
+      "frontend/src/app/privacy-security/privacy-security.component.spec.ts",
+      "frontend/src/app/privacy-security/privacy-security.component.ts",
+      "frontend/src/app/product-details/product-details.component.html",
+      "frontend/src/app/product-details/product-details.component.scss",
+      "frontend/src/app/product-details/product-details.component.spec.ts",
+      "frontend/src/app/product-details/product-details.component.ts",
+      "frontend/src/app/product-review-edit/product-review-edit.component.html",
+      "frontend/src/app/product-review-edit/product-review-edit.component.scss",
+      "frontend/src/app/product-review-edit/product-review-edit.component.spec.ts",
+      "frontend/src/app/product-review-edit/product-review-edit.component.ts",
+      "frontend/src/app/purchase-basket/purchase-basket.component.html",
+      "frontend/src/app/purchase-basket/purchase-basket.component.scss",
+      "frontend/src/app/purchase-basket/purchase-basket.component.spec.ts",
+      "frontend/src/app/purchase-basket/purchase-basket.component.ts",
+      "frontend/src/app/qr-code/qr-code.component.html",
+      "frontend/src/app/qr-code/qr-code.component.scss",
+      "frontend/src/app/qr-code/qr-code.component.spec.ts",
+      "frontend/src/app/qr-code/qr-code.component.ts",
+      "frontend/src/app/recycle/recycle.component.html",
+      "frontend/src/app/recycle/recycle.component.scss",
+      "frontend/src/app/recycle/recycle.component.spec.ts",
+      "frontend/src/app/recycle/recycle.component.ts",
+      "frontend/src/app/register/register.component.html",
+      "frontend/src/app/register/register.component.scss",
+      "frontend/src/app/register/register.component.spec.ts",
+      "frontend/src/app/register/register.component.ts",
+      "frontend/src/app/roles.ts",
+      "frontend/src/app/saved-address/saved-address.component.html",
+      "frontend/src/app/saved-address/saved-address.component.scss",
+      "frontend/src/app/saved-address/saved-address.component.spec.ts",
+      "frontend/src/app/saved-address/saved-address.component.ts",
+      "frontend/src/app/saved-payment-methods/saved-payment-methods.component.html",
+      "frontend/src/app/saved-payment-methods/saved-payment-methods.component.scss",
+      "frontend/src/app/saved-payment-methods/saved-payment-methods.component.spec.ts",
+      "frontend/src/app/saved-payment-methods/saved-payment-methods.component.ts",
+      "frontend/src/app/score-board/score-board.component.html",
+      "frontend/src/app/score-board/score-board.component.scss",
+      "frontend/src/app/score-board/score-board.component.spec.ts",
+      "frontend/src/app/score-board/score-board.component.ts",
+      "frontend/src/app/search-result/search-result.component.html",
+      "frontend/src/app/search-result/search-result.component.scss",
+      "frontend/src/app/search-result/search-result.component.spec.ts",
+      "frontend/src/app/search-result/search-result.component.ts",
+      "frontend/src/app/server-started-notification/server-started-notification.component.html",
+      "frontend/src/app/server-started-notification/server-started-notification.component.scss",
+      "frontend/src/app/server-started-notification/server-started-notification.component.spec.ts",
+      "frontend/src/app/server-started-notification/server-started-notification.component.ts",
+      "frontend/src/app/sidenav/sidenav.component.html",
+      "frontend/src/app/sidenav/sidenav.component.scss",
+      "frontend/src/app/sidenav/sidenav.component.spec.ts",
+      "frontend/src/app/sidenav/sidenav.component.ts",
+      "frontend/src/app/token-sale/token-sale.component.html",
+      "frontend/src/app/token-sale/token-sale.component.scss",
+      "frontend/src/app/token-sale/token-sale.component.spec.ts",
+      "frontend/src/app/token-sale/token-sale.component.ts",
+      "frontend/src/app/track-result/track-result.component.html",
+      "frontend/src/app/track-result/track-result.component.scss",
+      "frontend/src/app/track-result/track-result.component.spec.ts",
+      "frontend/src/app/track-result/track-result.component.ts",
+      "frontend/src/app/two-factor-auth/two-factor-auth.component.html",
+      "frontend/src/app/two-factor-auth/two-factor-auth.component.scss",
+      "frontend/src/app/two-factor-auth/two-factor-auth.component.spec.ts",
+      "frontend/src/app/two-factor-auth/two-factor-auth.component.ts",
+      "frontend/src/app/two-factor-auth-enter/two-factor-auth-enter.component.html",
+      "frontend/src/app/two-factor-auth-enter/two-factor-auth-enter.component.scss",
+      "frontend/src/app/two-factor-auth-enter/two-factor-auth-enter.component.spec.ts",
+      "frontend/src/app/two-factor-auth-enter/two-factor-auth-enter.component.ts",
+      "frontend/src/app/user-details/user-details.component.html",
+      "frontend/src/app/user-details/user-details.component.scss",
+      "frontend/src/app/user-details/user-details.component.spec.ts",
+      "frontend/src/app/user-details/user-details.component.ts",
+      "frontend/src/app/wallet/wallet.component.html",
+      "frontend/src/app/wallet/wallet.component.scss",
+      "frontend/src/app/wallet/wallet.component.spec.ts",
+      "frontend/src/app/wallet/wallet.component.ts",
+      "frontend/src/app/welcome/welcome.component.html",
+      "frontend/src/app/welcome/welcome.component.scss",
+      "frontend/src/app/welcome/welcome.component.spec.ts",
+      "frontend/src/app/welcome/welcome.component.ts",
+      "frontend/src/app/welcome-banner/welcome-banner.component.html",
+      "frontend/src/app/welcome-banner/welcome-banner.component.scss",
+      "frontend/src/app/welcome-banner/welcome-banner.component.spec.ts",
+      "frontend/src/app/welcome-banner/welcome-banner.component.ts",
+      "frontend/src/assets/i18n/ar_SA.json",
+      "frontend/src/assets/i18n/az_AZ.json",
+      "frontend/src/assets/i18n/bg_BG.json",
+      "frontend/src/assets/i18n/ca_ES.json",
+      "frontend/src/assets/i18n/cs_CZ.json",
+      "frontend/src/assets/i18n/da_DK.json",
+      "frontend/src/assets/i18n/de_CH.json",
+      "frontend/src/assets/i18n/de_DE.json",
+      "frontend/src/assets/i18n/el_GR.json",
+      "frontend/src/assets/i18n/en.json",
+      "frontend/src/assets/i18n/es_ES.json",
+      "frontend/src/assets/i18n/et_EE.json",
+      "frontend/src/assets/i18n/fi_FI.json",
+      "frontend/src/assets/i18n/fr_FR.json",
+      "frontend/src/assets/i18n/he_IL.json",
+      "frontend/src/assets/i18n/hi_IN.json",
+      "frontend/src/assets/i18n/hu_HU.json",
+      "frontend/src/assets/i18n/id_ID.json",
+      "frontend/src/assets/i18n/it_IT.json",
+      "frontend/src/assets/i18n/ja_JP.json",
+      "frontend/src/assets/i18n/ka_GE.json",
+      "frontend/src/assets/i18n/ko_KR.json",
+      "frontend/src/assets/i18n/lv_LV.json",
+      "frontend/src/assets/i18n/my_MM.json",
+      "frontend/src/assets/i18n/nl_NL.json",
+      "frontend/src/assets/i18n/no_NO.json",
+      "frontend/src/assets/i18n/pl_PL.json",
+      "frontend/src/assets/i18n/pt_BR.json",
+      "frontend/src/assets/i18n/pt_PT.json",
+      "frontend/src/assets/i18n/ro_RO.json",
+      "frontend/src/assets/i18n/ru_RU.json",
+      "frontend/src/assets/i18n/si_LK.json",
+      "frontend/src/assets/i18n/sv_SE.json",
+      "frontend/src/assets/i18n/th_TH.json",
+      "frontend/src/assets/i18n/tlh_AA.json",
+      "frontend/src/assets/i18n/tr_TR.json",
+      "frontend/src/assets/i18n/uk_UA.json",
+      "frontend/src/assets/i18n/zh_CN.json",
+      "frontend/src/assets/i18n/zh_HK.json",
+      "frontend/src/assets/i18n/zh_TW.json",
+      "frontend/src/assets/private/CopyShader.js",
+      "frontend/src/assets/private/EffectComposer.js",
+      "frontend/src/assets/private/JuiceShop_Wallpaper_1920x1080_VR.jpg",
+      "frontend/src/assets/private/MaskPass.js",
+      "frontend/src/assets/private/OrbitControls.js",
+      "frontend/src/assets/private/RenderPass.js",
+      "frontend/src/assets/private/ShaderPass.js",
+      "frontend/src/assets/private/earthspec4k.jpg",
+      "frontend/src/assets/private/orangemap2k.jpg",
+      "frontend/src/assets/private/three.js",
+      "frontend/src/assets/private/threejs-demo.html",
+      "frontend/src/assets/public/css/dataErasure.css",
+      "frontend/src/assets/public/css/userProfile.css",
+      "frontend/src/assets/public/favicon_ctf.ico",
+      "frontend/src/assets/public/favicon_js.ico",
+      "frontend/src/assets/public/images/JuiceShopCTF_Logo.png",
+      "frontend/src/assets/public/images/JuiceShopCTF_Logo_400px.png",
+      "frontend/src/assets/public/images/JuiceShop_Logo.ai",
+      "frontend/src/assets/public/images/JuiceShop_Logo.png",
+      "frontend/src/assets/public/images/JuiceShop_Logo.svg",
+      "frontend/src/assets/public/images/JuiceShop_Logo_100px.png",
+      "frontend/src/assets/public/images/JuiceShop_Logo_400px.png",
+      "frontend/src/assets/public/images/JuiceShop_Logo_50px.png",
+      "frontend/src/assets/public/images/JuicyBot.png",
+      "frontend/src/assets/public/images/JuicyBot_MedicalMask.png",
+      "frontend/src/assets/public/images/JuicyChatBot.png",
+      "frontend/src/assets/public/images/Welcome_Banner.svg",
+      "frontend/src/assets/public/images/carousel/1.jpg",
+      "frontend/src/assets/public/images/carousel/2.jpg",
+      "frontend/src/assets/public/images/carousel/3.jpg",
+      "frontend/src/assets/public/images/carousel/4.jpg",
+      "frontend/src/assets/public/images/carousel/5.png",
+      "frontend/src/assets/public/images/carousel/6.jpg",
+      "frontend/src/assets/public/images/carousel/7.jpg",
+      "frontend/src/assets/public/images/deluxe/blankBoxes.png",
+      "frontend/src/assets/public/images/juicyEvilWasp.png",
+      "frontend/src/assets/public/images/padding/19px.png",
+      "frontend/src/assets/public/images/padding/1px.png",
+      "frontend/src/assets/public/images/padding/56px.png",
+      "frontend/src/assets/public/images/padding/81px.png",
+      "frontend/src/assets/public/images/products/3d_keychain.jpg",
+      "frontend/src/assets/public/images/products/JuiceShop.stl",
+      "frontend/src/assets/public/images/products/apple_juice.jpg",
+      "frontend/src/assets/public/images/products/apple_pressings.jpg",
+      "frontend/src/assets/public/images/products/artwork.jpg",
+      "frontend/src/assets/public/images/products/artwork2.jpg",
+      "frontend/src/assets/public/images/products/banana_juice.jpg",
+      "frontend/src/assets/public/images/products/card_alpha.jpg",
+      "frontend/src/assets/public/images/products/carrot_juice.jpeg",
+      "frontend/src/assets/public/images/products/ccg_common.png",
+      "frontend/src/assets/public/images/products/ccg_foil.png",
+      "frontend/src/assets/public/images/products/coaster.jpg",
+      "frontend/src/assets/public/images/products/cover_small.jpg",
+      "frontend/src/assets/public/images/products/eggfruit_juice.jpg",
+      "frontend/src/assets/public/images/products/fan_facemask.jpg",
+      "frontend/src/assets/public/images/products/fan_girlie.jpg",
+      "frontend/src/assets/public/images/products/fan_hoodie.jpg",
+      "frontend/src/assets/public/images/products/fan_mug.jpg",
+      "frontend/src/assets/public/images/products/fan_shirt.jpg",
+      "frontend/src/assets/public/images/products/fruit_press.jpg",
+      "frontend/src/assets/public/images/products/green_smoothie.jpg",
+      "frontend/src/assets/public/images/products/holo_sticker.png",
+      "frontend/src/assets/public/images/products/iron-on.jpg",
+      "frontend/src/assets/public/images/products/lemon_juice.jpg",
+      "frontend/src/assets/public/images/products/magnets.jpg",
+      "frontend/src/assets/public/images/products/melon_bike.jpeg",
+      "frontend/src/assets/public/images/products/no-results.png",
+      "frontend/src/assets/public/images/products/orange_juice.jpg",
+      "frontend/src/assets/public/images/products/permafrost.jpg",
+      "frontend/src/assets/public/images/products/quince.jpg",
+      "frontend/src/assets/public/images/products/raspberry_juice.jpg",
+      "frontend/src/assets/public/images/products/snakes_ladders.jpg",
+      "frontend/src/assets/public/images/products/snakes_ladders_m.jpg",
+      "frontend/src/assets/public/images/products/squareBox1-40x40x40.stl",
+      "frontend/src/assets/public/images/products/sticker.png",
+      "frontend/src/assets/public/images/products/sticker_page.jpg",
+      "frontend/src/assets/public/images/products/sticker_single.jpg",
+      "frontend/src/assets/public/images/products/stickersheet_se.png",
+      "frontend/src/assets/public/images/products/strawberry_juice.jpeg",
+      "frontend/src/assets/public/images/products/tattoo.jpg",
+      "frontend/src/assets/public/images/products/thingie1.jpg",
+      "frontend/src/assets/public/images/products/undefined.png",
+      "frontend/src/assets/public/images/products/velcro-patch.jpg",
+      "frontend/src/assets/public/images/products/waspy.png",
+      "frontend/src/assets/public/images/products/woodruff_syrup.jpg",
+      "frontend/src/assets/public/images/uploads/12.png",
+      "frontend/src/assets/public/images/uploads/13.jpg",
+      "frontend/src/assets/public/images/uploads/20.jpg",
+      "frontend/src/assets/public/images/uploads/default.svg",
+      "frontend/src/assets/public/images/uploads/defaultAdmin.png",
+      "frontend/src/assets/public/images/uploads/favorite-hiking-place.png",
+      "frontend/src/assets/public/images/uploads/magn(et)ificent!-1571814229653.jpg",
+      "frontend/src/confetti/index.ts",
+      "frontend/src/environments/environment.prod.ts",
+      "frontend/src/environments/environment.ts",
+      "frontend/src/hacking-instructor/challenges/bonusPayload.ts",
+      "frontend/src/hacking-instructor/challenges/codingChallenges.ts",
+      "frontend/src/hacking-instructor/challenges/domXss.ts",
+      "frontend/src/hacking-instructor/challenges/forgedFeedback.ts",
+      "frontend/src/hacking-instructor/challenges/loginAdmin.ts",
+      "frontend/src/hacking-instructor/challenges/loginBender.ts",
+      "frontend/src/hacking-instructor/challenges/loginJim.ts",
+      "frontend/src/hacking-instructor/challenges/passwordStrength.ts",
+      "frontend/src/hacking-instructor/challenges/privacyPolicy.ts",
+      "frontend/src/hacking-instructor/challenges/scoreBoard.ts",
+      "frontend/src/hacking-instructor/challenges/viewBasket.ts",
+      "frontend/src/hacking-instructor/helpers/helpers.ts",
+      "frontend/src/hacking-instructor/index.ts",
+      "frontend/src/hacking-instructor/tutorialUnavailable.ts",
+      "frontend/src/index.html",
+      "frontend/src/karma.conf.js",
+      "frontend/src/main.ts",
+      "frontend/src/polyfills.ts",
+      "frontend/src/styles.scss",
+      "frontend/src/test.ts",
+      "frontend/src/theme.scss",
+      "frontend/src/tsconfig.app.json",
+      "frontend/src/tsconfig.spec.json",
+      "frontend/tsconfig.base.json",
+      "frontend/tsconfig.json",
+      "ftp/acquisitions.md",
+      "ftp/announcement_encrypted.md",
+      "ftp/coupons_2013.md.bak",
+      "ftp/eastere.gg",
+      "ftp/encrypt.pyc",
+      "ftp/incident-support.kdbx",
+      "ftp/package.json.bak",
+      "ftp/quarantine/juicy_malware_linux_amd_64.url",
+      "ftp/quarantine/juicy_malware_linux_arm_64.url",
+      "ftp/quarantine/juicy_malware_macos_64.url",
+      "ftp/quarantine/juicy_malware_windows_64.exe.url",
+      "ftp/suspicious_errors.yml",
+      "i18n/.gitkeep",
+      "lib/accuracy.ts",
+      "lib/antiCheat.ts",
+      "lib/botUtils.ts",
+      "lib/challengeUtils.ts",
+      "lib/insecurity.ts",
+      "lib/logger.ts",
+      "lib/noUpdate.ts",
+      "lib/startup/cleanupFtpFolder.ts",
+      "lib/startup/customizeApplication.ts",
+      "lib/startup/customizeEasterEgg.ts",
+      "lib/startup/registerWebsocketEvents.ts",
+      "lib/startup/restoreOverwrittenFilesWithOriginals.ts",
+      "lib/startup/validateChatBot.ts",
+      "lib/startup/validateConfig.ts",
+      "lib/startup/validateDependencies.ts",
+      "lib/startup/validatePreconditions.ts",
+      "lib/utils.ts",
+      "lib/webhook.ts",
+      "models/address.ts",
+      "models/basket.ts",
+      "models/basketitem.ts",
+      "models/captcha.ts",
+      "models/card.ts",
+      "models/challenge.ts",
+      "models/complaint.ts",
+      "models/delivery.ts",
+      "models/feedback.ts",
+      "models/imageCaptcha.ts",
+      "models/index.ts",
+      "models/memory.ts",
+      "models/privacyRequests.ts",
+      "models/product.ts",
+      "models/quantity.ts",
+      "models/recycle.ts",
+      "models/relations.ts",
+      "models/securityAnswer.ts",
+      "models/securityQuestion.ts",
+      "models/user.ts",
+      "models/wallet.ts",
+      "monitoring/grafana-dashboard.json",
+      "package.json",
+      "routes/2fa.ts",
+      "routes/address.ts",
+      "routes/angular.ts",
+      "routes/appConfiguration.ts",
+      "routes/appVersion.ts",
+      "routes/authenticatedUsers.ts",
+      "routes/b2bOrder.ts",
+      "routes/basket.ts",
+      "routes/basketItems.ts",
+      "routes/captcha.ts",
+      "routes/changePassword.ts",
+      "routes/chatbot.ts",
+      "routes/continueCode.ts",
+      "routes/countryMapping.ts",
+      "routes/coupon.ts",
+      "routes/createProductReviews.ts",
+      "routes/currentUser.ts",
+      "routes/dataErasure.ts",
+      "routes/dataExport.ts",
+      "routes/delivery.ts",
+      "routes/deluxe.ts",
+      "routes/easterEgg.ts",
+      "routes/fileServer.ts",
+      "routes/fileUpload.ts",
+      "routes/imageCaptcha.ts",
+      "routes/keyServer.ts",
+      "routes/languages.ts",
+      "routes/likeProductReviews.ts",
+      "routes/logfileServer.ts",
+      "routes/login.ts",
+      "routes/memory.ts",
+      "routes/metrics.ts",
+      "routes/order.ts",
+      "routes/orderHistory.ts",
+      "routes/payment.ts",
+      "routes/premiumReward.ts",
+      "routes/privacyPolicyProof.ts",
+      "routes/profileImageFileUpload.ts",
+      "routes/profileImageUrlUpload.ts",
+      "routes/quarantineServer.ts",
+      "routes/recycles.ts",
+      "routes/redirect.ts",
+      "routes/repeatNotification.ts",
+      "routes/resetPassword.ts",
+      "routes/restoreProgress.ts",
+      "routes/saveLoginIp.ts",
+      "routes/search.ts",
+      "routes/securityQuestion.ts",
+      "routes/showProductReviews.ts",
+      "routes/trackOrder.ts",
+      "routes/updateProductReviews.ts",
+      "routes/updateUserProfile.ts",
+      "routes/userProfile.ts",
+      "routes/verify.ts",
+      "routes/videoHandler.ts",
+      "routes/vulnCodeFixes.ts",
+      "routes/vulnCodeSnippet.ts",
+      "routes/wallet.ts",
+      "rsn/cache.json",
+      "rsn/rsn-update.ts",
+      "rsn/rsn-verbose.ts",
+      "rsn/rsn.ts",
+      "rsn/rsnUtil.ts",
+      "screenshots/git-stats.png",
+      "screenshots/screenshot01.png",
+      "screenshots/screenshot02.png",
+      "screenshots/screenshot03.png",
+      "screenshots/screenshot04.png",
+      "screenshots/screenshot05.png",
+      "screenshots/slideshow.gif",
+      "server.ts",
+      "swagger.yml",
+      "threat-model.json",
+      "tsconfig.json",
+      "uploads/complaints/.gitkeep",
+      "vagrant/Vagrantfile",
+      "vagrant/bootstrap.sh",
+      "vagrant/default.conf",
+      "views/dataErasureForm.hbs",
+      "views/dataErasureResult.hbs",
+      "views/promotionVideo.pug",
+      "views/themes/themes.js",
+      "views/userProfile.pug"
+    ]
+  },
+  "results": [
+    {
+      "check_id": "javascript.jsonwebtoken.security.jwt-hardcode.hardcoded-jwt-secret",
+      "end": {
+        "col": 61,
+        "line": 55,
+        "offset": 2654
+      },
+      "extra": {
+        "dataflow_trace": {
+          "taint_source": {
+            "content": "jwt.sign(user, privateKey, { expiresInMinutes: 60 * 5, algorithm: 'RS256' })",
+            "location": {
+              "end": {
+                "col": 112,
+                "line": 55,
+                "offset": 2705
+              },
+              "path": "lib/insecurity.ts",
+              "start": {
+                "col": 36,
+                "line": 55,
+                "offset": 2629
+              }
+            }
+          }
+        },
+        "fingerprint": "407f1f277b2b9bbecfd4a1e21acb4c2bcdd9a47a10ea5e668918227cb67f2e0f2a1140a3159493dfc76fba4469e627b5dfb28aebd87858c747ae864157d22a59_0",
+        "is_ignored": false,
+        "lines": "exports.authorize = (user = {}) => jwt.sign(user, privateKey, { expiresInMinutes: 60 * 5, algorithm: 'RS256' })",
+        "message": "A hard-coded credential was detected. It is not recommended  to store credentials in source-code, as this risks secrets being leaked and used by either an internal or external malicious adversary.  It is recommended to use environment variables to  securely provide credentials or retrieve credentials from  a secure vault or HSM (Hardware Security Module).",
+        "metadata": {
+          "asvs": {
+            "control_id": "3.5.2 Static API keys or secret",
+            "control_url": "https://github.com/OWASP/ASVS/blob/master/4.0/en/0x12-V3-Session-management.md#v35-token-based-session-management",
+            "section": "V3: Session Management Verification Requirements",
+            "version": "4"
+          },
+          "category": "security",
+          "cwe": "CWE-798: Use of Hard-coded Credentials",
+          "license": "Commons Clause License Condition v1.0[LGPL-2.1-only]",
+          "owasp": [
+            "A07:2021 - Identification and Authentication Failures",
+            "A03:2017 - Sensitive Data Exposure"
+          ],
+          "references": [
+            "https://cheatsheetseries.owasp.org/cheatsheets/Secrets_Management_CheatSheet.html"
+          ],
+          "shortlink": "https://sg.run/4xN9",
+          "source": "https://semgrep.dev/r/javascript.jsonwebtoken.security.jwt-hardcode.hardcoded-jwt-secret",
+          "technology": [
+            "jwt",
+            "javascript"
+          ]
+        },
+        "metavars": {
+          "$DATA": {
+            "abstract_content": "user",
+            "end": {
+              "col": 49,
+              "line": 55,
+              "offset": 2642
+            },
+            "start": {
+              "col": 45,
+              "line": 55,
+              "offset": 2638
+            }
+          },
+          "$JWT": {
+            "abstract_content": "jwt",
+            "end": {
+              "col": 39,
+              "line": 55,
+              "offset": 2632
+            },
+            "start": {
+              "col": 36,
+              "line": 55,
+              "offset": 2629
+            }
+          },
+          "$VALUE": {
+            "abstract_content": "user",
+            "end": {
+              "col": 49,
+              "line": 55,
+              "offset": 2642
+            },
+            "start": {
+              "col": 45,
+              "line": 55,
+              "offset": 2638
+            }
+          },
+          "$Y": {
+            "abstract_content": "-----BEGIN RSA PRIVATE KEY-----\\r\\nMIICXAIBAAKBgQDNwqLEe9wgTXCbC7+RPdDbBbeqjdbs4kOPOIGzqLpXvJXlxxW8iMz0EaM4BKUqYsIa+ndv3NAn2RxCd5ubVdJJcX43zO6Ko0TFEZx/65gY3BE0O6syCEmUP4qbSd6exou/F+WTISzbQ5FBVPVmhnYhG/kpwt/cIxK5iUn5hm+4tQIDAQABAoGBAI+8xiPoOrA+KMnG/T4jJsG6TsHQcDHvJi7o1IKC/hnIXha0atTX5AUkRRce95qSfvKFweXdJXSQ0JMGJyfuXgU6dI0TcseFRfewXAa/ssxAC+iUVR6KUMh1PE2wXLitfeI6JLvVtrBYswm2I7CtY0q8n5AGimHWVXJPLfGV7m0BAkEA+fqFt2LXbLtyg6wZyxMA/cnmt5Nt3U2dAu77MzFJvibANUNHE4HPLZxjGNXN+a6m0K6TD4kDdh5HfUYLWWRBYQJBANK3carmulBwqzcDBjsJ0YrIONBpCAsXxk8idXb8jL9aNIg15Wumm2enqqObahDHB5jnGOLmbasizvSVqypfM9UCQCQl8xIqy+YgURXzXCN+kwUgHinrutZms87Jyi+D8Br8NY0+Nlf+zHvXAomD2W5CsEK7C+8SLBr3k/TsnRWHJuECQHFE9RA2OP8WoaLPuGCyFXaxzICThSRZYluVnWkZtxsBhW2W8z1b8PvWUE7kMy7TnkzeJS2LSnaNHoyxi7IaPQUCQCwWU4U+v4lD7uYBw00Ga/xt+7+UqFPlPVdz1yyr4q24Zxaw0LgmuEvgU5dycq8N7JxjTubX0MIRR+G9fmDBBl8=\\r\\n-----END RSA PRIVATE KEY-----",
+            "end": {
+              "col": 901,
+              "line": 22,
+              "offset": 1573
+            },
+            "start": {
+              "col": 21,
+              "line": 22,
+              "offset": 693
+            }
+          }
+        },
+        "severity": "WARNING"
+      },
+      "path": "lib/insecurity.ts",
+      "start": {
+        "col": 51,
+        "line": 55,
+        "offset": 2644
+      }
+    },
+    {
+      "check_id": "javascript.browser.security.eval-detected.eval-detected",
+      "end": {
+        "col": 31,
+        "line": 258,
+        "offset": 8261
+      },
+      "extra": {
+        "fingerprint": "666797ed052b795aca6df5ea3c578a5efd2532342dea810382f2d8dd57acc0dad1a7c551c1524471ee2c77085b3b3e93993c3dec2e61a3fa31ba3a1ff6dcef95_0",
+        "is_ignored": false,
+        "lines": "      const answer = eval(val).toString()",
+        "message": "Detected the use of eval(). eval() can be dangerous if used to evaluate dynamic content. If this content can be input from outside the program, this may be a code injection vulnerability. Ensure evaluated content is not definable by external sources.",
+        "metadata": {
+          "asvs": {
+            "control_id": "5.2.4 Dynamic Code Execution Features",
+            "control_url": "https://github.com/OWASP/ASVS/blob/master/4.0/en/0x13-V5-Validation-Sanitization-Encoding.md#v52-sanitization-and-sandboxing",
+            "section": "V5 Validation, Sanitization and Encoding",
+            "version": "4"
+          },
+          "category": "security",
+          "cwe": "CWE-95: Improper Neutralization of Directives in Dynamically Evaluated Code ('Eval Injection')",
+          "license": "Commons Clause License Condition v1.0[LGPL-2.1-only]",
+          "owasp": "A1: Injection",
+          "shortlink": "https://sg.run/7ope",
+          "source": "https://semgrep.dev/r/javascript.browser.security.eval-detected.eval-detected",
+          "technology": [
+            "browser"
+          ]
+        },
+        "metavars": {},
+        "severity": "WARNING"
+      },
+      "path": "cypress/integration/e2e/contact.spec.ts",
+      "start": {
+        "col": 22,
+        "line": 258,
+        "offset": 8252
+      }
+    },
+    {
+      "check_id": "javascript.browser.security.eval-detected.eval-detected",
+      "end": {
+        "col": 36,
+        "line": 23,
+        "offset": 908
+      },
+      "extra": {
+        "fingerprint": "30e76aaa5bef79d7d1e08ea08a077f36bd5d9208a7539558327aaa05a7eeef20a0ebbda2e94cc6c562cdde67be2b6ab108bdfa8ceb90fa79d57cd6dff4c9bfee_0",
+        "is_ignored": false,
+        "lines": "    const answer = eval(expression).toString() // eslint-disable-line no-eval",
+        "message": "Detected the use of eval(). eval() can be dangerous if used to evaluate dynamic content. If this content can be input from outside the program, this may be a code injection vulnerability. Ensure evaluated content is not definable by external sources.",
+        "metadata": {
+          "asvs": {
+            "control_id": "5.2.4 Dynamic Code Execution Features",
+            "control_url": "https://github.com/OWASP/ASVS/blob/master/4.0/en/0x13-V5-Validation-Sanitization-Encoding.md#v52-sanitization-and-sandboxing",
+            "section": "V5 Validation, Sanitization and Encoding",
+            "version": "4"
+          },
+          "category": "security",
+          "cwe": "CWE-95: Improper Neutralization of Directives in Dynamically Evaluated Code ('Eval Injection')",
+          "license": "Commons Clause License Condition v1.0[LGPL-2.1-only]",
+          "owasp": "A1: Injection",
+          "shortlink": "https://sg.run/7ope",
+          "source": "https://semgrep.dev/r/javascript.browser.security.eval-detected.eval-detected",
+          "technology": [
+            "browser"
+          ]
+        },
+        "metavars": {},
+        "severity": "WARNING"
+      },
+      "path": "routes/captcha.ts",
+      "start": {
+        "col": 20,
+        "line": 23,
+        "offset": 892
+      }
+    },
+    {
+      "check_id": "javascript.browser.security.eval-detected.eval-detected",
+      "end": {
+        "col": 36,
+        "line": 36,
+        "offset": 1484
+      },
+      "extra": {
+        "fingerprint": "d15c8803dcd0a83365b887c4207db4e681c9470c390b31cbb40733b5c358b1dc30a01071b536a6c562cf1d1dff32b7529c508947d34cd8da6bad5958cb4f531a_0",
+        "is_ignored": false,
+        "lines": "              username = eval(code) // eslint-disable-line no-eval",
+        "message": "Detected the use of eval(). eval() can be dangerous if used to evaluate dynamic content. If this content can be input from outside the program, this may be a code injection vulnerability. Ensure evaluated content is not definable by external sources.",
+        "metadata": {
+          "asvs": {
+            "control_id": "5.2.4 Dynamic Code Execution Features",
+            "control_url": "https://github.com/OWASP/ASVS/blob/master/4.0/en/0x13-V5-Validation-Sanitization-Encoding.md#v52-sanitization-and-sandboxing",
+            "section": "V5 Validation, Sanitization and Encoding",
+            "version": "4"
+          },
+          "category": "security",
+          "cwe": "CWE-95: Improper Neutralization of Directives in Dynamically Evaluated Code ('Eval Injection')",
+          "license": "Commons Clause License Condition v1.0[LGPL-2.1-only]",
+          "owasp": "A1: Injection",
+          "shortlink": "https://sg.run/7ope",
+          "source": "https://semgrep.dev/r/javascript.browser.security.eval-detected.eval-detected",
+          "technology": [
+            "browser"
+          ]
+        },
+        "metavars": {},
+        "severity": "WARNING"
+      },
+      "path": "routes/userProfile.ts",
+      "start": {
+        "col": 26,
+        "line": 36,
+        "offset": 1474
+      }
+    },
+    {
+      "check_id": "javascript.browser.security.insecure-document-method.insecure-document-method",
+      "end": {
+        "col": 43,
+        "line": 107,
+        "offset": 3433
+      },
+      "extra": {
+        "fingerprint": "2c98e3f2a3876269bc65deaaaf7d15babb665e2ef3c1ad4d5f0a13c8b18a4e1e5d025a370b85781ad5d3d629000ef15e98f99eddabd1b2ef147f05f1bb0acbc1_0",
+        "is_ignored": false,
+        "lines": "  textBox.innerHTML = snarkdown(hint.text)",
+        "message": "User controlled data in methods like `innerHTML`, `outerHTML` or `document.write` is an anti-pattern that can lead to XSS vulnerabilities",
+        "metadata": {
+          "category": "security",
+          "cwe": "CWE-79: Improper Neutralization of Input During Web Page Generation ('Cross-site Scripting')",
+          "license": "Commons Clause License Condition v1.0[LGPL-2.1-only]",
+          "owasp": "A7: Cross-Site Scripting (XSS)",
+          "shortlink": "https://sg.run/LwA9",
+          "source": "https://semgrep.dev/r/javascript.browser.security.insecure-document-method.insecure-document-method",
+          "technology": [
+            "browser"
+          ]
+        },
+        "metavars": {
+          "$EL": {
+            "abstract_content": "textBox",
+            "end": {
+              "col": 10,
+              "line": 107,
+              "offset": 3400
+            },
+            "start": {
+              "col": 3,
+              "line": 107,
+              "offset": 3393
+            }
+          },
+          "$HTML": {
+            "abstract_content": "snarkdown(hint.text)",
+            "end": {
+              "col": 43,
+              "line": 107,
+              "offset": 3433
+            },
+            "start": {
+              "col": 23,
+              "line": 107,
+              "offset": 3413
+            }
+          }
+        },
+        "severity": "ERROR"
+      },
+      "path": "frontend/src/hacking-instructor/index.ts",
+      "start": {
+        "col": 3,
+        "line": 107,
+        "offset": 3393
+      }
+    },
+    {
+      "check_id": "javascript.browser.security.insecure-innerhtml.insecure-innerhtml",
+      "end": {
+        "col": 43,
+        "line": 107,
+        "offset": 3433
+      },
+      "extra": {
+        "fingerprint": "5cb340edb124b728567163c9d012c318ab922a085824a5bcb76fdbcdfb9208a468fbdb81d9790c8e0a5a203bf1229f0b82588fd73d7a03a3f9bbad75146bfebd_0",
+        "is_ignored": false,
+        "lines": "  textBox.innerHTML = snarkdown(hint.text)",
+        "message": "User controlled data in a `textBox.innerHTML` is an anti-pattern that can lead to XSS vulnerabilities",
+        "metadata": {
+          "category": "security",
+          "cwe": "CWE-79: Improper Neutralization of Input During Web Page Generation ('Cross-site Scripting')",
+          "license": "Commons Clause License Condition v1.0[LGPL-2.1-only]",
+          "owasp": "A7: Cross-Site Scripting (XSS)",
+          "shortlink": "https://sg.run/8y0q",
+          "source": "https://semgrep.dev/r/javascript.browser.security.insecure-innerhtml.insecure-innerhtml",
+          "technology": [
+            "browser"
+          ]
+        },
+        "metavars": {
+          "$EL": {
+            "abstract_content": "textBox",
+            "end": {
+              "col": 10,
+              "line": 107,
+              "offset": 3400
+            },
+            "start": {
+              "col": 3,
+              "line": 107,
+              "offset": 3393
+            }
+          },
+          "$HTML": {
+            "abstract_content": "snarkdown(hint.text)",
+            "end": {
+              "col": 43,
+              "line": 107,
+              "offset": 3433
+            },
+            "start": {
+              "col": 23,
+              "line": 107,
+              "offset": 3413
+            }
+          }
+        },
+        "severity": "ERROR"
+      },
+      "path": "frontend/src/hacking-instructor/index.ts",
+      "start": {
+        "col": 3,
+        "line": 107,
+        "offset": 3393
+      }
+    },
+    {
+      "check_id": "javascript.express.security.audit.express-jwt-not-revoked.express-jwt-not-revoked",
+      "end": {
+        "col": 63,
+        "line": 53,
+        "offset": 2526
+      },
+      "extra": {
+        "fingerprint": "600ed07ed79be3e05ab666fb222a33c7e1151498a49cc26f3447f2620adc464a8a3effdd2972444b1855a65df184688b12acdcbd9bb92674dc73bc0b33c77a86_0",
+        "is_ignored": false,
+        "lines": "exports.isAuthorized = () => expressJwt({ secret: publicKey })",
+        "message": "No token revoking configured for `express-jwt`. A leaked token could still be used and unable to be revoked. Consider using function as the `isRevoked` option.",
+        "metadata": {
+          "asvs": {
+            "control_id": "3.5.3 Insecue Stateless Session Tokens",
+            "control_url": "https://github.com/OWASP/ASVS/blob/master/4.0/en/0x12-V3-Session-management.md#v35-token-based-session-management",
+            "section": "V3: Session Management Verification Requirements",
+            "version": "4"
+          },
+          "category": "security",
+          "cwe": "CWE-522: Insufficiently Protected Credentials",
+          "license": "Commons Clause License Condition v1.0[LGPL-2.1-only]",
+          "owasp": "A2: Broken Authentication",
+          "shortlink": "https://sg.run/kXNo",
+          "source": "https://semgrep.dev/r/javascript.express.security.audit.express-jwt-not-revoked.express-jwt-not-revoked",
+          "source-rule-url": "https://github.com/goldbergyoni/nodebestpractices/blob/master/sections/security/expirejwt.md",
+          "technology": [
+            "express"
+          ]
+        },
+        "metavars": {
+          "$JWT": {
+            "abstract_content": "expressJwt",
+            "end": {
+              "col": 40,
+              "line": 53,
+              "offset": 2503
+            },
+            "start": {
+              "col": 30,
+              "line": 53,
+              "offset": 2493
+            }
+          }
+        },
+        "severity": "WARNING"
+      },
+      "path": "lib/insecurity.ts",
+      "start": {
+        "col": 30,
+        "line": 53,
+        "offset": 2493
+      }
+    },
+    {
+      "check_id": "javascript.express.security.audit.express-jwt-not-revoked.express-jwt-not-revoked",
+      "end": {
+        "col": 67,
+        "line": 54,
+        "offset": 2593
+      },
+      "extra": {
+        "fingerprint": "600ed07ed79be3e05ab666fb222a33c7e1151498a49cc26f3447f2620adc464a8a3effdd2972444b1855a65df184688b12acdcbd9bb92674dc73bc0b33c77a86_1",
+        "is_ignored": false,
+        "lines": "exports.denyAll = () => expressJwt({ secret: '' + Math.random() })",
+        "message": "No token revoking configured for `express-jwt`. A leaked token could still be used and unable to be revoked. Consider using function as the `isRevoked` option.",
+        "metadata": {
+          "asvs": {
+            "control_id": "3.5.3 Insecue Stateless Session Tokens",
+            "control_url": "https://github.com/OWASP/ASVS/blob/master/4.0/en/0x12-V3-Session-management.md#v35-token-based-session-management",
+            "section": "V3: Session Management Verification Requirements",
+            "version": "4"
+          },
+          "category": "security",
+          "cwe": "CWE-522: Insufficiently Protected Credentials",
+          "license": "Commons Clause License Condition v1.0[LGPL-2.1-only]",
+          "owasp": "A2: Broken Authentication",
+          "shortlink": "https://sg.run/kXNo",
+          "source": "https://semgrep.dev/r/javascript.express.security.audit.express-jwt-not-revoked.express-jwt-not-revoked",
+          "source-rule-url": "https://github.com/goldbergyoni/nodebestpractices/blob/master/sections/security/expirejwt.md",
+          "technology": [
+            "express"
+          ]
+        },
+        "metavars": {
+          "$JWT": {
+            "abstract_content": "expressJwt",
+            "end": {
+              "col": 35,
+              "line": 54,
+              "offset": 2561
+            },
+            "start": {
+              "col": 25,
+              "line": 54,
+              "offset": 2551
+            }
+          }
+        },
+        "severity": "WARNING"
+      },
+      "path": "lib/insecurity.ts",
+      "start": {
+        "col": 25,
+        "line": 54,
+        "offset": 2551
+      }
+    },
+    {
+      "check_id": "javascript.express.security.audit.express-path-join-resolve-traversal.express-path-join-resolve-traversal",
+      "end": {
+        "col": 60,
+        "line": 69,
+        "offset": 2292
+      },
+      "extra": {
+        "dataflow_trace": {
+          "taint_source": {
+            "content": "req.body",
+            "location": {
+              "end": {
+                "col": 53,
+                "line": 69,
+                "offset": 2285
+              },
+              "path": "routes/dataErasure.ts",
+              "start": {
+                "col": 45,
+                "line": 69,
+                "offset": 2277
+              }
+            }
+          }
+        },
+        "fingerprint": "d9646d5b70dc0f1cfaf65c4f780b4838b32f18a2551abec56de0f7eb5a2db13c4ecd0700d7bb9ed42edae19e1b1dfbac66be3feb6ce9d4f82157afc53f03c188_0",
+        "is_ignored": false,
+        "lines": "      const filePath: string = path.resolve(req.body.layout).toLowerCase()",
+        "message": "Possible writing outside of the destination, make sure that the target path is nested in the intended destination",
+        "metadata": {
+          "category": "security",
+          "cwe": "CWE-22: Improper Limitation of a Pathname to a Restricted Directory ('Path Traversal')",
+          "license": "Commons Clause License Condition v1.0[LGPL-2.1-only]",
+          "owasp": "A01:2021 - Broken Access Control",
+          "references": [
+            "https://owasp.org/www-community/attacks/Path_Traversal"
+          ],
+          "shortlink": "https://sg.run/weRn",
+          "source": "https://semgrep.dev/r/javascript.express.security.audit.express-path-join-resolve-traversal.express-path-join-resolve-traversal",
+          "technology": [
+            "express",
+            "node.js"
+          ]
+        },
+        "metavars": {
+          "$APP": {
+            "abstract_content": "router",
+            "end": {
+              "col": 7,
+              "line": 54,
+              "offset": 1723
+            },
+            "propagated_value": {
+              "svalue_abstract_content": "express.Router()",
+              "svalue_end": {
+                "col": 32,
+                "line": 15,
+                "offset": 643
+              },
+              "svalue_start": {
+                "col": 16,
+                "line": 15,
+                "offset": 627
+              }
+            },
+            "start": {
+              "col": 1,
+              "line": 54,
+              "offset": 1717
+            }
+          },
+          "$METHOD": {
+            "abstract_content": "post",
+            "end": {
+              "col": 12,
+              "line": 54,
+              "offset": 1728
+            },
+            "start": {
+              "col": 8,
+              "line": 54,
+              "offset": 1724
+            }
+          },
+          "$NEXT": {
+            "abstract_content": "next",
+            "end": {
+              "col": 92,
+              "line": 54,
+              "offset": 1808
+            },
+            "start": {
+              "col": 88,
+              "line": 54,
+              "offset": 1804
+            }
+          },
+          "$PATH": {
+            "abstract_content": "path",
+            "end": {
+              "col": 36,
+              "line": 69,
+              "offset": 2268
+            },
+            "start": {
+              "col": 32,
+              "line": 69,
+              "offset": 2264
+            }
+          },
+          "$REQ": {
+            "abstract_content": "req",
+            "end": {
+              "col": 48,
+              "line": 69,
+              "offset": 2280
+            },
+            "start": {
+              "col": 45,
+              "line": 69,
+              "offset": 2277
+            }
+          },
+          "$RES": {
+            "abstract_content": "res",
+            "end": {
+              "col": 76,
+              "line": 54,
+              "offset": 1792
+            },
+            "start": {
+              "col": 73,
+              "line": 54,
+              "offset": 1789
+            }
+          },
+          "$SINK": {
+            "abstract_content": "req.body.layout",
+            "end": {
+              "col": 60,
+              "line": 69,
+              "offset": 2292
+            },
+            "start": {
+              "col": 45,
+              "line": 69,
+              "offset": 2277
+            }
+          }
+        },
+        "severity": "WARNING"
+      },
+      "path": "routes/dataErasure.ts",
+      "start": {
+        "col": 45,
+        "line": 69,
+        "offset": 2277
+      }
+    },
+    {
+      "check_id": "javascript.express.security.audit.express-path-join-resolve-traversal.express-path-join-resolve-traversal",
+      "end": {
+        "col": 56,
+        "line": 14,
+        "offset": 442
+      },
+      "extra": {
+        "dataflow_trace": {
+          "intermediate_vars": [
+            {
+              "content": "params",
+              "location": {
+                "end": {
+                  "col": 19,
+                  "line": 10,
+                  "offset": 273
+                },
+                "path": "routes/keyServer.ts",
+                "start": {
+                  "col": 13,
+                  "line": 10,
+                  "offset": 267
+                }
+              }
+            },
+            {
+              "content": "file",
+              "location": {
+                "end": {
+                  "col": 15,
+                  "line": 11,
+                  "offset": 340
+                },
+                "path": "routes/keyServer.ts",
+                "start": {
+                  "col": 11,
+                  "line": 11,
+                  "offset": 336
+                }
+              }
+            }
+          ],
+          "taint_source": {
+            "content": "params",
+            "location": {
+              "end": {
+                "col": 19,
+                "line": 10,
+                "offset": 273
+              },
+              "path": "routes/keyServer.ts",
+              "start": {
+                "col": 13,
+                "line": 10,
+                "offset": 267
+              }
+            }
+          }
+        },
+        "fingerprint": "61ff0ef3a6438f8e69ef8457e3f95f844787ad58ef6a9b2a93dc684a1504d223617e6708689b4ece9b8a784fdacc6357e52220b0226dae233c0aadd44003b493_0",
+        "is_ignored": false,
+        "lines": "      res.sendFile(path.resolve('encryptionkeys/', file))",
+        "message": "Possible writing outside of the destination, make sure that the target path is nested in the intended destination",
+        "metadata": {
+          "category": "security",
+          "cwe": "CWE-22: Improper Limitation of a Pathname to a Restricted Directory ('Path Traversal')",
+          "license": "Commons Clause License Condition v1.0[LGPL-2.1-only]",
+          "owasp": "A01:2021 - Broken Access Control",
+          "references": [
+            "https://owasp.org/www-community/attacks/Path_Traversal"
+          ],
+          "shortlink": "https://sg.run/weRn",
+          "source": "https://semgrep.dev/r/javascript.express.security.audit.express-path-join-resolve-traversal.express-path-join-resolve-traversal",
+          "technology": [
+            "express",
+            "node.js"
+          ]
+        },
+        "metavars": {
+          "$NEXT": {
+            "abstract_content": "next",
+            "end": {
+              "col": 51,
+              "line": 10,
+              "offset": 305
+            },
+            "start": {
+              "col": 47,
+              "line": 10,
+              "offset": 301
+            }
+          },
+          "$REQ": {
+            "abstract_content": "params",
+            "end": {
+              "col": 19,
+              "line": 10,
+              "offset": 273
+            },
+            "start": {
+              "col": 13,
+              "line": 10,
+              "offset": 267
+            }
+          },
+          "$RES": {
+            "abstract_content": "res",
+            "end": {
+              "col": 35,
+              "line": 10,
+              "offset": 289
+            },
+            "start": {
+              "col": 32,
+              "line": 10,
+              "offset": 286
+            }
+          },
+          "$SINK": {
+            "abstract_content": "file",
+            "end": {
+              "col": 56,
+              "line": 14,
+              "offset": 442
+            },
+            "propagated_value": {
+              "svalue_abstract_content": "params.file",
+              "svalue_end": {
+                "col": 29,
+                "line": 11,
+                "offset": 354
+              },
+              "svalue_start": {
+                "col": 18,
+                "line": 11,
+                "offset": 343
+              }
+            },
+            "start": {
+              "col": 52,
+              "line": 14,
+              "offset": 438
+            }
+          }
+        },
+        "severity": "WARNING"
+      },
+      "path": "routes/keyServer.ts",
+      "start": {
+        "col": 52,
+        "line": 14,
+        "offset": 438
+      }
+    },
+    {
+      "check_id": "javascript.express.security.audit.express-path-join-resolve-traversal.express-path-join-resolve-traversal",
+      "end": {
+        "col": 46,
+        "line": 14,
+        "offset": 432
+      },
+      "extra": {
+        "dataflow_trace": {
+          "intermediate_vars": [
+            {
+              "content": "params",
+              "location": {
+                "end": {
+                  "col": 19,
+                  "line": 10,
+                  "offset": 273
+                },
+                "path": "routes/logfileServer.ts",
+                "start": {
+                  "col": 13,
+                  "line": 10,
+                  "offset": 267
+                }
+              }
+            },
+            {
+              "content": "file",
+              "location": {
+                "end": {
+                  "col": 15,
+                  "line": 11,
+                  "offset": 340
+                },
+                "path": "routes/logfileServer.ts",
+                "start": {
+                  "col": 11,
+                  "line": 11,
+                  "offset": 336
+                }
+              }
+            }
+          ],
+          "taint_source": {
+            "content": "params",
+            "location": {
+              "end": {
+                "col": 19,
+                "line": 10,
+                "offset": 273
+              },
+              "path": "routes/logfileServer.ts",
+              "start": {
+                "col": 13,
+                "line": 10,
+                "offset": 267
+              }
+            }
+          }
+        },
+        "fingerprint": "b006dd478b7c4c3e581ffefa653e2acc49ff508e726936cf55711b71057a86100d2a66b55e0d7b9b04e48aad88892b8b168b8825d679db573dd93efd650d76d8_0",
+        "is_ignored": false,
+        "lines": "      res.sendFile(path.resolve('logs/', file))",
+        "message": "Possible writing outside of the destination, make sure that the target path is nested in the intended destination",
+        "metadata": {
+          "category": "security",
+          "cwe": "CWE-22: Improper Limitation of a Pathname to a Restricted Directory ('Path Traversal')",
+          "license": "Commons Clause License Condition v1.0[LGPL-2.1-only]",
+          "owasp": "A01:2021 - Broken Access Control",
+          "references": [
+            "https://owasp.org/www-community/attacks/Path_Traversal"
+          ],
+          "shortlink": "https://sg.run/weRn",
+          "source": "https://semgrep.dev/r/javascript.express.security.audit.express-path-join-resolve-traversal.express-path-join-resolve-traversal",
+          "technology": [
+            "express",
+            "node.js"
+          ]
+        },
+        "metavars": {
+          "$NEXT": {
+            "abstract_content": "next",
+            "end": {
+              "col": 51,
+              "line": 10,
+              "offset": 305
+            },
+            "start": {
+              "col": 47,
+              "line": 10,
+              "offset": 301
+            }
+          },
+          "$REQ": {
+            "abstract_content": "params",
+            "end": {
+              "col": 19,
+              "line": 10,
+              "offset": 273
+            },
+            "start": {
+              "col": 13,
+              "line": 10,
+              "offset": 267
+            }
+          },
+          "$RES": {
+            "abstract_content": "res",
+            "end": {
+              "col": 35,
+              "line": 10,
+              "offset": 289
+            },
+            "start": {
+              "col": 32,
+              "line": 10,
+              "offset": 286
+            }
+          },
+          "$SINK": {
+            "abstract_content": "file",
+            "end": {
+              "col": 46,
+              "line": 14,
+              "offset": 432
+            },
+            "propagated_value": {
+              "svalue_abstract_content": "params.file",
+              "svalue_end": {
+                "col": 29,
+                "line": 11,
+                "offset": 354
+              },
+              "svalue_start": {
+                "col": 18,
+                "line": 11,
+                "offset": 343
+              }
+            },
+            "start": {
+              "col": 42,
+              "line": 14,
+              "offset": 428
+            }
+          }
+        },
+        "severity": "WARNING"
+      },
+      "path": "routes/logfileServer.ts",
+      "start": {
+        "col": 42,
+        "line": 14,
+        "offset": 428
+      }
+    },
+    {
+      "check_id": "javascript.express.security.audit.express-path-join-resolve-traversal.express-path-join-resolve-traversal",
+      "end": {
+        "col": 56,
+        "line": 14,
+        "offset": 456
+      },
+      "extra": {
+        "dataflow_trace": {
+          "intermediate_vars": [
+            {
+              "content": "params",
+              "location": {
+                "end": {
+                  "col": 19,
+                  "line": 10,
+                  "offset": 280
+                },
+                "path": "routes/quarantineServer.ts",
+                "start": {
+                  "col": 13,
+                  "line": 10,
+                  "offset": 274
+                }
+              }
+            },
+            {
+              "content": "file",
+              "location": {
+                "end": {
+                  "col": 15,
+                  "line": 11,
+                  "offset": 354
+                },
+                "path": "routes/quarantineServer.ts",
+                "start": {
+                  "col": 11,
+                  "line": 11,
+                  "offset": 350
+                }
+              }
+            }
+          ],
+          "taint_source": {
+            "content": "params",
+            "location": {
+              "end": {
+                "col": 19,
+                "line": 10,
+                "offset": 280
+              },
+              "path": "routes/quarantineServer.ts",
+              "start": {
+                "col": 13,
+                "line": 10,
+                "offset": 274
+              }
+            }
+          }
+        },
+        "fingerprint": "c56fde85159a4267f7b3cb6642b732d750f67ba5e8a4550aa0e9213b802ebf3c27ebd8e6a3183d267eadc3d12749de80ac659ac2d28eabc6b17f92d20307241f_0",
+        "is_ignored": false,
+        "lines": "      res.sendFile(path.resolve('ftp/quarantine/', file))",
+        "message": "Possible writing outside of the destination, make sure that the target path is nested in the intended destination",
+        "metadata": {
+          "category": "security",
+          "cwe": "CWE-22: Improper Limitation of a Pathname to a Restricted Directory ('Path Traversal')",
+          "license": "Commons Clause License Condition v1.0[LGPL-2.1-only]",
+          "owasp": "A01:2021 - Broken Access Control",
+          "references": [
+            "https://owasp.org/www-community/attacks/Path_Traversal"
+          ],
+          "shortlink": "https://sg.run/weRn",
+          "source": "https://semgrep.dev/r/javascript.express.security.audit.express-path-join-resolve-traversal.express-path-join-resolve-traversal",
+          "technology": [
+            "express",
+            "node.js"
+          ]
+        },
+        "metavars": {
+          "$NEXT": {
+            "abstract_content": "next",
+            "end": {
+              "col": 58,
+              "line": 10,
+              "offset": 319
+            },
+            "start": {
+              "col": 54,
+              "line": 10,
+              "offset": 315
+            }
+          },
+          "$REQ": {
+            "abstract_content": "params",
+            "end": {
+              "col": 19,
+              "line": 10,
+              "offset": 280
+            },
+            "start": {
+              "col": 13,
+              "line": 10,
+              "offset": 274
+            }
+          },
+          "$RES": {
+            "abstract_content": "res",
+            "end": {
+              "col": 42,
+              "line": 10,
+              "offset": 303
+            },
+            "start": {
+              "col": 39,
+              "line": 10,
+              "offset": 300
+            }
+          },
+          "$SINK": {
+            "abstract_content": "file",
+            "end": {
+              "col": 56,
+              "line": 14,
+              "offset": 456
+            },
+            "propagated_value": {
+              "svalue_abstract_content": "params.file",
+              "svalue_end": {
+                "col": 29,
+                "line": 11,
+                "offset": 368
+              },
+              "svalue_start": {
+                "col": 18,
+                "line": 11,
+                "offset": 357
+              }
+            },
+            "start": {
+              "col": 52,
+              "line": 14,
+              "offset": 452
+            }
+          }
+        },
+        "severity": "WARNING"
+      },
+      "path": "routes/quarantineServer.ts",
+      "start": {
+        "col": 52,
+        "line": 14,
+        "offset": 452
+      }
+    },
+    {
+      "check_id": "javascript.express.security.audit.possible-user-input-redirect.unknown-value-in-redirect",
+      "end": {
+        "col": 36,
+        "line": 19,
+        "offset": 1062
+      },
+      "extra": {
+        "fingerprint": "a79f016b626b975579977c296fd899a8f422d2d5bc7e2b869bb6338c097d349472d84b12b705adf899160b193a1b5af778d8665d4a77a92415f4e1dcd9777971_0",
+        "is_ignored": false,
+        "lines": "      res.redirect(toUrl as string)",
+        "message": "It looks like 'toUrl' is read from user input and it is used to as a redirect. Ensure 'toUrl' is not externally controlled, otherwise this is an open redirect.",
+        "metadata": {
+          "asvs": {
+            "control_id": "5.5.1 Insecue Redirect",
+            "control_url": "https://github.com/OWASP/ASVS/blob/master/4.0/en/0x13-V5-Validation-Sanitization-Encoding.md#v51-input-validation",
+            "section": "V5 Validation, Sanitization and Encoding",
+            "version": "4"
+          },
+          "category": "security",
+          "cwe": "CWE-601: URL Redirection to Untrusted Site ('Open Redirect')",
+          "license": "Commons Clause License Condition v1.0[LGPL-2.1-only]",
+          "owasp": "A1: Injection",
+          "shortlink": "https://sg.run/OPv2",
+          "source": "https://semgrep.dev/r/javascript.express.security.audit.possible-user-input-redirect.unknown-value-in-redirect",
+          "technology": [
+            "express"
+          ]
+        },
+        "metavars": {
+          "$B": {
+            "abstract_content": "to",
+            "end": {
+              "col": 27,
+              "line": 15,
+              "offset": 525
+            },
+            "start": {
+              "col": 25,
+              "line": 15,
+              "offset": 523
+            }
+          },
+          "$RES": {
+            "abstract_content": "res",
+            "end": {
+              "col": 10,
+              "line": 19,
+              "offset": 1036
+            },
+            "start": {
+              "col": 7,
+              "line": 19,
+              "offset": 1033
+            }
+          },
+          "$UNK": {
+            "abstract_content": "toUrl",
+            "end": {
+              "col": 25,
+              "line": 19,
+              "offset": 1051
+            },
+            "propagated_value": {
+              "svalue_abstract_content": "query.to",
+              "svalue_end": {
+                "col": 27,
+                "line": 15,
+                "offset": 525
+              },
+              "svalue_start": {
+                "col": 19,
+                "line": 15,
+                "offset": 517
+              }
+            },
+            "start": {
+              "col": 20,
+              "line": 19,
+              "offset": 1046
+            }
+          }
+        },
+        "severity": "WARNING"
+      },
+      "path": "routes/redirect.ts",
+      "start": {
+        "col": 7,
+        "line": 19,
+        "offset": 1033
+      }
+    },
+    {
+      "check_id": "javascript.express.security.audit.xss.pug.explicit-unescape.template-explicit-unescape",
+      "end": {
+        "col": 40,
+        "line": 79,
+        "offset": 3969
+      },
+      "extra": {
+        "fingerprint": "a15f585b68d6d123be356ae999949a88694dcee167c404b60d277df0ecb69aceaa54652bb72451e4c0cd5b1e6152730adc6dc1c6487ae2b3dc443410f1188dc4_0",
+        "is_ignored": false,
+        "lines": "            if (splitted.length != 2) {",
+        "message": "Detected an explicit unescape in a Pug template, using either '!=' or '!{...}'. If external data can reach these locations, your application is exposed to a cross-site scripting (XSS) vulnerability. If you must do this, ensure no external data can reach this location.",
+        "metadata": {
+          "category": "security",
+          "cwe": "CWE-79: Improper Neutralization of Input During Web Page Generation ('Cross-site Scripting')",
+          "license": "Commons Clause License Condition v1.0[LGPL-2.1-only]",
+          "owasp": "A7: Cross-Site Scripting (XSS)",
+          "references": [
+            "https://pugjs.org/language/code.html#unescaped-buffered-code",
+            "https://pugjs.org/language/attributes.html#unescaped-attributes"
+          ],
+          "shortlink": "https://sg.run/3xbe",
+          "source": "https://semgrep.dev/r/javascript.express.security.audit.xss.pug.explicit-unescape.template-explicit-unescape",
+          "technology": [
+            "express"
+          ]
+        },
+        "metavars": {
+          "$1": {
+            "abstract_content": "!=",
+            "end": {
+              "col": 35,
+              "line": 79,
+              "offset": 3964
+            },
+            "start": {
+              "col": 33,
+              "line": 79,
+              "offset": 3962
+            }
+          }
+        },
+        "severity": "WARNING"
+      },
+      "path": "views/promotionVideo.pug",
+      "start": {
+        "col": 13,
+        "line": 79,
+        "offset": 3942
+      }
+    },
+    {
+      "check_id": "javascript.jsonwebtoken.security.audit.jwt-exposed-data.jwt-exposed-data",
+      "end": {
+        "col": 112,
+        "line": 55,
+        "offset": 2705
+      },
+      "extra": {
+        "fingerprint": "58790189b9fb025d2ba62d9e109eb9ef94e90279cbdba46db794787843a5d2ed7883d21d5ed1887959dc1bbc3f543b93aa1a69c6d05b702056c814cc4cee3be6_0",
+        "is_ignored": false,
+        "lines": "exports.authorize = (user = {}) => jwt.sign(user, privateKey, { expiresInMinutes: 60 * 5, algorithm: 'RS256' })",
+        "message": "The object is passed strictly to jsonwebtoken.sign(...) Make sure that sensitive information is not exposed through JWT token payload.",
+        "metadata": {
+          "asvs": {
+            "control_id": "3.5.3 Insecue Stateless Session Tokens",
+            "control_url": "https://github.com/OWASP/ASVS/blob/master/4.0/en/0x12-V3-Session-management.md#v35-token-based-session-management",
+            "section": "V3: Session Management Verification Requirements",
+            "version": "4"
+          },
+          "category": "security",
+          "cwe": "CWE-522: Insufficiently Protected Credentials",
+          "license": "Commons Clause License Condition v1.0[LGPL-2.1-only]",
+          "owasp": "A3: Sensitive Data Exposure",
+          "shortlink": "https://sg.run/5Qkj",
+          "source": "https://semgrep.dev/r/javascript.jsonwebtoken.security.audit.jwt-exposed-data.jwt-exposed-data",
+          "source-rule-url": "https://r2c.dev/blog/2020/hardcoded-secrets-unverified-tokens-and-other-common-jwt-mistakes/",
+          "technology": [
+            "jwt"
+          ]
+        },
+        "metavars": {
+          "$INPUT": {
+            "abstract_content": "user",
+            "end": {
+              "col": 49,
+              "line": 55,
+              "offset": 2642
+            },
+            "start": {
+              "col": 45,
+              "line": 55,
+              "offset": 2638
+            }
+          },
+          "$JWT": {
+            "abstract_content": "jwt",
+            "end": {
+              "col": 39,
+              "line": 55,
+              "offset": 2632
+            },
+            "start": {
+              "col": 36,
+              "line": 55,
+              "offset": 2629
+            }
+          }
+        },
+        "severity": "WARNING"
+      },
+      "path": "lib/insecurity.ts",
+      "start": {
+        "col": 36,
+        "line": 55,
+        "offset": 2629
+      }
+    },
+    {
+      "check_id": "javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal",
+      "end": {
+        "col": 65,
+        "line": 41,
+        "offset": 1666
+      },
+      "extra": {
+        "dataflow_trace": {
+          "taint_source": {
+            "content": "file",
+            "location": {
+              "end": {
+                "col": 56,
+                "line": 41,
+                "offset": 1657
+              },
+              "path": "data/datacreator.ts",
+              "start": {
+                "col": 52,
+                "line": 41,
+                "offset": 1653
+              }
+            }
+          }
+        },
+        "fingerprint": "cc63a684cea621802562c3aabc866f05b37b9f8658bd0fe4c88e63588609de300bfaabd7191f7ee48bd8017671c3f8e0190de52fa986158dafb899463b79b3ae_0",
+        "is_ignored": false,
+        "lines": "  const filePath = path.resolve('./data/static/' + file + '.yml')",
+        "message": "Possible writing/reading outside of the destination, make sure that the target path is nested in the intended destination.",
+        "metadata": {
+          "category": "security",
+          "cwe": "CWE-22: Improper Limitation of a Pathname to a Restricted Directory ('Path Traversal')",
+          "license": "Commons Clause License Condition v1.0[LGPL-2.1-only]",
+          "owasp": "A01:2021 - Broken Access Control",
+          "references": [
+            "https://owasp.org/www-community/attacks/Path_Traversal"
+          ],
+          "shortlink": "https://sg.run/OPqk",
+          "source": "https://semgrep.dev/r/javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal",
+          "technology": [
+            "javascript",
+            "node.js"
+          ]
+        },
+        "metavars": {
+          "$PATH": {
+            "abstract_content": "path",
+            "end": {
+              "col": 24,
+              "line": 41,
+              "offset": 1625
+            },
+            "start": {
+              "col": 20,
+              "line": 41,
+              "offset": 1621
+            }
+          },
+          "$SINK": {
+            "abstract_content": "'./data/static/'+file+'.yml'",
+            "end": {
+              "col": 65,
+              "line": 41,
+              "offset": 1666
+            },
+            "start": {
+              "col": 33,
+              "line": 41,
+              "offset": 1634
+            }
+          },
+          "$X": {
+            "abstract_content": "file",
+            "end": {
+              "col": 56,
+              "line": 41,
+              "offset": 1657
+            },
+            "start": {
+              "col": 52,
+              "line": 41,
+              "offset": 1653
+            }
+          }
+        },
+        "severity": "WARNING"
+      },
+      "path": "data/datacreator.ts",
+      "start": {
+        "col": 33,
+        "line": 41,
+        "offset": 1634
+      }
+    },
+    {
+      "check_id": "javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal",
+      "end": {
+        "col": 129,
+        "line": 30,
+        "offset": 1076
+      },
+      "extra": {
+        "dataflow_trace": {
+          "taint_source": {
+            "content": "filename",
+            "location": {
+              "end": {
+                "col": 107,
+                "line": 30,
+                "offset": 1054
+              },
+              "path": "lib/startup/restoreOverwrittenFilesWithOriginals.ts",
+              "start": {
+                "col": 99,
+                "line": 30,
+                "offset": 1046
+              }
+            }
+          }
+        },
+        "fingerprint": "2c1ed46a95df027eb77813b1205bf0482eae6338d0b4921cc2584dd56e7ea6f48a513a398c46a0dcf5cac18a363e5dca9147878eea933fcb6ace30864c751009_0",
+        "is_ignored": false,
+        "lines": "      files.map((filename: string) => copyFile(filename, path.resolve('i18n/', filename.substring(filename.lastIndexOf('/') + 1))))",
+        "message": "Possible writing/reading outside of the destination, make sure that the target path is nested in the intended destination.",
+        "metadata": {
+          "category": "security",
+          "cwe": "CWE-22: Improper Limitation of a Pathname to a Restricted Directory ('Path Traversal')",
+          "license": "Commons Clause License Condition v1.0[LGPL-2.1-only]",
+          "owasp": "A01:2021 - Broken Access Control",
+          "references": [
+            "https://owasp.org/www-community/attacks/Path_Traversal"
+          ],
+          "shortlink": "https://sg.run/OPqk",
+          "source": "https://semgrep.dev/r/javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal",
+          "technology": [
+            "javascript",
+            "node.js"
+          ]
+        },
+        "metavars": {
+          "$SINK": {
+            "abstract_content": "filename.substring(filename.lastIndexOf('/')+1)",
+            "end": {
+              "col": 129,
+              "line": 30,
+              "offset": 1076
+            },
+            "start": {
+              "col": 80,
+              "line": 30,
+              "offset": 1027
+            }
+          },
+          "$X": {
+            "abstract_content": "filename",
+            "end": {
+              "col": 107,
+              "line": 30,
+              "offset": 1054
+            },
+            "start": {
+              "col": 99,
+              "line": 30,
+              "offset": 1046
+            }
+          }
+        },
+        "severity": "WARNING"
+      },
+      "path": "lib/startup/restoreOverwrittenFilesWithOriginals.ts",
+      "start": {
+        "col": 80,
+        "line": 30,
+        "offset": 1027
+      }
+    },
+    {
+      "check_id": "javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal",
+      "end": {
+        "col": 55,
+        "line": 95,
+        "offset": 3813
+      },
+      "extra": {
+        "dataflow_trace": {
+          "intermediate_vars": [
+            {
+              "content": "pathRelativeToProjectRoot",
+              "location": {
+                "end": {
+                  "col": 45,
+                  "line": 93,
+                  "offset": 3702
+                },
+                "path": "lib/startup/validatePreconditions.ts",
+                "start": {
+                  "col": 20,
+                  "line": 93,
+                  "offset": 3677
+                }
+              }
+            }
+          ],
+          "taint_source": {
+            "content": "pathRelativeToProjectRoot",
+            "location": {
+              "end": {
+                "col": 45,
+                "line": 93,
+                "offset": 3702
+              },
+              "path": "lib/startup/validatePreconditions.ts",
+              "start": {
+                "col": 20,
+                "line": 93,
+                "offset": 3677
+              }
+            }
+          }
+        },
+        "fingerprint": "eece54dc5f65980d98c700ee02453e9a4b301c904bd3a0a8053aa8d91b0421a6f7f6773f8c05ae90b778d852ccff55d567da1a5816e61d1c33e6663699c299c0_0",
+        "is_ignored": false,
+        "lines": "  return access(path.resolve(pathRelativeToProjectRoot)).then(() => {",
+        "message": "Possible writing/reading outside of the destination, make sure that the target path is nested in the intended destination.",
+        "metadata": {
+          "category": "security",
+          "cwe": "CWE-22: Improper Limitation of a Pathname to a Restricted Directory ('Path Traversal')",
+          "license": "Commons Clause License Condition v1.0[LGPL-2.1-only]",
+          "owasp": "A01:2021 - Broken Access Control",
+          "references": [
+            "https://owasp.org/www-community/attacks/Path_Traversal"
+          ],
+          "shortlink": "https://sg.run/OPqk",
+          "source": "https://semgrep.dev/r/javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal",
+          "technology": [
+            "javascript",
+            "node.js"
+          ]
+        },
+        "metavars": {
+          "$PATH": {
+            "abstract_content": "path",
+            "end": {
+              "col": 21,
+              "line": 95,
+              "offset": 3779
+            },
+            "start": {
+              "col": 17,
+              "line": 95,
+              "offset": 3775
+            }
+          },
+          "$SINK": {
+            "abstract_content": "pathRelativeToProjectRoot",
+            "end": {
+              "col": 55,
+              "line": 95,
+              "offset": 3813
+            },
+            "start": {
+              "col": 30,
+              "line": 95,
+              "offset": 3788
+            }
+          },
+          "$X": {
+            "abstract_content": "pathRelativeToProjectRoot",
+            "end": {
+              "col": 45,
+              "line": 93,
+              "offset": 3702
+            },
+            "start": {
+              "col": 20,
+              "line": 93,
+              "offset": 3677
+            }
+          }
+        },
+        "severity": "WARNING"
+      },
+      "path": "lib/startup/validatePreconditions.ts",
+      "start": {
+        "col": 30,
+        "line": 95,
+        "offset": 3788
+      }
+    },
+    {
+      "check_id": "javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal",
+      "end": {
+        "col": 60,
+        "line": 69,
+        "offset": 2292
+      },
+      "extra": {
+        "dataflow_trace": {
+          "intermediate_vars": [
+            {
+              "content": "req",
+              "location": {
+                "end": {
+                  "col": 61,
+                  "line": 55,
+                  "offset": 1904
+                },
+                "path": "routes/dataErasure.ts",
+                "start": {
+                  "col": 58,
+                  "line": 55,
+                  "offset": 1901
+                }
+              }
+            }
+          ],
+          "taint_source": {
+            "content": "req",
+            "location": {
+              "end": {
+                "col": 61,
+                "line": 55,
+                "offset": 1904
+              },
+              "path": "routes/dataErasure.ts",
+              "start": {
+                "col": 58,
+                "line": 55,
+                "offset": 1901
+              }
+            }
+          }
+        },
+        "fingerprint": "8f6f91eeb13bdb8118b87cf066031dd72e61e05bec64d88574f743d851fd60f45b2051285e3133cdf29e0dca864535851ec5870820b19b6015b20e807407f3a0_0",
+        "is_ignored": false,
+        "lines": "      const filePath: string = path.resolve(req.body.layout).toLowerCase()",
+        "message": "Possible writing/reading outside of the destination, make sure that the target path is nested in the intended destination.",
+        "metadata": {
+          "category": "security",
+          "cwe": "CWE-22: Improper Limitation of a Pathname to a Restricted Directory ('Path Traversal')",
+          "license": "Commons Clause License Condition v1.0[LGPL-2.1-only]",
+          "owasp": "A01:2021 - Broken Access Control",
+          "references": [
+            "https://owasp.org/www-community/attacks/Path_Traversal"
+          ],
+          "shortlink": "https://sg.run/OPqk",
+          "source": "https://semgrep.dev/r/javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal",
+          "technology": [
+            "javascript",
+            "node.js"
+          ]
+        },
+        "metavars": {
+          "$PATH": {
+            "abstract_content": "path",
+            "end": {
+              "col": 36,
+              "line": 69,
+              "offset": 2268
+            },
+            "start": {
+              "col": 32,
+              "line": 69,
+              "offset": 2264
+            }
+          },
+          "$SINK": {
+            "abstract_content": "req.body.layout",
+            "end": {
+              "col": 60,
+              "line": 69,
+              "offset": 2292
+            },
+            "start": {
+              "col": 45,
+              "line": 69,
+              "offset": 2277
+            }
+          },
+          "$X": {
+            "abstract_content": "req",
+            "end": {
+              "col": 61,
+              "line": 55,
+              "offset": 1904
+            },
+            "start": {
+              "col": 58,
+              "line": 55,
+              "offset": 1901
+            }
+          }
+        },
+        "severity": "WARNING"
+      },
+      "path": "routes/dataErasure.ts",
+      "start": {
+        "col": 45,
+        "line": 69,
+        "offset": 2277
+      }
+    },
+    {
+      "check_id": "javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal",
+      "end": {
+        "col": 45,
+        "line": 33,
+        "offset": 1176
+      },
+      "extra": {
+        "dataflow_trace": {
+          "intermediate_vars": [
+            {
+              "content": "file",
+              "location": {
+                "end": {
+                  "col": 50,
+                  "line": 27,
+                  "offset": 861
+                },
+                "path": "routes/fileServer.ts",
+                "start": {
+                  "col": 46,
+                  "line": 27,
+                  "offset": 857
+                }
+              }
+            }
+          ],
+          "taint_source": {
+            "content": "file",
+            "location": {
+              "end": {
+                "col": 50,
+                "line": 27,
+                "offset": 861
+              },
+              "path": "routes/fileServer.ts",
+              "start": {
+                "col": 46,
+                "line": 27,
+                "offset": 857
+              }
+            }
+          }
+        },
+        "fingerprint": "1e3f3b33d36e8279b541c97a9a40a03f2c1fd84c4eba94e9360fe6ffa9cd156a042ce1538c8e963a85cb673ca5eb2fd36fc2ec7ebea0a6d492e7c339e9b06477_0",
+        "is_ignored": false,
+        "lines": "      res.sendFile(path.resolve('ftp/', file))",
+        "message": "Possible writing/reading outside of the destination, make sure that the target path is nested in the intended destination.",
+        "metadata": {
+          "category": "security",
+          "cwe": "CWE-22: Improper Limitation of a Pathname to a Restricted Directory ('Path Traversal')",
+          "license": "Commons Clause License Condition v1.0[LGPL-2.1-only]",
+          "owasp": "A01:2021 - Broken Access Control",
+          "references": [
+            "https://owasp.org/www-community/attacks/Path_Traversal"
+          ],
+          "shortlink": "https://sg.run/OPqk",
+          "source": "https://semgrep.dev/r/javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal",
+          "technology": [
+            "javascript",
+            "node.js"
+          ]
+        },
+        "metavars": {
+          "$SINK": {
+            "abstract_content": "file",
+            "end": {
+              "col": 45,
+              "line": 33,
+              "offset": 1176
+            },
+            "start": {
+              "col": 41,
+              "line": 33,
+              "offset": 1172
+            }
+          },
+          "$X": {
+            "abstract_content": "file",
+            "end": {
+              "col": 50,
+              "line": 27,
+              "offset": 861
+            },
+            "start": {
+              "col": 46,
+              "line": 27,
+              "offset": 857
+            }
+          }
+        },
+        "severity": "WARNING"
+      },
+      "path": "routes/fileServer.ts",
+      "start": {
+        "col": 41,
+        "line": 33,
+        "offset": 1172
+      }
+    },
+    {
+      "check_id": "javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal",
+      "end": {
+        "col": 83,
+        "line": 39,
+        "offset": 1478
+      },
+      "extra": {
+        "dataflow_trace": {
+          "intermediate_vars": [
+            {
+              "content": "fileName",
+              "location": {
+                "end": {
+                  "col": 31,
+                  "line": 38,
+                  "offset": 1382
+                },
+                "path": "routes/fileUpload.ts",
+                "start": {
+                  "col": 23,
+                  "line": 38,
+                  "offset": 1374
+                }
+              }
+            }
+          ],
+          "taint_source": {
+            "content": "entry",
+            "location": {
+              "end": {
+                "col": 39,
+                "line": 38,
+                "offset": 1390
+              },
+              "path": "routes/fileUpload.ts",
+              "start": {
+                "col": 34,
+                "line": 38,
+                "offset": 1385
+              }
+            }
+          }
+        },
+        "fingerprint": "02e960aad52bb6a6ac53d36883a93b820d27ba8c4ae6198a5d1fb6d7d7219a598e38daaf8d58979554318156073c83d0df83bc965a5feea3c9eadf70b3c93528_0",
+        "is_ignored": false,
+        "lines": "                const absolutePath = path.resolve('uploads/complaints/' + fileName)",
+        "message": "Possible writing/reading outside of the destination, make sure that the target path is nested in the intended destination.",
+        "metadata": {
+          "category": "security",
+          "cwe": "CWE-22: Improper Limitation of a Pathname to a Restricted Directory ('Path Traversal')",
+          "license": "Commons Clause License Condition v1.0[LGPL-2.1-only]",
+          "owasp": "A01:2021 - Broken Access Control",
+          "references": [
+            "https://owasp.org/www-community/attacks/Path_Traversal"
+          ],
+          "shortlink": "https://sg.run/OPqk",
+          "source": "https://semgrep.dev/r/javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal",
+          "technology": [
+            "javascript",
+            "node.js"
+          ]
+        },
+        "metavars": {
+          "$PATH": {
+            "abstract_content": "path",
+            "end": {
+              "col": 42,
+              "line": 39,
+              "offset": 1437
+            },
+            "start": {
+              "col": 38,
+              "line": 39,
+              "offset": 1433
+            }
+          },
+          "$SINK": {
+            "abstract_content": "'uploads/complaints/'+fileName",
+            "end": {
+              "col": 83,
+              "line": 39,
+              "offset": 1478
+            },
+            "start": {
+              "col": 51,
+              "line": 39,
+              "offset": 1446
+            }
+          },
+          "$X": {
+            "abstract_content": "entry",
+            "end": {
+              "col": 39,
+              "line": 38,
+              "offset": 1390
+            },
+            "start": {
+              "col": 34,
+              "line": 38,
+              "offset": 1385
+            }
+          }
+        },
+        "severity": "WARNING"
+      },
+      "path": "routes/fileUpload.ts",
+      "start": {
+        "col": 51,
+        "line": 39,
+        "offset": 1446
+      }
+    },
+    {
+      "check_id": "javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal",
+      "end": {
+        "col": 85,
+        "line": 46,
+        "offset": 1807
+      },
+      "extra": {
+        "dataflow_trace": {
+          "intermediate_vars": [
+            {
+              "content": "req",
+              "location": {
+                "end": {
+                  "col": 19,
+                  "line": 36,
+                  "offset": 1142
+                },
+                "path": "routes/order.ts",
+                "start": {
+                  "col": 16,
+                  "line": 36,
+                  "offset": 1139
+                }
+              }
+            },
+            {
+              "content": "customer",
+              "location": {
+                "end": {
+                  "col": 25,
+                  "line": 40,
+                  "offset": 1363
+                },
+                "path": "routes/order.ts",
+                "start": {
+                  "col": 17,
+                  "line": 40,
+                  "offset": 1355
+                }
+              }
+            },
+            {
+              "content": "email",
+              "location": {
+                "end": {
+                  "col": 22,
+                  "line": 41,
+                  "offset": 1425
+                },
+                "path": "routes/order.ts",
+                "start": {
+                  "col": 17,
+                  "line": 41,
+                  "offset": 1420
+                }
+              }
+            },
+            {
+              "content": "orderId",
+              "location": {
+                "end": {
+                  "col": 24,
+                  "line": 42,
+                  "offset": 1508
+                },
+                "path": "routes/order.ts",
+                "start": {
+                  "col": 17,
+                  "line": 42,
+                  "offset": 1501
+                }
+              }
+            },
+            {
+              "content": "pdfFile",
+              "location": {
+                "end": {
+                  "col": 24,
+                  "line": 43,
+                  "offset": 1601
+                },
+                "path": "routes/order.ts",
+                "start": {
+                  "col": 17,
+                  "line": 43,
+                  "offset": 1594
+                }
+              }
+            }
+          ],
+          "taint_source": {
+            "content": "req",
+            "location": {
+              "end": {
+                "col": 19,
+                "line": 36,
+                "offset": 1142
+              },
+              "path": "routes/order.ts",
+              "start": {
+                "col": 16,
+                "line": 36,
+                "offset": 1139
+              }
+            }
+          }
+        },
+        "fingerprint": "1fc353b4547904b691d2b711a5bc2312c013f79c9ee1b797db9e9f027f0ebd62a8f0ef476a112235ffeeb21966c5fec55b300554ebca2faf27e7a7d70c8fb592_0",
+        "is_ignored": false,
+        "lines": "          const fileWriter = doc.pipe(fs.createWriteStream(path.join('ftp/', pdfFile)))",
+        "message": "Possible writing/reading outside of the destination, make sure that the target path is nested in the intended destination.",
+        "metadata": {
+          "category": "security",
+          "cwe": "CWE-22: Improper Limitation of a Pathname to a Restricted Directory ('Path Traversal')",
+          "license": "Commons Clause License Condition v1.0[LGPL-2.1-only]",
+          "owasp": "A01:2021 - Broken Access Control",
+          "references": [
+            "https://owasp.org/www-community/attacks/Path_Traversal"
+          ],
+          "shortlink": "https://sg.run/OPqk",
+          "source": "https://semgrep.dev/r/javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal",
+          "technology": [
+            "javascript",
+            "node.js"
+          ]
+        },
+        "metavars": {
+          "$SINK": {
+            "abstract_content": "pdfFile",
+            "end": {
+              "col": 85,
+              "line": 46,
+              "offset": 1807
+            },
+            "propagated_value": {
+              "svalue_abstract_content": "`order_ orderId.pdf",
+              "svalue_end": {
+                "col": 48,
+                "line": 43,
+                "offset": 1625
+              },
+              "svalue_start": {
+                "col": 27,
+                "line": 43,
+                "offset": 1604
+              }
+            },
+            "start": {
+              "col": 78,
+              "line": 46,
+              "offset": 1800
+            }
+          },
+          "$X": {
+            "abstract_content": "req",
+            "end": {
+              "col": 19,
+              "line": 36,
+              "offset": 1142
+            },
+            "start": {
+              "col": 16,
+              "line": 36,
+              "offset": 1139
+            }
+          }
+        },
+        "severity": "WARNING"
+      },
+      "path": "routes/order.ts",
+      "start": {
+        "col": 78,
+        "line": 46,
+        "offset": 1800
+      }
+    },
+    {
+      "check_id": "javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal",
+      "end": {
+        "col": 88,
+        "line": 33,
+        "offset": 1028
+      },
+      "extra": {
+        "dataflow_trace": {
+          "taint_source": {
+            "content": "file",
+            "location": {
+              "end": {
+                "col": 88,
+                "line": 33,
+                "offset": 1028
+              },
+              "path": "routes/vulnCodeSnippet.ts",
+              "start": {
+                "col": 84,
+                "line": 33,
+                "offset": 1024
+              }
+            }
+          }
+        },
+        "fingerprint": "f8df7becdab2d923bc74628dceac6e35610571461c5a3b982bdfd18ac38e97407208b5d043f521205d664ff4b85ca7a2a346ac5d36af99514cf5aeaa1a5cb3e4_0",
+        "is_ignored": false,
+        "lines": "      const moreMatches = await fileSniff(files.map(file => path.resolve(currPath, file)), match)",
+        "message": "Possible writing/reading outside of the destination, make sure that the target path is nested in the intended destination.",
+        "metadata": {
+          "category": "security",
+          "cwe": "CWE-22: Improper Limitation of a Pathname to a Restricted Directory ('Path Traversal')",
+          "license": "Commons Clause License Condition v1.0[LGPL-2.1-only]",
+          "owasp": "A01:2021 - Broken Access Control",
+          "references": [
+            "https://owasp.org/www-community/attacks/Path_Traversal"
+          ],
+          "shortlink": "https://sg.run/OPqk",
+          "source": "https://semgrep.dev/r/javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal",
+          "technology": [
+            "javascript",
+            "node.js"
+          ]
+        },
+        "metavars": {
+          "$PATH": {
+            "abstract_content": "path",
+            "end": {
+              "col": 65,
+              "line": 33,
+              "offset": 1005
+            },
+            "start": {
+              "col": 61,
+              "line": 33,
+              "offset": 1001
+            }
+          },
+          "$SINK": {
+            "abstract_content": "file",
+            "end": {
+              "col": 88,
+              "line": 33,
+              "offset": 1028
+            },
+            "start": {
+              "col": 84,
+              "line": 33,
+              "offset": 1024
+            }
+          },
+          "$X": {
+            "abstract_content": "file",
+            "end": {
+              "col": 88,
+              "line": 33,
+              "offset": 1028
+            },
+            "start": {
+              "col": 84,
+              "line": 33,
+              "offset": 1024
+            }
+          }
+        },
+        "severity": "WARNING"
+      },
+      "path": "routes/vulnCodeSnippet.ts",
+      "start": {
+        "col": 84,
+        "line": 33,
+        "offset": 1024
+      }
+    },
+    {
+      "check_id": "javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal",
+      "end": {
+        "col": 68,
+        "line": 107,
+        "offset": 2744
+      },
+      "extra": {
+        "dataflow_trace": {
+          "intermediate_vars": [
+            {
+              "content": "key",
+              "location": {
+                "end": {
+                  "col": 33,
+                  "line": 100,
+                  "offset": 2374
+                },
+                "path": "routes/vulnCodeSnippet.ts",
+                "start": {
+                  "col": 30,
+                  "line": 100,
+                  "offset": 2371
+                }
+              }
+            },
+            {
+              "content": "challenge",
+              "location": {
+                "end": {
+                  "col": 22,
+                  "line": 101,
+                  "offset": 2397
+                },
+                "path": "routes/vulnCodeSnippet.ts",
+                "start": {
+                  "col": 13,
+                  "line": 101,
+                  "offset": 2388
+                }
+              }
+            },
+            {
+              "content": "match",
+              "location": {
+                "end": {
+                  "col": 18,
+                  "line": 104,
+                  "offset": 2477
+                },
+                "path": "routes/vulnCodeSnippet.ts",
+                "start": {
+                  "col": 13,
+                  "line": 104,
+                  "offset": 2472
+                }
+              }
+            },
+            {
+              "content": "matches",
+              "location": {
+                "end": {
+                  "col": 20,
+                  "line": 105,
+                  "offset": 2555
+                },
+                "path": "routes/vulnCodeSnippet.ts",
+                "start": {
+                  "col": 13,
+                  "line": 105,
+                  "offset": 2548
+                }
+              }
+            }
+          ],
+          "taint_source": {
+            "content": "key",
+            "location": {
+              "end": {
+                "col": 33,
+                "line": 100,
+                "offset": 2374
+              },
+              "path": "routes/vulnCodeSnippet.ts",
+              "start": {
+                "col": 30,
+                "line": 100,
+                "offset": 2371
+              }
+            }
+          }
+        },
+        "fingerprint": "ee42c00631e269c09e8a6df928b5de8a5723911d0129b68780619695004dffdc7da8eb0265999ee4ec5d7a5971dca7d6719231887fac4959e4829826629096ca_0",
+        "is_ignored": false,
+        "lines": "        const source = fs.readFileSync(path.resolve(matches[0].path), 'utf8')",
+        "message": "Possible writing/reading outside of the destination, make sure that the target path is nested in the intended destination.",
+        "metadata": {
+          "category": "security",
+          "cwe": "CWE-22: Improper Limitation of a Pathname to a Restricted Directory ('Path Traversal')",
+          "license": "Commons Clause License Condition v1.0[LGPL-2.1-only]",
+          "owasp": "A01:2021 - Broken Access Control",
+          "references": [
+            "https://owasp.org/www-community/attacks/Path_Traversal"
+          ],
+          "shortlink": "https://sg.run/OPqk",
+          "source": "https://semgrep.dev/r/javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal",
+          "technology": [
+            "javascript",
+            "node.js"
+          ]
+        },
+        "metavars": {
+          "$PATH": {
+            "abstract_content": "path",
+            "end": {
+              "col": 44,
+              "line": 107,
+              "offset": 2720
+            },
+            "start": {
+              "col": 40,
+              "line": 107,
+              "offset": 2716
+            }
+          },
+          "$SINK": {
+            "abstract_content": "matches[0].path",
+            "end": {
+              "col": 68,
+              "line": 107,
+              "offset": 2744
+            },
+            "start": {
+              "col": 53,
+              "line": 107,
+              "offset": 2729
+            }
+          },
+          "$X": {
+            "abstract_content": "key",
+            "end": {
+              "col": 33,
+              "line": 100,
+              "offset": 2374
+            },
+            "start": {
+              "col": 30,
+              "line": 100,
+              "offset": 2371
+            }
+          }
+        },
+        "severity": "WARNING"
+      },
+      "path": "routes/vulnCodeSnippet.ts",
+      "start": {
+        "col": 53,
+        "line": 107,
+        "offset": 2729
+      }
+    },
+    {
+      "check_id": "javascript.lang.security.audit.unknown-value-with-script-tag.unknown-value-with-script-tag",
+      "end": {
+        "col": 169,
+        "line": 69,
+        "offset": 2736
+      },
+      "extra": {
+        "fingerprint": "fde17572f3af182fa82133427aa273d2a1448e390f9c14557d65eab9120e1cb862201465a25eb17cc7e5426f93bf534e942e56742437bb896fb0b32f8e25b6b0_0",
+        "is_ignored": false,
+        "lines": "      compiledTemplate = compiledTemplate.replace('<script id=\"subtitle\"></script>', '<script id=\"subtitle\" type=\"text/vtt\" data-label=\"English\" data-lang=\"en\">' + subs + '</script>')",
+        "message": "Cannot determine what 'subs' is and it is used with a '<script>' tag. This could be susceptible to cross-site scripting (XSS). Ensure 'subs' is not externally controlled, or sanitize this data.",
+        "metadata": {
+          "category": "security",
+          "cwe": "CWE-79: Improper Neutralization of Input During Web Page Generation ('Cross-site Scripting')",
+          "license": "Commons Clause License Condition v1.0[LGPL-2.1-only]",
+          "owasp": "A07:2017 - Cross-Site Scripting (XSS)",
+          "references": [
+            "https://www.developsec.com/2017/11/09/xss-in-a-script-tag/",
+            "https://github.com/juice-shop/juice-shop/blob/1ceb8751e986dacd3214a618c37e7411be6bc11a/routes/videoHandler.ts#L68"
+          ],
+          "shortlink": "https://sg.run/1Zy1",
+          "source": "https://semgrep.dev/r/javascript.lang.security.audit.unknown-value-with-script-tag.unknown-value-with-script-tag",
+          "technology": [
+            "javascript"
+          ]
+        },
+        "metavars": {
+          "$ANYFUNC": {
+            "abstract_content": "getSubsFromFile",
+            "end": {
+              "col": 35,
+              "line": 55,
+              "offset": 1809
+            },
+            "start": {
+              "col": 20,
+              "line": 55,
+              "offset": 1794
+            }
+          },
+          "$OTHERFUNC": {
+            "abstract_content": "compiledTemplate.replace",
+            "end": {
+              "col": 50,
+              "line": 69,
+              "offset": 2617
+            },
+            "start": {
+              "col": 26,
+              "line": 69,
+              "offset": 2593
+            }
+          },
+          "$UNK": {
+            "abstract_content": "subs",
+            "end": {
+              "col": 169,
+              "line": 69,
+              "offset": 2736
+            },
+            "propagated_value": {
+              "svalue_abstract_content": "getSubsFromFile()",
+              "svalue_end": {
+                "col": 37,
+                "line": 55,
+                "offset": 1811
+              },
+              "svalue_start": {
+                "col": 20,
+                "line": 55,
+                "offset": 1794
+              }
+            },
+            "start": {
+              "col": 165,
+              "line": 69,
+              "offset": 2732
+            }
+          }
+        },
+        "severity": "WARNING"
+      },
+      "path": "routes/videoHandler.ts",
+      "start": {
+        "col": 165,
+        "line": 69,
+        "offset": 2732
+      }
+    },
+    {
+      "check_id": "javascript.sequelize.security.audit.sequelize-raw-query.sequelize-raw-query",
+      "end": {
+        "col": 163,
+        "line": 5,
+        "offset": 429
+      },
+      "extra": {
+        "fingerprint": "eee39100f27c3d8006486c2ee5f6cbc5ec68a03b9035c1d0033846f9831b8d66eb891647b8b0c0d3be870d24012ec6e3564063c4116f73db9ccea5b3a98e3d66_0",
+        "is_ignored": false,
+        "lines": "    models.sequelize.query(\"SELECT * FROM Products WHERE ((name LIKE '%\"+criteria+\"%' OR description LIKE '%\"+criteria+\"%') AND deletedAt IS NULL) ORDER BY name\")",
+        "message": "Avoiding SQL string concatenation: untrusted input concatenated with raw SQL query can result in SQL Injection. Data replacement or data binding should be used. See https://sequelize.org/master/manual/raw-queries.html",
+        "metadata": {
+          "category": "security",
+          "cwe": "CWE-89: Improper Neutralization of Special Elements used in an SQL Command ('SQL Injection')",
+          "license": "Commons Clause License Condition v1.0[LGPL-2.1-only]",
+          "owasp": "A1: Injection",
+          "references": [
+            "https://sequelize.org/master/manual/raw-queries.html"
+          ],
+          "shortlink": "https://sg.run/GeG6",
+          "source": "https://semgrep.dev/r/javascript.sequelize.security.audit.sequelize-raw-query.sequelize-raw-query",
+          "technology": [
+            "sequelize"
+          ]
+        },
+        "metavars": {
+          "$DATABASE": {
+            "abstract_content": "models",
+            "end": {
+              "col": 11,
+              "line": 5,
+              "offset": 277
+            },
+            "start": {
+              "col": 5,
+              "line": 5,
+              "offset": 271
+            }
+          },
+          "$SQL": {
+            "abstract_content": "\"SELECT * FROM Products WHERE ((name LIKE '%\"+criteria+\"%' OR description LIKE '%\"+criteria",
+            "end": {
+              "col": 119,
+              "line": 5,
+              "offset": 385
+            },
+            "start": {
+              "col": 28,
+              "line": 5,
+              "offset": 294
+            }
+          },
+          "$VALUE": {
+            "abstract_content": "\"%') AND deletedAt IS NULL) ORDER BY name\"",
+            "end": {
+              "col": 162,
+              "line": 5,
+              "offset": 428
+            },
+            "start": {
+              "col": 120,
+              "line": 5,
+              "offset": 386
+            }
+          }
+        },
+        "severity": "WARNING"
+      },
+      "path": "data/static/codefixes/dbSchemaChallenge_1.ts",
+      "start": {
+        "col": 5,
+        "line": 5,
+        "offset": 271
+      }
+    },
+    {
+      "check_id": "javascript.sequelize.security.audit.sequelize-raw-query.sequelize-raw-query",
+      "end": {
+        "col": 161,
+        "line": 11,
+        "offset": 562
+      },
+      "extra": {
+        "fingerprint": "69faff60d7a439c30e17cdbd67a008fa31855de11384c145904ddc5dc6829f544e970829e8d66421fb629583f6305509a09d6e4491f55beacc1b01534a7ca81a_0",
+        "is_ignored": false,
+        "lines": "    models.sequelize.query(`SELECT * FROM Products WHERE ((name LIKE '%${criteria}%' OR description LIKE '%${criteria}%') AND deletedAt IS NULL) ORDER BY name`)",
+        "message": "Avoiding SQL string concatenation: untrusted input concatenated with raw SQL query can result in SQL Injection. Data replacement or data binding should be used. See https://sequelize.org/master/manual/raw-queries.html",
+        "metadata": {
+          "category": "security",
+          "cwe": "CWE-89: Improper Neutralization of Special Elements used in an SQL Command ('SQL Injection')",
+          "license": "Commons Clause License Condition v1.0[LGPL-2.1-only]",
+          "owasp": "A1: Injection",
+          "references": [
+            "https://sequelize.org/master/manual/raw-queries.html"
+          ],
+          "shortlink": "https://sg.run/GeG6",
+          "source": "https://semgrep.dev/r/javascript.sequelize.security.audit.sequelize-raw-query.sequelize-raw-query",
+          "technology": [
+            "sequelize"
+          ]
+        },
+        "metavars": {
+          "$DATABASE": {
+            "abstract_content": "models",
+            "end": {
+              "col": 11,
+              "line": 11,
+              "offset": 412
+            },
+            "start": {
+              "col": 5,
+              "line": 11,
+              "offset": 406
+            }
+          }
+        },
+        "severity": "WARNING"
+      },
+      "path": "data/static/codefixes/dbSchemaChallenge_3.ts",
+      "start": {
+        "col": 5,
+        "line": 11,
+        "offset": 406
+      }
+    },
+    {
+      "check_id": "javascript.sequelize.security.audit.sequelize-raw-query.sequelize-raw-query",
+      "end": {
+        "col": 161,
+        "line": 6,
+        "offset": 469
+      },
+      "extra": {
+        "fingerprint": "497c08f0f675cf30fa0948b6d043ae96586aca9a2488a7a60a0e193190290ce375f203f1fc04a22d42db0ad01e37251d87a69520086866e16fcc624ca1480898_0",
+        "is_ignored": false,
+        "lines": "    models.sequelize.query(`SELECT * FROM Products WHERE ((name LIKE '%${criteria}%' OR description LIKE '%${criteria}%') AND deletedAt IS NULL) ORDER BY name`)",
+        "message": "Avoiding SQL string concatenation: untrusted input concatenated with raw SQL query can result in SQL Injection. Data replacement or data binding should be used. See https://sequelize.org/master/manual/raw-queries.html",
+        "metadata": {
+          "category": "security",
+          "cwe": "CWE-89: Improper Neutralization of Special Elements used in an SQL Command ('SQL Injection')",
+          "license": "Commons Clause License Condition v1.0[LGPL-2.1-only]",
+          "owasp": "A1: Injection",
+          "references": [
+            "https://sequelize.org/master/manual/raw-queries.html"
+          ],
+          "shortlink": "https://sg.run/GeG6",
+          "source": "https://semgrep.dev/r/javascript.sequelize.security.audit.sequelize-raw-query.sequelize-raw-query",
+          "technology": [
+            "sequelize"
+          ]
+        },
+        "metavars": {
+          "$DATABASE": {
+            "abstract_content": "models",
+            "end": {
+              "col": 11,
+              "line": 6,
+              "offset": 319
+            },
+            "start": {
+              "col": 5,
+              "line": 6,
+              "offset": 313
+            }
+          }
+        },
+        "severity": "WARNING"
+      },
+      "path": "data/static/codefixes/unionSqlInjectionChallenge_1.ts",
+      "start": {
+        "col": 5,
+        "line": 6,
+        "offset": 313
+      }
+    },
+    {
+      "check_id": "javascript.sequelize.security.audit.sequelize-raw-query.sequelize-raw-query",
+      "end": {
+        "col": 161,
+        "line": 10,
+        "offset": 601
+      },
+      "extra": {
+        "fingerprint": "737c25526f970d6f50d9c111243ed4d35da6ead8d6ea8afc530502d726f0bab1a69f6645f73e694f635c7403ad34dad9e6f522b92ad1c66a83f996071ab183dc_0",
+        "is_ignored": false,
+        "lines": "    models.sequelize.query(`SELECT * FROM Products WHERE ((name LIKE '%${criteria}%' OR description LIKE '%${criteria}%') AND deletedAt IS NULL) ORDER BY name`)",
+        "message": "Avoiding SQL string concatenation: untrusted input concatenated with raw SQL query can result in SQL Injection. Data replacement or data binding should be used. See https://sequelize.org/master/manual/raw-queries.html",
+        "metadata": {
+          "category": "security",
+          "cwe": "CWE-89: Improper Neutralization of Special Elements used in an SQL Command ('SQL Injection')",
+          "license": "Commons Clause License Condition v1.0[LGPL-2.1-only]",
+          "owasp": "A1: Injection",
+          "references": [
+            "https://sequelize.org/master/manual/raw-queries.html"
+          ],
+          "shortlink": "https://sg.run/GeG6",
+          "source": "https://semgrep.dev/r/javascript.sequelize.security.audit.sequelize-raw-query.sequelize-raw-query",
+          "technology": [
+            "sequelize"
+          ]
+        },
+        "metavars": {
+          "$DATABASE": {
+            "abstract_content": "models",
+            "end": {
+              "col": 11,
+              "line": 10,
+              "offset": 451
+            },
+            "start": {
+              "col": 5,
+              "line": 10,
+              "offset": 445
+            }
+          }
+        },
+        "severity": "WARNING"
+      },
+      "path": "data/static/codefixes/unionSqlInjectionChallenge_3.ts",
+      "start": {
+        "col": 5,
+        "line": 10,
+        "offset": 445
+      }
+    },
+    {
+      "check_id": "javascript.sequelize.security.audit.sequelize-raw-query.sequelize-raw-query",
+      "end": {
+        "col": 206,
+        "line": 36,
+        "offset": 1689
+      },
+      "extra": {
+        "fingerprint": "eddc2cf1f075af6eac3305016618a827e17cd553eac50c5534a218903dc071a588ed1bc94f2ccb42a95b7d05e3508127ba4d426dadb6c581052e9804c2e55610_0",
+        "is_ignored": false,
+        "lines": "    models.sequelize.query(`SELECT * FROM Users WHERE email = '${req.body.email || ''}' AND password = '${security.hash(req.body.password || '')}' AND deletedAt IS NULL`, { model: UserModel, plain: true }) // vuln-code-snippet vuln-line loginAdminChallenge loginBenderChallenge loginJimChallenge",
+        "message": "Avoiding SQL string concatenation: untrusted input concatenated with raw SQL query can result in SQL Injection. Data replacement or data binding should be used. See https://sequelize.org/master/manual/raw-queries.html",
+        "metadata": {
+          "category": "security",
+          "cwe": "CWE-89: Improper Neutralization of Special Elements used in an SQL Command ('SQL Injection')",
+          "license": "Commons Clause License Condition v1.0[LGPL-2.1-only]",
+          "owasp": "A1: Injection",
+          "references": [
+            "https://sequelize.org/master/manual/raw-queries.html"
+          ],
+          "shortlink": "https://sg.run/GeG6",
+          "source": "https://semgrep.dev/r/javascript.sequelize.security.audit.sequelize-raw-query.sequelize-raw-query",
+          "technology": [
+            "sequelize"
+          ]
+        },
+        "metavars": {
+          "$DATABASE": {
+            "abstract_content": "'../models/index'",
+            "end": {
+              "col": 42,
+              "line": 6,
+              "offset": 162
+            },
+            "start": {
+              "col": 25,
+              "line": 6,
+              "offset": 145
+            }
+          }
+        },
+        "severity": "WARNING"
+      },
+      "path": "routes/login.ts",
+      "start": {
+        "col": 5,
+        "line": 36,
+        "offset": 1488
+      }
+    },
+    {
+      "check_id": "javascript.sequelize.security.audit.sequelize-raw-query.sequelize-raw-query",
+      "end": {
+        "col": 161,
+        "line": 23,
+        "offset": 988
+      },
+      "extra": {
+        "fingerprint": "bfa750e8f64f921ca92c1dc9985d07d059c99c0b68bb550e4eea614f9a60af0ab4b6a60c52ef494118f5d2938779b605ccd60e5f8aa65e2e7b717aaadf2ad05e_0",
+        "is_ignored": false,
+        "lines": "    models.sequelize.query(`SELECT * FROM Products WHERE ((name LIKE '%${criteria}%' OR description LIKE '%${criteria}%') AND deletedAt IS NULL) ORDER BY name`) // vuln-code-snippet vuln-line unionSqlInjectionChallenge dbSchemaChallenge",
+        "message": "Avoiding SQL string concatenation: untrusted input concatenated with raw SQL query can result in SQL Injection. Data replacement or data binding should be used. See https://sequelize.org/master/manual/raw-queries.html",
+        "metadata": {
+          "category": "security",
+          "cwe": "CWE-89: Improper Neutralization of Special Elements used in an SQL Command ('SQL Injection')",
+          "license": "Commons Clause License Condition v1.0[LGPL-2.1-only]",
+          "owasp": "A1: Injection",
+          "references": [
+            "https://sequelize.org/master/manual/raw-queries.html"
+          ],
+          "shortlink": "https://sg.run/GeG6",
+          "source": "https://semgrep.dev/r/javascript.sequelize.security.audit.sequelize-raw-query.sequelize-raw-query",
+          "technology": [
+            "sequelize"
+          ]
+        },
+        "metavars": {
+          "$DATABASE": {
+            "abstract_content": "'../models/index'",
+            "end": {
+              "col": 42,
+              "line": 6,
+              "offset": 162
+            },
+            "start": {
+              "col": 25,
+              "line": 6,
+              "offset": 145
+            }
+          }
+        },
+        "severity": "WARNING"
+      },
+      "path": "routes/search.ts",
+      "start": {
+        "col": 5,
+        "line": 23,
+        "offset": 832
+      }
+    }
+  ],
+  "version": "0.115.0"
+}

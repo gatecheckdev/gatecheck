@@ -39,6 +39,32 @@ func TestExportGrypeCmd(t *testing.T) {
 	t.Log(actual)
 }
 
+func TestExportSemgrepCmd(t *testing.T) {
+	actual := new(bytes.Buffer)
+	command := NewRootCmd(mockExporter{})
+	command.SetOut(actual)
+	command.SetErr(actual)
+
+	command.SetArgs([]string{"export", "defect-dojo", "semgrep", "some-nonexistent-file.bad-json"})
+
+	if err := command.Execute(); errors.Is(err, ErrorFileNotExists) != true {
+		t.Fatal("Expected error for non-existent file")
+	}
+
+	actual = new(bytes.Buffer)
+
+	tempFile, err := os.Open("../test/semgrep-sast-report.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	command.SetArgs([]string{"export", "defect-dojo", "semgrep", tempFile.Name()})
+
+	if err := command.Execute(); err != nil {
+		t.Fatal(err)
+	}
+}
+
 type mockExporter struct{}
 
 func (m mockExporter) Export(reportFile io.Reader, scanType exporter.ScanType) error {
@@ -49,6 +75,14 @@ func (m mockExporter) Export(reportFile io.Reader, scanType exporter.ScanType) e
 			return err
 		}
 		if len(report.Matches) == 0 {
+			return errors.New("zero matches decoded from report")
+		}
+	case exporter.Semgrep:
+		report := new(entity.SemgrepScanReport)
+		if err := json.NewDecoder(reportFile).Decode(report); err != nil {
+			return err
+		}
+		if len(report.Results) == 0 {
 			return errors.New("zero matches decoded from report")
 		}
 	}
