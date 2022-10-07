@@ -10,6 +10,10 @@ func TestStdValidator_Validate(t *testing.T) {
 	r.Artifacts.Grype.High.Found = 22
 	r.Artifacts.Grype.Medium.Found = 113
 
+	r.Artifacts.Semgrep.Error.Found = 12
+	r.Artifacts.Semgrep.Warning.Found = 14
+	r.Artifacts.Semgrep.Info.Found = 130
+
 	t.Run("All Vulnerabilities allowed", func(t *testing.T) {
 		// All vulnerabilities should be allowed
 		c := NewConfig("Test Project")
@@ -28,6 +32,10 @@ func TestStdValidator_Validate(t *testing.T) {
 		c.Grype.Low = 50
 		c.Grype.Unknown = 0
 		c.Grype.Negligible = 0
+
+		c.Semgrep.Error = 0
+		c.Semgrep.Warning = 20
+		c.Semgrep.Info = -1
 		r = r.WithConfig(c)
 
 		err := NewStdValidator(*r).Validate()
@@ -46,6 +54,10 @@ func TestStdValidator_Validate(t *testing.T) {
 		c.Grype.Low = 0
 		c.Grype.Unknown = 0
 		c.Grype.Negligible = 0
+
+		c.Semgrep.Error = 0
+		c.Semgrep.Warning = 0
+		c.Semgrep.Info = 0
 		r = r.WithConfig(c)
 
 		err := NewStdValidator(*r).Validate()

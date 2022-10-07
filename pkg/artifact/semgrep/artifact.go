@@ -74,7 +74,11 @@ func (a Artifact) WithScanReport(r io.Reader, reportName string) (*Artifact, err
 func (a Artifact) String() string {
 	var out strings.Builder
 	out.WriteString("Semgrep Static Code Analysis Report\n")
-	out.WriteString(fmt.Sprintf("Report: %s\n", a.ScanReport.Label))
+
+	if a.ScanReport != nil {
+		out.WriteString(fmt.Sprintf("Report: %s\n", a.ScanReport.Label))
+	}
+	
 	out.WriteString(fmt.Sprintf("%-10s | %-7s | %-7s | %-5s\n", "Severity", "Found", "Allowed", "Pass"))
 	out.WriteString(strings.Repeat("-", 38) + "\n")
 	out.WriteString(a.Error.String())

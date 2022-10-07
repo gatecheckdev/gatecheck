@@ -27,7 +27,7 @@ func TestArtifact_WithConfig(t *testing.T) {
 		t.Fatal("Artifact from config object and artifact from string do not match")
 	}
 
-	t.Log(artifact)
+	t.Log(artifact.String())
 }
 
 func TestArtifact_WithScanReport(t *testing.T) {
@@ -38,6 +38,8 @@ func TestArtifact_WithScanReport(t *testing.T) {
 	}
 
 	grypeArtifact, err := grype.NewArtifact().WithScanReport(scanFile, "grype-report.json")
+
+	t.Log(grypeArtifact.String())
 
 	if grypeArtifact.ScanReport.Label != "grype-report.json" {
 		t.Log(grypeArtifact)
@@ -55,7 +57,6 @@ func TestArtifact_WithScanReport(t *testing.T) {
 			t.Fatal("Expected error for bad decode")
 		}
 	})
-
 }
 
 type badReader struct{}

@@ -45,7 +45,8 @@ func TestWriteAndReadReport(t *testing.T) {
 
 	t.Run("with-config", func(t *testing.T) {
 		tempConfig := NewConfig("Test Project")
-		tempConfig.Grype.Low = 100
+		tempConfig.Grype.Low = 101
+		tempConfig.Semgrep.Error = 202
 		tempConfig.ProjectName = "Some project name"
 
 		rep = rep.WithConfig(tempConfig)
@@ -54,6 +55,17 @@ func TestWriteAndReadReport(t *testing.T) {
 		if strings.Contains(rep.String(), tempConfig.ProjectName) != true {
 			t.Fatal("Project name not updated")
 		}
+
+		if rep.Artifacts.Grype.Low.Allowed != 101 {
+			t.Logf("%+v", rep)
+			t.Fatal("Grype Artifact config was not updated as expected")
+		}
+
+		if rep.Artifacts.Semgrep.Error.Allowed != 202 {
+			t.Logf("%+v", rep)
+			t.Fatal("Semgrep Artifact config was not updated as expected")
+		}
+
 	})
 }
 
@@ -73,5 +85,4 @@ func TestReport_WithSettings(t *testing.T) {
 	if strings.Compare(r.PipelineUrl, "pipeline.com") != 0 {
 		t.Fatal("Unexpected Pipeline URL")
 	}
-
 }

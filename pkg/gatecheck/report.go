@@ -2,6 +2,7 @@ package gatecheck
 
 import (
 	"github.com/gatecheckdev/gatecheck/pkg/artifact/grype"
+	"github.com/gatecheckdev/gatecheck/pkg/artifact/semgrep"
 	"strings"
 	"time"
 )
@@ -18,7 +19,8 @@ type Report struct {
 	PipelineUrl string `json:"pipelineUrl"`
 	Timestamp   string `json:"timestamp"`
 	Artifacts   struct {
-		Grype grype.Artifact `json:"grype"`
+		Grype   grype.Artifact   `json:"grype,omitempty"`
+		Semgrep semgrep.Artifact `json:"semgrep,omitempty"`
 	} `json:"artifacts"`
 }
 
@@ -34,6 +36,7 @@ func NewReport(projectName string) *Report {
 func (r Report) WithConfig(c *Config) *Report {
 	r.ProjectName = c.ProjectName
 	r.Artifacts.Grype = *r.Artifacts.Grype.WithConfig(&c.Grype)
+	r.Artifacts.Semgrep = *r.Artifacts.Semgrep.WithConfig(&c.Semgrep)
 	return &r
 }
 
@@ -57,5 +60,7 @@ func (r Report) String() string {
 	out.WriteString(r.PipelineUrl + "\n")
 	out.WriteString(divider)
 	out.WriteString(r.Artifacts.Grype.String())
+	out.WriteString(divider)
+	out.WriteString(r.Artifacts.Semgrep.String())
 	return out.String()
 }

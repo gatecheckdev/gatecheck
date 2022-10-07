@@ -7,8 +7,8 @@ import (
 
 type Config struct {
 	ProjectName string         `yaml:"projectName" json:"projectName"`
-	Grype       grype.Config   `yaml:"grype" json:"grype"`
-	Semgrep     semgrep.Config `yaml:"semgrep" json:"semgrep"`
+	Grype       grype.Config   `yaml:"grype,omitempty" json:"grype,omitempty"`
+	Semgrep     semgrep.Config `yaml:"semgrep,omitempty" json:"semgrep,omitempty"`
 }
 
 func NewConfig(projectName string) *Config {
