@@ -9,6 +9,8 @@ import (
 	"testing"
 )
 
+const TestGrypeReportFilename = "../../../test/grype-report.json"
+
 func TestArtifact_WithConfig(t *testing.T) {
 	artifact := grype.NewArtifact()
 
@@ -30,7 +32,7 @@ func TestArtifact_WithConfig(t *testing.T) {
 
 func TestArtifact_WithScanReport(t *testing.T) {
 
-	scanFile, err := os.Open(TestGrypeReport)
+	scanFile, err := os.Open(TestGrypeReportFilename)
 	if err != nil {
 		t.Fatal(err)
 	}
