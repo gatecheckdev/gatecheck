@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/gatecheckdev/gatecheck/pkg/entity"
+	"github.com/gatecheckdev/gatecheck/pkg/exporter"
 	"io"
 	"os"
 	"testing"
@@ -40,14 +41,17 @@ func TestExportGrypeCmd(t *testing.T) {
 
 type mockExporter struct{}
 
-func (m mockExporter) ExportGrype(reportFile io.Reader) error {
-	var report entity.GrypeScanReport
+func (m mockExporter) Export(reportFile io.Reader, scanType exporter.ScanType) error {
+	switch scanType {
+	case exporter.Grype:
+		report := new(entity.GrypeScanReport)
+		if err := json.NewDecoder(reportFile).Decode(report); err != nil {
+			return err
+		}
+		if len(report.Matches) == 0 {
+			return errors.New("zero matches decoded from report")
+		}
+	}
 
-	if err := json.NewDecoder(reportFile).Decode(&report); err != nil {
-		return err
-	}
-	if len(report.Matches) == 0 {
-		return errors.New("zero matches decoded from report")
-	}
 	return nil
 }

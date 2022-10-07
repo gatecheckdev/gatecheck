@@ -3,6 +3,7 @@ package defectDojo
 import (
 	"bytes"
 	"errors"
+	"github.com/gatecheckdev/gatecheck/pkg/exporter"
 	"github.com/gatecheckdev/gatecheck/pkg/exporter/defectDojo/models"
 	"io"
 	"testing"
@@ -19,24 +20,24 @@ func TestExporter_ExportGrype(t *testing.T) {
 		errEngagement: errExpected, getEngagementValue: []models.Engagement{{Id: 1, Name: "engagement 1", Product: 1}},
 	}
 
-	if err := e.WithService(service).ExportGrype(new(bytes.Buffer)); err == nil {
+	if err := e.WithService(service).Export(new(bytes.Buffer), exporter.Grype); err == nil {
 		t.Fatal("Expected to fail getting product Type")
 	}
 	// turn off product type error
 	service.errProductType = nil
-	if err := e.WithService(service).ExportGrype(new(bytes.Buffer)); err == nil {
+	if err := e.WithService(service).Export(new(bytes.Buffer), exporter.Grype); err == nil {
 		t.Fatal("Expected to fail getting product")
 	}
 
 	// turn off product error
 	service.errProduct = nil
-	if err := e.WithService(service).ExportGrype(new(bytes.Buffer)); err == nil {
+	if err := e.WithService(service).Export(new(bytes.Buffer), exporter.Grype); err == nil {
 		t.Fatal("Expected to fail getting engagement")
 	}
 
 	// turn off engagement error, Provoke encode error
 	service.errEngagement = nil
-	if err := e.WithService(service).ExportGrype(bytes.NewBufferString("Some scan data")); err != nil {
+	if err := e.WithService(service).Export(bytes.NewBufferString("Some scan data"), exporter.Grype); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -150,7 +151,7 @@ type mockService struct {
 	errScan              error
 }
 
-func (m mockService) PostScan(reader io.Reader, i int, scanType ScanType) (*models.ScanImportResponse, error) {
+func (m mockService) PostScan(io.Reader, int, exporter.ScanType) (*models.ScanImportResponse, error) {
 	return m.postScanValue, m.errScan
 }
 
@@ -158,7 +159,7 @@ func (m mockService) GetProductTypes() ([]models.ProductType, error) {
 	return m.getProductTypeValue, m.errProductType
 }
 
-func (m mockService) PostProductType(productType models.ProductType) (*models.ProductType, error) {
+func (m mockService) PostProductType(models.ProductType) (*models.ProductType, error) {
 	return m.postProductTypeValue, m.errProductType
 }
 
@@ -166,7 +167,7 @@ func (m mockService) GetProducts() ([]models.Product, error) {
 	return m.getProductValue, m.errProduct
 }
 
-func (m mockService) PostProduct(product models.Product) (*models.Product, error) {
+func (m mockService) PostProduct(models.Product) (*models.Product, error) {
 	return m.postProductValue, m.errProduct
 }
 
@@ -174,10 +175,10 @@ func (m mockService) GetEngagements() ([]models.Engagement, error) {
 	panic("implement me")
 }
 
-func (m mockService) GetEngagementsByProduct(_ int) ([]models.Engagement, error) {
+func (m mockService) GetEngagementsByProduct(int) ([]models.Engagement, error) {
 	return m.getEngagementValue, m.errEngagement
 }
 
-func (m mockService) PostEngagement(engagement models.Engagement) (*models.Engagement, error) {
+func (m mockService) PostEngagement(models.Engagement) (*models.Engagement, error) {
 	return m.postEngagementValue, m.errEngagement
 }

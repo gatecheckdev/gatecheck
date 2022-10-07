@@ -5,5 +5,11 @@ import (
 )
 
 type Exporter interface {
-	ExportGrype(reportFile io.Reader) error
+	Export(reportFile io.Reader, scanType ScanType) error
 }
+
+type ScanType string
+
+const (
+	Grype ScanType = "Anchore Grype"
+)

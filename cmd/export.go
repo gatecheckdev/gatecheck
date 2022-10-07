@@ -28,7 +28,7 @@ func NewExportCmd(e exporter.Exporter) *cobra.Command {
 				return err
 			}
 
-			return e.ExportGrype(f)
+			return e.Export(f, exporter.Grype)
 		},
 	}
 

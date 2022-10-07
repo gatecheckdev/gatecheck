@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/gatecheckdev/gatecheck/pkg/exporter"
 	"github.com/gatecheckdev/gatecheck/pkg/exporter/defectDojo/models"
 	"io"
 	"log"
@@ -29,14 +30,8 @@ type EngagementHandler interface {
 }
 
 type ScanHandler interface {
-	PostScan(io.Reader, int, ScanType) (*models.ScanImportResponse, error)
+	PostScan(io.Reader, int, exporter.ScanType) (*models.ScanImportResponse, error)
 }
-
-type ScanType string
-
-const (
-	Grype ScanType = "Anchore Grype"
-)
 
 type Service interface {
 	ProductTypeHandler
@@ -94,7 +89,7 @@ func (c APIClient) PostProduct(p models.Product) (*models.Product, error) {
 	return post[models.Product](c, buf, "application/json", c.url+"/api/v2/products/")
 }
 
-func (c APIClient) PostScan(r io.Reader, engagementID int, scanType ScanType) (*models.ScanImportResponse, error) {
+func (c APIClient) PostScan(r io.Reader, engagementID int, scanType exporter.ScanType) (*models.ScanImportResponse, error) {
 	payload := &bytes.Buffer{}
 
 	// Write the file to the form writer

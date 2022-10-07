@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/gatecheckdev/gatecheck/pkg/exporter"
 	"github.com/gatecheckdev/gatecheck/pkg/exporter/defectDojo/models"
 	"io"
 	"net/http"
@@ -147,14 +148,14 @@ func (m mockedBuffer) Read(p []byte) (n int, err error) {
 func TestService_PostScan(t *testing.T) {
 	service := mockedPOST()
 	badBuf := mockedBuffer{}
-	if _, err := service.PostScan(badBuf, 1, Grype); err == nil {
+	if _, err := service.PostScan(badBuf, 1, exporter.Grype); err == nil {
 		t.Fatal("expected form io.copy error")
 	}
 
 	buf := new(bytes.Buffer)
 	_ = json.NewEncoder(buf).Encode(map[string]string{"foo": "bar"})
 
-	resScan, err := service.PostScan(buf, 1, Grype)
+	resScan, err := service.PostScan(buf, 1, exporter.Grype)
 	if err != nil {
 		t.Fatal(err)
 	}

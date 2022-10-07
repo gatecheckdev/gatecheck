@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Removed test utility and internal packages in favor of IO functions
 - Move config, report, and validator to pkg/gatecheck for simplified folder structure
 - Moved validate responsibility to the artifact
+- Converted ExportGrype in exporter to just Export using a scan type enum for better support for multiple file types
 
 ### Added
 - JSON struct tags to config for additional support
