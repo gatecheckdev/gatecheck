@@ -1,11 +1,10 @@
-package validator
+package gatecheck
 
 import (
 	"errors"
 	"fmt"
 	"github.com/gatecheckdev/gatecheck/pkg/artifact/fields"
 	"github.com/gatecheckdev/gatecheck/pkg/artifact/grype"
-	"github.com/gatecheckdev/gatecheck/pkg/report"
 	"strings"
 )
 
@@ -13,10 +12,10 @@ var ValidationError = errors.New("report failed validation")
 var GrypeValidationError = errors.New("grype artifact failed validation")
 
 type StdValidator struct {
-	r report.Report
+	r Report
 }
 
-func NewStdValidator(r report.Report) *StdValidator {
+func NewStdValidator(r Report) *StdValidator {
 	return &StdValidator{r: r}
 }
 

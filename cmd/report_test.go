@@ -3,9 +3,8 @@ package cmd
 import (
 	"bytes"
 	"errors"
-	"github.com/gatecheckdev/gatecheck/pkg/config"
 	"github.com/gatecheckdev/gatecheck/pkg/exporter/defectDojo"
-	"github.com/gatecheckdev/gatecheck/pkg/report"
+	"github.com/gatecheckdev/gatecheck/pkg/gatecheck"
 	"path"
 	"strings"
 	"testing"
@@ -75,7 +74,7 @@ func TestAddGrypeCmd(t *testing.T) {
 		}
 
 		// Check if the created file can be decoded
-		gatecheckReport, err := OpenAndDecode[report.Report](newReportFilename, JSON)
+		gatecheckReport, err := OpenAndDecode[gatecheck.Report](newReportFilename, JSON)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -95,7 +94,7 @@ func TestUpdateCmd(t *testing.T) {
 	configFilename := CopyToTemp(t, TestConfigFilename)
 	reportFilename := CopyToTemp(t, TestReportFilename)
 	// Change the Critical Threshold
-	c, err := OpenAndDecode[config.Config](configFilename, YAML)
+	c, err := OpenAndDecode[gatecheck.Config](configFilename, YAML)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -111,7 +110,7 @@ func TestUpdateCmd(t *testing.T) {
 	}
 
 	// Check if the report was indeed update
-	r, err := OpenAndDecode[report.Report](reportFilename, JSON)
+	r, err := OpenAndDecode[gatecheck.Report](reportFilename, JSON)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -158,7 +157,7 @@ func TestUpdateCmd(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		r, err := OpenAndDecode[report.Report](reportFilename, JSON)
+		r, err := OpenAndDecode[gatecheck.Report](reportFilename, JSON)
 		if err != nil {
 			t.Fatal(err)
 		}

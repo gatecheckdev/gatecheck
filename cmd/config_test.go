@@ -3,8 +3,8 @@ package cmd
 import (
 	"bytes"
 	"errors"
-	"github.com/gatecheckdev/gatecheck/pkg/config"
 	"github.com/gatecheckdev/gatecheck/pkg/exporter/defectDojo"
+	"github.com/gatecheckdev/gatecheck/pkg/gatecheck"
 	"os"
 	"path"
 	"testing"
@@ -81,7 +81,7 @@ func Test_ConfigInitCmd(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		c, err := OpenAndDecode[config.Config](fPath, YAML)
+		c, err := OpenAndDecode[gatecheck.Config](fPath, YAML)
 		if c.ProjectName != "test project name" {
 			t.Logf("%+v\n", c)
 			t.Fatal("Expected project name to be 'test project name'")

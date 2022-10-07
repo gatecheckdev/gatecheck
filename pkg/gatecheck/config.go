@@ -1,4 +1,4 @@
-package config
+package gatecheck
 
 import (
 	"github.com/gatecheckdev/gatecheck/pkg/artifact/grype"

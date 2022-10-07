@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"github.com/gatecheckdev/gatecheck/pkg/config"
+	"github.com/gatecheckdev/gatecheck/pkg/gatecheck"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
 )
@@ -37,7 +37,7 @@ func NewConfigCmd() *cobra.Command {
 			}
 
 			// Create a new configuration
-			newConfig := config.NewConfig(projectName)
+			newConfig := gatecheck.NewConfig(projectName)
 
 			// should not error on encoding if the file was opened successfully since using a new config
 			_ = yaml.NewEncoder(targetFile).Encode(newConfig)

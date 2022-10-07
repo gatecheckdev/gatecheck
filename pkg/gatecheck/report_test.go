@@ -1,11 +1,9 @@
-package report_test
+package gatecheck
 
 import (
 	"bytes"
 	"encoding/json"
 	"github.com/gatecheckdev/gatecheck/pkg/artifact/grype"
-	"github.com/gatecheckdev/gatecheck/pkg/config"
-	"github.com/gatecheckdev/gatecheck/pkg/report"
 	"os"
 	"strings"
 	"testing"
@@ -15,13 +13,13 @@ var TestGrypeReport = "../../test/grype-report.json"
 
 func TestWriteAndReadReport(t *testing.T) {
 	buf := new(bytes.Buffer)
-	rep := report.NewReport("Test Gatecheck Report")
+	rep := NewReport("Test Gatecheck Report")
 
 	t.Run("encoding", func(t *testing.T) {
 		if err := json.NewEncoder(buf).Encode(rep); err != nil {
 			t.Fatal(err)
 		}
-		rep2 := new(report.Report)
+		rep2 := new(Report)
 		err := json.NewDecoder(buf).Decode(rep2)
 		if err != nil {
 			t.Fatal(err)
@@ -46,7 +44,7 @@ func TestWriteAndReadReport(t *testing.T) {
 	})
 
 	t.Run("with-config", func(t *testing.T) {
-		tempConfig := config.NewConfig("Test Project")
+		tempConfig := NewConfig("Test Project")
 		tempConfig.Grype.Low = 100
 		tempConfig.ProjectName = "Some project name"
 
@@ -60,11 +58,11 @@ func TestWriteAndReadReport(t *testing.T) {
 }
 
 func TestReport_WithSettings(t *testing.T) {
-	r := report.NewReport("Test Project Name")
+	r := NewReport("Test Project Name")
 
-	r = r.WithSettings(report.Settings{ProjectName: "New Project Name"})
-	r = r.WithSettings(report.Settings{PipelineId: "ABC-12345"})
-	r = r.WithSettings(report.Settings{PipelineUrl: "pipeline.com"})
+	r = r.WithSettings(Settings{ProjectName: "New Project Name"})
+	r = r.WithSettings(Settings{PipelineId: "ABC-12345"})
+	r = r.WithSettings(Settings{PipelineUrl: "pipeline.com"})
 
 	if strings.Compare(r.ProjectName, "New Project Name") != 0 {
 		t.Fatal("Unexpected Project Name")

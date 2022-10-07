@@ -1,8 +1,8 @@
-package config_test
+package gatecheck
 
 import (
 	"bytes"
-	"github.com/gatecheckdev/gatecheck/pkg/config"
+
 	"gopkg.in/yaml.v3"
 	"testing"
 )
@@ -18,7 +18,7 @@ grype:
 `
 
 func TestNewConfig(t *testing.T) {
-	c := config.NewConfig("Test Project")
+	c := NewConfig("Test Project")
 	c.Grype.Critical = 1
 	c.Grype.High = 2
 	c.Grype.Medium = 3
@@ -31,7 +31,7 @@ func TestNewConfig(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	c2 := new(config.Config)
+	c2 := new(Config)
 	if err := yaml.NewDecoder(buf).Decode(c2); err != nil {
 		t.Fatal(err)
 	}

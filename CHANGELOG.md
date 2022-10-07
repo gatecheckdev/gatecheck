@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Refactored the cmd to use the new IO functions
 - Refactor unit tests in cmd package to be more uniform
 - Removed test utility and internal packages in favor of IO functions
+- Move config, report, and validator to pkg/gatecheck for simplified folder structure
 
 ### Added
 - JSON struct tags to config for additional support

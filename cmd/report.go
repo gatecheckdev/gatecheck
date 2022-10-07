@@ -3,8 +3,7 @@ package cmd
 import (
 	"fmt"
 	"github.com/gatecheckdev/gatecheck/pkg/artifact/grype"
-	"github.com/gatecheckdev/gatecheck/pkg/config"
-	"github.com/gatecheckdev/gatecheck/pkg/report"
+	"github.com/gatecheckdev/gatecheck/pkg/gatecheck"
 	"github.com/spf13/cobra"
 	"path"
 )
@@ -27,19 +26,19 @@ func NewReportCmd(configFile *string, reportFile *string) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 
 			// Open the config file, expecting an error if the file doesn't exist
-			gatecheckConfig, err := OpenAndDecode[config.Config](*configFile, YAML)
+			gatecheckConfig, err := OpenAndDecode[gatecheck.Config](*configFile, YAML)
 			if err != nil {
 				return err
 			}
 
-			gatecheckReport, err := OpenAndDecodeOrCreate[report.Report](*reportFile, JSON)
+			gatecheckReport, err := OpenAndDecodeOrCreate[gatecheck.Report](*reportFile, JSON)
 			if err != nil {
 				return err
 			}
 
 			gatecheckReport = gatecheckReport.WithConfig(gatecheckConfig)
 
-			gatecheckReport = gatecheckReport.WithSettings(report.Settings{
+			gatecheckReport = gatecheckReport.WithSettings(gatecheck.Settings{
 				ProjectName: flagProjectName,
 				PipelineId:  flagPipelineID,
 				PipelineUrl: flagPipelineURL,
@@ -56,7 +55,7 @@ func NewReportCmd(configFile *string, reportFile *string) *cobra.Command {
 		Short: "Print the Gate Check Report",
 		RunE: func(cmd *cobra.Command, args []string) error {
 
-			gatecheckReport, err := OpenAndDecodeOrCreate[report.Report](*reportFile, JSON)
+			gatecheckReport, err := OpenAndDecodeOrCreate[gatecheck.Report](*reportFile, JSON)
 			if err != nil {
 				return err
 			}
@@ -78,12 +77,12 @@ func NewReportCmd(configFile *string, reportFile *string) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 
 			// Decode the files into objects
-			gatecheckConfig, err := OpenAndDecode[config.Config](*configFile, YAML)
+			gatecheckConfig, err := OpenAndDecode[gatecheck.Config](*configFile, YAML)
 			if err != nil {
 				return err
 			}
 
-			gatecheckReport, err := OpenAndDecodeOrCreate[report.Report](*reportFile, JSON)
+			gatecheckReport, err := OpenAndDecodeOrCreate[gatecheck.Report](*reportFile, JSON)
 			if err != nil {
 				return err
 			}

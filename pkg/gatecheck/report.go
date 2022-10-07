@@ -1,8 +1,7 @@
-package report
+package gatecheck
 
 import (
 	"github.com/gatecheckdev/gatecheck/pkg/artifact/grype"
-	"github.com/gatecheckdev/gatecheck/pkg/config"
 	"strings"
 	"time"
 )
@@ -32,7 +31,7 @@ func NewReport(projectName string) *Report {
 	}
 }
 
-func (r Report) WithConfig(c *config.Config) *Report {
+func (r Report) WithConfig(c *Config) *Report {
 	r.ProjectName = c.ProjectName
 	r.Artifacts.Grype = *r.Artifacts.Grype.WithConfig(&c.Grype)
 	return &r
