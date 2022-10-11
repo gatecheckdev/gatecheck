@@ -11,6 +11,7 @@ import (
 )
 
 const TestGrypeFilename = "../test/grype-report.json"
+const TestSemgrepFilename = "../test/semgrep-sast-report.json"
 
 func TestAddGrypeCmd(t *testing.T) {
 	// Set up output captureA
@@ -168,6 +169,54 @@ func TestUpdateCmd(t *testing.T) {
 			t.Fatal("Pipeline url not updated")
 		}
 	})
+}
+
+func TestReportAddSemgrep(t *testing.T) {
+	command := NewRootCmd(defectDojo.Exporter{})
+
+	command.SetArgs([]string{"report", "add", "semgrep", "--config", CopyToTemp(t, TestConfigFilename),
+		"--report", CopyToTemp(t, TestReportFilename), CopyToTemp(t, TestSemgrepFilename)})
+
+	if err := command.Execute(); err != nil {
+		t.Fatal(err)
+	}
+
+	t.Run("bad-config", func(t *testing.T) {
+		command.SetArgs([]string{"report", "add", "semgrep", "--config", CreateMockFile(t, NoPermissions),
+			CopyToTemp(t, TestSemgrepFilename)})
+
+		if err := command.Execute(); errors.Is(err, ErrorFileAccess) != true {
+			t.Fatal("Expected file access error")
+		}
+	})
+
+	t.Run("bad-report", func(t *testing.T) {
+		command.SetArgs([]string{"report", "add", "semgrep", "--config", CopyToTemp(t, TestConfigFilename),
+			"--report", CreateMockFile(t, NoPermissions), CopyToTemp(t, TestSemgrepFilename)})
+
+		if err := command.Execute(); errors.Is(err, ErrorFileAccess) != true {
+			t.Fatal("Expected file access error")
+		}
+	})
+
+	t.Run("bad-scan", func(t *testing.T) {
+		command.SetArgs([]string{"report", "add", "semgrep", "--config", CopyToTemp(t, TestConfigFilename),
+			"--report", CopyToTemp(t, TestReportFilename), CreateMockFile(t, NoPermissions)})
+
+		if err := command.Execute(); errors.Is(err, ErrorFileAccess) != true {
+			t.Fatal("Expected file access error")
+		}
+	})
+
+	t.Run("bad-scan-decode", func(t *testing.T) {
+		command.SetArgs([]string{"report", "add", "semgrep", "--config", CopyToTemp(t, TestConfigFilename),
+			"--report", CopyToTemp(t, TestReportFilename), CreateMockFile(t, BadDecode)})
+
+		if err := command.Execute(); errors.Is(err, ErrorDecode) != true {
+			t.Fatal("Expected file access error")
+		}
+	})
+
 }
 
 func TestPrintCmd(t *testing.T) {

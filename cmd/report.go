@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"github.com/gatecheckdev/gatecheck/pkg/artifact/grype"
+	"github.com/gatecheckdev/gatecheck/pkg/artifact/semgrep"
 	"github.com/gatecheckdev/gatecheck/pkg/gatecheck"
 	"github.com/spf13/cobra"
 	"path"
@@ -70,6 +71,43 @@ func NewReportCmd(configFile *string, reportFile *string) *cobra.Command {
 		Short: "add an output file to the report",
 	}
 
+	var reportAddSemgrepCmd = &cobra.Command{
+		Use:   "semgrep <FILE>",
+		Short: "add a Semgrep scan file to the report",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+
+			// Decode the files into objects
+			gatecheckConfig, err := OpenAndDecode[gatecheck.Config](*configFile, YAML)
+			if err != nil {
+				return err
+			}
+
+			gatecheckReport, err := OpenAndDecodeOrCreate[gatecheck.Report](*reportFile, JSON)
+			if err != nil {
+				return err
+			}
+
+			scanFile, err := Open(args[0])
+			if err != nil {
+				return err
+			}
+
+			// Create a semgrep artifact with the scan report
+			artifact, err := semgrep.NewArtifact().WithScanReport(scanFile, path.Base(args[0]))
+			if err != nil {
+				return fmt.Errorf("%w : %v", ErrorDecode, err)
+			}
+			artifact = artifact.WithConfig(&gatecheckConfig.Semgrep)
+
+			// Create an Asset from the Grype Scan and add it to the report
+			gatecheckReport.Artifacts.Semgrep = *artifact
+
+			// Write report to file
+			return OpenAndEncode(*reportFile, JSON, gatecheckReport)
+		},
+	}
+
 	var reportAddGrypeCmd = &cobra.Command{
 		Use:   "grype <FILE>",
 		Short: "add a grype scan file to the report",
@@ -114,7 +152,7 @@ func NewReportCmd(configFile *string, reportFile *string) *cobra.Command {
 	reportCmd.PersistentFlags().StringVar(&flagProjectName, "name", "",
 		"The Project name for the report")
 
-	reportAddCmd.AddCommand(reportAddGrypeCmd)
+	reportAddCmd.AddCommand(reportAddGrypeCmd, reportAddSemgrepCmd)
 	reportCmd.AddCommand(reportAddCmd, reportPrintCmd, reportUpdateCmd)
 
 	return reportCmd
