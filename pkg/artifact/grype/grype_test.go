@@ -3,7 +3,7 @@ package grype
 import (
 	"bytes"
 	"errors"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 	"os"
 	"testing"
 )

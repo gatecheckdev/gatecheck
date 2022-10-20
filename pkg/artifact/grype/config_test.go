@@ -3,7 +3,7 @@ package grype_test
 import (
 	"bytes"
 	"github.com/gatecheckdev/gatecheck/pkg/artifact/grype"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 	"strings"
 	"testing"
 )

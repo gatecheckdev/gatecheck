@@ -5,6 +5,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [UNRELEASED]
+### Added
+- Gitleaks support, has the config option to allow secrets
+- Gitleaks test report generated from Juice Shop v14.3.0-4-g2c757a928
+
+### Changed
+- YAML 2.0 to 3.0 in all places
 
 ## [0.0.6]
 ### Added

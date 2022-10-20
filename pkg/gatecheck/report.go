@@ -3,6 +3,7 @@ package gatecheck
 import (
 	"errors"
 	"fmt"
+	"github.com/gatecheckdev/gatecheck/pkg/artifact/gitleaks"
 	"github.com/gatecheckdev/gatecheck/pkg/artifact/grype"
 	"github.com/gatecheckdev/gatecheck/pkg/artifact/semgrep"
 	"strings"
@@ -23,8 +24,9 @@ type Report struct {
 	PipelineUrl string `json:"pipelineUrl"`
 	Timestamp   string `json:"timestamp"`
 	Artifacts   struct {
-		Grype   grype.Artifact   `json:"grype,omitempty"`
-		Semgrep semgrep.Artifact `json:"semgrep,omitempty"`
+		Grype    grype.Artifact    `json:"grype,omitempty"`
+		Semgrep  semgrep.Artifact  `json:"semgrep,omitempty"`
+		Gitleaks gitleaks.Artifact `json:"gitleaks,omitempty"`
 	} `json:"artifacts"`
 }
 
@@ -41,6 +43,7 @@ func (r Report) WithConfig(c *Config) *Report {
 	r.ProjectName = c.ProjectName
 	r.Artifacts.Grype = *r.Artifacts.Grype.WithConfig(&c.Grype)
 	r.Artifacts.Semgrep = *r.Artifacts.Semgrep.WithConfig(&c.Semgrep)
+	r.Artifacts.Gitleaks = *r.Artifacts.Gitleaks.WithConfig(&c.Gitleaks)
 	return &r
 }
 
@@ -79,6 +82,7 @@ func (r Report) artifacts() []Artifact {
 	return []Artifact{
 		r.Artifacts.Grype,
 		r.Artifacts.Semgrep,
+		r.Artifacts.Gitleaks,
 	}
 }
 
@@ -91,6 +95,8 @@ func (r Report) String() string {
 	out.WriteString(r.Artifacts.Grype.String())
 	out.WriteString(divider)
 	out.WriteString(r.Artifacts.Semgrep.String())
+	out.WriteString(divider)
+	out.WriteString(r.Artifacts.Gitleaks.String())
 	return out.String()
 }
 
