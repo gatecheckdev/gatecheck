@@ -11,7 +11,7 @@ import (
 
 const TestGrypeFilename = "../test/grype-report.json"
 const TestSemgrepFilename = "../test/semgrep-sast-report.json"
-const TestGitleaksFilename = "../test/gitleaks_report.json"
+const TestGitleaksFilename = "../test/gitleaks-report.json"
 
 func TestUpdateCmd(t *testing.T) {
 	// Set up output capture

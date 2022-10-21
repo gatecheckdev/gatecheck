@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Gitleaks support, has the config option to allow secrets
 - Gitleaks test report generated from Juice Shop v14.3.0-4-g2c757a928
 - Gitleaks to CLI
+- Gitleaks as Export target to Defect Dojo
 
 
 ### Changed
