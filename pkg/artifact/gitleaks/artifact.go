@@ -46,7 +46,12 @@ func (a Artifact) WithScanReport(r io.Reader, reportName string) (*Artifact, err
 	return &a, nil
 }
 
+// WithConfig sets the secrets allowed based on a config file, if nil it will default to false
 func (a Artifact) WithConfig(config *Config) *Artifact {
+	if config == nil {
+		a.SecretsAllowed = false
+		return &a
+	}
 	a.SecretsAllowed = config.SecretsAllowed
 	return &a
 }

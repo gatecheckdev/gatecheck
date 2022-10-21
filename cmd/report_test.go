@@ -5,85 +5,13 @@ import (
 	"errors"
 	"github.com/gatecheckdev/gatecheck/pkg/exporter/defectDojo"
 	"github.com/gatecheckdev/gatecheck/pkg/gatecheck"
-	"path"
 	"strings"
 	"testing"
 )
 
 const TestGrypeFilename = "../test/grype-report.json"
 const TestSemgrepFilename = "../test/semgrep-sast-report.json"
-
-func TestAddGrypeCmd(t *testing.T) {
-	// Set up output captureA
-	actual := new(bytes.Buffer)
-	command := NewRootCmd(defectDojo.Exporter{})
-	command.SetOut(actual)
-	command.SetErr(actual)
-
-	t.Run("bad config", func(t *testing.T) {
-		command.SetArgs([]string{"report", "add", "grype", CopyToTemp(t, TestGrypeFilename)})
-
-		if err := command.Execute(); errors.Is(err, ErrorFileNotExists) != true {
-			t.Fatal(err)
-		}
-	})
-
-	t.Run("bad report", func(t *testing.T) {
-		command.SetArgs([]string{"report", "add", "grype", "--config", CreateMockFile(t, BadDecode),
-			"--report", CopyToTemp(t, TestReportFilename), CopyToTemp(t, TestGrypeFilename)})
-
-		if err := command.Execute(); errors.Is(err, ErrorDecode) != true {
-			t.Fatal(err)
-		}
-	})
-
-	t.Run("bad-scan", func(t *testing.T) {
-		command.SetArgs([]string{"report", "add", "grype", "--config", CopyToTemp(t, TestConfigFilename),
-			"--report", CopyToTemp(t, TestReportFilename), CreateMockFile(t, BadDecode)})
-
-		if err := command.Execute(); errors.Is(err, ErrorDecode) != true {
-			t.Fatal(err)
-		}
-	})
-
-	t.Run("report-file-access", func(t *testing.T) {
-		command.SetArgs([]string{"report", "add", "grype", "--config", CopyToTemp(t, TestConfigFilename),
-			"--report", CreateMockFile(t, NoPermissions), CreateMockFile(t, NoPermissions)})
-
-		if err := command.Execute(); errors.Is(err, ErrorFileAccess) != true {
-			t.Fatal(err)
-		}
-	})
-
-	t.Run("file-access", func(t *testing.T) {
-		command.SetArgs([]string{"report", "add", "grype", "--config", CopyToTemp(t, TestConfigFilename),
-			"--report", CopyToTemp(t, TestReportFilename), CreateMockFile(t, NoPermissions)})
-
-		if err := command.Execute(); errors.Is(err, ErrorFileAccess) != true {
-			t.Fatal(err)
-		}
-	})
-
-	t.Run("success", func(t *testing.T) {
-		newReportFilename := path.Join(t.TempDir(), "gatecheck-report.json")
-
-		command.SetArgs([]string{"report", "add", "grype", "--config", CopyToTemp(t, TestConfigFilename),
-			"--report", newReportFilename, CopyToTemp(t, TestGrypeFilename)})
-
-		if err := command.Execute(); err != nil {
-			t.Fatal(err)
-		}
-
-		// Check if the created file can be decoded
-		gatecheckReport, err := OpenAndDecode[gatecheck.Report](newReportFilename, JSON)
-		if err != nil {
-			t.Fatal(err)
-		}
-		if len(gatecheckReport.Artifacts.Grype.ScanReport.Digest) == 0 {
-			t.Fatal("Scan Report Digest is blank")
-		}
-	})
-}
+const TestGitleaksFilename = "../test/gitleaks_report.json"
 
 func TestUpdateCmd(t *testing.T) {
 	// Set up output capture
@@ -171,54 +99,6 @@ func TestUpdateCmd(t *testing.T) {
 	})
 }
 
-func TestReportAddSemgrep(t *testing.T) {
-	command := NewRootCmd(defectDojo.Exporter{})
-
-	command.SetArgs([]string{"report", "add", "semgrep", "--config", CopyToTemp(t, TestConfigFilename),
-		"--report", CopyToTemp(t, TestReportFilename), CopyToTemp(t, TestSemgrepFilename)})
-
-	if err := command.Execute(); err != nil {
-		t.Fatal(err)
-	}
-
-	t.Run("bad-config", func(t *testing.T) {
-		command.SetArgs([]string{"report", "add", "semgrep", "--config", CreateMockFile(t, NoPermissions),
-			CopyToTemp(t, TestSemgrepFilename)})
-
-		if err := command.Execute(); errors.Is(err, ErrorFileAccess) != true {
-			t.Fatal("Expected file access error")
-		}
-	})
-
-	t.Run("bad-report", func(t *testing.T) {
-		command.SetArgs([]string{"report", "add", "semgrep", "--config", CopyToTemp(t, TestConfigFilename),
-			"--report", CreateMockFile(t, NoPermissions), CopyToTemp(t, TestSemgrepFilename)})
-
-		if err := command.Execute(); errors.Is(err, ErrorFileAccess) != true {
-			t.Fatal("Expected file access error")
-		}
-	})
-
-	t.Run("bad-scan", func(t *testing.T) {
-		command.SetArgs([]string{"report", "add", "semgrep", "--config", CopyToTemp(t, TestConfigFilename),
-			"--report", CopyToTemp(t, TestReportFilename), CreateMockFile(t, NoPermissions)})
-
-		if err := command.Execute(); errors.Is(err, ErrorFileAccess) != true {
-			t.Fatal("Expected file access error")
-		}
-	})
-
-	t.Run("bad-scan-decode", func(t *testing.T) {
-		command.SetArgs([]string{"report", "add", "semgrep", "--config", CopyToTemp(t, TestConfigFilename),
-			"--report", CopyToTemp(t, TestReportFilename), CreateMockFile(t, BadDecode)})
-
-		if err := command.Execute(); errors.Is(err, ErrorDecode) != true {
-			t.Fatal("Expected file access error")
-		}
-	})
-
-}
-
 func TestPrintCmd(t *testing.T) {
 	// Set up output capture
 	actual := new(bytes.Buffer)
@@ -239,6 +119,74 @@ func TestPrintCmd(t *testing.T) {
 
 		if err := command.Execute(); errors.Is(err, ErrorFileAccess) != true {
 			t.Fatal(err)
+		}
+	})
+}
+
+func TestReportAddGrype(t *testing.T) {
+	ReportAdd(t, "grype", TestGrypeFilename)
+}
+
+func TestReportAddSemgrep(t *testing.T) {
+	ReportAdd(t, "semgrep", TestSemgrepFilename)
+}
+
+func TestReportAddGitleaks(t *testing.T) {
+	ReportAdd(t, "gitleaks", TestGitleaksFilename)
+}
+
+// Generic Tests
+func ReportAdd(t *testing.T, addCommand string, testScanReport string) {
+	command := NewRootCmd(defectDojo.Exporter{})
+	command.SilenceUsage = true
+
+	tempGatecheckReport := CopyToTemp(t, TestReportFilename)
+	command.SetArgs([]string{"report", "add", addCommand, "--config", CopyToTemp(t, TestConfigFilename),
+		"--report", tempGatecheckReport, CopyToTemp(t, testScanReport)})
+
+	if err := command.Execute(); err != nil {
+		t.Fatal(err)
+	}
+
+	command.SetArgs([]string{"report", "print", "--report", tempGatecheckReport})
+
+	if err := command.Execute(); err != nil {
+		t.Fatal(err)
+	}
+
+	t.Run("bad-config", func(t *testing.T) {
+		command.SetArgs([]string{"report", "add", addCommand, "--config", CreateMockFile(t, NoPermissions),
+			CopyToTemp(t, testScanReport)})
+
+		if err := command.Execute(); errors.Is(err, ErrorFileAccess) != true {
+			t.Fatal("Expected file access error")
+		}
+	})
+
+	t.Run("bad-report", func(t *testing.T) {
+		command.SetArgs([]string{"report", "add", addCommand, "--config", CopyToTemp(t, TestConfigFilename),
+			"--report", CreateMockFile(t, NoPermissions), CopyToTemp(t, testScanReport)})
+
+		if err := command.Execute(); errors.Is(err, ErrorFileAccess) != true {
+			t.Fatal("Expected file access error")
+		}
+	})
+
+	t.Run("bad-scan", func(t *testing.T) {
+		command.SetArgs([]string{"report", "add", addCommand, "--config", CopyToTemp(t, TestConfigFilename),
+			"--report", CopyToTemp(t, TestReportFilename), CreateMockFile(t, NoPermissions)})
+
+		if err := command.Execute(); errors.Is(err, ErrorFileAccess) != true {
+			t.Fatal("Expected file access error")
+		}
+	})
+
+	t.Run("bad-scan-decode", func(t *testing.T) {
+		command.SetArgs([]string{"report", "add", addCommand, "--config", CopyToTemp(t, TestConfigFilename),
+			"--report", CopyToTemp(t, TestReportFilename), CreateMockFile(t, BadDecode)})
+
+		if err := command.Execute(); errors.Is(err, ErrorDecode) != true {
+			t.Fatal("Expected file access error")
 		}
 	})
 }

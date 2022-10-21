@@ -31,7 +31,7 @@ func TestArtifact(t *testing.T) {
 	t.Log(gitleaksReport)
 
 	gitleaksReport.SecretsFound = 0
-	gitleaksReport.SecretsAllowed = false
+	gitleaksReport = gitleaksReport.WithConfig(nil)
 	if err := gitleaksReport.Validate(); err != nil {
 		t.Fatal("Expected validation to pass")
 	}

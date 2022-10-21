@@ -20,6 +20,9 @@ func TestArtifact_WithConfig(t *testing.T) {
 			t.Fatal("Expected all findings.Found to equal 0")
 		}
 	}
+
+	a = a.WithConfig(nil)
+	t.Log(a.String())
 }
 
 func TestArtifact_WithScanReport(t *testing.T) {

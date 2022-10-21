@@ -3,6 +3,7 @@ package gatecheck
 import (
 	"bytes"
 	"encoding/json"
+	"github.com/gatecheckdev/gatecheck/pkg/artifact/gitleaks"
 	"github.com/gatecheckdev/gatecheck/pkg/artifact/grype"
 	"github.com/gatecheckdev/gatecheck/pkg/artifact/semgrep"
 	"os"
@@ -39,35 +40,54 @@ func TestWriteAndReadReport(t *testing.T) {
 
 		art := grype.NewArtifact().WithConfig(grype.NewConfig(-1))
 		art, err = art.WithScanReport(scanFile, "grype-report.json")
-		rep.Artifacts.Grype = *art
+		rep.Artifacts.Grype = art
 
 		t.Log(rep)
 	})
 
-	t.Run("with-config", func(t *testing.T) {
-		tempConfig := NewConfig("Test Project")
-		tempConfig.Grype.Low = 101
-		tempConfig.Semgrep.Error = 202
-		tempConfig.ProjectName = "Some project name"
+}
 
-		rep = rep.WithConfig(tempConfig)
-		t.Log(rep)
+func TestReport_WithConfig(t *testing.T) {
 
-		if strings.Contains(rep.String(), tempConfig.ProjectName) != true {
-			t.Fatal("Project name not updated")
+	t.Run("grype", func(t *testing.T) {
+		report := NewReport("Some project with grype")
+		// nil config
+		if report.WithConfig(nil).Artifacts.Grype != nil {
+			t.Fatal("Unexpected value")
 		}
-
-		if rep.Artifacts.Grype.Low.Allowed != 101 {
-			t.Logf("%+v", rep)
-			t.Fatal("Grype Artifact config was not updated as expected")
+		// good config
+		config := &Config{Grype: grype.NewConfig(2)}
+		if report.WithConfig(config).Artifacts.Grype.Critical.Allowed != 2 {
+			t.Fatal("Configuration did not set")
 		}
-
-		if rep.Artifacts.Semgrep.Error.Allowed != 202 {
-			t.Logf("%+v", rep)
-			t.Fatal("Semgrep Artifact config was not updated as expected")
-		}
-
 	})
+
+	t.Run("semgrep", func(t *testing.T) {
+		report := NewReport("Some project with semgrep")
+		// nil config
+		if report.WithConfig(nil).Artifacts.Semgrep != nil {
+			t.Fatal("Unexpected value")
+		}
+		// good config
+		config := &Config{Semgrep: semgrep.NewConfig(2)}
+		if report.WithConfig(config).Artifacts.Semgrep.Error.Allowed != 2 {
+			t.Fatal("Configuration did not set")
+		}
+	})
+
+	t.Run("gitleaks", func(t *testing.T) {
+		report := NewReport("Some project with gitleaks")
+		// nil config
+		if report.WithConfig(nil).Artifacts.Gitleaks != nil {
+			t.Fatal("Unexpected value")
+		}
+		// good config
+		config := &Config{Gitleaks: gitleaks.NewConfig(true)}
+		if report.WithConfig(config).Artifacts.Gitleaks.SecretsAllowed != true {
+			t.Fatal("Configuration did not set")
+		}
+	})
+
 }
 
 func TestReport_WithSettings(t *testing.T) {
@@ -90,10 +110,13 @@ func TestReport_WithSettings(t *testing.T) {
 
 func TestReport_Validate(t *testing.T) {
 	r := NewReport("Test Report")
+
+	r.Artifacts.Grype = grype.NewArtifact()
 	r.Artifacts.Grype.Critical.Found = 20
 	r.Artifacts.Grype.High.Found = 22
 	r.Artifacts.Grype.Medium.Found = 113
 
+	r.Artifacts.Semgrep = semgrep.NewArtifact()
 	r.Artifacts.Semgrep.Error.Found = 12
 	r.Artifacts.Semgrep.Warning.Found = 14
 	r.Artifacts.Semgrep.Info.Found = 130
@@ -130,8 +153,8 @@ func TestReport_Validate(t *testing.T) {
 
 	t.Run("No vulnerabilities allowed", func(t *testing.T) {
 		c := NewConfig("Test Project")
-		c.Grype = *grype.NewConfig(0)
-		c.Semgrep = *semgrep.NewConfig(0)
+		c.Grype = grype.NewConfig(0)
+		c.Semgrep = semgrep.NewConfig(0)
 		r = r.WithConfig(c)
 
 		if err := r.Validate(); err == nil {

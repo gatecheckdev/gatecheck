@@ -24,9 +24,9 @@ type Report struct {
 	PipelineUrl string `json:"pipelineUrl"`
 	Timestamp   string `json:"timestamp"`
 	Artifacts   struct {
-		Grype    grype.Artifact    `json:"grype,omitempty"`
-		Semgrep  semgrep.Artifact  `json:"semgrep,omitempty"`
-		Gitleaks gitleaks.Artifact `json:"gitleaks,omitempty"`
+		Grype    *grype.Artifact    `json:"grype,omitempty"`
+		Semgrep  *semgrep.Artifact  `json:"semgrep,omitempty"`
+		Gitleaks *gitleaks.Artifact `json:"gitleaks,omitempty"`
 	} `json:"artifacts"`
 }
 
@@ -39,11 +39,34 @@ func NewReport(projectName string) *Report {
 	}
 }
 
+// WithConfig will configure each Artifact if the config is defined
 func (r Report) WithConfig(c *Config) *Report {
+	if c == nil {
+		return &r
+	}
 	r.ProjectName = c.ProjectName
-	r.Artifacts.Grype = *r.Artifacts.Grype.WithConfig(&c.Grype)
-	r.Artifacts.Semgrep = *r.Artifacts.Semgrep.WithConfig(&c.Semgrep)
-	r.Artifacts.Gitleaks = *r.Artifacts.Gitleaks.WithConfig(&c.Gitleaks)
+
+	if c.Grype != nil {
+		if r.Artifacts.Grype == nil {
+			r.Artifacts.Grype = grype.NewArtifact()
+		}
+		r.Artifacts.Grype = r.Artifacts.Grype.WithConfig(c.Grype)
+	}
+
+	if c.Semgrep != nil {
+		if r.Artifacts.Semgrep == nil {
+			r.Artifacts.Semgrep = semgrep.NewArtifact()
+		}
+		r.Artifacts.Semgrep = r.Artifacts.Semgrep.WithConfig(c.Semgrep)
+	}
+
+	if c.Gitleaks != nil {
+		if r.Artifacts.Gitleaks == nil {
+			r.Artifacts.Gitleaks = gitleaks.NewArtifact()
+		}
+		r.Artifacts.Gitleaks = r.Artifacts.Gitleaks.WithConfig(c.Gitleaks)
+	}
+
 	return &r
 }
 
@@ -65,6 +88,7 @@ func (r Report) Validate() error {
 	var allErrors []error
 	var errorDescriptions []string
 	for _, artifact := range r.artifacts() {
+
 		if err := artifact.Validate(); err != nil {
 			allErrors = append(allErrors, err)
 			errorDescriptions = append(errorDescriptions, err.Error())
@@ -79,11 +103,17 @@ func (r Report) Validate() error {
 }
 
 func (r Report) artifacts() []Artifact {
-	return []Artifact{
-		r.Artifacts.Grype,
-		r.Artifacts.Semgrep,
-		r.Artifacts.Gitleaks,
+	var activeArtifacts []Artifact
+	if r.Artifacts.Grype != nil {
+		activeArtifacts = append(activeArtifacts, r.Artifacts.Grype)
 	}
+	if r.Artifacts.Semgrep != nil {
+		activeArtifacts = append(activeArtifacts, r.Artifacts.Semgrep)
+	}
+	if r.Artifacts.Gitleaks != nil {
+		activeArtifacts = append(activeArtifacts, r.Artifacts.Gitleaks)
+	}
+	return activeArtifacts
 }
 
 func (r Report) String() string {
@@ -91,12 +121,14 @@ func (r Report) String() string {
 	divider := strings.Repeat("-", 25) + "\n"
 	out.WriteString(r.ProjectName + " " + r.PipelineId + "\n")
 	out.WriteString(r.PipelineUrl + "\n")
-	out.WriteString(divider)
-	out.WriteString(r.Artifacts.Grype.String())
-	out.WriteString(divider)
-	out.WriteString(r.Artifacts.Semgrep.String())
-	out.WriteString(divider)
-	out.WriteString(r.Artifacts.Gitleaks.String())
+
+	for _, artifact := range r.artifacts() {
+		if artifact != nil {
+			out.WriteString(divider)
+			out.WriteString(artifact.String())
+		}
+	}
+
 	return out.String()
 }
 
