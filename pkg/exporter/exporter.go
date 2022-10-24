@@ -14,5 +14,5 @@ type ScanType string
 const (
 	Grype    ScanType = "Anchore Grype"
 	Semgrep           = "Semgrep JSON Report"
-	Gitleaks          = "Gitleaks"
+	Gitleaks          = "Gitleaks Scan"
 )
