@@ -1,8 +1,9 @@
-name: Release Gatecheck
+name: Release Gatecheck with goreleaser
 on:
   push:
     tags:
       - 'v*'
+
 jobs:
   goreleaser:
     runs-on: ubuntu-latest
@@ -14,10 +15,8 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v3
       - name: Run GoReleaser
-
         uses: goreleaser/goreleaser-action@v3
         with:
-          # either 'goreleaser' (default) or 'goreleaser-pro'
           distribution: goreleaser
           version: latest
           args: release --rm-dist
