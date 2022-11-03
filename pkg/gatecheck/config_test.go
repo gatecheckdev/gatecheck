@@ -2,7 +2,6 @@ package gatecheck
 
 import (
 	"bytes"
-
 	"gopkg.in/yaml.v3"
 	"testing"
 )
@@ -44,10 +43,20 @@ func TestNewConfig(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if *c != *c2 {
-		t.Logf("%+v\n", *c)
-		t.Logf("%+v\n", *c2)
-		t.Fatal("Decoded Config does not match Encoded config")
+	if c.ProjectName != c2.ProjectName {
+		t.Fatal("Encoded config does not match decoded config")
 	}
 
+	cTestTable := []int{c.Grype.Critical, c.Grype.High, c.Grype.Medium,
+		c.Grype.Low, c.Grype.Negligible, c.Grype.Unknown, c.Semgrep.Error, c.Semgrep.Info, c.Semgrep.Warning}
+	c2TestTable := []int{c2.Grype.Critical, c2.Grype.High, c2.Grype.Medium,
+		c2.Grype.Low, c2.Grype.Negligible, c2.Grype.Unknown, c.Semgrep.Error, c.Semgrep.Info, c.Semgrep.Warning}
+
+	for i, _ := range cTestTable {
+		if cTestTable[i] != c2TestTable[i] {
+			t.Errorf("%+v\n", c)
+			t.Errorf("%+v\n", c2)
+			t.Fatalf("%d != %d as expected", cTestTable[i], c2TestTable[i])
+		}
+	}
 }

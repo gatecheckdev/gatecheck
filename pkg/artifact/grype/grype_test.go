@@ -3,7 +3,7 @@ package grype
 import (
 	"bytes"
 	"errors"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 	"os"
 	"testing"
 )
@@ -27,6 +27,12 @@ func TestArtifact_WithConfig(t *testing.T) {
 	}
 
 	t.Log(artifact.String())
+
+	t.Run("nil-config", func(t *testing.T) {
+		artifact := NewArtifact()
+		artifact = artifact.WithConfig(nil)
+		t.Log(artifact)
+	})
 }
 
 func TestArtifact_WithScanReport(t *testing.T) {

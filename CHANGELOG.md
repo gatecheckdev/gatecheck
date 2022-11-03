@@ -5,6 +5,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [UNRELEASED]
+### Added
+- Gitleaks support, has the config option to allow secrets
+- Gitleaks test report generated from Juice Shop v14.3.0-4-g2c757a928
+- Gitleaks to CLI
+- Gitleaks as Export target to Defect Dojo
+
+
+### Changed
+- YAML 2.0 to 3.0 in all places
+- TODO: Retry option for export command at CLI level
+- Use pointers for pkg/artifact values to allow nil
+- Use pointers for pkg/config values to allow nil
+- Unit tests to prevent nil pointer issues
+- Silence Usage text on error
+- Use std err in main for proper highlighting
 
 ## [0.0.6]
 ### Added

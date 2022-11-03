@@ -28,7 +28,11 @@ func NewArtifact() *Artifact {
 	}
 }
 
+// WithConfig will default to allow all findings if config is nil
 func (a Artifact) WithConfig(config *Config) *Artifact {
+	if config == nil {
+		return a.WithConfig(NewConfig(-1))
+	}
 	a.Info.Severity = "info"
 	a.Warning.Severity = "warning"
 	a.Error.Severity = "error"

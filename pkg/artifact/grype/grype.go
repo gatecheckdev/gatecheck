@@ -32,8 +32,11 @@ func NewArtifact() *Artifact {
 	}
 }
 
-// WithConfig sets the allowed values from config object
+// WithConfig sets the allowed values from config object, if nil it will default to allow all which is -1
 func (a Artifact) WithConfig(config *Config) *Artifact {
+	if config == nil {
+		return a.WithConfig(NewConfig(-1))
+	}
 	a.Critical.Severity = "Critical"
 	a.High.Severity = "High"
 	a.Medium.Severity = "Medium"

@@ -34,7 +34,7 @@ func NewExportCmd(e exporter.Exporter) *cobra.Command {
 
 	var semgrepToDojoCmd = &cobra.Command{
 		Use:   "semgrep <FILE>",
-		Short: "export a sempgrep --json file to Defect Dojo",
+		Short: "export a semgrep --json file to Defect Dojo",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 
@@ -48,7 +48,23 @@ func NewExportCmd(e exporter.Exporter) *cobra.Command {
 		},
 	}
 
-	defectDojoCmd.AddCommand(grypeToDojoCmd, semgrepToDojoCmd)
+	var gitleaksToDojoCmd = &cobra.Command{
+		Use:   "gitleaks <FILE>",
+		Short: "export a 'gitleaks --report-format json' file to Defect Dojo",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+
+			// Open the file
+			f, err := Open(args[0])
+			if err != nil {
+				return err
+			}
+
+			return e.Export(f, exporter.Gitleaks)
+		},
+	}
+
+	defectDojoCmd.AddCommand(grypeToDojoCmd, semgrepToDojoCmd, gitleaksToDojoCmd)
 	exportCmd.AddCommand(defectDojoCmd)
 	return exportCmd
 }
