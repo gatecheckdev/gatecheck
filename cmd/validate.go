@@ -65,7 +65,7 @@ func NewValidateCmd(configFile *string, reportFile *string) *cobra.Command {
 			cmd.Println(blacklist.StringBlacklistedVulnerabilities(kevBlacklist.CatalogVersion, blacklistedVulnerabilities))
 
 			if flagAudit != true && len(blacklistedVulnerabilities) != 0 {
-				return fmt.Errorf("%w : %d Vulnerabilities listed on CISA Known Exploited Vulnerabilities Blacklist",
+				return fmt.Errorf("%w: %d Vulnerabilities listed on CISA Known Exploited Vulnerabilities Blacklist",
 					ErrorValidation, len(blacklistedVulnerabilities))
 			}
 

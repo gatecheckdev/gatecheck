@@ -5,12 +5,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [UNRELEASED]
+
+## [0.0.7] - 2022-11-9
 ### Added
 - Gitleaks support, has the config option to allow secrets
 - Gitleaks test report generated from Juice Shop v14.3.0-4-g2c757a928
 - Gitleaks to CLI
 - Gitleaks as Export target to Defect Dojo
 - Blacklist Validation using KEVs from CISA
+- Dates to change log releases
+- CI/CD GitHub actions to auto release on tag
 
 
 ### Changed

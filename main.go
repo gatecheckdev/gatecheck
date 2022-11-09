@@ -38,7 +38,6 @@ func main() {
 		os.Exit(ExitFileAccessFail)
 	}
 	if errors.Is(err, cmd.ErrorValidation) {
-		command.PrintErrln(err)
 		os.Exit(ExitValidationFail)
 	}
 
