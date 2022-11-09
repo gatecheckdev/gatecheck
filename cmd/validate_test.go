@@ -2,7 +2,10 @@ package cmd
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
+	"github.com/anchore/grype/grype/presenter/models"
+	"github.com/gatecheckdev/gatecheck/pkg/entity"
 	"github.com/gatecheckdev/gatecheck/pkg/exporter/defectDojo"
 	"github.com/gatecheckdev/gatecheck/pkg/gatecheck"
 	"io"
@@ -74,6 +77,72 @@ func TestValidateCmd(t *testing.T) {
 		}
 	})
 
+}
+
+func TestValidateBlacklistCmd(t *testing.T) {
+	r := entity.GrypeScanReport{Matches: []models.Match{
+		{Vulnerability: models.Vulnerability{VulnerabilityMetadata: models.VulnerabilityMetadata{ID: "A"}}},
+		{Vulnerability: models.Vulnerability{VulnerabilityMetadata: models.VulnerabilityMetadata{ID: "B"}}},
+		{Vulnerability: models.Vulnerability{VulnerabilityMetadata: models.VulnerabilityMetadata{ID: "C"}}},
+	}}
+	br := entity.KEVCatalog{Vulnerabilities: []entity.KEVCatalogVulnerability{
+		{CveID: "A"},
+		{CveID: "C"},
+	}}
+	tempReportFilename := path.Join(t.TempDir(), "grype-report.json")
+	tempBlacklistFilename := path.Join(t.TempDir(), "blacklist.json")
+
+	f, err := os.Create(tempReportFilename)
+	if err != nil {
+		t.Fatal(err)
+	}
+	_ = json.NewEncoder(f).Encode(r)
+
+	f, err = os.Create(tempBlacklistFilename)
+	if err != nil {
+		t.Fatal(err)
+	}
+	_ = json.NewEncoder(f).Encode(br)
+
+	actual := new(bytes.Buffer)
+	command := NewRootCmd(defectDojo.Exporter{})
+	command.SetOut(actual)
+	command.SetErr(actual)
+
+	command.SetArgs([]string{"validate", "blacklist", tempReportFilename, tempBlacklistFilename})
+
+	if err := command.Execute(); errors.Is(err, ErrorValidation) != true {
+		t.Fatal("Expected validation to fail")
+	}
+
+	t.Run("bad-grype-file", func(t *testing.T) {
+		// Non-existing file
+		tempReportFilename := path.Join(t.TempDir(), "grype-report.json")
+
+		command.SetArgs([]string{"validate", "blacklist", tempReportFilename, tempBlacklistFilename})
+		if err := command.Execute(); errors.Is(err, ErrorDecode) != true {
+			t.Fatal("Expected decode error for non-existing file")
+		}
+	})
+
+	t.Run("bad-blacklist-file", func(t *testing.T) {
+		// Non-existing file
+		tempBlacklistFilename := path.Join(t.TempDir(), "blacklist.json")
+
+		command.SetArgs([]string{"validate", "blacklist", tempReportFilename, tempBlacklistFilename})
+
+		if err := command.Execute(); errors.Is(err, ErrorDecode) != true {
+			t.Fatal("Expected decode error for non-existing file")
+		}
+	})
+
+	t.Run("test-audit", func(t *testing.T) {
+		command.SetArgs([]string{"validate", "blacklist", "--audit", tempReportFilename, tempBlacklistFilename})
+		if err := command.Execute(); err != nil {
+			t.Fatal("Expected decode error for non-existing file")
+		}
+
+	})
 }
 
 // Mock Functions

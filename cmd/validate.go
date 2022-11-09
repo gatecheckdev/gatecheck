@@ -1,6 +1,9 @@
 package cmd
 
 import (
+	"fmt"
+	"github.com/gatecheckdev/gatecheck/pkg/blacklist"
+	"github.com/gatecheckdev/gatecheck/pkg/entity"
 	"github.com/gatecheckdev/gatecheck/pkg/gatecheck"
 	"github.com/spf13/cobra"
 )
@@ -42,6 +45,35 @@ func NewValidateCmd(configFile *string, reportFile *string) *cobra.Command {
 			return nil
 		},
 	}
+
+	var blacklistCmd = &cobra.Command{
+		Use:   "blacklist <Grype Report FILE> <KEV Blacklist FILE>",
+		Short: "Validate a Grype report with a CISA Known Exploited Vulnerabilities Blacklist",
+		Args:  cobra.ExactArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			grypeReport, err := OpenAndDecode[entity.GrypeScanReport](args[0], JSON)
+			if err != nil {
+				return fmt.Errorf("%w : %v", ErrorDecode, err)
+			}
+			kevBlacklist, err := OpenAndDecode[entity.KEVCatalog](args[1], JSON)
+			if err != nil {
+				return fmt.Errorf("%w : %v", ErrorDecode, err)
+			}
+
+			blacklistedVulnerabilities := blacklist.BlacklistedVulnerabilities(*grypeReport, *kevBlacklist)
+
+			cmd.Println(blacklist.StringBlacklistedVulnerabilities(kevBlacklist.CatalogVersion, blacklistedVulnerabilities))
+
+			if flagAudit != true && len(blacklistedVulnerabilities) != 0 {
+				return fmt.Errorf("%w : %d Vulnerabilities listed on CISA Known Exploited Vulnerabilities Blacklist",
+					ErrorValidation, len(blacklistedVulnerabilities))
+			}
+
+			return nil
+		},
+	}
+
+	validateCmd.AddCommand(blacklistCmd)
 
 	validateCmd.PersistentFlags().BoolVarP(&flagIgnoreConfig, "ignore-config", "x", false,
 		"Validate the report without using the thresholds from the gatecheck.yaml config")

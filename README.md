@@ -73,6 +73,19 @@ Custom exporters can be created by simply implementing the Exporter interface.
 gatecheck export defect-dojo grype grype-report.json
 ```
 
+## Blacklist Validation
+Gatecheck relies on [CISA Known Exploited Vulnerabilities](https://www.cisa.gov/known-exploited-vulnerabilities) to
+provide blacklist validation.
+You can take a Grype report and a CISA KEV blacklist file and see if any of the vulnerabilities are found in that Grype
+report.
+
+```shell
+gatecheck validate blacklist grype-report.json known_exploited_vulnerabilities.json
+```
+
+If `--audit` flag is used, it will exit code 0 after printing the report.
+Otherwise, it will exit code 1 for a Validation Error.
+
 ### Defect Dojo
 
 [Defect Dojo Documentation](https://defectdojo.github.io/django-DefectDojo/)
