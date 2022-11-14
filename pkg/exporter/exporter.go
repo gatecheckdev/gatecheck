@@ -6,6 +6,7 @@ import (
 
 type Exporter interface {
 	Export(reportFile io.Reader, scanType ScanType) error
+	ExportWithRetry(reportFile io.Reader, scanType ScanType, maxAttempts uint) error
 }
 
 type ScanType string

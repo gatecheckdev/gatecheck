@@ -7,6 +7,7 @@ import (
 	"github.com/gatecheckdev/gatecheck/pkg/exporter/defectDojo/models"
 	"io"
 	"testing"
+	"time"
 )
 
 func TestExporter_export(t *testing.T) {
@@ -45,6 +46,25 @@ func TestExporter_export(t *testing.T) {
 	if err := e.WithService(service).Export(new(bytes.Buffer), exporter.Semgrep); err != nil {
 		t.Fatal(err)
 	}
+
+}
+
+func TestExporter_ExportWithRetry(t *testing.T) {
+	e := NewExporter(Config{ProductTypeName: "prod type 1", ProductName: "prod 1", EngagementName: "engagement 1"})
+	e.RetryDuration = time.Nanosecond
+	service := mockService{
+		getProductTypeValue: []models.ProductType{{Id: 1, Name: "prod type 1"}},
+		getProductValue:     []models.Product{{Id: 1, ProdType: 1, Name: "prod 1"}},
+		getEngagementValue:  []models.Engagement{{Id: 1, Name: "engagement 1", Product: 1}},
+		testExportRetry:     true,
+	}
+	if err := e.WithService(service).ExportWithRetry(new(bytes.Buffer), exporter.Semgrep, 4); err != nil {
+		t.Fatal(err)
+	}
+	if err := e.WithService(service).ExportWithRetry(new(bytes.Buffer), exporter.Semgrep, 1); err == nil {
+		t.Fatal("Expected error for 1 max attempt")
+	}
+
 }
 
 func TestExporter_getProductType(t *testing.T) {
@@ -142,6 +162,8 @@ func TestAutoGenDescription(t *testing.T) {
 	t.Log(autoGenDescription("blah blah"))
 }
 
+var scanAttempts = 0
+
 type mockService struct {
 	errProductType       error
 	getProductTypeValue  []models.ProductType
@@ -154,9 +176,19 @@ type mockService struct {
 	postEngagementValue  *models.Engagement
 	postScanValue        *models.ScanImportResponse
 	errScan              error
+	testExportRetry      bool
 }
 
 func (m mockService) PostScan(io.Reader, int, exporter.ScanType) (*models.ScanImportResponse, error) {
+	if m.testExportRetry == true {
+		scanAttempts = scanAttempts + 1
+		if scanAttempts == 4 {
+			scanAttempts = 0
+			return m.postScanValue, nil
+		}
+		return m.postScanValue, errors.New("mock error")
+	}
+
 	return m.postScanValue, m.errScan
 }
 

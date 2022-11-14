@@ -92,6 +92,10 @@ func TestExportGitleaksCmd(t *testing.T) {
 
 type mockExporter struct{}
 
+func (m mockExporter) ExportWithRetry(r io.Reader, s exporter.ScanType, u uint) error {
+	return m.Export(r, s)
+}
+
 func (m mockExporter) Export(reportFile io.Reader, scanType exporter.ScanType) error {
 	switch scanType {
 	case exporter.Grype:

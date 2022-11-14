@@ -28,7 +28,7 @@ func NewExportCmd(e exporter.Exporter) *cobra.Command {
 				return err
 			}
 
-			return e.Export(f, exporter.Grype)
+			return e.ExportWithRetry(f, exporter.Grype, 4)
 		},
 	}
 
@@ -44,7 +44,7 @@ func NewExportCmd(e exporter.Exporter) *cobra.Command {
 				return err
 			}
 
-			return e.Export(f, exporter.Semgrep)
+			return e.ExportWithRetry(f, exporter.Semgrep, 4)
 		},
 	}
 
@@ -60,7 +60,7 @@ func NewExportCmd(e exporter.Exporter) *cobra.Command {
 				return err
 			}
 
-			return e.Export(f, exporter.Gitleaks)
+			return e.ExportWithRetry(f, exporter.Gitleaks, 4)
 		},
 	}
 

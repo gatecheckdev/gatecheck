@@ -5,6 +5,8 @@ import (
 	"github.com/gatecheckdev/gatecheck/pkg/exporter"
 	"github.com/gatecheckdev/gatecheck/pkg/exporter/defectDojo/models"
 	"io"
+	"log"
+	"math"
 	"time"
 )
 
@@ -21,12 +23,13 @@ type Config struct {
 }
 
 type Exporter struct {
-	service Service
-	config  Config
+	service       Service
+	config        Config
+	RetryDuration time.Duration
 }
 
 func NewExporter(c Config) *Exporter {
-	return &Exporter{config: c}
+	return &Exporter{config: c, RetryDuration: time.Second}
 }
 
 func (e Exporter) WithService(s Service) *Exporter {
@@ -41,6 +44,25 @@ func (e Exporter) Export(r io.Reader, scanType exporter.ScanType) error {
 	}
 
 	_, err = e.service.PostScan(r, engagement.Id, scanType)
+
+	return err
+}
+
+// ExportWithRetry calls Export in a backoff retry loop. Each loop has an exponential backoff
+func (e Exporter) ExportWithRetry(r io.Reader, scanType exporter.ScanType, maxAttempts uint) error {
+	var err error
+
+	for i := 0; i < int(maxAttempts); i++ {
+		err = e.Export(r, scanType)
+		if err == nil {
+			return nil
+		}
+		// Sleep for 2 ^ backoff, seconds
+		sleepFor := time.Duration(int64(math.Pow(2, float64(i)))) * e.RetryDuration
+		log.Printf("Export Attempt %d / %d, will Retrying after %s. Error: %v\n", i+1, maxAttempts,
+			sleepFor.String(), err)
+		time.Sleep(sleepFor)
+	}
 
 	return err
 }

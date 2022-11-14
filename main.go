@@ -25,6 +25,7 @@ func main() {
 		BranchTag:          os.Getenv("GATECHECK_DD_BRANCH_TAG"),
 		SourceURL:          os.Getenv("GATECHECK_DD_SOURCE_URL"),
 	}).WithService(defectDojo.NewDefaultService(dojoKey, dojoUrl))
+	e.RetryDuration = time.Second * 5
 	command := cmd.NewRootCmd(e)
 	command.SilenceUsage = true
 	err := command.Execute()
