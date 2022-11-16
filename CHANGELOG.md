@@ -9,7 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Export retry options
 
 ### Changed
--Exporter interface to allow retries on failed exports
+- Exporter interface to allow retries on failed exports
+
+## [UNRELEASED] - 
+### Added
+- Import package for EPSS
 
 ## [0.0.7] - 2022-11-9
 ### Added
