@@ -48,7 +48,7 @@ func TestArtifact_WithScanReport(t *testing.T) {
 
 	if grypeArtifact.ScanReport.Label != "grype-report.json" {
 		t.Log(grypeArtifact)
-		t.Fatal("Expected Scan Report Label to equal 'grype-report.json'")
+		t.Fatal("Expected Scan Report Metadata to equal 'grype-report.json'")
 	}
 
 	t.Run("bad-reader", func(t *testing.T) {

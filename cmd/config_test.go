@@ -14,7 +14,7 @@ func Test_ConfigInitCmd(t *testing.T) {
 	// Provoke an error with improper file name
 
 	actual := new(bytes.Buffer)
-	command := NewRootCmd(defectDojo.Exporter{})
+	command := NewRootCmd(defectDojo.Exporter{}, mockService{})
 	command.SetOut(actual)
 	command.SetErr(actual)
 

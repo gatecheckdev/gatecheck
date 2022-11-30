@@ -13,7 +13,7 @@ import (
 
 func TestExportGrypeCmd(t *testing.T) {
 	actual := new(bytes.Buffer)
-	command := NewRootCmd(mockExporter{})
+	command := NewRootCmd(mockExporter{}, mockService{})
 	command.SetOut(actual)
 	command.SetErr(actual)
 
@@ -41,7 +41,7 @@ func TestExportGrypeCmd(t *testing.T) {
 
 func TestExportSemgrepCmd(t *testing.T) {
 	actual := new(bytes.Buffer)
-	command := NewRootCmd(mockExporter{})
+	command := NewRootCmd(mockExporter{}, mockService{})
 	command.SetOut(actual)
 	command.SetErr(actual)
 
@@ -66,7 +66,7 @@ func TestExportSemgrepCmd(t *testing.T) {
 }
 func TestExportGitleaksCmd(t *testing.T) {
 	actual := new(bytes.Buffer)
-	command := NewRootCmd(mockExporter{})
+	command := NewRootCmd(mockExporter{}, mockService{})
 	command.SetOut(actual)
 	command.SetErr(actual)
 

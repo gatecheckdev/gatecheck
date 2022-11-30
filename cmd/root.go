@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"github.com/gatecheckdev/gatecheck/pkg/epss"
 	"github.com/gatecheckdev/gatecheck/pkg/exporter"
 	"github.com/spf13/cobra"
 )
@@ -11,7 +12,7 @@ const VersionNumber = "0.0.7"
 const DefaultReportFile = "gatecheck-report.json"
 const DefaultConfigFile = "gatecheck.yaml"
 
-func NewRootCmd(e exporter.Exporter) *cobra.Command {
+func NewRootCmd(e exporter.Exporter, s epss.Service) *cobra.Command {
 	// Flags
 
 	var FlagConfigFile string
@@ -48,6 +49,6 @@ func NewRootCmd(e exporter.Exporter) *cobra.Command {
 	RootCmd.AddCommand(versionCmd)
 
 	RootCmd.AddCommand(NewConfigCmd(), NewReportCmd(&FlagConfigFile, &FlagReportFile),
-		NewValidateCmd(&FlagConfigFile, &FlagReportFile), NewExportCmd(e))
+		NewValidateCmd(&FlagConfigFile, &FlagReportFile), NewExportCmd(e), NewEPSSCmd(s))
 	return RootCmd
 }

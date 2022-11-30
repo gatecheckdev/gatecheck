@@ -19,7 +19,7 @@ const TestReportFilename = "../test/gatecheck-report.json"
 
 func TestValidateCmd(t *testing.T) {
 	actual := new(bytes.Buffer)
-	command := NewRootCmd(defectDojo.Exporter{})
+	command := NewRootCmd(defectDojo.Exporter{}, mockService{})
 	command.SetOut(actual)
 	command.SetErr(actual)
 
@@ -105,7 +105,7 @@ func TestValidateBlacklistCmd(t *testing.T) {
 	_ = json.NewEncoder(f).Encode(br)
 
 	actual := new(bytes.Buffer)
-	command := NewRootCmd(defectDojo.Exporter{})
+	command := NewRootCmd(defectDojo.Exporter{}, mockService{})
 	command.SetOut(actual)
 	command.SetErr(actual)
 

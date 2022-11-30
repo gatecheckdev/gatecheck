@@ -3,7 +3,9 @@ package main
 import (
 	"errors"
 	"github.com/gatecheckdev/gatecheck/cmd"
+	"github.com/gatecheckdev/gatecheck/pkg/epss"
 	"github.com/gatecheckdev/gatecheck/pkg/exporter/defectDojo"
+	"net/http"
 	"os"
 	"time"
 )
@@ -25,8 +27,9 @@ func main() {
 		BranchTag:          os.Getenv("GATECHECK_DD_BRANCH_TAG"),
 		SourceURL:          os.Getenv("GATECHECK_DD_SOURCE_URL"),
 	}).WithService(defectDojo.NewDefaultService(dojoKey, dojoUrl))
+	s := epss.NewFirstAPIService(http.DefaultClient)
 	e.RetryDuration = time.Second * 5
-	command := cmd.NewRootCmd(e)
+	command := cmd.NewRootCmd(e, s)
 	command.SilenceUsage = true
 	err := command.Execute()
 

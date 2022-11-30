@@ -8,7 +8,7 @@ import (
 
 func Test_VersionCmd(t *testing.T) {
 	actual := new(bytes.Buffer)
-	command := NewRootCmd(defectDojo.Exporter{})
+	command := NewRootCmd(defectDojo.Exporter{}, mockService{})
 	command.SetOut(actual)
 	command.SetErr(actual)
 	command.SetArgs([]string{"version"})
@@ -23,7 +23,7 @@ func Test_VersionCmd(t *testing.T) {
 
 func Test_RootCmd(t *testing.T) {
 	actual := new(bytes.Buffer)
-	command := NewRootCmd(defectDojo.Exporter{})
+	command := NewRootCmd(defectDojo.Exporter{}, mockService{})
 	command.SetArgs([]string{})
 	t.Log(actual)
 	if err := command.Execute(); err != nil {

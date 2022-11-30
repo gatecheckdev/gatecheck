@@ -16,7 +16,7 @@ const TestGitleaksFilename = "../test/gitleaks-report.json"
 func TestUpdateCmd(t *testing.T) {
 	// Set up output capture
 	actual := new(bytes.Buffer)
-	command := NewRootCmd(defectDojo.Exporter{})
+	command := NewRootCmd(defectDojo.Exporter{}, mockService{})
 	command.SetOut(actual)
 	command.SetErr(actual)
 
@@ -102,7 +102,7 @@ func TestUpdateCmd(t *testing.T) {
 func TestPrintCmd(t *testing.T) {
 	// Set up output capture
 	actual := new(bytes.Buffer)
-	command := NewRootCmd(defectDojo.Exporter{})
+	command := NewRootCmd(defectDojo.Exporter{}, mockService{})
 	command.SetOut(actual)
 	command.SetErr(actual)
 
@@ -137,7 +137,7 @@ func TestReportAddGitleaks(t *testing.T) {
 
 // Generic Tests
 func ReportAdd(t *testing.T, addCommand string, testScanReport string) {
-	command := NewRootCmd(defectDojo.Exporter{})
+	command := NewRootCmd(defectDojo.Exporter{}, mockService{})
 	command.SilenceUsage = true
 
 	tempGatecheckReport := CopyToTemp(t, TestReportFilename)
