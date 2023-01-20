@@ -1,54 +1,67 @@
 package cmd
 
 import (
+	"errors"
+	"github.com/gatecheckdev/gatecheck/pkg/artifact"
 	"github.com/gatecheckdev/gatecheck/pkg/epss"
-	"github.com/gatecheckdev/gatecheck/pkg/exporter"
+	"github.com/gatecheckdev/gatecheck/pkg/export/defectdojo"
 	"github.com/spf13/cobra"
+	"gopkg.in/yaml.v3"
+	"os"
+	"time"
 )
 
-// Defaults
+type CLIConfig struct {
+	AutoDecoderTimeout time.Duration
+	Version            string
+	PipedInput         *os.File
+	DefaultReport      string
+	EPSSService        *epss.Service
+	DDExportService    *defectdojo.Service
+	DDEngagement       defectdojo.EngagementQuery
+	DDExportTimeout    time.Duration
+}
 
-const VersionNumber = "0.0.7"
-const DefaultReportFile = "gatecheck-report.json"
-const DefaultConfigFile = "gatecheck.yaml"
+var ErrorFileAccess = errors.New("file access")
+var ErrorEncoding = errors.New("encoding")
+var ErrorValidation = errors.New("validation")
 
-func NewRootCmd(e exporter.Exporter, s epss.Service) *cobra.Command {
-	// Flags
-
-	var FlagConfigFile string
-	var FlagReportFile string
-
-	var RootCmd = &cobra.Command{
-		Use:   "gatecheck",
-		Short: "Gate Check is a 'go' 'no-go' status reporter",
-		Long: `A tool used to collect job reports from various scans and
-                   compare the findings to an expected threshold provided
-                   gatecheck.yaml file.`,
+func NewRootCommand(config CLIConfig) *cobra.Command {
+	var command = &cobra.Command{
+		Use:     "gatecheck",
+		Short:   "A utility for aggregating, validating, and exporting vulnerability reports from other tools",
+		Version: config.Version,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cmd.Printf(GatecheckLogo)
 			return nil
 		},
 	}
+	command.InitDefaultVersionFlag()
 
-	var versionCmd = &cobra.Command{
-		Use:   "version",
-		Short: "Show the version and other defaults",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			cmd.Printf("Gate Check Version %s\n", VersionNumber)
-			cmd.Printf("Config File: %s\n", FlagConfigFile)
-			cmd.Printf("Report File: %s\n", FlagReportFile)
-			return nil
+	command.AddCommand(NewPrintCommand(config.AutoDecoderTimeout, config.PipedInput))
+	command.AddCommand(NewConfigCmd(), NewBundleCmd())
+	command.AddCommand(NewValidateCmd(config.AutoDecoderTimeout))
+	command.AddCommand(NewEPSSCmd(config.EPSSService))
+	command.AddCommand(NewExportCmd(config.DDExportService, config.DDExportTimeout, config.DDEngagement))
+	return command
+}
+
+func NewConfigCmd() *cobra.Command {
+	var cmd = &cobra.Command{
+		Use:   "config",
+		Short: "Creates a new configuration file",
+	}
+
+	var initCmd = &cobra.Command{
+		Use:   "init",
+		Short: "prints a new configuration file.",
+		RunE: func(cmd *cobra.Command, _ []string) error {
+
+			return yaml.NewEncoder(cmd.OutOrStdout()).Encode(artifact.NewConfig())
 		},
 	}
 
-	RootCmd.PersistentFlags().StringVarP(&FlagConfigFile, "config", "c", DefaultConfigFile,
-		"Gate Check configuration file")
-	RootCmd.PersistentFlags().StringVarP(&FlagReportFile, "report", "r", DefaultReportFile,
-		"Gate Check report file")
+	cmd.AddCommand(initCmd)
 
-	RootCmd.AddCommand(versionCmd)
-
-	RootCmd.AddCommand(NewConfigCmd(), NewReportCmd(&FlagConfigFile, &FlagReportFile),
-		NewValidateCmd(&FlagConfigFile, &FlagReportFile), NewExportCmd(e), NewEPSSCmd(s))
-	return RootCmd
+	return cmd
 }

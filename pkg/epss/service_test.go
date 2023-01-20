@@ -10,6 +10,8 @@ import (
 	"time"
 )
 
+const FirstAPIURL = "https://api.first.org/data/v1/epss"
+
 func TestFirstAPIService_GetAll(t *testing.T) {
 	server := mockClient(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
@@ -30,7 +32,7 @@ func TestFirstAPIService_GetAll(t *testing.T) {
 		_ = json.NewEncoder(w).Encode(&resObj)
 	})
 
-	service := NewFirstAPIService(server.Client())
+	service := NewEPSSService(server.Client(), FirstAPIURL)
 	service.Endpoint = server.URL
 	service.BatchSize = 2
 
@@ -57,7 +59,7 @@ func TestFirstAPIService_BadServer(t *testing.T) {
 		_ = json.NewEncoder(w).Encode(map[string]string{"message": "Server Error"})
 	})
 
-	service := NewFirstAPIService(server.Client())
+	service := NewEPSSService(server.Client(), FirstAPIURL)
 	service.Endpoint = server.URL
 
 	_, err := service.Get([]CVE{{ID: "a"}, {ID: "b"}})
@@ -71,7 +73,7 @@ func TestFirstAPIService_ClosedSever(t *testing.T) {
 	server := mockClient(func(w http.ResponseWriter, r *http.Request) {})
 	server.Close()
 
-	service := NewFirstAPIService(server.Client())
+	service := NewEPSSService(server.Client(), FirstAPIURL)
 	service.Endpoint = server.URL
 
 	_, err := service.Get([]CVE{{ID: "a"}, {ID: "b"}})
@@ -86,7 +88,7 @@ func TestFirstAPIService_BadServerResponseJSON(t *testing.T) {
 		_, _ = w.Write([]byte("{BAD JSON"))
 	})
 
-	service := NewFirstAPIService(server.Client())
+	service := NewEPSSService(server.Client(), FirstAPIURL)
 	service.Endpoint = server.URL
 
 	_, err := service.Get([]CVE{{ID: "a"}, {ID: "b"}})

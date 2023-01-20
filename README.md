@@ -1,29 +1,31 @@
-# Gate Check
+# Gatecheck
 [![CICD Pipeline](https://github.com/gatecheckdev/gatecheck/actions/workflows/run-test.yaml/badge.svg?branch=main)](https://github.com/gatecheckdev/gatecheck/actions/workflows/run-test.yaml)
 [![Go Reference](https://pkg.go.dev/badge/github.com/gatecheckdev/gatecheck.svg)](https://pkg.go.dev/github.com/gatecheckdev/gatecheck)
 [![Go Report Card](https://goreportcard.com/badge/github.com/gatecheckdev/gatecheck)](https://goreportcard.com/report/github.com/gatecheckdev/gatecheck)
 
 
-![Gate Check Logo](static/gatecheck-logo.png)
+![Gatecheck Logo](static/gatecheck-logo.png)
 
-Gate Check automates report validation in a CI/CD Pipeline by comparing security findings to a pre-determined 
+Gatecheck automates report validation in a CI/CD Pipeline by comparing security findings to a pre-determined 
 thresholds.
 It also provides report aggregation, artifact integrity, and deployment validation.
-Gate Check is stateless so self-hosting and provisioning servers is not required.
+Gatecheck is stateless so self-hosting and provisioning servers is not required.
 
 ## Upcoming Features
 
 - [X] Report Aggregation
 - [X] Vulnerability Threshold Configuration
 - [X] Report Exporting
-- [ ] Asset bundling
+- [X] Asset bundling
+- [X] Exploit Prediction Scoring System (EPSS) Querying
+- [X] CISA Known Exploited Vulnerabilities (KEV) Blacklisting
 - [ ] Artifact Integrity Verification
 - [ ] Whitelist Management
 - [ ] Deployment Verification & Validation
 
 ## Getting started
 
-The fastest way to get started with Gate Check is to download the pre-built binaries for your target system.
+The fastest way to get started with Gatecheck is to download the pre-built binaries for your target system.
 
 ```shell
 cd <target install dir>
@@ -32,15 +34,59 @@ curl -L <OS Specific Release>.tar.gz | tar xz
 ./gatecheck --help
 ```
 
-Gate Check uses Cobra for the CLI, so the normal convention of using ```--help``` to see command usage works.
+Gatecheck uses Cobra for the CLI, so the normal convention of using ```--help``` to see command usage works.
 
-To generate a configuration file with the default thresholds set
+Generate a configuration file with the default thresholds set
 
 ```shell
-gatecheck config init .
-cat gatecheck.yaml
+gatecheck config init > gatecheck.yaml
 ```
 
+Print scans in a table
+
+```shell
+gatecheck print grype-report.json gitleaks-report.json semgrep-report.json
+Severity   | Package             | Version            | Link                                                        
+-------------------------------------------------------------------------------------------------------------------
+Critical   | curl                | 7.74.0-1.3+deb11u1 | https://security-tracker.debian.org/tracker/CVE-2021-22945  
+Critical   | libcurl4            | 7.74.0-1.3+deb11u1 | https://security-tracker.debian.org/tracker/CVE-2021-22945  
+...
+
+Rule            | File                   | Secret                                              | Commit                                  
+-----------------------------------------------------------------------------------------------------------------------------------------
+jwt             | path/forgedJwt.spec.ts | eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJkYXRhIj...  | 1d1571854621f9fa4150e6fae93b24504d4e5a11
+generic-api-key | path/totpSetup.spec.ts | IFTXE3SPOEYVURT2MRYGI52TKJ4HC3KH                    | 1d1571854621f9fa4150e6fae93b24504d4e5a11
+...
+
+Path              | Line | Level   | link                | CWE Message                                                                                   
+--------------------------------------------------------------------------------------------------------
+lib/insecurity.ts | 55   | WARNING | https://sg.run/4xN9 | CWE-798: Use of Hard-coded Credentials
+lib/insecurity.ts | 53   | WARNING | https://sg.run/kXNo | CWE-522: Insufficiently Protected Credentials
+...  
+```
+
+`print` command can also be used for gatecheck report and gatecheck config.
+
+--------------- TODO --------------------
+```shell
+gatecheck validate grype-report.json
+
+add table
+```
+
+``shell
+gatecheck 
+``
+
+Add reports to the Gatecheck report
+
+```shell
+gatecheck add grype-report.json gitleaks-report.json semgrep-report.json
+```
+
+
+
+---------------------- OLD --------------------
 Add a grype report 
 
 ```shell
@@ -63,6 +109,15 @@ If you want to apply a modified configuration file to the report, it can be done
 gatecheck report update --report gatecheck-report.json --config custom-config.yaml
 gatecheck report print --report gatecheck-report.json
 ```
+
+## Example Usage
+
+Print a report 
+```shell
+cat grype-report.json | gatecheck print
+```
+
+
 
 ## Exporting
 
@@ -106,12 +161,12 @@ Environment Variables:
 
 ## Types
 
-With dozens of popular security and software tools, Gate Check abstracts the terminology.
+With dozens of popular security and software tools, Gatecheck abstracts the terminology.
 
 ### Config
 
 The configuration file has the threshold for each artifact.
-The Gate Check config (```gatecheck.yaml``` by default) is a customizable collection of tool specific configuration 
+The Gatecheck config (```gatecheck.yaml``` by default) is a customizable collection of tool specific configuration 
 files.
 This file is where the thresholds are set.
 
@@ -124,7 +179,7 @@ This is a summary of the data collected from the output reports from other tools
 ### Artifact
 
 The converted scan output or report from a specific third party tool.
-This is the Gate Check internal representation of an output report which is abstracted and simplified.
+This is the Gatecheck internal representation of an output report which is abstracted and simplified.
 This enables future integration with other tools and simplifies parsing and validation.
 
 ### Entity
@@ -139,4 +194,4 @@ The Semgrep Entity was created manually based on the provided schema in their re
 ### Asset
 
 This is a wrapper around the output scan report that comes from a scanning tool like Grype or Semgrep (An Entity).
-Gate Check will bundle all assets and verify the integrity of the files using RSA signing. (Feature pending)
+Gatecheck will bundle all assets and verify the integrity of the files using RSA signing. (Feature pending)

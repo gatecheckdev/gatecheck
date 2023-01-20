@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	gcStrings "github.com/gatecheckdev/gatecheck/pkg/strings"
 	"log"
 	"net/http"
 	"sort"
@@ -45,21 +46,17 @@ type result struct {
 	Error error
 }
 
-type Service interface {
-	Get(CVEs []CVE) ([]Data, error)
+func NewEPSSService(c *http.Client, endpoint string) *Service {
+	return &Service{client: c, BatchSize: 10, Endpoint: endpoint}
 }
 
-func NewFirstAPIService(c *http.Client) *FirstAPIService {
-	return &FirstAPIService{client: c, BatchSize: 10, Endpoint: "https://api.first.org/data/v1/epss"}
-}
-
-type FirstAPIService struct {
+type Service struct {
 	client    *http.Client
 	BatchSize int
 	Endpoint  string
 }
 
-func (s FirstAPIService) Get(CVEs []CVE) ([]Data, error) {
+func (s Service) Get(CVEs []CVE) ([]Data, error) {
 	dataChan := make(chan result)
 	var wg sync.WaitGroup
 
@@ -137,13 +134,8 @@ func cveMap(CVEs []CVE) map[string]CVE {
 }
 
 func Sprint(data []Data) string {
-	var sb strings.Builder
-	fmtString := "%-17s | %-10s | %-7s | %-10s | %-10s | %-25s \n"
 
-	sb.WriteString(fmt.Sprintf(fmtString, "CVE", "Severity", "EPSS", "Percentile", "Date", "Link"))
-
-	sb.WriteString(strings.Repeat("-", 85))
-	sb.WriteString("\n")
+	table := new(gcStrings.Table).WithHeader("CVE", "Severity", "EPSS", "Percentile", "Date", "Link")
 
 	percentage := func(s string) string {
 		f, _ := strconv.ParseFloat(s, 16)
@@ -152,12 +144,10 @@ func Sprint(data []Data) string {
 	}
 
 	for _, d := range data {
-
-		sb.WriteString(fmt.Sprintf(fmtString, d.CVE, d.Severity, percentage(d.EPSS),
-			percentage(d.Percentile), d.Date, d.URL))
+		table = table.WithRow(d.CVE, d.Severity, percentage(d.EPSS), percentage(d.Percentile), d.Date, d.URL)
 	}
 
-	return sb.String()
+	return table.String()
 }
 
 type SortByOption int
