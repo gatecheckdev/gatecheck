@@ -1,30 +1,41 @@
 package cmd
 
 import (
+	"context"
 	"errors"
 	"github.com/gatecheckdev/gatecheck/pkg/artifact"
 	"github.com/gatecheckdev/gatecheck/pkg/epss"
 	"github.com/gatecheckdev/gatecheck/pkg/export/defectdojo"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
+	"io"
 	"os"
 	"time"
 )
+
+var ErrorFileAccess = errors.New("file access")
+var ErrorEncoding = errors.New("encoding")
+var ErrorValidation = errors.New("validation")
+var ErrorAPI = errors.New("request API")
+
+type DDExportService interface {
+	Export(context.Context, io.Reader, defectdojo.EngagementQuery, defectdojo.ScanType) error
+}
+
+type EPSSService interface {
+	Get([]epss.CVE) ([]epss.Data, error)
+}
 
 type CLIConfig struct {
 	AutoDecoderTimeout time.Duration
 	Version            string
 	PipedInput         *os.File
 	DefaultReport      string
-	EPSSService        *epss.Service
-	DDExportService    *defectdojo.Service
+	EPSSService        EPSSService
+	DDExportService    DDExportService
 	DDEngagement       defectdojo.EngagementQuery
 	DDExportTimeout    time.Duration
 }
-
-var ErrorFileAccess = errors.New("file access")
-var ErrorEncoding = errors.New("encoding")
-var ErrorValidation = errors.New("validation")
 
 func NewRootCommand(config CLIConfig) *cobra.Command {
 	var command = &cobra.Command{

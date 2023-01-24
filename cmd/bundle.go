@@ -6,6 +6,7 @@ import (
 	"github.com/spf13/cobra"
 	"io"
 	"os"
+	"path"
 )
 
 func NewBundleCmd() *cobra.Command {
@@ -40,15 +41,13 @@ func NewBundleCmd() *cobra.Command {
 				if err != nil {
 					return fmt.Errorf("%w: %v", ErrorFileAccess, err)
 				}
+				label := path.Base(v)
+				// File already opened, shouldn't have a reason to error
+				art, _ := artifact.NewArtifact(label, f)
 
-				art, err := artifact.NewArtifact(v, f)
-				if err != nil {
-					return err
-				}
+				// Error would only occur on a missing label which isn't possible here
+				_ = bun.Add(art)
 
-				if err := bun.Add(art); err != nil {
-					return err
-				}
 				_, _ = fmt.Fprintln(out, "Adding", art.String())
 			}
 

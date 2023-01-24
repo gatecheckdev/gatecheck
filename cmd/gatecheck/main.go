@@ -38,8 +38,9 @@ func main() {
 	}
 
 	command := cmd.NewRootCommand(cmd.CLIConfig{
-		AutoDecoderTimeout: 3 * time.Second,
-		Version:            "1.0",
+		AutoDecoderTimeout: 5 * time.Second,
+		DDExportTimeout:    5 * time.Minute,
+		Version:            "0.0.8",
 		EPSSService:        epssService,
 		DDExportService:    &dojoService,
 		DDEngagement:       ddEngagement,

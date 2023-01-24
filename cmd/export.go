@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-func NewExportCmd(service *defectdojo.Service, timeout time.Duration, engagement defectdojo.EngagementQuery) *cobra.Command {
+func NewExportCmd(service DDExportService, timeout time.Duration, engagement defectdojo.EngagementQuery) *cobra.Command {
 	var exportCmd = &cobra.Command{
 		Use:   "export",
 		Short: "Export a report to a target location",
@@ -31,9 +31,9 @@ func NewExportCmd(service *defectdojo.Service, timeout time.Duration, engagement
 			ctx, cancel := context.WithTimeout(context.Background(), timeout)
 			defer cancel()
 
-			rType, err := artifact.Inspect(f)
+			rType, err := artifact.InspectWithContext(ctx, f)
 			if err != nil {
-				return fmt.Errorf("%w: %v", ErrorFileAccess, err)
+				return fmt.Errorf("%w: %v", ErrorEncoding, err)
 			}
 
 			var ddScanType defectdojo.ScanType
@@ -44,6 +44,8 @@ func NewExportCmd(service *defectdojo.Service, timeout time.Duration, engagement
 				ddScanType = defectdojo.Semgrep
 			case artifact.Gitleaks:
 				ddScanType = defectdojo.Gitleaks
+			default:
+				return fmt.Errorf("%w: Unsupported file type", ErrorEncoding)
 			}
 
 			return service.Export(ctx, f, engagement, ddScanType)

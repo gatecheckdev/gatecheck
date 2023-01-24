@@ -73,7 +73,7 @@ func NewValidateCmd(decodeTimeout time.Duration) *cobra.Command {
 
 			// Decode for Grype and return an error on fail because only grype can be validated with a blacklist
 			if err := json.NewDecoder(bytes.NewBuffer(targetBytes)).Decode(&grypeScan); err != nil {
-				return fmt.Errorf("%w: %v", ErrorEncoding, err)
+				return fmt.Errorf("%w: only Grype Reports are supported with KEV: %v", ErrorEncoding, err)
 			}
 
 			vulnerabilities := blacklist.BlacklistedVulnerabilities(grypeScan, kevBlacklist)
@@ -101,7 +101,7 @@ func NewValidateCmd(decodeTimeout time.Duration) *cobra.Command {
 	return cmd
 }
 
-func NewEPSSCmd(service *epss.Service) *cobra.Command {
+func NewEPSSCmd(service EPSSService) *cobra.Command {
 
 	var EPSSCmd = &cobra.Command{
 		Use:   "epss <Grype FILE>",
@@ -131,8 +131,9 @@ func NewEPSSCmd(service *epss.Service) *cobra.Command {
 
 			data, err := service.Get(CVEs)
 			if err != nil {
-				return err
+				return fmt.Errorf("%w: %s", ErrorAPI, err)
 			}
+
 			cmd.Println(epss.Sprint(data))
 			return nil
 		},

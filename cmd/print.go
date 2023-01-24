@@ -69,6 +69,8 @@ func ParseAndFPrint(r io.Reader, w io.Writer, timeout time.Duration) error {
 	case artifact.GatecheckBundle:
 		bundle := artifact.DecodeBundle(buf)
 		_, err = fmt.Fprintln(w, bundle.String())
+	default:
+		_, err = fmt.Fprintln(w, "Unsupported file type")
 	}
 
 	return err

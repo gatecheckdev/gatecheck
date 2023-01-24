@@ -395,6 +395,7 @@ func TestService_Export(t *testing.T) {
 
 		server := httptest.NewServer(nopHandler())
 		service := NewService(server.Client(), "", server.URL)
+		service.BackoffDuration = time.Nanosecond
 		server.Close()
 		if err := service.Export(context.Background(), bytes.NewBufferString("a"), eq, Grype); err == nil {
 			t.Fatal("expected error for closed server")
