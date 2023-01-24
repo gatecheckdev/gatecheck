@@ -19,7 +19,7 @@ Gatecheck is stateless so self-hosting and provisioning servers is not required.
 - [X] Asset bundling
 - [X] Exploit Prediction Scoring System (EPSS) Querying
 - [X] CISA Known Exploited Vulnerabilities (KEV) Blacklisting
-- [ ] Artifact Integrity Verification
+- [X] Artifact Integrity Verification
 - [ ] Whitelist Management
 - [ ] Deployment Verification & Validation
 
@@ -67,23 +67,49 @@ lib/insecurity.ts | 53   | WARNING | https://sg.run/kXNo | CWE-522: Insufficient
 
 `print` command can also be used for gatecheck report and gatecheck config.
 
---------------- TODO --------------------
 ```shell
-gatecheck validate grype-report.json
+gatecheck validate -c gatecheck.yaml grype-report.json
 
-add table
+grype validation failed: Critical (22 found > 0 allowed), High (27 found > 0 allowed)
+Error: validation
 ```
 
-``shell
-gatecheck 
-``
+Using the `--audit` flag will exit with code 0
 
-Add reports to the Gatecheck report
+### Validation with KEV Catalog 
+
+Use the `-k` flag to provide a [CISA Known Exploited Vulnerabilities Catalog (JSON)](https://www.cisa.gov/known-exploited-vulnerabilities-catalog)
 
 ```shell
-gatecheck add grype-report.json gitleaks-report.json semgrep-report.json
+gatecheck validate -c gatecheck.yaml -k known-exploited-vulnerabilities.json grype-report.json
+
+grype validation failed: Critical (22 found > 0 allowed), High (27 found > 0 allowed)
+Blacklisted Vulnerabilities Report
+Catalog Version: 2022.11.08
+0 Blacklisted Vulnerabilities Matched
+
+0 Vulnerabilities listed on CISA Known Exploited Vulnerabilities Blacklist
+Error: validation
 ```
 
+### EPSS
+
+Automatically queries the [Exploit Prediction Scoring System, by First](https://www.first.org/epss/) API and cross reference
+using a Grype Report file.
+
+```shell
+CVE              | Severity   | EPSS   | Percentile | Date       | Link
+---------------------------------------------------------------------------------------------------------------------------------
+CVE-2011-3389    | Medium     | 40.95% | 98.22%     | 2023-01-23 | https://security-tracker.debian.org/tracker/CVE-2011-3389
+CVE-2011-3389    | Medium     | 40.95% | 98.22%     | 2023-01-23 | https://security-tracker.debian.org/tracker/CVE-2011-3389
+CVE-2022-0778    | High       | 35.45% | 97.80%     | 2023-01-23 | https://security-tracker.debian.org/tracker/CVE-2022-0778
+CVE-2022-1271    | Unknown    | 25.98% | 96.99%     | 2023-01-23 | https://security-tracker.debian.org/tracker/CVE-2022-1271
+CVE-2018-25032   | High       | 23.44% | 96.63%     | 2023-01-23 | https://security-tracker.debian.org/tracker/CVE-2018-25032
+CVE-2022-23852   | Critical   | 20.15% | 96.32%     | 2023-01-23 | https://security-tracker.debian.org/tracker/CVE-2022-23852
+CVE-2022-23990   | Critical   | 19.17% | 96.23%     | 2023-01-23 | https://security-tracker.debian.org/tracker/CVE-2022-23990
+CVE-2022-25315   | Critical   | 17.17% | 96.07%     | 2023-01-23 | https://security-tracker.debian.org/tracker/CVE-2022-25315
+...
+```
 
 ## Exporting
 
@@ -91,7 +117,7 @@ Exporting will take the report and upload it to a specific target location using
 Custom exporters can be created by simply implementing the Exporter interface.
 
 ```shell
-gatecheck export defect-dojo grype grype-report.json
+gatecheck export defect-dojo grype-report.json
 ```
 
 ## Blacklist Validation
@@ -125,9 +151,6 @@ Environment Variables:
 - GATECHECK_DD_BRANCH_TAG
 - GATECHECK_DD_SOURCE_URL
 
-## Types
-
-With dozens of popular security and software tools, Gatecheck abstracts the terminology.
 
 ### Config
 
@@ -137,9 +160,50 @@ files.
 This file is where the thresholds are set.
 
 ```shell
-gatecheck config init
+gatecheck config init > gatecheck.yaml
+cat gatecheck.yaml
+
+grype:
+    critical: -1
+    high: -1
+    medium: -1
+    low: -1
+    negligible: -1
+    unknown: -1
+semgrep:
+    info: -1
+    warning: -1
+    error: -1
+gitleaks:
+    SecretsAllowed: false
 ```
 
 ### Bundle
 
-### Artifact
+Artifacts and generic files can be bundled using Gatecheck.
+The files are compressed which reduces the total file size while preserving data.
+
+To create a new bundle
+```shell
+gatecheck bundle -o bundle.gatecheck grype-report.json semgrep-sast-report.json random.file
+```
+
+To view the files in a bundle
+```shell
+gatecheck print bundle.gatecheck
+
+Type         | Label                    | Digest                                                           | Size
+---------------------------------------------------------------------------------------------------------------------
+Grype        | grype-report.json        | 588E5969C6205FFD3F5531EB643B6D6BB9FF4CBB862BD9BC180DC2867D3A1A18 | 940 kB
+Semgrep      | semgrep-sast-report.json | 377C6C86987DFB649266432DF2A741917EC7D225CA883A6ABDC176AA44519F84 | 172 kB
+Gitleaks     |                          |                                                                  | 0 B
+Generic File | random.file              | 1C87B6727F523662DF714F06A94EA27FA4D9050C38F4F7712BD4663FFBFDFA01 | 13 B
+
+                                                                                                Total Size: 1.1 MB
+```
+
+To validate all files in the bundle with a configuration file
+
+```shell
+gatecheck validate -c gatecheck.yaml bundle.gatecheck
+```

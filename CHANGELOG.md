@@ -6,14 +6,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [UNRELEASED]
 ### Added
-- Export retry options
+- Defect Dojo Export has a exponential backoff between queries
+- Gatecheck Bundle 
+- Validation in Bundle
+- Predictive encoding to avoid the need to label each file type
+- KEV Blacklisting
+- EPSS Table
+- Strings package for pretty table printing
 
 ### Changed
 - Exporter interface to allow retries on failed exports
+- Validation strategy
+- Removed implementation side interfacing for export services and epss in favor of caller side interfacing
+- Main function moved to cmd/gatecheck for better package conformation
 
-## [UNRELEASED] - 
-### Added
-- Import package for EPSS
+### Removed
+- Gatecheck Report in favor of Gatecheck Bundle
+- The concept of Assets, treating everything as artifacts
+- Unnecessary complexity in Defect Dojo Export Service
 
 ## [0.0.7] - 2022-11-9
 ### Added
