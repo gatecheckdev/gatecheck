@@ -2,31 +2,70 @@ package cmd
 
 import (
 	"bytes"
-	"github.com/gatecheckdev/gatecheck/pkg/exporter/defectDojo"
+	"os"
+	"strings"
 	"testing"
+	"time"
 )
 
-func Test_VersionCmd(t *testing.T) {
-	actual := new(bytes.Buffer)
-	command := NewRootCmd(defectDojo.Exporter{})
-	command.SetOut(actual)
-	command.SetErr(actual)
-	command.SetArgs([]string{"version"})
-	err := command.Execute()
+var semgrepTestReport = "../test/semgrep-sast-report.json"
+var gitleaksTestReport = "../test/gitleaks-report.json"
+var grypeTestReport = "../test/grype-report.json"
+var kevTestFile = "../test/known_exploited_vulnerabilities.json"
 
-	t.Log(actual)
-	if err != nil {
-		t.Fatal("No error expected for root command")
-	}
+func Test_RootCommand(t *testing.T) {
+	t.Parallel()
+	t.Run("logo", func(t *testing.T) {
+		out, err := Execute("", CLIConfig{AutoDecoderTimeout: time.Nanosecond})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if len(out) < 100 {
+			t.FailNow()
+		}
+	})
 
+	t.Run("version", func(t *testing.T) {
+		version := "TEST.VERSION.32"
+		out, err := Execute("--version", CLIConfig{Version: version})
+		if err != nil {
+			t.Fatal("Error:", err, "Output:", out)
+		}
+		if strings.Contains(out, version) == false {
+			t.Fatal(version, "Not Contained in", out)
+		}
+	})
 }
 
-func Test_RootCmd(t *testing.T) {
-	actual := new(bytes.Buffer)
-	command := NewRootCmd(defectDojo.Exporter{})
-	command.SetArgs([]string{})
-	t.Log(actual)
-	if err := command.Execute(); err != nil {
-		t.Fatal(err)
+func Test_InitCommand(t *testing.T) {
+	out, err := Execute("config init", CLIConfig{AutoDecoderTimeout: time.Nanosecond})
+	if err != nil {
+		t.FailNow()
 	}
+	if strings.Contains(out, "grype") == false {
+		t.FailNow()
+	}
+	t.Log(out)
+}
+
+// Helper Functions
+func Execute(command string, config CLIConfig) (commandOutput string, commandError error) {
+	buf := new(bytes.Buffer)
+
+	cmd := NewRootCommand(config)
+	cmd.SetOut(buf)
+	cmd.SetArgs(strings.Split(command, " "))
+	cmd.SilenceUsage = true
+	err := cmd.Execute()
+
+	return buf.String(), err
+}
+
+func MustOpen(filename string, failFunc func(args ...any)) *os.File {
+	f, err := os.Open(filename)
+	if err != nil {
+		failFunc(err)
+		return nil
+	}
+	return f
 }

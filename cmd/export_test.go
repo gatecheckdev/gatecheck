@@ -1,128 +1,92 @@
 package cmd
 
 import (
-	"bytes"
-	"encoding/json"
+	"context"
 	"errors"
-	"github.com/gatecheckdev/gatecheck/pkg/entity"
-	"github.com/gatecheckdev/gatecheck/pkg/exporter"
+	"fmt"
+	"github.com/gatecheckdev/gatecheck/pkg/export/defectdojo"
 	"io"
 	"os"
+	"path"
 	"testing"
+	"time"
 )
 
-func TestExportGrypeCmd(t *testing.T) {
-	actual := new(bytes.Buffer)
-	command := NewRootCmd(mockExporter{})
-	command.SetOut(actual)
-	command.SetErr(actual)
+func TestNewExportCmd(t *testing.T) {
+	t.Run("bad-file", func(t *testing.T) {
+		commandString := fmt.Sprintf("export dd %s", fileWithBadPermissions(t))
+		out, err := Execute(commandString, CLIConfig{})
 
-	command.SetArgs([]string{"export", "defect-dojo", "grype", "some-nonexistent-file.bad-json"})
+		if errors.Is(err, ErrorFileAccess) != true {
+			t.Log(out)
+			t.Fatal(err)
+		}
+	})
 
-	if err := command.Execute(); err == nil {
-		t.Fatal("Expected error for non-existent file")
-	}
-	t.Log(actual)
+	t.Run("timeout", func(t *testing.T) {
+		b := make([]byte, 1000)
+		tempFile := path.Join(t.TempDir(), "random.file")
+		if err := os.WriteFile(tempFile, b, 0664); err != nil {
+			t.Fatal(err)
+		}
 
-	actual = new(bytes.Buffer)
+		commandString := fmt.Sprintf("export dd %s", tempFile)
+		config := CLIConfig{DDExportTimeout: time.Nanosecond}
 
-	tempFile, err := os.Open("../test/grype-report.json")
-	if err != nil {
-		t.Fatal(err)
-	}
+		out, err := Execute(commandString, config)
 
-	command.SetArgs([]string{"export", "defect-dojo", "grype", tempFile.Name()})
+		if errors.Is(err, ErrorEncoding) != true {
+			t.Log(out)
+			t.Fatal(err)
+		}
+	})
 
-	if err := command.Execute(); err != nil {
-		t.Fatal(err)
-	}
-	t.Log(actual)
+	t.Run("unsupported", func(t *testing.T) {
+		b := make([]byte, 1000)
+		tempFile := path.Join(t.TempDir(), "random.file")
+		if err := os.WriteFile(tempFile, b, 0664); err != nil {
+			t.Fatal(err)
+		}
+
+		commandString := fmt.Sprintf("export dd %s", tempFile)
+
+		out, err := Execute(commandString, CLIConfig{DDExportTimeout: time.Second * 3})
+
+		if errors.Is(err, ErrorEncoding) != true {
+			t.Log(out)
+			t.Fatal(err)
+		}
+		t.Log(out)
+	})
+
+	t.Run("success", func(t *testing.T) {
+		files := []*os.File{
+			MustOpen(grypeTestReport, t.Fatal),
+			MustOpen(semgrepTestReport, t.Fatal),
+			MustOpen(gitleaksTestReport, t.Fatal),
+		}
+
+		for _, v := range files {
+
+			commandString := fmt.Sprintf("export dd %s", v.Name())
+
+			out, err := Execute(commandString, CLIConfig{
+				DDExportService: mockDDExportService{exportResponse: nil},
+				DDExportTimeout: time.Second * 3,
+			})
+
+			if err != nil {
+				t.Log(out)
+				t.Fatal(err)
+			}
+		}
+	})
 }
 
-func TestExportSemgrepCmd(t *testing.T) {
-	actual := new(bytes.Buffer)
-	command := NewRootCmd(mockExporter{})
-	command.SetOut(actual)
-	command.SetErr(actual)
-
-	command.SetArgs([]string{"export", "defect-dojo", "semgrep", "some-nonexistent-file.bad-json"})
-
-	if err := command.Execute(); errors.Is(err, ErrorFileNotExists) != true {
-		t.Fatal("Expected error for non-existent file")
-	}
-
-	actual = new(bytes.Buffer)
-
-	tempFile, err := os.Open("../test/semgrep-sast-report.json")
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	command.SetArgs([]string{"export", "defect-dojo", "semgrep", tempFile.Name()})
-
-	if err := command.Execute(); err != nil {
-		t.Fatal(err)
-	}
-}
-func TestExportGitleaksCmd(t *testing.T) {
-	actual := new(bytes.Buffer)
-	command := NewRootCmd(mockExporter{})
-	command.SetOut(actual)
-	command.SetErr(actual)
-
-	command.SetArgs([]string{"export", "defect-dojo", "gitleaks", "some-nonexistent-file.bad-json"})
-
-	if err := command.Execute(); errors.Is(err, ErrorFileNotExists) != true {
-		t.Fatal("Expected error for non-existent file")
-	}
-
-	actual = new(bytes.Buffer)
-
-	tempFile, err := os.Open("../test/gitleaks-report.json")
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	command.SetArgs([]string{"export", "defect-dojo", "gitleaks", tempFile.Name()})
-
-	if err := command.Execute(); err != nil {
-		t.Fatal(err)
-	}
+type mockDDExportService struct {
+	exportResponse error
 }
 
-type mockExporter struct{}
-
-func (m mockExporter) ExportWithRetry(r io.Reader, s exporter.ScanType, u uint) error {
-	return m.Export(r, s)
-}
-
-func (m mockExporter) Export(reportFile io.Reader, scanType exporter.ScanType) error {
-	switch scanType {
-	case exporter.Grype:
-		report := new(entity.GrypeScanReport)
-		if err := json.NewDecoder(reportFile).Decode(report); err != nil {
-			return err
-		}
-		if len(report.Matches) == 0 {
-			return errors.New("zero matches decoded from report")
-		}
-	case exporter.Semgrep:
-		report := new(entity.SemgrepScanReport)
-		if err := json.NewDecoder(reportFile).Decode(report); err != nil {
-			return err
-		}
-		if len(report.Results) == 0 {
-			return errors.New("zero matches decoded from report")
-		}
-	case exporter.Gitleaks:
-		report := new(entity.GitLeaksScanReport)
-		if err := json.NewDecoder(reportFile).Decode(report); err != nil {
-			return err
-		}
-		if len(*report) == 0 {
-			return errors.New("zero matches decoded from report")
-		}
-	}
-
-	return nil
+func (m mockDDExportService) Export(_ context.Context, _ io.Reader, _ defectdojo.EngagementQuery, _ defectdojo.ScanType) error {
+	return m.exportResponse
 }

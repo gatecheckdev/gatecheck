@@ -3,7 +3,9 @@ module github.com/gatecheckdev/gatecheck
 go 1.19
 
 require (
+	github.com/BacchusJackson/go-semgrep v1.2.1
 	github.com/anchore/grype v0.51.0
+	github.com/dustin/go-humanize v1.0.0
 	github.com/spf13/cobra v1.5.0
 	github.com/zricethezav/gitleaks/v8 v8.15.0
 	gopkg.in/yaml.v3 v3.0.1
@@ -58,7 +60,6 @@ require (
 	github.com/docker/go-connections v0.4.0 // indirect
 	github.com/docker/go-units v0.4.0 // indirect
 	github.com/dsnet/compress v0.0.2-0.20210315054119-f66993602bf5 // indirect
-	github.com/dustin/go-humanize v1.0.0 // indirect
 	github.com/envoyproxy/go-control-plane v0.10.2-0.20220325020618-49ff273808a1 // indirect
 	github.com/envoyproxy/protoc-gen-validate v0.6.2 // indirect
 	github.com/facebookincubator/nvdtools v0.1.4 // indirect

@@ -1,84 +1,199 @@
 package cmd
 
 import (
+	"bytes"
+	"context"
+	"encoding/json"
+	"errors"
 	"fmt"
+	"github.com/gatecheckdev/gatecheck/pkg/artifact"
 	"github.com/gatecheckdev/gatecheck/pkg/blacklist"
-	"github.com/gatecheckdev/gatecheck/pkg/entity"
-	"github.com/gatecheckdev/gatecheck/pkg/gatecheck"
+	"github.com/gatecheckdev/gatecheck/pkg/epss"
 	"github.com/spf13/cobra"
+	"gopkg.in/yaml.v3"
+	"io"
+	"os"
+	"strings"
+	"time"
 )
 
-func NewValidateCmd(configFile *string, reportFile *string) *cobra.Command {
-	// Flags
-	var flagAudit bool
-	var flagIgnoreConfig bool
-
-	var validateCmd = &cobra.Command{
-		Use:   "validate",
-		Short: "compare thresholds in config to findings in report",
+func NewValidateCmd(decodeTimeout time.Duration) *cobra.Command {
+	var cmd = &cobra.Command{
+		Use:   "validate [FILE]",
+		Short: "Validate reports or a bundle using thresholds set in the Gatecheck configuration file",
+		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			var config *gatecheck.Config
-			var err error
+			var config artifact.Config
+			var kevBlacklist artifact.KEVCatalog
+			var grypeScan artifact.GrypeScanReport
 
-			if flagIgnoreConfig == false {
-				config, err = OpenAndDecode[gatecheck.Config](*configFile, YAML)
-				if err != nil {
-					return err
-				}
-			}
+			var validationError error = nil
 
-			report, err := OpenAndDecode[gatecheck.Report](*reportFile, JSON)
+			configFilename, _ := cmd.Flags().GetString("config")
+			kevFilename, _ := cmd.Flags().GetString("blacklist")
+			audit, _ := cmd.Flags().GetBool("audit")
+
+			// Open the config file
+			configFile, err := os.Open(configFilename)
 			if err != nil {
-				return err
+				return fmt.Errorf("%w: %v", ErrorFileAccess, err)
+			}
+			if err := yaml.NewDecoder(configFile).Decode(&config); err != nil {
+				return fmt.Errorf("%w: %v", ErrorEncoding, err)
 			}
 
-			report = report.WithConfig(config)
+			// Open the target file
+			targetBytes, err := os.ReadFile(args[0])
+			if err != nil {
+				return fmt.Errorf("%w: %v", ErrorFileAccess, err)
+			}
 
-			if err := report.Validate(); err != nil {
-				cmd.PrintErrln(err.Error())
-				if flagAudit == true {
+			err = ParseAndValidate(bytes.NewBuffer(targetBytes), config, decodeTimeout)
+			cmd.PrintErrln(err)
+			if err != nil {
+				validationError = ErrorValidation
+			}
+
+			// Return early if no KEV file passed
+			if kevFilename == "" {
+				if audit {
 					return nil
 				}
-				return ErrorValidation
+				return validationError
 			}
 
-			return nil
+			kevFile, err := os.Open(kevFilename)
+			if err != nil {
+				return fmt.Errorf("%w: %v", ErrorFileAccess, err)
+			}
+
+			if err := json.NewDecoder(kevFile).Decode(&kevBlacklist); err != nil {
+				return fmt.Errorf("%w: %v", ErrorEncoding, err)
+			}
+
+			// Decode for Grype and return an error on fail because only grype can be validated with a blacklist
+			if err := json.NewDecoder(bytes.NewBuffer(targetBytes)).Decode(&grypeScan); err != nil {
+				return fmt.Errorf("%w: only Grype Reports are supported with KEV: %v", ErrorEncoding, err)
+			}
+
+			vulnerabilities := blacklist.BlacklistedVulnerabilities(grypeScan, kevBlacklist)
+
+			cmd.Println(blacklist.StringBlacklistedVulnerabilities(kevBlacklist.CatalogVersion, vulnerabilities))
+
+			cmd.Println(fmt.Sprintf("%d Vulnerabilities listed on CISA Known Exploited Vulnerabilities Blacklist",
+				len(vulnerabilities)))
+
+			if len(vulnerabilities) > 0 {
+				validationError = ErrorValidation
+			}
+
+			if audit == true {
+				return nil
+			}
+
+			return validationError
 		},
 	}
 
-	var blacklistCmd = &cobra.Command{
-		Use:   "blacklist <Grype Report FILE> <KEV Blacklist FILE>",
-		Short: "Validate a Grype report with a CISA Known Exploited Vulnerabilities Blacklist",
-		Args:  cobra.ExactArgs(2),
+	cmd.Flags().Bool("audit", false, "Exit w/ Code 0 even if validation fails")
+	cmd.Flags().StringP("config", "c", "", "A Gatecheck configuration file with thresholds")
+	cmd.Flags().StringP("blacklist", "k", "", "A CISA KEV Blacklist file")
+	return cmd
+}
+
+func NewEPSSCmd(service EPSSService) *cobra.Command {
+
+	var EPSSCmd = &cobra.Command{
+		Use:   "epss <Grype FILE>",
+		Short: "Query first.org for Exploit Prediction Scoring System (EPSS)",
+		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			grypeReport, err := OpenAndDecode[entity.GrypeScanReport](args[0], JSON)
+			var grypeScan artifact.GrypeScanReport
+
+			f, err := os.Open(args[0])
 			if err != nil {
-				return fmt.Errorf("%w : %v", ErrorDecode, err)
+				return fmt.Errorf("%w: %v", ErrorFileAccess, err)
 			}
-			kevBlacklist, err := OpenAndDecode[entity.KEVCatalog](args[1], JSON)
+
+			if err := json.NewDecoder(f).Decode(&grypeScan); err != nil {
+				return fmt.Errorf("%w: %v", ErrorEncoding, err)
+			}
+
+			CVEs := make([]epss.CVE, len(grypeScan.Matches))
+
+			for i, match := range grypeScan.Matches {
+				CVEs[i] = epss.CVE{
+					ID:       match.Vulnerability.ID,
+					Severity: match.Vulnerability.Severity,
+					Link:     match.Vulnerability.DataSource,
+				}
+			}
+
+			data, err := service.Get(CVEs)
 			if err != nil {
-				return fmt.Errorf("%w : %v", ErrorDecode, err)
+				return fmt.Errorf("%w: %s", ErrorAPI, err)
 			}
 
-			blacklistedVulnerabilities := blacklist.BlacklistedVulnerabilities(*grypeReport, *kevBlacklist)
-
-			cmd.Println(blacklist.StringBlacklistedVulnerabilities(kevBlacklist.CatalogVersion, blacklistedVulnerabilities))
-
-			if flagAudit != true && len(blacklistedVulnerabilities) != 0 {
-				return fmt.Errorf("%w: %d Vulnerabilities listed on CISA Known Exploited Vulnerabilities Blacklist",
-					ErrorValidation, len(blacklistedVulnerabilities))
-			}
-
+			cmd.Println(epss.Sprint(data))
 			return nil
 		},
 	}
 
-	validateCmd.AddCommand(blacklistCmd)
+	return EPSSCmd
+}
 
-	validateCmd.PersistentFlags().BoolVarP(&flagIgnoreConfig, "ignore-config", "x", false,
-		"Validate the report without using the thresholds from the gatecheck.yaml config")
-	validateCmd.PersistentFlags().BoolVarP(&flagAudit, "audit", "a", false,
-		"Print validation status without a non-zero exit code")
+func ParseAndValidate(r io.Reader, config artifact.Config, timeout time.Duration) error {
+	var err error
 
-	return validateCmd
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+
+	rType, b, err := artifact.ReadWithContext(ctx, r)
+
+	if err != nil {
+		return err
+	}
+
+	buf := bytes.NewBuffer(b)
+
+	// No need to check decode errors since it's decoded in the DetectReportType Function
+	switch rType {
+	case artifact.Semgrep:
+		if config.Semgrep == nil {
+			return errors.New("no Semgrep configuration specified")
+		}
+		err = artifact.ValidateSemgrep(*config.Semgrep, artifact.DecodeJSON[artifact.SemgrepScanReport](buf))
+	case artifact.Grype:
+		if config.Grype == nil {
+			return errors.New("no Grype configuration specified")
+		}
+		err = artifact.ValidateGrype(*config.Grype, artifact.DecodeJSON[artifact.GrypeScanReport](buf))
+	case artifact.Gitleaks:
+		if config.Gitleaks == nil {
+			return errors.New("no Gitleaks configuration specified")
+		}
+		err = artifact.ValidateGitleaks(*config.Gitleaks, artifact.DecodeJSON[artifact.GitleaksScanReport](buf))
+	case artifact.GatecheckBundle:
+		var errStrings []string
+		bundle := artifact.DecodeBundle(buf)
+		if err := bundle.ValidateGrype(config.Grype); err != nil {
+			errStrings = append(errStrings, err.Error())
+		}
+		if err := bundle.ValidateSemgrep(config.Semgrep); err != nil {
+			errStrings = append(errStrings, err.Error())
+		}
+		if err := bundle.ValidateGitleaks(config.Gitleaks); err != nil {
+			errStrings = append(errStrings, err.Error())
+		}
+		if len(errStrings) == 0 {
+			return nil
+		}
+		return errors.New(strings.Join(errStrings, "\n"))
+
+	default:
+		err = errors.New("unsupported scan type")
+	}
+
+	return err
+
 }
