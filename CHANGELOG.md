@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Marked config flag in validate command as required
+- Upgrade to go 1.20, no functional updates or changes to code
 
 ### Fixed
 - Bug in dojo export causing the open file to be read twice resulting in a blank file upload
