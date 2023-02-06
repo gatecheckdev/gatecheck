@@ -247,7 +247,9 @@ func (s Service) postScan(r io.Reader, scanType ScanType, e engagement) error {
 	}
 
 	if res.StatusCode != http.StatusCreated {
-		return fmt.Errorf("%w: GET '%s' unexpected response code %d", RequestError, url, res.StatusCode)
+		msg, _ := io.ReadAll(res.Body)
+		return fmt.Errorf("%w: POST '%s' unexpected response code %d msg: %s",
+			RequestError, url, res.StatusCode, msg)
 	}
 
 	return nil
@@ -265,7 +267,9 @@ func (s Service) postJSON(url string, reqBody io.Reader) (resBody io.ReadCloser,
 	}
 
 	if res.StatusCode != http.StatusCreated {
-		return nil, fmt.Errorf("%w: GET '%s' unexpected response code %d", RequestError, url, res.StatusCode)
+		msg, _ := io.ReadAll(res.Body)
+		return nil, fmt.Errorf("%w: GET '%s' unexpected response code %d: msg: %s",
+			RequestError, url, res.StatusCode, string(msg))
 	}
 	return res.Body, nil
 }
@@ -293,7 +297,9 @@ func query[T any](client *http.Client, key string, url string, queryFunc func(T)
 		}
 
 		if res.StatusCode != http.StatusOK {
-			return *new(T), fmt.Errorf("%w: GET '%s' unexpected response code %d", RequestError, next, res.StatusCode)
+			msg, _ := io.ReadAll(res.Body)
+			return *new(T), fmt.Errorf("%w: GET '%s' unexpected response code %d msg: %s",
+				RequestError, next, res.StatusCode, msg)
 		}
 
 		var response paginatedResponse[T]

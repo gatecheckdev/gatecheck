@@ -5,6 +5,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [UNRELEASED]
+### Added
+- Additional debug information for bad status codes on export
+
+### Changed
+- Marked config flag in validate command as required
+
+### Fixed
+- Bug in dojo export causing the open file to be read twice resulting in a blank file upload
 
 ## [0.0.8] - 2023-01-24
 ### Added

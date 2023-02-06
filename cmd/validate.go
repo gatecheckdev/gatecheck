@@ -98,6 +98,8 @@ func NewValidateCmd(decodeTimeout time.Duration) *cobra.Command {
 	cmd.Flags().Bool("audit", false, "Exit w/ Code 0 even if validation fails")
 	cmd.Flags().StringP("config", "c", "", "A Gatecheck configuration file with thresholds")
 	cmd.Flags().StringP("blacklist", "k", "", "A CISA KEV Blacklist file")
+
+	_ = cmd.MarkFlagRequired("config")
 	return cmd
 }
 

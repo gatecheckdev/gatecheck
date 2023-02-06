@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"github.com/gatecheckdev/gatecheck/pkg/artifact"
@@ -31,7 +32,7 @@ func NewExportCmd(service DDExportService, timeout time.Duration, engagement def
 			ctx, cancel := context.WithTimeout(context.Background(), timeout)
 			defer cancel()
 
-			rType, err := artifact.InspectWithContext(ctx, f)
+			rType, fileBytes, err := artifact.ReadWithContext(ctx, f)
 			if err != nil {
 				return fmt.Errorf("%w: %v", ErrorEncoding, err)
 			}
@@ -48,7 +49,7 @@ func NewExportCmd(service DDExportService, timeout time.Duration, engagement def
 				return fmt.Errorf("%w: Unsupported file type", ErrorEncoding)
 			}
 
-			return service.Export(ctx, f, engagement, ddScanType)
+			return service.Export(ctx, bytes.NewBuffer(fileBytes), engagement, ddScanType)
 		},
 	}
 	exportCmd.AddCommand(defectDojoCmd)
