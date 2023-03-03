@@ -3,20 +3,23 @@ package cmd
 import (
 	"context"
 	"errors"
+	"io"
+	"os"
+	"time"
+
 	"github.com/gatecheckdev/gatecheck/pkg/artifact"
 	"github.com/gatecheckdev/gatecheck/pkg/epss"
 	"github.com/gatecheckdev/gatecheck/pkg/export/defectdojo"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
-	"io"
-	"os"
-	"time"
 )
 
-var ErrorFileAccess = errors.New("file access")
-var ErrorEncoding = errors.New("encoding")
-var ErrorValidation = errors.New("validation")
-var ErrorAPI = errors.New("request API")
+var (
+	ErrorFileAccess = errors.New("file access")
+	ErrorEncoding   = errors.New("encoding")
+	ErrorValidation = errors.New("validation")
+	ErrorAPI        = errors.New("request API")
+)
 
 type DDExportService interface {
 	Export(context.Context, io.Reader, defectdojo.EngagementQuery, defectdojo.ScanType) error
@@ -38,9 +41,8 @@ type CLIConfig struct {
 }
 
 func NewRootCommand(config CLIConfig) *cobra.Command {
-	var command = &cobra.Command{
+	command := &cobra.Command{
 		Use:     "gatecheck",
-		Short:   "A utility for aggregating, validating, and exporting vulnerability reports from other tools",
 		Version: config.Version,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cmd.Printf(GatecheckLogo)
@@ -49,6 +51,7 @@ func NewRootCommand(config CLIConfig) *cobra.Command {
 	}
 	command.InitDefaultVersionFlag()
 
+	command.AddCommand(NewVersionCmd(config.Version))
 	command.AddCommand(NewPrintCommand(config.AutoDecoderTimeout, config.PipedInput))
 	command.AddCommand(NewConfigCmd(), NewBundleCmd())
 	command.AddCommand(NewValidateCmd(config.AutoDecoderTimeout))
@@ -57,17 +60,30 @@ func NewRootCommand(config CLIConfig) *cobra.Command {
 	return command
 }
 
+func NewVersionCmd(version string) *cobra.Command {
+	command := &cobra.Command{
+		Use: "version",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cmd.Printf(GatecheckLogo)
+			cmd.Println("A utility for aggregating, validating, and exporting vulnerability reports")
+			cmd.Println("Version:", version)
+			return nil
+		},
+	}
+
+	return command
+}
+
 func NewConfigCmd() *cobra.Command {
-	var cmd = &cobra.Command{
+	cmd := &cobra.Command{
 		Use:   "config",
 		Short: "Creates a new configuration file",
 	}
 
-	var initCmd = &cobra.Command{
+	initCmd := &cobra.Command{
 		Use:   "init",
 		Short: "prints a new configuration file.",
 		RunE: func(cmd *cobra.Command, _ []string) error {
-
 			return yaml.NewEncoder(cmd.OutOrStdout()).Encode(artifact.NewConfig())
 		},
 	}

@@ -8,10 +8,12 @@ import (
 	"time"
 )
 
-var semgrepTestReport = "../test/semgrep-sast-report.json"
-var gitleaksTestReport = "../test/gitleaks-report.json"
-var grypeTestReport = "../test/grype-report.json"
-var kevTestFile = "../test/known_exploited_vulnerabilities.json"
+var (
+	semgrepTestReport  = "../test/semgrep-sast-report.json"
+	gitleaksTestReport = "../test/gitleaks-report.json"
+	grypeTestReport    = "../test/grype-report.json"
+	kevTestFile        = "../test/known_exploited_vulnerabilities.json"
+)
 
 func Test_RootCommand(t *testing.T) {
 	t.Parallel()
@@ -25,9 +27,20 @@ func Test_RootCommand(t *testing.T) {
 		}
 	})
 
-	t.Run("version", func(t *testing.T) {
+	t.Run("version-flag", func(t *testing.T) {
 		version := "TEST.VERSION.32"
 		out, err := Execute("--version", CLIConfig{Version: version})
+		if err != nil {
+			t.Fatal("Error:", err, "Output:", out)
+		}
+		if strings.Contains(out, version) == false {
+			t.Fatal(version, "Not Contained in", out)
+		}
+	})
+
+	t.Run("version-cmd", func(t *testing.T) {
+		version := "TEST.VERSION.32"
+		out, err := Execute("version", CLIConfig{Version: version})
 		if err != nil {
 			t.Fatal("Error:", err, "Output:", out)
 		}
