@@ -1,73 +1,88 @@
-// package s3 contains the implementation code for `gatecheck export s3`
+// package s3 code for `gatecheck export s3`
 package s3
 
 import (
-	"bytes"
 	"context"
 	"fmt"
-	"log"
-	"os"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 )
 
-// ...
+//  ────────────────────────────────────────────────────────────────────────────────
 
-//go:generate mockery --name S3NewUploaderAPI
-type S3NewUploaderAPI interface {
-	// func manager.NewUploader(client manager.UploadAPIClient, options ...func(*manager.Uploader)) *manager.Uploader
-	NewUploader(ctx context.Context, params *s3.PutObjectInput, optFns ...func(*s3.Options)) (*manager.UploadOutput, error)
-}
+// Stage is the name of a CI Pipeline Stage and creates part of the AWS S3 upload key.
+// The value is the name of the stage that triggers the scan that creates the artifact.
+//
+// E.g. During the 'scan-image' stage a Grype scan is triggered creating a Grype Scan Report Artifact.
+//
+// NOTE: The value of `Stage` should match the value of `CI_BUILD_STAGE` in a GitLab CI Pipeline.
+//
+// Values:
+//
+//	const (
+//	    GrypeStageName    Stage = "scan-image" // Grype scan stage
+//	    SemgrepStageName        = "sast"       // Semgrep scan stage
+//	    GitleaksStageName       = "sast"       // Gitleaks scan stage
+//	)
+type Stage string
 
-//go:generate mockery --name S3UploadObjectAPI
-type S3UploadObjectAPI interface {
-	Upload(ctx context.Context, params *s3.PutObjectInput, optFns ...func(*s3.Options)) (*manager.UploadOutput, error)
-}
+const (
+	GrypeStageName    Stage = "scan-image" // Grype scan stage
+	SemgrepStageName        = "sast"       // Semgrep scan stage
+	GitleaksStageName       = "sast"       // Gitleaks scan stage
+)
 
-// func UploadObjectToS3(ctx context.Context, api S3UploadObjectAPI, bucket, key string, fileBytes []byte) {
-func UploadObjectToS3() {
-	// bad-upload
-	uploadFile := bytes.NewReader([]byte(""))
-	// good-upload
-	// uploadFile := bytes.NewReader([]byte("Hello, Test uploadFile"))
+// `Filename` is the name of the file uploaded to AWS S3.
+//
+// Values:
+//
+//	const (
+//	    GrypeFilename    Filename = "grype-report.json"        // Grype filename
+//	    SemgrepFilename           = "semgrep-sast-report.json" // Semgrep filename
+//	    GitleaksFilename          = "gitleaks-report.json"     // Gitleaks filename
+//	)
+type Filename string
 
-	cfg, _ := config.LoadDefaultConfig(context.TODO())
-	// if err != nil {
-	// 	log.Printf("error: %v", err)
-	// 	// panic(err)
-	// 	log.Fatal(err)
-	// 	return err
-	// }
+const (
+	GrypeFilename    Filename = "grype-report.json"        // Grype filename
+	SemgrepFilename           = "semgrep-sast-report.json" // Semgrep filename
+	GitleaksFilename          = "gitleaks-report.json"     // Gitleaks filename
+)
 
+//  ────────────────────────────────────────────────────────────────────────────────
+
+// ToS3 is the entrypoint function that loads the AWS Config, constructs the Client Service,
+// invokes the API Operation, and builds a new *s3.Client.
+// builds a new *s3.Client.
+func ToS3(ctx context.Context, i s3.PutObjectInput) error {
+	fmt.Println("──────────── ClientFor(ctx context.Context) *s3.Client ──────────────")
+	fmt.Println("")
+
+	// Loads the AWS Config
+	cfg, err := config.LoadDefaultConfig(ctx)
+	if err != nil {
+		return err
+	}
+
+	// Constructs the Client Service
 	client := s3.NewFromConfig(cfg)
 
 	uploader := manager.NewUploader(client)
-	result, _ := uploader.Upload(context.TODO(), &s3.PutObjectInput{
-		Bucket: aws.String(os.Getenv("AWS_BUCKET")),
-		Key:    aws.String("my-test-object-key"),
-		Body:   uploadFile,
+
+	// Invokes the API Operation
+	output, err := uploader.Upload(ctx, &s3.PutObjectInput{
+		Bucket: i.Bucket,
+		Key:    i.Key,
+		Body:   i.Body,
 	})
-	// if err != nil {
-	// 	logFatalf("err: %v", err)
-	// 	panic(err)
-	// 	// return err
-	// }
+	if err != nil {
+		return err
+	}
 
-	fmt.Printf("File uploaded!\n\nResult: %v", result)
-
-	fmt.Fprintf(os.Stderr, "DEBUGPRINT[1]: upload.go:43: result=%+v\n", result)
-
-	return
+	fmt.Printf("File upload type: %T\n\nvalue: %v\n\n", output, output)
+	return nil
 }
 
-// Custom logger for unit-tests
-//
-// Usage:
-//
-//	if err != nil {
-//	    logFatalf("error during some operation, error: %v", err)
-//	}
-var logFatalf = log.Fatalf
+//  ────────────────────────────────────────────────────────────────────────────────

@@ -1,25 +1,69 @@
-// package s3_test contains the unit-test code for `gatecheck export s3`
+// package s3 unit-test code for `gatecheck export s3`
 package s3
 
-import "testing"
+import (
+	"bytes"
+	"context"
+	"os"
+	"testing"
 
-func TestUploadObjectToS3(t *testing.T) {
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
+)
+
+func TestToS3(t *testing.T) {
+	type args struct {
+		ctx context.Context
+		i   s3.PutObjectInput
+	}
 	tests := []struct {
-		name string
-		// wantErr bool
+		name    string
+		args    args
+		wantErr bool
 	}{
 		// TODO: Add test cases.
-		// {"bad-upload", true},
-		// {"good-upload", false},
-		{"bad-upload"},
-		{"good-upload"},
+		{
+			name: "failed-upload",
+			args: args{
+				ctx: context.TODO(),
+				i: s3.PutObjectInput{
+					Bucket: aws.String("nonexistent-bucket"),
+					Key:    aws.String("some-key"),
+					Body:   bytes.NewReader([]byte("some-file-contents")),
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "successful-upload",
+			args: args{
+				ctx: context.TODO(),
+				i: s3.PutObjectInput{
+					Bucket: aws.String(os.Getenv("AWS_BUCKET")),
+					Key:    aws.String("some-key"),
+					Body:   bytes.NewReader([]byte("some-file-contents")),
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "failed-without-error-upload",
+			args: args{
+				ctx: context.TODO(),
+				i: s3.PutObjectInput{
+					Bucket: aws.String("nonexistent-bucket"),
+					Key:    aws.String("some-key"),
+					Body:   bytes.NewReader([]byte("")),
+				},
+			},
+			wantErr: true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			UploadObjectToS3()
-			// if err := UploadObjectToS3(); (err != nil) != tt.wantErr {
-			// 	t.Errorf("UploadObjectToS3() error = %v, wantErr %v", err, tt.wantErr)
-			// }
+			if err := ToS3(tt.args.ctx, tt.args.i); (err != nil) != tt.wantErr {
+				t.Errorf("ToS3() error = %v, wantErr %v", err, tt.wantErr)
+			}
 		})
 	}
 }
