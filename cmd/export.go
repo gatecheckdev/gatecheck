@@ -4,7 +4,9 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"log"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -81,24 +83,12 @@ func NewExportCmd(service DDExportService, timeout time.Duration, engagement def
 				return fmt.Errorf("%w: %v", ErrorEncoding, err)
 			}
 
-			// Set filename to "stage/filenamne"
-			var stage upload.Stage
-			var filename upload.Filename
-			switch rType {
-			case artifact.Grype:
-				stage = upload.GrypeStageName
-				filename = upload.GrypeFilename
-			case artifact.Semgrep:
-				stage = upload.SemgrepStageName
-				filename = upload.SemgrepFilename
-			case artifact.Gitleaks:
-				stage = upload.GitleaksStageName
-				filename = upload.GitleaksFilename
-			default:
-				return fmt.Errorf("%w: Unsupported file type", ErrorEncoding)
-			}
+			// Get the filepath from the CLI args then
+			// split the filepath and set the filename
+			fp := strings.Split(args[0], "/")
+			filename := fp[len(fp)-1]
 
-			key := engagement.ProductTypeName + "/" + engagement.ProductName + "/" + engagement.Name + "/" + string(stage) + "/" + string(filename)
+			key := engagement.ProductTypeName + "/" + engagement.ProductName + "/" + engagement.Name + "/" + string(filename)
 
 			input := s3.PutObjectInput{
 				Bucket: aws.String(os.Getenv("AWS_BUCKET")),
