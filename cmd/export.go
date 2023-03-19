@@ -4,21 +4,18 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"log"
 	"os"
 	"strings"
 	"time"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/spf13/cobra"
 
 	"github.com/gatecheckdev/gatecheck/pkg/artifact"
 	"github.com/gatecheckdev/gatecheck/pkg/export/defectdojo"
-	upload "github.com/gatecheckdev/gatecheck/pkg/export/s3"
+	"github.com/gatecheckdev/gatecheck/pkg/export/s3"
 )
 
-func NewExportCmd(service DDExportService, timeout time.Duration, engagement defectdojo.EngagementQuery) *cobra.Command {
+func NewExportCmd(service DDExportService, timeout time.Duration, engagement defectdojo.EngagementQuery, s3Service S3ExportService) *cobra.Command {
 	// gatecheck export command
 	exportCmd := &cobra.Command{
 		Use:   "export",
@@ -78,7 +75,7 @@ func NewExportCmd(service DDExportService, timeout time.Duration, engagement def
 			ctx, cancel := context.WithTimeout(context.Background(), timeout)
 			defer cancel()
 
-			rType, fileBytes, err := artifact.ReadWithContext(ctx, f)
+			_, fileBytes, err := artifact.ReadWithContext(ctx, f)
 			if err != nil {
 				return fmt.Errorf("%w: %v", ErrorEncoding, err)
 			}
@@ -88,19 +85,16 @@ func NewExportCmd(service DDExportService, timeout time.Duration, engagement def
 			fp := strings.Split(args[0], "/")
 			filename := fp[len(fp)-1]
 
-			key := engagement.ProductTypeName + "/" + engagement.ProductName + "/" + engagement.Name + "/" + string(filename)
-
-			input := s3.PutObjectInput{
-				Bucket: aws.String(os.Getenv("AWS_BUCKET")),
-				Key:    aws.String(key),
-				Body:   bytes.NewReader(fileBytes),
+			uploadObject := s3.UploadObject{
+				Key:  engagement.ProductTypeName + "/" + engagement.ProductName + "/" + engagement.Name + "/" + string(filename),
+				File: bytes.NewReader(fileBytes),
 			}
 
 			fmt.Println("")
-			fmt.Println("───────────────────── Gatecheck Upload to S3 ────────────────────")
+			fmt.Println("────────────────────────── Gatecheck S3 Export Service ─────────────────────────")
 			fmt.Println("")
 
-			return upload.ToS3(ctx, input)
+			return s3Service.Export(ctx, bytes.NewReader(fileBytes), uploadObject)
 		},
 	}
 	exportCmd.AddCommand(defectDojoCmd)
