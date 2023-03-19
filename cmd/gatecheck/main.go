@@ -1,13 +1,22 @@
 package main
 
 import (
+	"context"
 	"errors"
-	"github.com/gatecheckdev/gatecheck/cmd"
-	"github.com/gatecheckdev/gatecheck/pkg/epss"
-	"github.com/gatecheckdev/gatecheck/pkg/export/defectdojo"
+	"log"
 	"net/http"
 	"os"
 	"time"
+
+	"github.com/gatecheckdev/gatecheck/cmd"
+	"github.com/gatecheckdev/gatecheck/pkg/epss"
+	"github.com/gatecheckdev/gatecheck/pkg/export/defectdojo"
+	"github.com/gatecheckdev/gatecheck/pkg/export/s3"
+
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
+	awsS3 "github.com/aws/aws-sdk-go-v2/service/s3"
 )
 
 const ExitSystemFail int = -1
@@ -32,6 +41,24 @@ func main() {
 	dojoService := defectdojo.NewService(http.DefaultClient, dojoKey, dojoURL)
 	epssService := epss.NewEPSSService(http.DefaultClient, "https://api.first.org/data/v1/epss")
 
+	awsProfile := os.Getenv("AWS_PROFILE")
+	s3Bucket := os.Getenv("AWS_BUCKET")
+
+	// aws-sdk-go-v2 package
+	cfg, cfgErr := config.LoadDefaultConfig(context.TODO(), config.WithSharedConfigProfile(awsProfile))
+	if cfgErr != nil {
+		log.Printf("error: %v", cfgErr)
+		return
+	}
+	s3Client := awsS3.NewFromConfig(cfg)
+	s3Manager := manager.NewUploader(s3Client)
+	s3Params := awsS3.PutObjectInput{
+		Bucket: aws.String(s3Bucket),
+	}
+
+	// Gatecheck s3 exporter module
+	s3Service := s3.NewService(http.DefaultClient, s3Manager, &s3Params)
+
 	var pipedFile *os.File
 	if PipeInput() {
 		pipedFile = os.Stdin
@@ -44,6 +71,7 @@ func main() {
 		EPSSService:        epssService,
 		DDExportService:    &dojoService,
 		DDEngagement:       ddEngagement,
+		S3ExportService:    s3Service,
 		PipedInput:         pipedFile,
 	})
 

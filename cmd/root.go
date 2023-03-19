@@ -3,14 +3,17 @@ package cmd
 import (
 	"context"
 	"errors"
-	"github.com/gatecheckdev/gatecheck/pkg/artifact"
-	"github.com/gatecheckdev/gatecheck/pkg/epss"
-	"github.com/gatecheckdev/gatecheck/pkg/export/defectdojo"
-	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v3"
 	"io"
 	"os"
 	"time"
+
+	"github.com/spf13/cobra"
+	"gopkg.in/yaml.v3"
+
+	"github.com/gatecheckdev/gatecheck/pkg/artifact"
+	"github.com/gatecheckdev/gatecheck/pkg/epss"
+	"github.com/gatecheckdev/gatecheck/pkg/export/defectdojo"
+	"github.com/gatecheckdev/gatecheck/pkg/export/s3"
 )
 
 var ErrorFileAccess = errors.New("file access")
@@ -26,6 +29,10 @@ type EPSSService interface {
 	Get([]epss.CVE) ([]epss.Data, error)
 }
 
+type S3ExportService interface {
+	Export(context.Context, io.Reader, s3.UploadObject) error
+}
+
 type CLIConfig struct {
 	AutoDecoderTimeout time.Duration
 	Version            string
@@ -35,6 +42,8 @@ type CLIConfig struct {
 	DDExportService    DDExportService
 	DDEngagement       defectdojo.EngagementQuery
 	DDExportTimeout    time.Duration
+	S3ExportService    S3ExportService
+	S3UploadObject     s3.UploadObject
 }
 
 func NewRootCommand(config CLIConfig) *cobra.Command {
@@ -53,7 +62,14 @@ func NewRootCommand(config CLIConfig) *cobra.Command {
 	command.AddCommand(NewConfigCmd(), NewBundleCmd())
 	command.AddCommand(NewValidateCmd(config.AutoDecoderTimeout))
 	command.AddCommand(NewEPSSCmd(config.EPSSService))
-	command.AddCommand(NewExportCmd(config.DDExportService, config.DDExportTimeout, config.DDEngagement))
+	command.AddCommand(
+		NewExportCmd(
+			config.DDExportService,
+			config.DDExportTimeout,
+			config.DDEngagement,
+			config.S3ExportService,
+		),
+	)
 	return command
 }
 
