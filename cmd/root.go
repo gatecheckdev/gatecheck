@@ -12,8 +12,8 @@ import (
 
 	"github.com/gatecheckdev/gatecheck/pkg/artifact"
 	"github.com/gatecheckdev/gatecheck/pkg/epss"
+	"github.com/gatecheckdev/gatecheck/pkg/export/aws"
 	"github.com/gatecheckdev/gatecheck/pkg/export/defectdojo"
-	"github.com/gatecheckdev/gatecheck/pkg/export/s3"
 )
 
 var ErrorFileAccess = errors.New("file access")
@@ -29,8 +29,8 @@ type EPSSService interface {
 	Get([]epss.CVE) ([]epss.Data, error)
 }
 
-type S3ExportService interface {
-	Export(context.Context, io.Reader, s3.UploadObject) error
+type AWSExportService interface {
+	Export(context.Context, io.Reader, aws.Upload) error
 }
 
 type CLIConfig struct {
@@ -42,8 +42,8 @@ type CLIConfig struct {
 	DDExportService    DDExportService
 	DDEngagement       defectdojo.EngagementQuery
 	DDExportTimeout    time.Duration
-	S3ExportService    S3ExportService
-	S3UploadObject     s3.UploadObject
+	AWSExportService   AWSExportService
+	AWSUpload          aws.Upload
 }
 
 func NewRootCommand(config CLIConfig) *cobra.Command {
@@ -67,7 +67,8 @@ func NewRootCommand(config CLIConfig) *cobra.Command {
 			config.DDExportService,
 			config.DDExportTimeout,
 			config.DDEngagement,
-			config.S3ExportService,
+			config.AWSExportService,
+			config.AWSUpload,
 		),
 	)
 	return command
