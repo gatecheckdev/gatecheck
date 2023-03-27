@@ -5,17 +5,22 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"strings"
 	"time"
 
 	"github.com/spf13/cobra"
 
 	"github.com/gatecheckdev/gatecheck/pkg/artifact"
+	"github.com/gatecheckdev/gatecheck/pkg/export/aws"
 	"github.com/gatecheckdev/gatecheck/pkg/export/defectdojo"
-	"github.com/gatecheckdev/gatecheck/pkg/export/s3"
 )
 
-func NewExportCmd(service DDExportService, timeout time.Duration, engagement defectdojo.EngagementQuery, s3Service S3ExportService) *cobra.Command {
+func NewExportCmd(
+	service DDExportService,
+	timeout time.Duration,
+	engagement defectdojo.EngagementQuery,
+	awsService AWSExportService,
+	upload aws.Upload,
+) *cobra.Command {
 	// gatecheck export command
 	exportCmd := &cobra.Command{
 		Use:   "export",
@@ -59,11 +64,11 @@ func NewExportCmd(service DDExportService, timeout time.Duration, engagement def
 		},
 	}
 
-	// gatecheck export s3 command
-	s3Cmd := &cobra.Command{
-		Use:     "s3 [FILE]",
+	// gatecheck export aws command
+	awsCmd := &cobra.Command{
+		Use:     "aws [FILE]",
 		Short:   "Export raw scan report to AWS S3",
-		Aliases: []string{"aws"},
+		Aliases: []string{"s3"},
 		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// Open the file
@@ -80,24 +85,16 @@ func NewExportCmd(service DDExportService, timeout time.Duration, engagement def
 				return fmt.Errorf("%w: %v", ErrorEncoding, err)
 			}
 
-			// Get the filepath from the CLI args then
-			// split the filepath and set the filename
-			fp := strings.Split(args[0], "/")
-			filename := fp[len(fp)-1]
-
-			uploadObject := s3.UploadObject{
-				Key:  engagement.ProductTypeName + "/" + engagement.ProductName + "/" + engagement.Name + "/" + string(filename),
-				File: bytes.NewReader(fileBytes),
-			}
+			upload.File = fileBytes
 
 			fmt.Println("")
 			fmt.Println("────────────────────────── Gatecheck S3 Export Service ─────────────────────────")
 			fmt.Println("")
 
-			return s3Service.Export(ctx, bytes.NewReader(fileBytes), uploadObject)
+			return awsService.Export(ctx, bytes.NewReader(fileBytes), upload)
 		},
 	}
 	exportCmd.AddCommand(defectDojoCmd)
-	exportCmd.AddCommand(s3Cmd)
+	exportCmd.AddCommand(awsCmd)
 	return exportCmd
 }
