@@ -36,6 +36,7 @@ type EngagementQuery struct {
 	BranchTag       string
 	SourceURL       string
 	CommitHash      string
+	Tags            []string
 }
 
 // Service can be used to export scans to Defect Dojo
@@ -201,11 +202,14 @@ func (s Service) engagement(e EngagementQuery, prod product) (engagement, error)
 	loc, _ := time.LoadLocation("EST")
 
 	buf := new(bytes.Buffer)
-	newEngagement := &engagement{Name: e.Name, Description: s.description(),
+	newEngagement := &engagement{
+		Name: e.Name, Description: s.description(),
 		TargetStart: time.Now().In(loc).Format("2006-01-02"),
 		TargetEnd:   time.Now().In(loc).Add(e.Duration).Format("2006-01-02"),
 		Product:     prod.Id, Active: true, Status: "In Progress", EngagementType: "CI/CD", CommitHash: e.CommitHash,
-		BranchTag: e.BranchTag, SourceCodeManagementUri: e.SourceURL}
+		BranchTag: e.BranchTag, SourceCodeManagementUri: e.SourceURL,
+		Tags: e.Tags,
+	}
 	_ = json.NewEncoder(buf).Encode(newEngagement)
 
 	resBody, err := s.postJSON(url, buf)

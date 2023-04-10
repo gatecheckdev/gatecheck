@@ -10,6 +10,7 @@ import (
 	"math/rand"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 )
@@ -344,7 +345,8 @@ func Test_export(t *testing.T) {
 			"/api/v2/products/":      paginatedResponse[product]{Results: []product{{Name: "some product", Id: 5, ProdType: 2}}},
 		}
 
-		eq := EngagementQuery{ProductTypeName: "A", ProductName: "some product"}
+		tags := "a-tab,b_tag"
+		eq := EngagementQuery{ProductTypeName: "A", ProductName: "some product", Tags: strings.Split(tags, ",")}
 
 		server := httptest.NewServer(mapHandler(routeTable))
 		service := NewService(server.Client(), "", server.URL)
@@ -361,7 +363,8 @@ func Test_export(t *testing.T) {
 			"/api/v2/import-scan/":   TestStruct{A: "Good"},
 		}
 
-		eq := EngagementQuery{ProductTypeName: "A", ProductName: "some product", Name: "some engagement"}
+		tags := "a-tab,b_tag"
+		eq := EngagementQuery{ProductTypeName: "A", ProductName: "some product", Name: "some engagement", Tags: strings.Split(tags, ",")}
 
 		server := httptest.NewServer(mapHandler(routeTable))
 		service := NewService(server.Client(), "", server.URL)
@@ -380,7 +383,8 @@ func TestService_Export(t *testing.T) {
 			"/api/v2/import-scan/":   TestStruct{A: "Good"},
 		}
 
-		eq := EngagementQuery{ProductTypeName: "A", ProductName: "some product", Name: "some engagement"}
+		tags := "a-tab,b_tag"
+		eq := EngagementQuery{ProductTypeName: "A", ProductName: "some product", Name: "some engagement", Tags: strings.Split(tags, ",")}
 
 		server := httptest.NewServer(mapHandler(routeTable))
 		service := NewService(server.Client(), "", server.URL)
@@ -390,8 +394,8 @@ func TestService_Export(t *testing.T) {
 	})
 
 	t.Run("bad-server", func(t *testing.T) {
-
-		eq := EngagementQuery{ProductTypeName: "A", ProductName: "some product", Name: "some engagement"}
+		tags := "a-tab,b_tag"
+		eq := EngagementQuery{ProductTypeName: "A", ProductName: "some product", Name: "some engagement", Tags: strings.Split(tags, ",")}
 
 		server := httptest.NewServer(nopHandler())
 		service := NewService(server.Client(), "", server.URL)
@@ -410,7 +414,8 @@ func TestService_Export(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*1)
 		defer cancel()
 
-		eq := EngagementQuery{ProductTypeName: "A", ProductName: "some product", Name: "some engagement"}
+		tags := "a-tab,b_tag"
+		eq := EngagementQuery{ProductTypeName: "A", ProductName: "some product", Name: "some engagement", Tags: strings.Split(tags, ",")}
 		if err := service.Export(ctx, bytes.NewBufferString("a"), eq, Grype); errors.Is(err, ctx.Err()) != true {
 			t.Fatal(err)
 		}
