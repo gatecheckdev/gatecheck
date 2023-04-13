@@ -7,6 +7,7 @@ import (
 	"github.com/gatecheckdev/gatecheck/pkg/export/defectdojo"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 )
 
@@ -27,6 +28,7 @@ func main() {
 		BranchTag:       os.Getenv("GATECHECK_DD_BRANCH_TAG"),
 		SourceURL:       os.Getenv("GATECHECK_DD_SOURCE_URL"),
 		CommitHash:      os.Getenv("GATECHECK_DD_COMMIT_HASH"),
+		Tags:            strings.Split(os.Getenv("GATECHECK_DD_TAGS"), ","),
 	}
 
 	dojoService := defectdojo.NewService(http.DefaultClient, dojoKey, dojoURL)
