@@ -1,4 +1,3 @@
-projectName: Test Project
 grype:
   critical: 10
   high: 10
@@ -6,7 +5,17 @@ grype:
   low: 100
   negligible: -1
   unknown: -1
+  allowList:
+    - id: CVE-2022-3219
+      reason: some important reason to allow this finding
+    - id: CVE-2022-3220
+      reason: Another reason
+  denyList:
+    - id: CVE-2022-demo
+      reason: big ol bad finding
 semgrep:
   error: 1
   warning: 3
   info: 10
+gitleaks:
+  secretsAllowed: false

@@ -3,9 +3,11 @@ package artifact
 import (
 	"errors"
 	"fmt"
+	"log"
+	"strings"
+
 	"github.com/anchore/grype/grype/presenter/models"
 	gcStrings "github.com/gatecheckdev/gatecheck/pkg/strings"
-	"strings"
 )
 
 type GrypeScanReport models.Document
@@ -24,19 +26,47 @@ func (r GrypeScanReport) String() string {
 }
 
 type GrypeConfig struct {
-	Critical   int `yaml:"critical" json:"critical"`
-	High       int `yaml:"high" json:"high"`
-	Medium     int `yaml:"medium" json:"medium"`
-	Low        int `yaml:"low" json:"low"`
-	Negligible int `yaml:"negligible" json:"negligible"`
-	Unknown    int `yaml:"unknown" json:"unknown"`
+	AllowList  []GrypeListItem `yaml:"allowList,omitempty" json:"allowList,omitempty"`
+	DenyList   []GrypeListItem `yaml:"denyList,omitempty" json:"denyList,omitempty"`
+	Critical   int             `yaml:"critical"   json:"critical"`
+	High       int             `yaml:"high"       json:"high"`
+	Medium     int             `yaml:"medium"     json:"medium"`
+	Low        int             `yaml:"low"        json:"low"`
+	Negligible int             `yaml:"negligible" json:"negligible"`
+	Unknown    int             `yaml:"unknown"    json:"unknown"`
+}
+
+type GrypeListItem struct {
+	Id     string `yaml:"id"     json:"id"`
+	Reason string `yaml:"reason" json:"reason"`
 }
 
 func ValidateGrype(config GrypeConfig, scanReport GrypeScanReport) error {
 	found := map[string]int{"Critical": 0, "High": 0, "Medium": 0, "Low": 0, "Negligible": 0, "Unknown": 0}
-	allowed := map[string]int{"Critical": config.Critical, "High": config.High, "Medium": config.Medium,
-		"Low": config.Low, "Negligible": config.Negligible, "Unknown": config.Unknown}
-	for _, match := range scanReport.Matches {
+	allowed := map[string]int{
+		"Critical": config.Critical, "High": config.High, "Medium": config.Medium,
+		"Low": config.Low, "Negligible": config.Negligible, "Unknown": config.Unknown,
+	}
+	foundDenied := make([]models.Match, 0)
+
+LOOPMATCH:
+	for matchIndex, match := range scanReport.Matches {
+
+		for _, allowed := range config.AllowList {
+			if strings.Compare(match.Vulnerability.ID, allowed.Id) == 0 {
+				log.Println(match.Vulnerability.ID, "allowed")
+				continue LOOPMATCH
+			}
+		}
+
+		for _, denied := range config.DenyList {
+			if match.Vulnerability.ID == denied.Id {
+
+				foundDenied = append(foundDenied, scanReport.Matches[matchIndex])
+
+			}
+		}
+
 		found[match.Vulnerability.Severity] += 1
 	}
 
@@ -52,6 +82,12 @@ func ValidateGrype(config GrypeConfig, scanReport GrypeScanReport) error {
 			errStrings = append(errStrings, s)
 		}
 	}
+
+	if len(foundDenied) != 0 {
+		deniedReport := &GrypeScanReport{Matches: foundDenied}
+		errStrings = append(errStrings, fmt.Sprintf("Denied Vulnerabilities\n%s", deniedReport))
+	}
+
 	if len(errStrings) == 0 {
 		return nil
 	}
