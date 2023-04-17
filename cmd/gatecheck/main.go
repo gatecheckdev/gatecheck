@@ -2,13 +2,17 @@ package main
 
 import (
 	"errors"
-	"github.com/gatecheckdev/gatecheck/cmd"
-	"github.com/gatecheckdev/gatecheck/pkg/epss"
-	"github.com/gatecheckdev/gatecheck/pkg/export/defectdojo"
+	"io"
 	"net/http"
 	"os"
 	"strings"
 	"time"
+
+	"github.com/gatecheckdev/gatecheck/cmd"
+	"github.com/gatecheckdev/gatecheck/internal/log"
+	"github.com/gatecheckdev/gatecheck/pkg/epss"
+	"github.com/gatecheckdev/gatecheck/pkg/export/defectdojo"
+	"github.com/spf13/cobra"
 )
 
 const ExitSystemFail int = -1
@@ -49,8 +53,19 @@ func main() {
 		PipedInput:         pipedFile,
 	})
 
+	command.PersistentPreRun = func(_ *cobra.Command, _ []string) {
+		if cmd.GlobalVerboseOutput {
+			log.SetOutput(command.OutOrStderr())
+		} else {
+			log.SetOutput(io.Discard)
+		}
+		log.Start()
+	}
+
 	command.SilenceUsage = true
+
 	err := command.Execute()
+	log.Info("Command Execution Complete")
 
 	if errors.Is(err, cmd.ErrorFileAccess) {
 		command.PrintErrln(err)

@@ -4,11 +4,13 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"github.com/gatecheckdev/gatecheck/pkg/artifact"
-	"github.com/spf13/cobra"
 	"io"
 	"os"
 	"time"
+
+	"github.com/gatecheckdev/gatecheck/internal/log"
+	"github.com/gatecheckdev/gatecheck/pkg/artifact"
+	"github.com/spf13/cobra"
 )
 
 // NewPrintCommand will pretty print a report file table, r can be piped input from standard out
@@ -20,6 +22,7 @@ func NewPrintCommand(decodeTimeout time.Duration, pipedFile *os.File) *cobra.Com
 		RunE: func(cmd *cobra.Command, args []string) error {
 
 			if pipedFile != nil {
+				log.Infof("Piped File Received: %s", pipedFile.Name())
 				err := ParseAndFPrint(pipedFile, cmd.OutOrStdout(), decodeTimeout)
 				if err != nil {
 					return fmt.Errorf("%w: %v", ErrorEncoding, err)
@@ -27,6 +30,7 @@ func NewPrintCommand(decodeTimeout time.Duration, pipedFile *os.File) *cobra.Com
 			}
 
 			for _, v := range args {
+				log.Infof("Opening file: %s", v)
 				f, err := os.Open(v)
 				if err != nil {
 					return fmt.Errorf("%w: %v", ErrorFileAccess, err)
@@ -57,6 +61,8 @@ func ParseAndFPrint(r io.Reader, w io.Writer, timeout time.Duration) error {
 	}
 
 	buf := bytes.NewBuffer(b)
+	log.Infof("Bytes received: %d", len(b))
+	log.Infof("Detected Type: %s", rType)
 
 	// No need to check decode errors since it's decoded in the DetectReportType Function
 	switch rType {

@@ -10,6 +10,12 @@ endif
 default: all
 
 all: fmt test
+	
+build:
+	$(info ******************** Compile Binary to ./bin ********************)
+	mkdir -p bin
+	go build -o bin ./...
+	
 
 fmt:
 	$(info ******************** checking formatting ********************)
