@@ -2,7 +2,6 @@ package main
 
 import (
 	"errors"
-	"io"
 	"net/http"
 	"os"
 	"strings"
@@ -54,18 +53,16 @@ func main() {
 	})
 
 	command.PersistentPreRun = func(_ *cobra.Command, _ []string) {
-		if cmd.GlobalVerboseOutput {
-			log.SetOutput(command.OutOrStderr())
-		} else {
-			log.SetOutput(io.Discard)
+		if cmd.GlobalVerboseOutput == false {
+			log.SetLogLevel(log.Disabled)
 		}
-		log.Start()
+		log.StartCLIOutput(command.ErrOrStderr())
 	}
 
 	command.SilenceUsage = true
 
 	err := command.Execute()
-	log.Info("Command Execution Complete")
+	log.Info("**** Command Execution Complete ****")
 
 	if errors.Is(err, cmd.ErrorFileAccess) {
 		command.PrintErrln(err)

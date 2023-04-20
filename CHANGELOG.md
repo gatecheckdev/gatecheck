@@ -15,7 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Version Command with Logo Output
-- Basic Logging Capabilities with custom logger package in internal/log
+- Basic Logging Capabilities with custom logger, (Zerolog abstraction) package in internal/log
 - Global Verbose flag and elapsed execution time tracking
 - Debugs in CLI commands
 

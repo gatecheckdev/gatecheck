@@ -4,11 +4,13 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"os"
+	"time"
+
+	"github.com/gatecheckdev/gatecheck/internal/log"
 	"github.com/gatecheckdev/gatecheck/pkg/artifact"
 	"github.com/gatecheckdev/gatecheck/pkg/export/defectdojo"
 	"github.com/spf13/cobra"
-	"os"
-	"time"
 )
 
 func NewExportCmd(service DDExportService, timeout time.Duration, engagement defectdojo.EngagementQuery) *cobra.Command {
@@ -22,8 +24,9 @@ func NewExportCmd(service DDExportService, timeout time.Duration, engagement def
 		Short:   "export raw scan report to Defect Dojo",
 		Aliases: []string{"dd"},
 		Args:    cobra.ExactArgs(1),
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(_ *cobra.Command, args []string) error {
 			// Open the file
+			log.Infof("Opening file: %s", args[0])
 			f, err := os.Open(args[0])
 			if err != nil {
 				return fmt.Errorf("%w: %v", ErrorFileAccess, err)
@@ -33,6 +36,8 @@ func NewExportCmd(service DDExportService, timeout time.Duration, engagement def
 			defer cancel()
 
 			rType, fileBytes, err := artifact.ReadWithContext(ctx, f)
+			log.Infof("file size: %d", len(fileBytes))
+			log.Infof("Detected File Type: %s", rType)
 			if err != nil {
 				return fmt.Errorf("%w: %v", ErrorEncoding, err)
 			}
