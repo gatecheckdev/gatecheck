@@ -9,6 +9,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/gatecheckdev/gatecheck/pkg/artifact"
 )
 
 func TestNewBundleCmd(t *testing.T) {
@@ -51,17 +53,27 @@ func TestNewBundleCmd(t *testing.T) {
 		outFile := path.Join(t.TempDir(), "bundle.gatecheck")
 		targetFile := path.Join(t.TempDir(), "random-1.file")
 		b := make([]byte, 1000)
+
 		_, _ = rand.Read(b)
 		if err := os.WriteFile(targetFile, b, 0664); err != nil {
 			t.Fatal(err)
 		}
 		commandString := fmt.Sprintf("bundle -vo %s %s", outFile, targetFile)
-		output, err := Execute(commandString, CLIConfig{})
+		_, err := Execute(commandString, CLIConfig{AutoDecoderTimeout: time.Second * 2})
 		if err != nil {
 			t.Fatal(err)
 		}
-		if strings.Contains(output, "random-1.file") != true {
-			t.Fatal("Expected file in bundle output")
+
+		// Check bundle for the artifact
+		postOutFile := MustOpen(outFile, t.Fatal)
+		bun := artifact.DecodeBundle(postOutFile)
+		genericFile, ok := bun.Generic["random-1.file"]
+		if !ok {
+			t.Fatal("Could not extract generic file")
+		}
+
+		if len(genericFile.Content) != 1000 {
+			t.Fatal("Invalid decoded file size")
 		}
 
 		t.Run("print-test", func(t *testing.T) {

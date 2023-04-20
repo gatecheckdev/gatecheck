@@ -15,10 +15,11 @@ import (
 )
 
 var (
-	ErrorFileAccess = errors.New("file access")
-	ErrorEncoding   = errors.New("encoding")
-	ErrorValidation = errors.New("validation")
-	ErrorAPI        = errors.New("request API")
+	ErrorFileAccess     = errors.New("file access")
+	ErrorEncoding       = errors.New("encoding")
+	ErrorValidation     = errors.New("validation")
+	ErrorAPI            = errors.New("request API")
+	GlobalVerboseOutput = false
 )
 
 type DDExportService interface {
@@ -44,26 +45,30 @@ func NewRootCommand(config CLIConfig) *cobra.Command {
 	command := &cobra.Command{
 		Use:     "gatecheck",
 		Version: config.Version,
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(cmd *cobra.Command, _ []string) error {
 			cmd.Printf(GatecheckLogo)
 			return nil
 		},
 	}
-	command.InitDefaultVersionFlag()
 
+	// Global Flags
+	command.PersistentFlags().BoolVarP(&GlobalVerboseOutput, "verbose", "v", false, "Verbose debug output")
+
+	// Commands
 	command.AddCommand(NewVersionCmd(config.Version))
 	command.AddCommand(NewPrintCommand(config.AutoDecoderTimeout, config.PipedInput))
 	command.AddCommand(NewConfigCmd(), NewBundleCmd())
 	command.AddCommand(NewValidateCmd(config.AutoDecoderTimeout))
 	command.AddCommand(NewEPSSCmd(config.EPSSService))
 	command.AddCommand(NewExportCmd(config.DDExportService, config.DDExportTimeout, config.DDEngagement))
+
 	return command
 }
 
 func NewVersionCmd(version string) *cobra.Command {
 	command := &cobra.Command{
 		Use: "version",
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(cmd *cobra.Command, _ []string) error {
 			cmd.Printf(GatecheckLogo)
 			cmd.Println("A utility for aggregating, validating, and exporting vulnerability reports")
 			cmd.Println("Version:", version)
