@@ -54,7 +54,7 @@ func main() {
 
 	command.PersistentPreRun = func(_ *cobra.Command, _ []string) {
 		if cmd.GlobalVerboseOutput == false {
-			log.SetLogLevel(log.Disabled)
+			log.SetLogLevel(log.WarnLevel)
 		}
 		log.StartCLIOutput(command.ErrOrStderr())
 	}

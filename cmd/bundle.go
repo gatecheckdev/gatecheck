@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path"
@@ -17,6 +18,7 @@ func NewBundleCmd() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// Flag is required, ignore errors
 			outputFilename, _ := cmd.Flags().GetString("output")
+			flagAllowMissing, _ := cmd.Flags().GetBool("allow-missing")
 
 			log.Infof("Opening target output Bundle file: %s", outputFilename)
 			outputFile, err := os.OpenFile(outputFilename, os.O_CREATE|os.O_RDWR, 0644)
@@ -40,6 +42,11 @@ func NewBundleCmd() *cobra.Command {
 			for _, v := range args {
 				log.Infof("Opening File: %s", v)
 				f, err := os.Open(v)
+				if errors.Is(err, os.ErrNotExist) && flagAllowMissing {
+					log.Warnf("%s does not exist, skipping", v)
+					continue
+				}
+
 				if err != nil {
 					return fmt.Errorf("%w: %v", ErrorFileAccess, err)
 				}
@@ -65,6 +72,7 @@ func NewBundleCmd() *cobra.Command {
 	}
 
 	cmd.Flags().StringP("output", "o", "", "output filename")
+	cmd.Flags().BoolP("allow-missing", "m", false, "Don't fail if a file doesn't exist")
 	_ = cmd.MarkFlagFilename("output", "gatecheck")
 	_ = cmd.MarkFlagRequired("output")
 	return cmd

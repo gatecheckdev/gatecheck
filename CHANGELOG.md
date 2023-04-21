@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Debugs in CLI commands
 - Make commands for test and coverage
 - Allow Deny List for Grype reports
+- 'allow-missing' flag to bundle command
 
 ## [0.0.9] - 2023-02-06
 

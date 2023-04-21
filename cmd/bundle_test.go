@@ -116,6 +116,16 @@ func TestNewBundleCmd(t *testing.T) {
 			t.Log(output)
 		})
 
+		t.Run("allow-missing", func(t *testing.T) {
+			someFile := path.Join(t.TempDir(), "some.file")
+
+			commandString := fmt.Sprintf("bundle -mvo %s %s", outFile, someFile)
+			output, err := Execute(commandString, CLIConfig{})
+			if err != nil {
+				t.Fatal(err)
+			}
+			t.Log(output)
+		})
 	})
 
 }
