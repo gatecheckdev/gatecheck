@@ -3,10 +3,10 @@ package artifact
 import (
 	"errors"
 	"fmt"
-	"log"
 	"strings"
 
 	"github.com/anchore/grype/grype/presenter/models"
+	"github.com/gatecheckdev/gatecheck/internal/log"
 	gcStrings "github.com/gatecheckdev/gatecheck/pkg/strings"
 )
 
@@ -54,16 +54,16 @@ LOOPMATCH:
 
 		for _, allowed := range config.AllowList {
 			if strings.Compare(match.Vulnerability.ID, allowed.Id) == 0 {
-				log.Println(match.Vulnerability.ID, "allowed")
+
+				log.Infof("%s Allowed. Reason: %s", match.Vulnerability.ID, allowed.Reason)
 				continue LOOPMATCH
 			}
 		}
 
 		for _, denied := range config.DenyList {
 			if match.Vulnerability.ID == denied.Id {
-
+				log.Infof("%s Denied. Reason: %s", match.Vulnerability.ID, denied.Reason)
 				foundDenied = append(foundDenied, scanReport.Matches[matchIndex])
-
 			}
 		}
 

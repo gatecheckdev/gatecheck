@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Global Verbose flag and elapsed execution time tracking
 - Debugs in CLI commands
 - Make commands for test and coverage
+- Allow Deny List for Grype reports
 
 ## [0.0.9] - 2023-02-06
 

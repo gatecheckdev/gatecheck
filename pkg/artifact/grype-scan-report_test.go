@@ -46,6 +46,25 @@ func TestAllowList(t *testing.T) {
 	}
 }
 
+func TestDenyList(t *testing.T) {
+	report := &GrypeScanReport{}
+	addVul(report, "Critical", "CVE-2023-1")
+	addVul(report, "High", "CVE-2023-2")
+	addVul(report, "Low", "CVE-2023-3")
+
+	config := NewConfig()
+	config.Grype.Critical = 0
+	config.Grype.DenyList = []GrypeListItem{{Id: "CVE-2023-3", Reason: "Because..."}}
+
+	t.Log(config.Grype.DenyList)
+
+	t.Log(report)
+
+	if err := ValidateGrype(*config.Grype, *report); err == nil {
+		t.Fatal("Expected Validation error for CVE-2023-3")
+	}
+}
+
 func addVul(r *GrypeScanReport, severity string, id string) {
 	vul := models.Vulnerability{
 		VulnerabilityMetadata: models.VulnerabilityMetadata{Severity: severity, ID: id, DataSource: "mock.link"},
