@@ -16,14 +16,18 @@ build:
 	mkdir -p bin
 	go build -o bin ./...
 	
-
 fmt:
 	$(info ******************** checking formatting ********************)
 	@test -z $(shell gofmt -l $(SRC)) || (gofmt -d $(SRC); exit 1)
 
 test: install_deps
 	$(info ******************** running tests ********************)
-	richgo test -cover -v ./...
+	richgo test -cover ./...
+
+coverage:
+	$(info ******************** running test coverage ********************)
+	go test -coverprofile cover.out ./...
+
 
 install_deps:
 	$(info ******************** downloading dependencies ********************)
