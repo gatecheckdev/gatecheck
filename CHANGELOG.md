@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - New ASCII Logo
 - Bundle logging to use internal logger
+- Sort Grype print by Severity, then by Package
 
 ### Added
 
@@ -21,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Make commands for test and coverage
 - Allow Deny List for Grype reports
 - 'allow-missing' flag to bundle command
+- Sort tables by single or multiple columns in ascending, descending or custom order
 
 ## [0.0.9] - 2023-02-06
 

@@ -7,10 +7,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/dustin/go-humanize"
-	gcStrings "github.com/gatecheckdev/gatecheck/pkg/strings"
 	"io"
 	"strings"
+
+	"github.com/dustin/go-humanize"
+	gcStrings "github.com/gatecheckdev/gatecheck/pkg/strings"
 )
 
 type Bundle struct {

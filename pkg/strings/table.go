@@ -8,19 +8,50 @@ import (
 type Table struct {
 	headerItems []string
 	rows        [][]string
+
+	sortBy     []SortBy
+	numColumns int
 }
 
 func NewTable(header ...string) *Table {
-	return &Table{headerItems: header}
+	return &Table{
+		headerItems: header,
+		numColumns:  len(header),
+	}
 }
 
 func (t Table) WithHeader(items ...string) *Table {
 	t.headerItems = items
+	t.numColumns = len(items)
 	return &t
 }
 
 func (t Table) WithRow(row ...string) *Table {
 	t.rows = append(t.rows, row)
+	return &t
+}
+
+// SortBy sets the rules for sorting the Rows in the order specified. i.e., the
+// first SortBy instruction takes precedence over the second and so on. Any
+// duplicate instructions on the same column will be discarded while sorting.
+func (t Table) SortBy(sortBy []SortBy) *Table {
+	t.sortBy = sortBy
+	return &t
+}
+
+func (t Table) Sort() *Table {
+	if len(t.sortBy) == 0 {
+		return &t
+	}
+
+	// sort the rows
+	sortedRowIndices := t.getSortedRowIndices()
+	sortedRows := make([][]string, len(t.rows))
+	for idx := range t.rows {
+		sortedRows[idx] = t.rows[sortedRowIndices[idx]]
+	}
+	t.rows = sortedRows
+
 	return &t
 }
 
