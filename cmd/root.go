@@ -9,6 +9,7 @@ import (
 
 	"github.com/gatecheckdev/gatecheck/pkg/artifact"
 	"github.com/gatecheckdev/gatecheck/pkg/epss"
+	"github.com/gatecheckdev/gatecheck/pkg/export/aws"
 	"github.com/gatecheckdev/gatecheck/pkg/export/defectdojo"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
@@ -30,6 +31,10 @@ type EPSSService interface {
 	Get([]epss.CVE) ([]epss.Data, error)
 }
 
+type AWSExportService interface {
+	Export(context.Context, io.Reader, aws.UploadQuery) error
+}
+
 type CLIConfig struct {
 	AutoDecoderTimeout time.Duration
 	Version            string
@@ -39,6 +44,9 @@ type CLIConfig struct {
 	DDExportService    DDExportService
 	DDEngagement       defectdojo.EngagementQuery
 	DDExportTimeout    time.Duration
+	AWSExportService   AWSExportService
+	AWSUpload          aws.UploadQuery
+	AWSExportTimeout   time.Duration
 }
 
 func NewRootCommand(config CLIConfig) *cobra.Command {
@@ -60,7 +68,16 @@ func NewRootCommand(config CLIConfig) *cobra.Command {
 	command.AddCommand(NewConfigCmd(), NewBundleCmd())
 	command.AddCommand(NewValidateCmd(config.AutoDecoderTimeout))
 	command.AddCommand(NewEPSSCmd(config.EPSSService))
-	command.AddCommand(NewExportCmd(config.DDExportService, config.DDExportTimeout, config.DDEngagement))
+	command.AddCommand(
+		NewExportCmd(
+			config.DDExportService,
+			config.DDExportTimeout,
+			config.DDEngagement,
+			config.AWSExportService,
+			config.AWSUpload,
+			config.AWSExportTimeout,
+		),
+	)
 
 	return command
 }
