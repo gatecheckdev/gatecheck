@@ -10,6 +10,7 @@ import (
 	"github.com/gatecheckdev/gatecheck/cmd"
 	"github.com/gatecheckdev/gatecheck/internal/log"
 	"github.com/gatecheckdev/gatecheck/pkg/epss"
+	"github.com/gatecheckdev/gatecheck/pkg/export/aws"
 	"github.com/gatecheckdev/gatecheck/pkg/export/defectdojo"
 	"github.com/spf13/cobra"
 )
@@ -37,6 +38,11 @@ func main() {
 	dojoService := defectdojo.NewService(http.DefaultClient, dojoKey, dojoURL)
 	epssService := epss.NewEPSSService(http.DefaultClient, "https://api.first.org/data/v1/epss")
 
+	awsProfile := os.Getenv("AWS_PROFILE")
+	awsBucket := os.Getenv("AWS_BUCKET")
+
+	awsService := aws.NewService(http.DefaultClient, awsProfile, awsBucket)
+
 	var pipedFile *os.File
 	if PipeInput() {
 		pipedFile = os.Stdin
@@ -49,6 +55,8 @@ func main() {
 		EPSSService:        epssService,
 		DDExportService:    &dojoService,
 		DDEngagement:       ddEngagement,
+		AWSExportService:   awsService,
+		AWSExportTimeout:   5 * time.Minute,
 		PipedInput:         pipedFile,
 	})
 

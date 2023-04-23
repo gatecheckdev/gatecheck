@@ -30,6 +30,10 @@ type EPSSService interface {
 	Get([]epss.CVE) ([]epss.Data, error)
 }
 
+type AWSExportService interface {
+	Export(context.Context, io.Reader, string) error
+}
+
 type CLIConfig struct {
 	AutoDecoderTimeout time.Duration
 	Version            string
@@ -39,6 +43,8 @@ type CLIConfig struct {
 	DDExportService    DDExportService
 	DDEngagement       defectdojo.EngagementQuery
 	DDExportTimeout    time.Duration
+	AWSExportService   AWSExportService
+	AWSExportTimeout   time.Duration
 }
 
 func NewRootCommand(config CLIConfig) *cobra.Command {
@@ -60,7 +66,15 @@ func NewRootCommand(config CLIConfig) *cobra.Command {
 	command.AddCommand(NewConfigCmd(), NewBundleCmd())
 	command.AddCommand(NewValidateCmd(config.AutoDecoderTimeout))
 	command.AddCommand(NewEPSSCmd(config.EPSSService))
-	command.AddCommand(NewExportCmd(config.DDExportService, config.DDExportTimeout, config.DDEngagement))
+	command.AddCommand(
+		NewExportCmd(
+			config.DDExportService,
+			config.DDExportTimeout,
+			config.DDEngagement,
+			config.AWSExportService,
+			config.AWSExportTimeout,
+		),
+	)
 
 	return command
 }
