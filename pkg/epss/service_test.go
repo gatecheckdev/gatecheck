@@ -7,7 +7,6 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
-	"time"
 )
 
 const FirstAPIURL = "https://api.first.org/data/v1/epss"
@@ -95,64 +94,6 @@ func TestFirstAPIService_BadServerResponseJSON(t *testing.T) {
 	if errors.Is(err, ErrAPIPartialFail) != true {
 		t.Fatal(err)
 	}
-}
-
-func TestSort(t *testing.T) {
-	layout := "2006-01-02"
-	now := time.Now()
-	data := []Data{
-		{CVE: "C", EPSS: ".02", Percentile: ".3", Date: now.Add(time.Hour * -48).Format(layout)},
-		{CVE: "B", EPSS: ".01", Percentile: ".76", Date: now.Format(layout)},
-		{CVE: "A", EPSS: ".06", Percentile: ".88", Date: now.Add(time.Hour * -24).Format(layout)},
-	}
-
-	t.Run("sort-by-cve", func(t *testing.T) {
-		tempData := make([]Data, 3)
-		_ = copy(tempData, data)
-		Sort(tempData, SortCVE)
-		expected := []string{"C", "B", "A"}
-		for i := range tempData {
-			if tempData[i].CVE == expected[i] != true {
-				t.Fatalf("Sort failed:\n%+v\n", tempData)
-			}
-		}
-	})
-
-	t.Run("sort-by-EPSS", func(t *testing.T) {
-		tempData := make([]Data, 3)
-		_ = copy(tempData, data)
-		Sort(tempData, SortEPSS)
-		expected := []string{"A", "C", "B"}
-		for i := range tempData {
-			if tempData[i].CVE == expected[i] != true {
-				t.Fatalf("Sort failed:\n%+v\n", tempData)
-			}
-		}
-	})
-
-	t.Run("sort-by-Percentile", func(t *testing.T) {
-		tempData := make([]Data, 3)
-		_ = copy(tempData, data)
-		Sort(tempData, SortPercentile)
-		expected := []string{"A", "B", "C"}
-		for i := range tempData {
-			if tempData[i].CVE == expected[i] != true {
-				t.Fatalf("Sort failed:\n%+v\n", tempData)
-			}
-		}
-	})
-
-	t.Run("sort-by-Date", func(t *testing.T) {
-		tempData := make([]Data, 3)
-		_ = copy(tempData, data)
-		Sort(tempData, SortDate)
-		expected := []string{"B", "A", "C"}
-		for i := range tempData {
-			if tempData[i].CVE == expected[i] != true {
-				t.Fatalf("Sort failed:\n%+v\n", tempData)
-			}
-		}
-	})
 }
 
 func mockClient(handlerFunc func(http.ResponseWriter, *http.Request)) *httptest.Server {

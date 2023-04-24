@@ -22,6 +22,13 @@ func (r GrypeScanReport) String() string {
 			item.Artifact.Name, item.Artifact.Version, item.Vulnerability.DataSource)
 	}
 
+	// Sort the rows by Severity then Package
+	severitiesOrder := gcStrings.StrOrder{"Critical", "High", "Medium", "Low", "Negligible", "Unknown"}
+	table = table.SortBy([]gcStrings.SortBy{
+		{Name: "Severity", Mode: gcStrings.AscCustom, Order: severitiesOrder},
+		{Name: "Package", Mode: gcStrings.Asc},
+	}).Sort()
+
 	return table.String()
 }
 

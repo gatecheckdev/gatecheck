@@ -4,13 +4,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	gcStrings "github.com/gatecheckdev/gatecheck/pkg/strings"
 	"log"
 	"net/http"
-	"sort"
 	"strconv"
 	"strings"
 	"sync"
+
+	gcStrings "github.com/gatecheckdev/gatecheck/pkg/strings"
 )
 
 var ErrAPIPartialFail = errors.New("an API request failed")
@@ -112,7 +112,6 @@ func (s Service) Get(CVEs []CVE) ([]Data, error) {
 		}
 	}
 
-	Sort(data, SortEPSS)
 	return data, err
 }
 
@@ -138,7 +137,7 @@ func Sprint(data []Data) string {
 	table := new(gcStrings.Table).WithHeader("CVE", "Severity", "EPSS", "Percentile", "Date", "Link")
 
 	percentage := func(s string) string {
-		f, _ := strconv.ParseFloat(s, 16)
+		f, _ := strconv.ParseFloat(s, 32)
 
 		return fmt.Sprintf("%.2f%%", 100*f)
 	}
@@ -147,68 +146,10 @@ func Sprint(data []Data) string {
 		table = table.WithRow(d.CVE, d.Severity, percentage(d.EPSS), percentage(d.Percentile), d.Date, d.URL)
 	}
 
+	// Dsc because EPSS has been converted into a percentage
+	table = table.SortBy([]gcStrings.SortBy{
+		{Name: "EPSS", Mode: gcStrings.Dsc},
+	}).Sort()
+
 	return table.String()
-}
-
-type SortByOption int
-
-const (
-	SortCVE SortByOption = iota
-	SortEPSS
-	SortPercentile
-	SortDate
-)
-
-func Sort(slice []Data, by SortByOption) {
-	mustConvert := func(s string) float64 {
-		f, _ := strconv.ParseFloat(s, 16)
-		return f
-	}
-
-	var SortBy func(p1, p2 *Data) bool
-	switch by {
-	case SortCVE:
-		SortBy = func(p1, p2 *Data) bool {
-			return p1.CVE > p2.CVE
-		}
-	case SortEPSS:
-		SortBy = func(p1, p2 *Data) bool {
-			a := mustConvert(p1.EPSS)
-			b := mustConvert(p2.EPSS)
-			return a > b
-		}
-	case SortPercentile:
-		SortBy = func(p1, p2 *Data) bool {
-			a := mustConvert(p1.Percentile)
-			b := mustConvert(p2.Percentile)
-			return a > b
-		}
-	case SortDate:
-		SortBy = func(p1, p2 *Data) bool {
-			return p1.Date > p2.Date
-		}
-	}
-
-	sorter := &DataSorter{
-		items: slice,
-		by:    SortBy,
-	}
-	sort.Sort(sorter)
-}
-
-type DataSorter struct {
-	items []Data
-	by    func(p1, p2 *Data) bool
-}
-
-func (s *DataSorter) Len() int {
-	return len(s.items)
-}
-
-func (s *DataSorter) Swap(i, j int) {
-	s.items[i], s.items[j] = s.items[j], s.items[i]
-}
-
-func (s *DataSorter) Less(i, j int) bool {
-	return s.by(&s.items[i], &s.items[j])
 }
