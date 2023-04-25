@@ -3,6 +3,8 @@ package cmd
 import (
 	"bytes"
 	"context"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"time"
@@ -32,7 +34,8 @@ func NewExportCmd(
 		Short:   "Export raw scan report to DefectDojo",
 		Aliases: []string{"dd"},
 		Args:    cobra.ExactArgs(1),
-		RunE: func(_ *cobra.Command, args []string) error {
+		RunE: func(cmd *cobra.Command, args []string) error {
+			fullBom, _ := cmd.Flags().GetBool("full-bom")
 			// Open the file
 			log.Infof("Opening file: %s", args[0])
 			f, err := os.Open(args[0])
@@ -52,6 +55,8 @@ func NewExportCmd(
 
 			var ddScanType defectdojo.ScanType
 			switch rType {
+			case artifact.Cyclonedx:
+				ddScanType = defectdojo.CycloneDX
 			case artifact.Grype:
 				ddScanType = defectdojo.Grype
 			case artifact.Semgrep:
@@ -60,6 +65,16 @@ func NewExportCmd(
 				ddScanType = defectdojo.Gitleaks
 			default:
 				return fmt.Errorf("%w: Unsupported file type", ErrorEncoding)
+			}
+
+			if rType != artifact.Cyclonedx && fullBom {
+				return errors.New("--full-bom is only permitted with a CycloneDx file")
+			}
+
+			if fullBom {
+				buf := bytes.NewBuffer(fileBytes)
+				c := artifact.DecodeJSON[artifact.CyclonedxSbomReport](buf)
+				fileBytes, _ = json.Marshal(c.ShimComponentsAsVulnerabilities())
 			}
 
 			return ddService.Export(ctx, bytes.NewBuffer(fileBytes), ddEngagement, ddScanType)
@@ -89,6 +104,7 @@ func NewExportCmd(
 	awsCmd.Flags().String("key", "", "The AWS S3 object key for the location in the bucket")
 	awsCmd.MarkFlagRequired("key")
 
+	exportCmd.PersistentFlags().BoolP("full-bom", "m", false, "CycloneDx: Adds all the components with no vulnerabilities as SeverityNone")
 	exportCmd.AddCommand(defectDojoCmd)
 	exportCmd.AddCommand(awsCmd)
 	return exportCmd

@@ -4,16 +4,23 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	"gopkg.in/yaml.v3"
 	"math/rand"
 	"strings"
 	"testing"
+
+	"gopkg.in/yaml.v3"
 )
 
 func TestNewBundle(t *testing.T) {
 	bun := FullBundle()
 
-	testables := []Artifact{bun.GrypeScan, bun.SemgrepScan, bun.GitleaksScan, bun.Generic["random.file"]}
+	testables := []Artifact{
+		bun.CyclonedxSbom,
+		bun.GrypeScan,
+		bun.SemgrepScan,
+		bun.GitleaksScan,
+		bun.Generic["random.file"],
+	}
 	for _, v := range testables {
 		if len(v.DigestString()) != 64 {
 			t.Log(bun)
@@ -31,6 +38,9 @@ func TestNewBundle(t *testing.T) {
 
 	t.Run("String", func(t *testing.T) {
 		t.Log(bun.String())
+		if strings.Contains(bun.String(), "cyclonedx-grype-sbom.json") == false {
+			t.Fatal("Expected cyclonedx-report.json in ", bun.String())
+		}
 		if strings.Contains(bun.String(), "grype-report.json") == false {
 			t.Fatal("Expected grype-report.json in ", bun.String())
 		}
@@ -47,6 +57,28 @@ func TestNewBundle(t *testing.T) {
 
 	t.Run("Validation", func(t *testing.T) {
 		t.Parallel()
+		t.Run("cyclonedx", func(t *testing.T) {
+			if err := bun.ValidateCyclonedx(&CyclonedxConfig{Critical: 0}); errors.Is(err, ErrCyclonedxValidationFailed) != true {
+				t.Fatal("Expected validation to fail")
+			}
+			if err := bun.ValidateCyclonedx(NewConfig().Cyclonedx); err != nil {
+				t.Fatal("Expected validation to pass")
+			}
+
+			// No configuration passed
+			if err := bun.ValidateCyclonedx(nil); err != nil {
+				t.FailNow()
+			}
+			// No cyclonedx scan content
+			if err := NewBundle().ValidateCyclonedx(&CyclonedxConfig{Critical: 0}); err != nil {
+				t.FailNow()
+			}
+			badBundle := NewBundle()
+			badBundle.CyclonedxSbom.Content = []byte("{{{")
+			if err := badBundle.ValidateCyclonedx(&CyclonedxConfig{Critical: 0}); err == nil {
+				t.Fatal("Expected error for bad unmarshal")
+			}
+		})
 		t.Run("grype", func(t *testing.T) {
 			if err := bun.ValidateGrype(&GrypeConfig{Critical: 0}); errors.Is(err, GrypeValidationFailed) != true {
 				t.Fatal("Expected validation to fail")
@@ -147,6 +179,10 @@ func TestBundleEncoding(t *testing.T) {
 		t.Fatal("Pipeline URLs don't match")
 	}
 
+	if bundle1.CyclonedxSbom.DigestString() != bundle2.CyclonedxSbom.DigestString() {
+		t.Fatal("Cyclonedx SBOM Digests don't match")
+	}
+
 	if bundle1.GrypeScan.DigestString() != bundle2.GrypeScan.DigestString() {
 		t.Fatal("Grype Scan Digests don't match")
 	}
@@ -226,6 +262,7 @@ func FullBundle() *Bundle {
 		panic(args)
 	}
 
+	cyclonedxBytes := MustReadFile("../../test/cyclonedx-grype-sbom.json", panicFunc)
 	grypeBytes := MustReadFile("../../test/grype-report.json", panicFunc)
 	semgrepBytes := MustReadFile("../../test/semgrep-sast-report.json", panicFunc)
 	gitleaksBytes := MustReadFile("../../test/gitleaks-report.json", panicFunc)
@@ -234,13 +271,14 @@ func FullBundle() *Bundle {
 		panic(err)
 	}
 
+	cyclonedxArtifact, _ := NewArtifact("cyclonedx-grype-sbom.json", bytes.NewBuffer(cyclonedxBytes))
 	grypeArtifact, _ := NewArtifact("grype-report.json", bytes.NewBuffer(grypeBytes))
 	semgrepArtifact, _ := NewArtifact("semgrep-sast-report.json", bytes.NewBuffer(semgrepBytes))
 	gitleaksArtifact, _ := NewArtifact("gitleaks-report.json", bytes.NewBuffer(gitleaksBytes))
 	randomArtifact, _ := NewArtifact("random.file", bytes.NewBuffer(b))
 
 	bundle1 := NewBundle()
-	if err := bundle1.Add(grypeArtifact, semgrepArtifact, gitleaksArtifact, randomArtifact); err != nil {
+	if err := bundle1.Add(cyclonedxArtifact, grypeArtifact, semgrepArtifact, gitleaksArtifact, randomArtifact); err != nil {
 		panic(err)
 	}
 

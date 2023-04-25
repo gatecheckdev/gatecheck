@@ -6,15 +6,16 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
+	"os"
+	"strings"
+	"time"
+
 	"github.com/gatecheckdev/gatecheck/pkg/artifact"
 	"github.com/gatecheckdev/gatecheck/pkg/blacklist"
 	"github.com/gatecheckdev/gatecheck/pkg/epss"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
-	"io"
-	"os"
-	"strings"
-	"time"
 )
 
 func NewValidateCmd(decodeTimeout time.Duration) *cobra.Command {
@@ -165,6 +166,11 @@ func ParseAndValidate(r io.Reader, config artifact.Config, timeout time.Duration
 			return errors.New("no Semgrep configuration specified")
 		}
 		err = artifact.ValidateSemgrep(*config.Semgrep, artifact.DecodeJSON[artifact.SemgrepScanReport](buf))
+	case artifact.Cyclonedx:
+		if config.Semgrep == nil {
+			return errors.New("no CycloneDx configuration specified")
+		}
+		err = artifact.ValidateCyclonedx(*config.Cyclonedx, artifact.DecodeJSON[artifact.CyclonedxSbomReport](buf))
 	case artifact.Grype:
 		if config.Grype == nil {
 			return errors.New("no Grype configuration specified")
@@ -178,6 +184,9 @@ func ParseAndValidate(r io.Reader, config artifact.Config, timeout time.Duration
 	case artifact.GatecheckBundle:
 		var errStrings []string
 		bundle := artifact.DecodeBundle(buf)
+		if err := bundle.ValidateCyclonedx(config.Cyclonedx); err != nil {
+			errStrings = append(errStrings, err.Error())
+		}
 		if err := bundle.ValidateGrype(config.Grype); err != nil {
 			errStrings = append(errStrings, err.Error())
 		}

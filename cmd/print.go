@@ -66,6 +66,8 @@ func ParseAndFPrint(r io.Reader, w io.Writer, timeout time.Duration) error {
 
 	// No need to check decode errors since it's decoded in the DetectReportType Function
 	switch rType {
+	case artifact.Cyclonedx:
+		_, err = fmt.Fprintln(w, artifact.DecodeJSON[artifact.CyclonedxSbomReport](buf))
 	case artifact.Semgrep:
 		_, err = fmt.Fprintln(w, artifact.DecodeJSON[artifact.SemgrepScanReport](buf))
 	case artifact.Grype:

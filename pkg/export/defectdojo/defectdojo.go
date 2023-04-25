@@ -20,10 +20,19 @@ var RequestError = errors.New("defect dojo request error")
 type ScanType string
 
 // Source for Scan Type Values https://demo.defectdojo.org/api/v2/doc/
+
+//	{
+//		"id": 54,
+//		"name": "CycloneDX Scan",
+//		"static_tool": false,
+//		"dynamic_tool": false,
+//		"active": true
+//	  },
 const (
-	Grype    ScanType = "Anchore Grype"
-	Semgrep           = "Semgrep JSON Report"
-	Gitleaks          = "Gitleaks Scan"
+	Grype     ScanType = "Anchore Grype"
+	CycloneDX ScanType = "CycloneDX Scan"
+	Semgrep   ScanType = "Semgrep JSON Report"
+	Gitleaks  ScanType = "Gitleaks Scan"
 )
 
 const contentTypeJSON = "application/json"

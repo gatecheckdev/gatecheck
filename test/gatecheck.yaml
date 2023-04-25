@@ -1,3 +1,11 @@
+cyclonedx:
+  critical: 10
+  high: 10
+  medium: 10
+  low: 100
+  info: 0
+  none: 0
+  unknown: 0
 grype:
   critical: 10
   high: 10

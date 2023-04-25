@@ -8,6 +8,7 @@ import (
 type Table struct {
 	headerItems []string
 	rows        [][]string
+	footer      string
 
 	sortBy     []SortBy
 	numColumns int
@@ -29,6 +30,23 @@ func (t Table) WithHeader(items ...string) *Table {
 func (t Table) WithRow(row ...string) *Table {
 	t.rows = append(t.rows, row)
 	return &t
+}
+
+func (t Table) WithFooter(item string) *Table {
+	t.footer = item
+	return &t
+}
+
+func (t *Table) NumRows() int {
+	return len(t.rows)
+}
+
+func (t *Table) TotalsByCol(col int) map[string]int {
+	m := map[string]int{}
+	for _, row := range t.rows {
+		m[row[col]] += 1
+	}
+	return m
 }
 
 // SortBy sets the rules for sorting the Rows in the order specified. i.e., the
@@ -60,6 +78,7 @@ func (t Table) String() string {
 	colLens := t.columnLengths()
 	data := append([][]string{t.headerItems}, t.rows...)
 
+	sb.WriteString(t.divider() + "\n")
 	for rowIndex, row := range data {
 		rowStrings := make([]string, len(t.headerItems))
 
@@ -75,7 +94,25 @@ func (t Table) String() string {
 		}
 	}
 
+	if t.footer != "" {
+		sb.WriteString(t.divider() + "\n")
+		sb.WriteString(t.footer + "\n")
+		sb.WriteString(t.divider() + "\n")
+	}
+
 	return sb.String()
+}
+
+// Single line map string format from "map[foo:90 bar:30]" to "(foo: 90, bar: 30)"
+func PrettyPrintMap[K comparable, V any](m map[K]V) string {
+	s := ""
+	for k, v := range m {
+		s += fmt.Sprintf("%v: %v, ", k, v)
+	}
+	if s != "" {
+		return fmt.Sprintf("(%s)", s[:len(s)-2])
+	}
+	return s
 }
 
 // Private helper functions

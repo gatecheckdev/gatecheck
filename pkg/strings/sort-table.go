@@ -114,9 +114,9 @@ func (rs rowsSorter) lessColumns(rowI []string, rowJ []string, colIdx int, col S
 	} else if col.Mode == Dsc {
 		return false, rowI[colIdx] > rowJ[colIdx]
 	} else if col.Mode == AscCustom {
-		return false, col.Order.index(rowI[colIdx]) < col.Order.index(rowJ[colIdx])
+		return false, col.Order.Index(rowI[colIdx]) < col.Order.Index(rowJ[colIdx])
 	} else if col.Mode == DscCustom {
-		return false, col.Order.index(rowI[colIdx]) > col.Order.index(rowJ[colIdx])
+		return false, col.Order.Index(rowI[colIdx]) > col.Order.Index(rowJ[colIdx])
 	}
 
 	// Sort Numerically
@@ -133,7 +133,7 @@ func (rs rowsSorter) lessColumns(rowI []string, rowJ []string, colIdx int, col S
 }
 
 // Finds the index of a string in an array
-func (strOrder StrOrder) index(s string) int {
+func (strOrder StrOrder) Index(s string) int {
 	for i, str := range strOrder {
 		if str == s {
 			return i

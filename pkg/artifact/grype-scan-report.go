@@ -76,6 +76,7 @@ LOOPMATCH:
 
 		found[match.Vulnerability.Severity] += 1
 	}
+	log.Infof("Grype Findings: %v", gcStrings.PrettyPrintMap(found))
 
 	var errStrings []string
 

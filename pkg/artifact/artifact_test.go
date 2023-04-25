@@ -4,10 +4,12 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	go_semgrep "github.com/BacchusJackson/go-semgrep"
-	"github.com/anchore/grype/grype/presenter/models"
 	"strings"
 	"testing"
+
+	go_semgrep "github.com/BacchusJackson/go-semgrep"
+	cdx "github.com/CycloneDX/cyclonedx-go"
+	"github.com/anchore/grype/grype/presenter/models"
 )
 
 func TestValidateGitleaks(t *testing.T) {
@@ -32,6 +34,38 @@ func TestValidateGitleaks(t *testing.T) {
 	}
 	if err := ValidateGitleaks(GitleaksConfig{SecretsAllowed: false}, GitleaksScanReport{}); err != nil {
 		t.Fatal("Should pass, len 0")
+	}
+
+}
+
+func TestValidateCyclonedx(t *testing.T) {
+	cyclonedxSbom := CyclonedxSbomReport{
+		Vulnerabilities: &[]cdx.Vulnerability{
+			{Ratings: &[]cdx.VulnerabilityRating{{Severity: cdx.SeverityCritical}}},
+			{Ratings: &[]cdx.VulnerabilityRating{{Severity: cdx.SeverityCritical}}},
+			{Ratings: &[]cdx.VulnerabilityRating{{Severity: cdx.SeverityCritical}}},
+			{
+				Ratings: &[]cdx.VulnerabilityRating{{Severity: cdx.SeverityHigh}},
+				Affects: &[]cdx.Affects{{Ref: "ref1"}},
+			},
+		},
+		Components: &[]cdx.Component{
+			{BOMRef: "ref1", Name: "refName1", Version: "refVersion1", Type: cdx.ComponentTypeLibrary},
+		},
+	}
+
+	if strings.Contains(cyclonedxSbom.String(), "Critical") == false {
+		t.Fatal("string formatting failed")
+	}
+
+	if err := ValidateCyclonedx(CyclonedxConfig{Critical: 0}, cyclonedxSbom); errors.Is(err, ErrCyclonedxValidationFailed) != true {
+		t.Log(cyclonedxSbom)
+		t.Fatal("Expected Failed validation")
+	}
+
+	if err := ValidateCyclonedx(CyclonedxConfig{Critical: -1, High: -1}, cyclonedxSbom); err != nil {
+		t.Log(cyclonedxSbom)
+		t.Fatal("Expected passed validation")
 	}
 
 }
