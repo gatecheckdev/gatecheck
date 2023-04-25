@@ -10,11 +10,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gatecheckdev/gatecheck/pkg/export/aws"
 	"github.com/gatecheckdev/gatecheck/pkg/export/defectdojo"
 )
 
-func TestNewExportCmd(t *testing.T) {
+func TestNewExport_DDCmd(t *testing.T) {
 	t.Run("defectdojo-bad-file", func(t *testing.T) {
 		commandString := fmt.Sprintf("export dd %s", fileWithBadPermissions(t))
 		out, err := Execute(commandString, CLIConfig{})
@@ -83,53 +82,32 @@ func TestNewExportCmd(t *testing.T) {
 		}
 	})
 
-	t.Run("aws-bad-file", func(t *testing.T) {
-		commandString := fmt.Sprintf("export aws %s", fileWithBadPermissions(t))
+}
+
+func TestExportS3Cmd(t *testing.T) {
+
+	t.Run("success", func(t *testing.T) {
+		f := MustOpen(grypeTestReport, t.Fatal)
+
+		commandString := fmt.Sprintf("export s3 %s", f.Name())
+
+		_, err := Execute(commandString, CLIConfig{
+			AWSExportService: mockAWSExportService{exportResponse: nil},
+			AWSExportTimeout: time.Second * 3,
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+	})
+
+	t.Run("bad-permissions", func(t *testing.T) {
+
+		commandString := fmt.Sprintf("export s3 %s --key a/b/c", fileWithBadPermissions(t))
 		out, err := Execute(commandString, CLIConfig{})
 
 		if errors.Is(err, ErrorFileAccess) != true {
 			t.Log(out)
 			t.Fatal(err)
-		}
-	})
-
-	t.Run("aws-timeout", func(t *testing.T) {
-		b := make([]byte, 1000)
-		tempFile := path.Join(t.TempDir(), "random.file")
-		if err := os.WriteFile(tempFile, b, 0664); err != nil {
-			t.Fatal(err)
-		}
-
-		commandString := fmt.Sprintf("export aws %s", tempFile)
-		config := CLIConfig{AWSExportTimeout: time.Nanosecond}
-
-		out, err := Execute(commandString, config)
-
-		if errors.Is(err, ErrorEncoding) != true {
-			t.Log(out)
-			t.Fatal(err)
-		}
-	})
-
-	t.Run("aws-success", func(t *testing.T) {
-		files := []*os.File{
-			MustOpen(grypeTestReport, t.Fatal),
-			MustOpen(semgrepTestReport, t.Fatal),
-			MustOpen(gitleaksTestReport, t.Fatal),
-		}
-
-		for _, v := range files {
-
-			commandString := fmt.Sprintf("export aws %s", v.Name())
-
-			out, err := Execute(commandString, CLIConfig{
-				AWSExportService: mockAWSExportService{exportResponse: nil},
-				AWSExportTimeout: time.Second * 3,
-			})
-			if err != nil {
-				t.Log(out)
-				t.Fatal(err)
-			}
 		}
 	})
 }
@@ -146,6 +124,6 @@ type mockAWSExportService struct {
 	exportResponse error
 }
 
-func (m mockAWSExportService) Export(_ context.Context, _ io.Reader, _ aws.UploadQuery) error {
+func (m mockAWSExportService) Export(_ context.Context, _ io.Reader, _ string) error {
 	return m.exportResponse
 }

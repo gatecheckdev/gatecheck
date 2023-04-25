@@ -41,13 +41,6 @@ func main() {
 	awsProfile := os.Getenv("AWS_PROFILE")
 	awsBucket := os.Getenv("AWS_BUCKET")
 
-	awsUpload := aws.UploadQuery{
-		Filepath:      os.Args[3],
-		DDEngagement:  ddEngagement.Name,
-		DDProduct:     ddEngagement.ProductName,
-		DDProductType: ddEngagement.ProductTypeName,
-	}
-
 	awsService := aws.NewService(http.DefaultClient, awsProfile, awsBucket)
 
 	var pipedFile *os.File
@@ -62,7 +55,6 @@ func main() {
 		EPSSService:        epssService,
 		DDExportService:    &dojoService,
 		DDEngagement:       ddEngagement,
-		AWSUpload:          awsUpload,
 		AWSExportService:   awsService,
 		AWSExportTimeout:   5 * time.Minute,
 		PipedInput:         pipedFile,

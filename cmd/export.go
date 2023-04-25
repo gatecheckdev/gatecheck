@@ -9,17 +9,15 @@ import (
 
 	"github.com/gatecheckdev/gatecheck/internal/log"
 	"github.com/gatecheckdev/gatecheck/pkg/artifact"
-	"github.com/gatecheckdev/gatecheck/pkg/export/aws"
 	"github.com/gatecheckdev/gatecheck/pkg/export/defectdojo"
 	"github.com/spf13/cobra"
 )
 
 func NewExportCmd(
-	service DDExportService,
+	ddService DDExportService,
 	ddTimeout time.Duration,
-	engagement defectdojo.EngagementQuery,
+	ddEngagement defectdojo.EngagementQuery,
 	awsService AWSExportService,
-	upload aws.UploadQuery,
 	awsTimeout time.Duration,
 ) *cobra.Command {
 	// gatecheck export command
@@ -64,16 +62,15 @@ func NewExportCmd(
 				return fmt.Errorf("%w: Unsupported file type", ErrorEncoding)
 			}
 
-			return service.Export(ctx, bytes.NewBuffer(fileBytes), engagement, ddScanType)
+			return ddService.Export(ctx, bytes.NewBuffer(fileBytes), ddEngagement, ddScanType)
 		},
 	}
 
 	// gatecheck export aws command
 	awsCmd := &cobra.Command{
-		Use:     "aws [FILE]",
-		Short:   "Export raw scan report to AWS S3",
-		Aliases: []string{"s3"},
-		Args:    cobra.ExactArgs(1),
+		Use:   "s3 [FILE]",
+		Short: "Export raw scan report to AWS S3",
+		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// Open the file
 			f, err := os.Open(args[0])
@@ -81,17 +78,17 @@ func NewExportCmd(
 				return fmt.Errorf("%w: %v", ErrorFileAccess, err)
 			}
 
+			objectKey, _ := cmd.Flags().GetString("key")
+
 			ctx, cancel := context.WithTimeout(context.Background(), awsTimeout)
 			defer cancel()
 
-			_, fileBytes, err := artifact.ReadWithContext(ctx, f)
-			if err != nil {
-				return fmt.Errorf("%w: %v", ErrorEncoding, err)
-			}
-
-			return awsService.Export(ctx, bytes.NewReader(fileBytes), upload)
+			return awsService.Export(ctx, f, objectKey)
 		},
 	}
+	awsCmd.Flags().String("key", "", "The AWS S3 object key for the location in the bucket")
+	awsCmd.MarkFlagRequired("key")
+
 	exportCmd.AddCommand(defectDojoCmd)
 	exportCmd.AddCommand(awsCmd)
 	return exportCmd

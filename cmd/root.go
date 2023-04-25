@@ -9,7 +9,6 @@ import (
 
 	"github.com/gatecheckdev/gatecheck/pkg/artifact"
 	"github.com/gatecheckdev/gatecheck/pkg/epss"
-	"github.com/gatecheckdev/gatecheck/pkg/export/aws"
 	"github.com/gatecheckdev/gatecheck/pkg/export/defectdojo"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
@@ -32,7 +31,7 @@ type EPSSService interface {
 }
 
 type AWSExportService interface {
-	Export(context.Context, io.Reader, aws.UploadQuery) error
+	Export(context.Context, io.Reader, string) error
 }
 
 type CLIConfig struct {
@@ -45,7 +44,6 @@ type CLIConfig struct {
 	DDEngagement       defectdojo.EngagementQuery
 	DDExportTimeout    time.Duration
 	AWSExportService   AWSExportService
-	AWSUpload          aws.UploadQuery
 	AWSExportTimeout   time.Duration
 }
 
@@ -74,7 +72,6 @@ func NewRootCommand(config CLIConfig) *cobra.Command {
 			config.DDExportTimeout,
 			config.DDEngagement,
 			config.AWSExportService,
-			config.AWSUpload,
 			config.AWSExportTimeout,
 		),
 	)

@@ -1,74 +1,81 @@
-// package aws unit-tests for `gatecheck export aws` module
 package aws
 
 import (
 	"bytes"
 	"context"
-	"log"
+	"crypto/tls"
+	"net/http"
+	"net/http/httptest"
+	"os"
+	"path"
 	"testing"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/smithy-go/middleware"
-
-	"github.com/gatecheckdev/gatecheck/pkg/export/aws/mock"
-	util "github.com/gatecheckdev/gatecheck/pkg/export/aws/utilities"
-
 	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/johannesboyne/gofakes3"
+	"github.com/johannesboyne/gofakes3/backend/s3mem"
 )
 
-var (
-	client     *s3.Client
-	bucketName string
-)
+func TestExport_timeout(t *testing.T) {
+	cfg, _ := config.LoadDefaultConfig(context.Background())
 
-var runLiveTests = false
+	service := NewService("some-bucket", cfg)
 
-func init() {
-	log.Println("Setting up suite")
+	ctx := context.Background()
+	ctx.Done()
 
-	cfg, err := config.LoadDefaultConfig(context.TODO())
-	if err != nil {
-		panic("Failed to load configuration")
+	err := service.Export(ctx, bytes.NewBufferString("Content"), "some/object/key")
+	if err == nil {
+		t.Fatal("Expected timeout error")
 	}
 
-	client = s3.NewFromConfig(cfg)
+	t.Log(err)
 }
 
-func TestOps(t *testing.T) {
-	if !runLiveTests {
-		t.Skip("Skipping live test. Change variable runLiveTests to true to run.")
-	}
-	ctx := context.TODO()
-	t.Log("Doing things to the bucket...")
-	util.BucketOps(ctx, *client, bucketName)
-}
+func TestExport_success(t *testing.T) {
 
-func TestMock_PutObject(t *testing.T) {
-	m := mock.NewMockPutObjectClient()
-	dataToWrite := []byte("Hi!")
+	backend := s3mem.New()
+	faker := gofakes3.New(backend)
+	mockServer := httptest.NewServer(faker.Server())
+	defer mockServer.Close()
 
-	m.ObjectOutput(&s3.PutObjectOutput{
-		BucketKeyEnabled:     false,
-		ETag:                 aws.String("etag"),
-		RequestCharged:       "",
-		ServerSideEncryption: "",
-		ResultMetadata:       middleware.Metadata{},
+	client := mockServer.Client()
+	client.Transport = &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}
+
+	endpointResolver := aws.EndpointResolverWithOptionsFunc(func(service string, region string, options ...interface{}) (aws.Endpoint, error) {
+		return aws.Endpoint{URL: mockServer.URL}, nil
 	})
 
-	result, err := util.PutObject(context.TODO(),
-		m.ClientS3PutObject(),
-		"bucketName", "key",
-		bytes.NewReader(dataToWrite))
+	cfg, _ := config.LoadDefaultConfig(context.Background(),
+		config.WithEndpointResolverWithOptions(endpointResolver),
+		config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider("KEY", "SECRET", "SESSION")),
+		config.WithHTTPClient(client))
+
+	service := NewService("some-bucket", cfg)
+
+	s3Client := s3.NewFromConfig(cfg, func(o *s3.Options) {
+		o.UsePathStyle = true
+	})
+
+	_, err := s3Client.CreateBucket(context.Background(), &s3.CreateBucketInput{Bucket: aws.String("some-bucket")})
 	if err != nil {
-		t.Error(err)
-	}
-	if result == nil {
-		t.Error("Expected a result")
+		t.Fatal(err)
 	}
 
-	data, err := m.GetData(make([]byte, 20))
-	if string(data) != "Hi!" {
-		t.Error("Expected data to be Hi!")
+	testFilename := path.Join(t.TempDir(), "somefile.txt")
+
+	_ = os.WriteFile(testFilename, []byte("Some content"), 0664)
+
+	f, err := os.Open(testFilename)
+	if err != nil {
+		t.Fatal(err)
 	}
+
+	err = service.Export(context.Background(), f, "some/object/key")
+	if err != nil {
+		t.Fatal(err)
+	}
+
 }
