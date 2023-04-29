@@ -1,18 +1,21 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"net/http"
 	"os"
 	"strings"
 	"time"
 
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/spf13/cobra"
+
 	"github.com/gatecheckdev/gatecheck/cmd"
 	"github.com/gatecheckdev/gatecheck/internal/log"
 	"github.com/gatecheckdev/gatecheck/pkg/epss"
 	"github.com/gatecheckdev/gatecheck/pkg/export/aws"
 	"github.com/gatecheckdev/gatecheck/pkg/export/defectdojo"
-	"github.com/spf13/cobra"
 )
 
 const ExitSystemFail int = -1
@@ -38,10 +41,14 @@ func main() {
 	dojoService := defectdojo.NewService(http.DefaultClient, dojoKey, dojoURL)
 	epssService := epss.NewEPSSService(http.DefaultClient, "https://api.first.org/data/v1/epss")
 
-	awsProfile := os.Getenv("AWS_PROFILE")
 	awsBucket := os.Getenv("AWS_BUCKET")
+	awsProfile := os.Getenv("AWS_PROFILE")
 
-	awsService := aws.NewService(http.DefaultClient, awsProfile, awsBucket)
+	cfg, _ := config.LoadDefaultConfig(context.Background(),
+		config.WithSharedConfigProfile(awsProfile),
+	)
+
+	awsService := aws.NewService(awsBucket, cfg)
 
 	var pipedFile *os.File
 	if PipeInput() {

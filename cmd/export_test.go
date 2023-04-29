@@ -89,7 +89,7 @@ func TestExportS3Cmd(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		f := MustOpen(grypeTestReport, t.Fatal)
 
-		commandString := fmt.Sprintf("export s3 %s", f.Name())
+		commandString := fmt.Sprintf("export s3 %s --key a/b/c", f.Name())
 
 		_, err := Execute(commandString, CLIConfig{
 			AWSExportService: mockAWSExportService{exportResponse: nil},
@@ -107,6 +107,20 @@ func TestExportS3Cmd(t *testing.T) {
 
 		if errors.Is(err, ErrorFileAccess) != true {
 			t.Log(out)
+			t.Fatal(err)
+		}
+	})
+
+	t.Run("missing-required-flag", func(t *testing.T) {
+		f := MustOpen(grypeTestReport, t.Fatal)
+
+		commandString := fmt.Sprintf("export s3 %s", f.Name())
+
+		_, err := Execute(commandString, CLIConfig{
+			AWSExportService: mockAWSExportService{exportResponse: errors.New("missing required flag")},
+			AWSExportTimeout: time.Second * 3,
+		})
+		if err != nil {
 			t.Fatal(err)
 		}
 	})

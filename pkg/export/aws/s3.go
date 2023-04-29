@@ -5,15 +5,12 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"net/http"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 )
 
 type Service struct {
-	client    *http.Client
-	Profile   string
 	Bucket    string
 	AWSConfig aws.Config
 }
