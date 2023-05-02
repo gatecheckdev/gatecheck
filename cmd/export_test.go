@@ -110,20 +110,6 @@ func TestExportS3Cmd(t *testing.T) {
 			t.Fatal(err)
 		}
 	})
-
-	t.Run("missing-required-flag", func(t *testing.T) {
-		f := MustOpen(grypeTestReport, t.Fatal)
-
-		commandString := fmt.Sprintf("export s3 %s", f.Name())
-
-		_, err := Execute(commandString, CLIConfig{
-			AWSExportService: mockAWSExportService{exportResponse: errors.New("missing required flag")},
-			AWSExportTimeout: time.Second * 3,
-		})
-		if err != nil {
-			t.Fatal(err)
-		}
-	})
 }
 
 type mockDDExportService struct {

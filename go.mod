@@ -5,10 +5,12 @@ go 1.20
 require (
 	github.com/BacchusJackson/go-semgrep v1.2.1
 	github.com/anchore/grype v0.51.0
-	github.com/aws/aws-sdk-go v1.44.249
+	github.com/aws/aws-sdk-go-v2 v1.17.8
 	github.com/aws/aws-sdk-go-v2/config v1.17.7
+	github.com/aws/aws-sdk-go-v2/credentials v1.12.20
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.32.0
 	github.com/dustin/go-humanize v1.0.0
+	github.com/johannesboyne/gofakes3 v0.0.0-20230310080033-c0edf658332b
 	github.com/rs/zerolog v1.29.1
 	github.com/spf13/cobra v1.5.0
 	github.com/zricethezav/gitleaks/v8 v8.15.0
@@ -39,9 +41,8 @@ require (
 	github.com/anchore/syft v0.59.0 // indirect
 	github.com/andybalholm/brotli v1.0.4 // indirect
 	github.com/asaskevich/govalidator v0.0.0-20210307081110-f21760c49a8d // indirect
-	github.com/aws/aws-sdk-go-v2 v1.17.8 // indirect
+	github.com/aws/aws-sdk-go v1.44.249 // indirect
 	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.4.10 // indirect
-	github.com/aws/aws-sdk-go-v2/credentials v1.12.20 // indirect
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.12.17 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/configsources v1.1.32 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.4.26 // indirect
@@ -140,7 +141,6 @@ require (
 	github.com/jedisct1/go-minisign v0.0.0-20211028175153-1c139d1cc84b // indirect
 	github.com/jhump/protoreflect v1.12.0 // indirect
 	github.com/jinzhu/copier v0.3.2 // indirect
-	github.com/johannesboyne/gofakes3 v0.0.0-20230310080033-c0edf658332b // indirect
 	github.com/jonboulle/clockwork v0.3.0 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
