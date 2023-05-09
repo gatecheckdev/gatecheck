@@ -13,15 +13,23 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func NewExportCmd(service DDExportService, timeout time.Duration, engagement defectdojo.EngagementQuery) *cobra.Command {
-	var exportCmd = &cobra.Command{
+func NewExportCmd(
+	ddService DDExportService,
+	ddTimeout time.Duration,
+	ddEngagement defectdojo.EngagementQuery,
+	awsService AWSExportService,
+	awsTimeout time.Duration,
+) *cobra.Command {
+	// gatecheck export command
+	exportCmd := &cobra.Command{
 		Use:   "export",
 		Short: "Export a report to a target location",
 	}
 
-	var defectDojoCmd = &cobra.Command{
+	// gatecheck export defect-dojo command
+	defectDojoCmd := &cobra.Command{
 		Use:     "defect-dojo [FILE]",
-		Short:   "export raw scan report to Defect Dojo",
+		Short:   "Export raw scan report to DefectDojo",
 		Aliases: []string{"dd"},
 		Args:    cobra.ExactArgs(1),
 		RunE: func(_ *cobra.Command, args []string) error {
@@ -32,7 +40,7 @@ func NewExportCmd(service DDExportService, timeout time.Duration, engagement def
 				return fmt.Errorf("%w: %v", ErrorFileAccess, err)
 			}
 
-			ctx, cancel := context.WithTimeout(context.Background(), timeout)
+			ctx, cancel := context.WithTimeout(context.Background(), ddTimeout)
 			defer cancel()
 
 			rType, fileBytes, err := artifact.ReadWithContext(ctx, f)
@@ -54,9 +62,34 @@ func NewExportCmd(service DDExportService, timeout time.Duration, engagement def
 				return fmt.Errorf("%w: Unsupported file type", ErrorEncoding)
 			}
 
-			return service.Export(ctx, bytes.NewBuffer(fileBytes), engagement, ddScanType)
+			return ddService.Export(ctx, bytes.NewBuffer(fileBytes), ddEngagement, ddScanType)
 		},
 	}
+
+	// gatecheck export aws command
+	awsCmd := &cobra.Command{
+		Use:   "s3 [FILE]",
+		Short: "Export raw scan report to AWS S3",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			// Open the file
+			f, err := os.Open(args[0])
+			if err != nil {
+				return fmt.Errorf("%w: %v", ErrorFileAccess, err)
+			}
+
+			objectKey, _ := cmd.Flags().GetString("key")
+
+			ctx, cancel := context.WithTimeout(context.Background(), awsTimeout)
+			defer cancel()
+
+			return awsService.Export(ctx, f, objectKey)
+		},
+	}
+	awsCmd.Flags().String("key", "", "The AWS S3 object key for the location in the bucket")
+	awsCmd.MarkFlagRequired("key")
+
 	exportCmd.AddCommand(defectDojoCmd)
+	exportCmd.AddCommand(awsCmd)
 	return exportCmd
 }
