@@ -139,6 +139,23 @@ Environment Variables:
 gatecheck export defect-dojo grype-report.json
 ```
 
+### AWS S3
+
+[Developer Guide | AWS SDK for Go V2](https://aws.github.io/aws-sdk-go-v2/docs/)
+
+The AWS S3 upload bucket name must be supplied as an environment variable, `AWS_BUCKET`.
+To upload artifacts to S3, ensure the configured `AWS_PROFILE` has write access to `AWS_BUCKET`.
+Currently, the exporter uses the AWS SDK for Go V2 to upload artifacts to AWS S3.
+
+Environment Variables:
+- AWS_BUCKET
+- AWS_PROFILE
+
+```shell
+gatecheck export s3 grype-report.json \
+  --key upload/path/to/grype-report.json
+```
+
 ## Blacklist Validation
 Gatecheck relies on [CISA Known Exploited Vulnerabilities](https://www.cisa.gov/known-exploited-vulnerabilities) to
 provide blacklist validation.
