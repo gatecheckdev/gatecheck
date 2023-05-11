@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Allow Deny List for Grype reports
 - 'allow-missing' flag to bundle command
 - Sort tables by single or multiple columns in ascending, descending or custom order
+- Export to AWS S3
 
 ## [0.0.9] - 2023-02-06
 
