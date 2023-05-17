@@ -116,8 +116,44 @@ CVE-2022-25315   | Critical   | 17.17% | 96.07%     | 2023-01-23 | https://secur
 Exporting will take the report and upload it to a specific target location using the API.
 Custom exporters can be created by simply implementing the Exporter interface.
 
+### DefectDojo
+
+[DefectDojo Documentation](https://defectdojo.github.io/django-DefectDojo/)
+
+The Product Type, Product, and Engagement will be automatically created on export.
+These variables must be supplied as environment variables.
+Currently, the exporter uses the `/import-scan` endpoint in the DefectDojo API.
+
+Environment Variables:
+- GATECHECK_DD_API_KEY
+- GATECHECK_DD_API_URL
+- GATECHECK_DD_PRODUCT_TYPE
+- GATECHECK_DD_PRODUCT
+- GATECHECK_DD_ENGAGEMENT
+- GATECHECK_DD_COMMIT_HASH
+- GATECHECK_DD_BRANCH_TAG
+- GATECHECK_DD_SOURCE_URL
+- GATECHECK_DD_TAGS
+
 ```shell
 gatecheck export defect-dojo grype-report.json
+```
+
+### AWS S3
+
+[Developer Guide | AWS SDK for Go V2](https://aws.github.io/aws-sdk-go-v2/docs/)
+
+The AWS S3 upload bucket name must be supplied as an environment variable, `AWS_BUCKET`.
+To upload artifacts to S3, ensure the configured `AWS_PROFILE` has write access to `AWS_BUCKET`.
+Currently, the exporter uses the AWS SDK for Go V2 to upload artifacts to AWS S3.
+
+Environment Variables:
+- AWS_BUCKET
+- AWS_PROFILE
+
+```shell
+gatecheck export s3 grype-report.json \
+  --key upload/path/to/grype-report.json
 ```
 
 ## Blacklist Validation
@@ -132,24 +168,6 @@ gatecheck validate --blacklist kev.json -c gatecheck.yaml grype-report.json
 
 If `--audit` flag is used, it will exit code 0 after printing the report.
 Otherwise, it will exit code 1 for a Validation Error.
-
-### Defect Dojo
-
-[Defect Dojo Documentation](https://defectdojo.github.io/django-DefectDojo/)
-
-The Product Type, Product, and Engagement will be automatically created on export.
-These variables must be supplied as environment variables.
-Currently, the exporter uses the `/import-scan` endpoint in the Defect Dojo API
-
-Environment Variables:
-- GATECHECK_DD_API_KEY
-- GATECHECK_DD_API_URL
-- GATECHECK_DD_PRODUCT_TYPE
-- GATECHECK_DD_PRODUCT
-- GATECHECK_DD_ENGAGEMENT
-- GATECHECK_DD_COMMIT_HASH
-- GATECHECK_DD_BRANCH_TAG
-- GATECHECK_DD_SOURCE_URL
 
 
 ### Config
