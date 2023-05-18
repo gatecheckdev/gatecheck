@@ -6,15 +6,15 @@ require (
 	github.com/BacchusJackson/go-semgrep v1.2.1
 	github.com/CycloneDX/cyclonedx-go v0.7.1
 	github.com/anchore/grype v0.61.1
-	github.com/aws/aws-sdk-go-v2 v1.17.8
-	github.com/aws/aws-sdk-go-v2/config v1.17.7
-	github.com/aws/aws-sdk-go-v2/credentials v1.12.20
-	github.com/aws/aws-sdk-go-v2/service/s3 v1.32.0
+	github.com/aws/aws-sdk-go-v2 v1.18.0
+	github.com/aws/aws-sdk-go-v2/config v1.18.25
+	github.com/aws/aws-sdk-go-v2/credentials v1.13.24
+	github.com/aws/aws-sdk-go-v2/service/s3 v1.33.1
 	github.com/dustin/go-humanize v1.0.1
-	github.com/johannesboyne/gofakes3 v0.0.0-20230310080033-c0edf658332b
+	github.com/johannesboyne/gofakes3 v0.0.0-20230506070712-04da935ef877
 	github.com/rs/zerolog v1.29.1
 	github.com/spf13/cobra v1.7.0
-	github.com/zricethezav/gitleaks/v8 v8.15.0
+	github.com/zricethezav/gitleaks/v8 v8.16.3
 	golang.org/x/text v0.9.0
 	gopkg.in/yaml.v3 v3.0.1
 )
@@ -36,20 +36,20 @@ require (
 	github.com/anchore/stereoscope v0.0.0-20230412183729-8602f1afc574 // indirect
 	github.com/anchore/syft v0.79.0 // indirect
 	github.com/andybalholm/brotli v1.0.4 // indirect
-	github.com/aws/aws-sdk-go v1.44.249 // indirect
+	github.com/aws/aws-sdk-go v1.44.256 // indirect
 	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.4.10 // indirect
-	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.12.17 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/configsources v1.1.32 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.4.26 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/ini v1.3.24 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/v4a v1.0.24 // indirect
+	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.13.3 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/configsources v1.1.33 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.4.27 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/ini v1.3.34 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/v4a v1.0.25 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.9.11 // indirect
-	github.com/aws/aws-sdk-go-v2/service/internal/checksum v1.1.27 // indirect
-	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.9.26 // indirect
-	github.com/aws/aws-sdk-go-v2/service/internal/s3shared v1.14.1 // indirect
-	github.com/aws/aws-sdk-go-v2/service/sso v1.11.23 // indirect
-	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.13.5 // indirect
-	github.com/aws/aws-sdk-go-v2/service/sts v1.16.19 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/checksum v1.1.28 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.9.27 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/s3shared v1.14.2 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sso v1.12.10 // indirect
+	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.14.10 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sts v1.19.0 // indirect
 	github.com/aws/smithy-go v1.13.5 // indirect
 	github.com/becheran/wildmatch-go v1.0.0 // indirect
 	github.com/bmatcuk/doublestar/v2 v2.0.4 // indirect
@@ -122,7 +122,7 @@ require (
 	github.com/sassoftware/go-rpmutils v0.2.0 // indirect
 	github.com/scylladb/go-set v1.0.3-0.20200225121959-cc7b2070d91e // indirect
 	github.com/sergi/go-diff v1.3.1 // indirect
-	github.com/shabbyrobe/gocovmerge v0.0.0-20180507124511-f6ea450bfb63 // indirect
+	github.com/shabbyrobe/gocovmerge v0.0.0-20190829150210-3e036491d500 // indirect
 	github.com/shopspring/decimal v1.2.0 // indirect
 	github.com/sirupsen/logrus v1.9.0 // indirect
 	github.com/skeema/knownhosts v1.1.0 // indirect
