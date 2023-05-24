@@ -4,15 +4,17 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"gopkg.in/yaml.v3"
 	"io"
 	"sync"
+
+	"gopkg.in/yaml.v3"
 )
 
 type Type string
 
 const (
 	Gitleaks        Type = "Gitleaks"
+	Cyclonedx       Type = "Cyclonedx"
 	Grype           Type = "Grype"
 	Semgrep         Type = "Semgrep"
 	GatecheckBundle Type = "Gatecheck Bundle"
@@ -112,7 +114,7 @@ func detectBytes(inputBytes []byte) (Type, error) {
 	var wg sync.WaitGroup
 	resChan := make(chan Type, 1)
 
-	decodeFuncs := []func([]byte) Type{detectGitleaksBytes, detectSemgrepBytes, detectGrypeBytes,
+	decodeFuncs := []func([]byte) Type{detectCyclonedxBytes, detectGitleaksBytes, detectSemgrepBytes, detectGrypeBytes,
 		detectBundleBytes, detectConfigBytes}
 
 	// Try each decoder at the same time
@@ -137,6 +139,20 @@ func detectBytes(inputBytes []byte) (Type, error) {
 	response := <-resChan
 
 	return response, nil
+}
+
+func detectCyclonedxBytes(b []byte) Type {
+	var cyclonedxScan CyclonedxSbomReport
+
+	if err := json.Unmarshal(b, &cyclonedxScan); err != nil {
+		return Unsupported
+	}
+
+	if cyclonedxScan.BOMFormat != "CycloneDX" {
+		return Unsupported
+	}
+
+	return Cyclonedx
 }
 
 func detectGitleaksBytes(b []byte) Type {

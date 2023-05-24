@@ -1,6 +1,7 @@
 package strings
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 )
@@ -42,4 +43,66 @@ func TestCleanAndAbbreviate(t *testing.T) {
 	if output != expected {
 		t.Fatal("For", input, "expected", expected, "got", output)
 	}
+}
+
+func TestFooterAndTotals(t *testing.T) {
+	table := NewTable("ColumnName")
+	table = table.WithRow("Hot")
+	table = table.WithRow("Hot")
+	table = table.WithRow("Hot")
+	table = table.WithRow("Warm")
+	table = table.WithRow("Warm")
+	table = table.WithRow("Cold")
+	table = table.SortBy([]SortBy{
+		{Name: "ColumnName", Mode: AscCustom, Order: StrOrder{"Hot", "Warm", "Cold"}},
+	}).Sort()
+
+	expectedTotal := 6
+	expected := map[string]int{
+		"Hot":  3,
+		"Warm": 2,
+		"Cold": 1,
+	}
+	t.Parallel()
+
+	t.Run("table-col-totals", func(t *testing.T) {
+
+		totals := table.TotalsByCol(0)
+		for k, v := range expected {
+			if ev, ok := totals[k]; ok {
+				if ev != v {
+					t.Fatal("Expected", v, "got", ev)
+				}
+			} else {
+				t.Fatal("Expected key for", k, "got", nil)
+			}
+		}
+	})
+
+	t.Run("table-row-count", func(t *testing.T) {
+		total := table.NumRows()
+		if total != expectedTotal {
+			t.Fatal("Expected", expectedTotal, "got", total)
+		}
+	})
+
+	t.Run("table-footer", func(t *testing.T) {
+		total := table.NumRows()
+		expectedFooter := fmt.Sprintf("Total %d", total)
+		tableStr := table.WithFooter(expectedFooter).String()
+		if !strings.Contains(tableStr, expectedFooter) {
+			t.Fatal("Expected '", expectedFooter, "' in table but got", tableStr)
+		}
+	})
+
+	t.Run("pretty-print-map", func(t *testing.T) {
+		m := map[string]int{
+			"Hot": 2,
+		}
+		expectedStr := "(Hot: 2)"
+		str := PrettyPrintMap(m)
+		if str != expectedStr {
+			t.Fatal("Expected", expectedStr, "got", str)
+		}
+	})
 }

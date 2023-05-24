@@ -11,17 +11,19 @@ import (
 	"strings"
 
 	"github.com/dustin/go-humanize"
+	"github.com/gatecheckdev/gatecheck/internal/log"
 	gcStrings "github.com/gatecheckdev/gatecheck/pkg/strings"
 )
 
 type Bundle struct {
-	GrypeScan    Artifact
-	SemgrepScan  Artifact
-	GitleaksScan Artifact
-	Generic      map[string]Artifact
-	PipelineID   string
-	PipelineURL  string
-	ProjectName  string
+	CyclonedxSbom Artifact
+	GrypeScan     Artifact
+	SemgrepScan   Artifact
+	GitleaksScan  Artifact
+	Generic       map[string]Artifact
+	PipelineID    string
+	PipelineURL   string
+	ProjectName   string
 }
 
 func NewBundle() *Bundle {
@@ -48,6 +50,8 @@ func (b *Bundle) add(artifact Artifact) error {
 	switch rType {
 	case Semgrep:
 		b.SemgrepScan = artifact
+	case Cyclonedx:
+		b.CyclonedxSbom = artifact
 	case Grype:
 		b.GrypeScan = artifact
 	case Gitleaks:
@@ -62,8 +66,8 @@ func (b *Bundle) add(artifact Artifact) error {
 func (b *Bundle) String() string {
 	table := new(gcStrings.Table).WithHeader("Type", "Label", "Digest", "Size")
 
-	items := []Artifact{b.GrypeScan, b.SemgrepScan, b.GitleaksScan}
-	types := []string{"Grype", "Semgrep", "Gitleaks"}
+	items := []Artifact{b.CyclonedxSbom, b.GrypeScan, b.SemgrepScan, b.GitleaksScan}
+	types := []string{"CycloneDX", "Grype", "Semgrep", "Gitleaks"}
 	for _, v := range b.Generic {
 		items = append(items, v)
 		types = append(types, "Generic File")
@@ -84,6 +88,28 @@ func (b *Bundle) String() string {
 	return sb.String()
 }
 
+func (b *Bundle) ValidateCyclonedx(config *CyclonedxConfig) error {
+	var cyclonedxSbom CyclonedxSbomReport
+	// No config
+	if config == nil {
+		return nil
+	}
+	// No scan in bundle to validate
+	if len(b.CyclonedxSbom.Content) == 0 {
+		log.Info("No cyclonedx content... skipping validation")
+		return nil
+	}
+
+	// Problem parsing the artifact
+	if err := json.Unmarshal(b.CyclonedxSbom.ContentBytes(), &cyclonedxSbom); err != nil {
+		log.Info("Validating CycloneDX Schema")
+		return fmt.Errorf("%w: %v", ErrCyclonedxValidationFailed, err)
+	}
+
+	log.Info("Validating CycloneDX Findings")
+	return ValidateCyclonedx(*config, cyclonedxSbom)
+}
+
 func (b *Bundle) ValidateGrype(config *GrypeConfig) error {
 	var grypeScan GrypeScanReport
 	// No config
@@ -92,6 +118,7 @@ func (b *Bundle) ValidateGrype(config *GrypeConfig) error {
 	}
 	// No scan in bundle to validate
 	if len(b.GrypeScan.Content) == 0 {
+		log.Info("No grype content... skipping validation")
 		return nil
 	}
 
@@ -111,6 +138,7 @@ func (b *Bundle) ValidateSemgrep(config *SemgrepConfig) error {
 	}
 	// No scan in bundle to validate
 	if len(b.SemgrepScan.ContentBytes()) == 0 {
+		log.Info("No semgrep content... skipping validation")
 		return nil
 	}
 
@@ -130,6 +158,7 @@ func (b *Bundle) ValidateGitleaks(config *GitleaksConfig) error {
 	}
 	// No scan in bundle to validate
 	if len(b.GitleaksScan.ContentBytes()) == 0 {
+		log.Info("No gitleaks content... skipping validation")
 		return nil
 	}
 
