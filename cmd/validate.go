@@ -167,7 +167,7 @@ func ParseAndValidate(r io.Reader, config artifact.Config, timeout time.Duration
 		}
 		err = artifact.ValidateSemgrep(*config.Semgrep, artifact.DecodeJSON[artifact.SemgrepScanReport](buf))
 	case artifact.Cyclonedx:
-		if config.Semgrep == nil {
+		if config.Cyclonedx == nil {
 			return errors.New("no CycloneDx configuration specified")
 		}
 		err = artifact.ValidateCyclonedx(*config.Cyclonedx, artifact.DecodeJSON[artifact.CyclonedxSbomReport](buf))
