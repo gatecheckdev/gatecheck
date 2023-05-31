@@ -112,10 +112,20 @@ func NewEPSSCmd(service EPSSService) *cobra.Command {
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			var grypeScan artifact.GrypeScanReport
+			var csvFile *os.File
+			var err error
+
+			csvFilename, _ := cmd.Flags().GetString("file")
 
 			f, err := os.Open(args[0])
 			if err != nil {
 				return fmt.Errorf("%w: %v", ErrorFileAccess, err)
+			}
+			if csvFilename != "" {
+				csvFile, err = os.Open(csvFilename)
+				if err != nil {
+					return fmt.Errorf("%w: %v", ErrorFileAccess, err)
+				}
 			}
 
 			if err := json.NewDecoder(f).Decode(&grypeScan); err != nil {
@@ -132,17 +142,53 @@ func NewEPSSCmd(service EPSSService) *cobra.Command {
 				}
 			}
 
-			data, err := service.Get(CVEs)
-			if err != nil {
-				return fmt.Errorf("%w: %s", ErrorAPI, err)
+			var output string
+			if csvFile != nil {
+				output, err = epssFromDataStore(csvFile, CVEs)
+			} else {
+				output, err = epssFromAPI(service, CVEs)
 			}
 
-			cmd.Println(epss.Sprint(data))
-			return nil
+			if err == nil {
+				cmd.Println(output)
+			}
+
+			return err
 		},
 	}
 
+	EPSSCmd.Flags().StringP("file", "f", "", "A downloaded CSV File with scores, note: will not query API")
+
 	return EPSSCmd
+}
+
+func epssFromAPI(service EPSSService, CVEs []epss.CVE) (string, error) {
+
+	data, err := service.Get(CVEs)
+	if err != nil {
+		return "", fmt.Errorf("%w: %s", ErrorAPI, err)
+	}
+
+	return epss.Sprint(data), nil
+}
+
+func epssFromDataStore(epssCSV io.Reader, CVEs []epss.CVE) (string, error) {
+	store := epss.NewDataStore()
+	data := make([]epss.Data, len(CVEs))
+
+	for i := range data {
+		vul, err := store.Get(CVEs[i].ID)
+		if err != nil {
+			return "", err
+		}
+		data[i].CVE = CVEs[i].ID
+		data[i].Severity = CVEs[i].Severity
+		data[i].URL = CVEs[i].Link
+		data[i].EPSS = fmt.Sprintf("%.2f%%", 100*vul.Probability)
+		data[i].Percentile = fmt.Sprintf("%.2f%%", 100*vul.Percentile)
+
+	}
+	return epss.Sprint(data), nil
 }
 
 func ParseAndValidate(r io.Reader, config artifact.Config, timeout time.Duration) error {
