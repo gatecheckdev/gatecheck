@@ -14,6 +14,7 @@ import (
 	"github.com/gatecheckdev/gatecheck/pkg/artifact"
 	"github.com/gatecheckdev/gatecheck/pkg/blacklist"
 	"github.com/gatecheckdev/gatecheck/pkg/epss"
+	"github.com/gatecheckdev/gatecheck/internal/log"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
 )
@@ -175,18 +176,19 @@ func epssFromAPI(service EPSSService, CVEs []epss.CVE) (string, error) {
 func epssFromDataStore(epssCSV io.Reader, CVEs []epss.CVE) (string, error) {
 	store := epss.NewDataStore()
 	data := make([]epss.Data, len(CVEs))
+  if err := epss.NewCSVDecoder(epssCSV).Decode(store); err != nil {
+    return "", err
+  }
+  log.Infof("EPSS CSV Datastore imported scores for %d CVEs\n", store.Len())
 
 	for i := range data {
-		vul, err := store.Get(CVEs[i].ID)
-		if err != nil {
-			return "", err
-		}
 		data[i].CVE = CVEs[i].ID
 		data[i].Severity = CVEs[i].Severity
 		data[i].URL = CVEs[i].Link
-		data[i].EPSS = fmt.Sprintf("%.2f%%", 100*vul.Probability)
-		data[i].Percentile = fmt.Sprintf("%.2f%%", 100*vul.Percentile)
-
+		err := store.Write(&data[i])
+		if err != nil {
+			return "", err
+		}
 	}
 	return epss.Sprint(data), nil
 }

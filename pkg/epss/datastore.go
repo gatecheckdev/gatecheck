@@ -41,6 +41,25 @@ func (d *DataStore) Get(cve string) (Vulnerability, error) {
 	return Vulnerability{CVE: cve, Probability: prob, Percentile: perc}, nil
 }
 
+func (d *DataStore) Write(dataObj *Data) error {
+  if dataObj == nil {
+    return fmt.Errorf("%w: target is nil", ErrDecode)
+  }
+	scores, ok := d.data[dataObj.CVE]
+
+	if !ok {
+		return fmt.Errorf("%w: '%s'", ErrNotFound, dataObj.CVE)
+	}
+  dataObj.EPSS = scores.Probability
+  dataObj.Percentile = scores.Percentile
+
+  return nil
+}
+
+func (d *DataStore) Len() int {
+  return len(d.data)
+}
+
 type Vulnerability struct {
 	CVE         string
 	Probability float64

@@ -137,7 +137,7 @@ func Sprint(data []Data) string {
 	table := new(gcStrings.Table).WithHeader("CVE", "Severity", "EPSS", "Percentile", "Date", "Link")
 
 	percentage := func(s string) string {
-		f, _ := strconv.ParseFloat(s, 32)
+		f, _ := strconv.ParseFloat(s, 64)
 
 		return fmt.Sprintf("%.2f%%", 100*f)
 	}

@@ -28,6 +28,10 @@ func TestCSVDecoder(t *testing.T) {
 	}
 
 	t.Run("success", func(t *testing.T) {
+		if store.Len() < 10 {
+			t.Fatal("Total Items:", store.Len())
+		}
+
 		for _, want := range expected {
 			got, err := store.Get(want.CVE)
 			if err != nil {
@@ -43,29 +47,57 @@ func TestCSVDecoder(t *testing.T) {
 
 	})
 
-  t.Run("bad-values", func(t *testing.T) {
-    store.data["bad-values"] = scores{Probability: "nil", Percentile: "0.0032"}
-    if _, err := store.Get("non-existant"); errors.Is(err, ErrNotFound) != true {
-      t.Fatal(err, "Expected Not Found")
+	t.Run("bad-values", func(t *testing.T) {
+		store.data["bad-values"] = scores{Probability: "nil", Percentile: "0.0032"}
+		if _, err := store.Get("non-existant"); errors.Is(err, ErrNotFound) != true {
+			t.Fatal(err, "Expected Not Found")
+		}
+		if _, err := store.Get("bad-values"); errors.Is(err, ErrDecode) != true {
+			t.Fatal(err, "Expected Decode Error")
+		}
+		store.data["bad-values"] = scores{Probability: "0.0035", Percentile: "nil"}
+		if _, err := store.Get("bad-values"); errors.Is(err, ErrDecode) != true {
+			t.Fatal(err, "Expected Decode Error")
+		}
+	})
+
+	t.Run("bad-file", func(t *testing.T) {
+		if err := NewCSVDecoder(bytes.NewBufferString("a,b,c")).Decode(&DataStore{}); !errors.Is(err, ErrDecode) {
+			t.Fatal(err, "Expected Decode error")
+		}
+		badCSV := "cve,epss,percentile\n1,2,3,4,5"
+		if err := NewCSVDecoder(bytes.NewBufferString(badCSV)).Decode(&DataStore{}); !errors.Is(err, ErrDecode) {
+			t.Fatal(err, "Expected Decode error")
+		}
+	})
+}
+
+func TestDataStore_Write(t *testing.T) {
+	store := NewDataStore()
+	store.data["CVE-A"] = scores{Probability: "0.03234", Percentile: "0.11184"}
+  
+	t.Run("success", func(t *testing.T) {
+		sample := Data{CVE: "CVE-A"}
+		if err := store.Write(&sample); err != nil {
+			t.Fatal(err)
+		}
+    if sample.Percentile != "0.11184" {
+      t.Fail()
     }
-    if _, err := store.Get("bad-values"); errors.Is(err, ErrDecode) != true {
-      t.Fatal(err, "Expected Decode Error")
-    }
-    store.data["bad-values"] = scores{Probability: "0.0035", Percentile: "nil"}
-    if _, err := store.Get("bad-values"); errors.Is(err, ErrDecode) != true {
+	})
+
+  t.Run("nil", func(t *testing.T) {
+    if err := store.Write(nil); !errors.Is(err, ErrDecode) {
       t.Fatal(err, "Expected Decode Error")
     }
   })
 
-  t.Run("bad-file", func(t *testing.T) {
-    if err := NewCSVDecoder(bytes.NewBufferString("a,b,c")).Decode(&DataStore{}); !errors.Is(err, ErrDecode) {
-      t.Fatal(err, "Expected Decode error")
-    }
-    badCSV := "cve,epss,percentile\n1,2,3,4,5"
-    if err := NewCSVDecoder(bytes.NewBufferString(badCSV)).Decode(&DataStore{}); !errors.Is(err, ErrDecode) {
-      t.Fatal(err, "Expected Decode error")
+  t.Run("not-found", func(t *testing.T) {
+    if err := store.Write(&Data{CVE: "None"}); !errors.Is(err, ErrNotFound) {
+      t.Fatal(err, "Expected Not Found Error")
     }
   })
+
 }
 
 func MustOpen(filename string, t *testing.T) *os.File {
