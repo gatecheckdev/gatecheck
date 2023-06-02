@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"path"
 	"testing"
@@ -14,6 +15,30 @@ import (
 )
 
 func TestNewEPSSCmd(t *testing.T) {
+
+	t.Run("test-download-csv-success", func(t *testing.T) {
+		config := CLIConfig{EPSSService: mockEPSSService{returnN: 100_000, returnError: nil}}
+		commandString := fmt.Sprintf("epss download")
+		output, err := Execute(commandString, config)
+
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		t.Log(output)
+	})
+
+	t.Run("download-csv-fail", func(t *testing.T) {
+		config := CLIConfig{EPSSService: mockEPSSService{returnN: 0, returnError: epss.ErrAPIPartialFail}}
+		commandString := fmt.Sprintf("epss download")
+		_, err := Execute(commandString, config)
+
+		if !errors.Is(err, ErrorAPI) {
+			t.Fatal(err, "Expected API failure")
+		}
+
+	})
+
 	t.Run("success-from-datastore", func(t *testing.T) {
 
 		commandString := fmt.Sprintf("epss %s -f %s", grypeTestReport, epssTestCSV)
@@ -139,4 +164,18 @@ func MockAppendedGrypeReport(t *testing.T, match models.Match) string {
 	_ = json.NewEncoder(f).Encode(grypeScan)
 
 	return tempGrypeScanFile
+}
+
+type mockEPSSService struct {
+	returnError error
+	returnData  []epss.Data
+	returnN     int64
+}
+
+func (m mockEPSSService) Get(_ []epss.CVE) ([]epss.Data, error) {
+	return m.returnData, m.returnError
+}
+
+func (m mockEPSSService) WriteCSV(w io.Writer, url string) (int64, error) {
+	return m.returnN, m.returnError
 }

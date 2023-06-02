@@ -2,7 +2,6 @@ package epss
 
 import (
 	"bufio"
-	"errors"
 	"fmt"
 	"io"
 	"strconv"
@@ -10,13 +9,6 @@ import (
 	"time"
 )
 
-// An estimate for how many lines are in the CSV file for performance
-const EST_LINE_COUNT = 250_000
-const SUPPORTED_MODEL = "v2023.03.01"
-const MODEL_DATE_LAYOUT = "2006-01-02T15:04:05-0700"
-
-var ErrDecode = errors.New("Decoding Error")
-var ErrNotFound = errors.New("CVE not found in Data Store")
 
 type DataStore struct {
 	data         map[string]scores
@@ -25,7 +17,7 @@ type DataStore struct {
 }
 
 func NewDataStore() *DataStore {
-	return &DataStore{data: make(map[string]scores, EST_LINE_COUNT)}
+	return &DataStore{data: make(map[string]scores, estimatedLineCount)}
 }
 
 func (d *DataStore) Get(cve string) (Vulnerability, error) {
@@ -68,12 +60,6 @@ func (d *DataStore) ScoreDate() time.Time {
 	return d.scoreDate
 }
 
-type Vulnerability struct {
-	CVE         string
-	Probability float64
-	Percentile  float64
-}
-
 type scores struct {
 	Probability string
 	Percentile  string
@@ -98,11 +84,11 @@ func (c *CSVDecoder) Decode(store *DataStore) error {
 
 	store.modelVersion = strings.ReplaceAll(parts[0], "#model_version:", "")
 
-	if store.modelVersion != SUPPORTED_MODEL {
+	if store.modelVersion != supportedModel {
 		return fmt.Errorf("%w: CSV Reader detected invalid model version: '%s'", ErrDecode, scanner.Text())
 	}
 
-	sDate, err := time.Parse(MODEL_DATE_LAYOUT, strings.ReplaceAll(parts[1], "score_date:", ""))
+	sDate, err := time.Parse(modelDateLayout, strings.ReplaceAll(parts[1], "score_date:", ""))
 	if err != nil {
 		return fmt.Errorf("%w: CSV Reader detected invalid date format in metadata: '%s'", ErrDecode, scanner.Text())
 	}

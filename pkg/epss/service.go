@@ -1,25 +1,20 @@
 package epss
 
 import (
+	"compress/gzip"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
+	"io"
 	"net/http"
 	"strconv"
 	"strings"
 	"sync"
 
+	"github.com/gatecheckdev/gatecheck/internal/log"
+
 	gcStrings "github.com/gatecheckdev/gatecheck/pkg/strings"
 )
-
-var ErrAPIPartialFail = errors.New("an API request failed")
-
-type CVE struct {
-	ID       string
-	Severity string
-	Link     string
-}
 
 type response struct {
 	Status     string `json:"status"`
@@ -30,15 +25,6 @@ type response struct {
 	Offset     int    `json:"offset"`
 	Limit      int    `json:"limit"`
 	Data       []Data `json:"data"`
-}
-
-type Data struct {
-	CVE        string `json:"cve"`
-	EPSS       string `json:"epss"`
-	Percentile string `json:"percentile"`
-	Date       string `json:"date"`
-	Severity   string `json:"severity,omitempty"`
-	URL        string `json:"url,omitempty"`
 }
 
 type result struct {
@@ -54,6 +40,32 @@ type Service struct {
 	client    *http.Client
 	BatchSize int
 	Endpoint  string
+}
+
+func (s Service) WriteCSV(w io.Writer, url string) (int64, error) {
+	req, _ := http.NewRequest("GET", url, nil)
+
+	res, err := s.client.Do(req)
+	if err != nil {
+		return 0, fmt.Errorf("%w: %v", ErrAPIPartialFail, err)
+	}
+
+	if res.StatusCode != http.StatusOK {
+		log.Warnf("Download CSV Status: %s", res.Status)
+		return 0, fmt.Errorf("%w: %v", ErrAPIPartialFail, err)
+	}
+
+	reader, err := gzip.NewReader(res.Body)
+	if err != nil {
+		return 0, fmt.Errorf("%w: %v", ErrDecode, err)
+	}
+
+	n, err := io.Copy(w, reader)
+	if err != nil {
+		return n, fmt.Errorf("%w :%v", ErrEncode, err)
+	}
+	reader.Close()
+	return n, nil
 }
 
 func (s Service) Get(CVEs []CVE) ([]Data, error) {
@@ -77,7 +89,7 @@ func (s Service) Get(CVEs []CVE) ([]Data, error) {
 				return
 			}
 			if res.StatusCode != http.StatusOK {
-				log.Println(res.Status)
+				log.Info(res.Status)
 				dataChan <- result{Error: errors.New("received non 200 response")}
 			}
 			var resObj response

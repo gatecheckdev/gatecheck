@@ -6,15 +6,15 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/anchore/grype/grype/presenter/models"
-	"github.com/gatecheckdev/gatecheck/pkg/artifact"
-	"github.com/gatecheckdev/gatecheck/pkg/epss"
-	"gopkg.in/yaml.v3"
 	"math/rand"
 	"os"
 	"path"
 	"testing"
 	"time"
+
+	"github.com/anchore/grype/grype/presenter/models"
+	"github.com/gatecheckdev/gatecheck/pkg/artifact"
+	"gopkg.in/yaml.v3"
 )
 
 func TestNewValidateCmd(t *testing.T) {
@@ -286,11 +286,3 @@ func TestParseAndValidate_bundle(t *testing.T) {
 
 }
 
-type mockEPSSService struct {
-	returnError error
-	returnData  []epss.Data
-}
-
-func (m mockEPSSService) Get(_ []epss.CVE) ([]epss.Data, error) {
-	return m.returnData, m.returnError
-}
