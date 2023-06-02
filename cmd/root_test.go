@@ -12,6 +12,7 @@ var (
 	semgrepTestReport  = "../test/semgrep-sast-report.json"
 	gitleaksTestReport = "../test/gitleaks-report.json"
 	grypeTestReport    = "../test/grype-report.json"
+	epssTestCSV        = "../test/epss_scores-2023-06-01.csv"
 	kevTestFile        = "../test/known_exploited_vulnerabilities.json"
 )
 
