@@ -252,6 +252,37 @@ func TestDecoding(t *testing.T) {
 	}
 }
 
+func TestBundle_Write(t *testing.T) {
+
+	mockBuf := bytes.NewBufferString("ABC-123")
+	artifact, _ := NewArtifact("mock_artifact.txt", mockBuf)
+	bun := NewBundle()
+	_ = bun.add(artifact)
+
+	t.Run("success", func(t *testing.T) {
+		outputBuf := new(bytes.Buffer)
+
+		n, err := bun.Write(outputBuf, "mock_artifact.txt")
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if outputBuf.Len() != 7 && n != 7 {
+			t.Fatal("Expected 7 Bytes to be written")
+		}
+	})
+
+	t.Run("not-exist", func(t *testing.T) {
+		outputBuf := new(bytes.Buffer)
+
+		if _, err := bun.Write(outputBuf, "not-exist"); !errors.Is(err, ErrNotExist) {
+			t.Fatal(err, "Expected ErrNotExist")
+		}
+
+	})
+
+}
+
 // Test Resources
 type sample struct {
 	FieldOne string `json:"field_one" yaml:"field_one"`

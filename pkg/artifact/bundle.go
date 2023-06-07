@@ -15,6 +15,8 @@ import (
 	gcStrings "github.com/gatecheckdev/gatecheck/pkg/strings"
 )
 
+var ErrNotExist = errors.New("Artifact does not exist")
+
 type Bundle struct {
 	CyclonedxSbom Artifact
 	GrypeScan     Artifact
@@ -61,6 +63,28 @@ func (b *Bundle) add(artifact Artifact) error {
 	}
 
 	return nil
+}
+
+func (b *Bundle) Write(w io.Writer, key string) (written int64, err error){
+	fileMap := map[string]*Artifact{
+		"cyclonedx": &b.CyclonedxSbom,
+		"grype": &b.GrypeScan,
+		"semgrep": &b.SemgrepScan,
+		"gitleaks": &b.GitleaksScan,
+	}
+
+	for k := range b.Generic {
+		genericArtifact := b.Generic[k]
+		fileMap[strings.ToLower(k)] = &genericArtifact
+	}
+
+	artifact, ok := fileMap[strings.ToLower(key)]
+
+	if !ok {
+		return 0, ErrNotExist
+	}
+
+	return io.Copy(w, bytes.NewBuffer(artifact.Content))
 }
 
 func (b *Bundle) String() string {

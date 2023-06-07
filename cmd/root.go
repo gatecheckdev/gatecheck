@@ -19,6 +19,7 @@ var (
 	ErrorEncoding       = errors.New("encoding")
 	ErrorValidation     = errors.New("validation")
 	ErrorAPI            = errors.New("request API")
+	ErrorUserInput      = errors.New("user error")
 	GlobalVerboseOutput = false
 )
 

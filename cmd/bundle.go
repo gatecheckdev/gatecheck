@@ -12,6 +12,39 @@ import (
 )
 
 func NewBundleCmd() *cobra.Command {
+
+	var extractCmd = &cobra.Command{
+		Use: "extract <GATECHECK BUNDLE>",
+		Short: "Extract a specific file from a gatecheck bundle",
+		Args: cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			key, _ := cmd.Flags().GetString("key")
+			if key == "" {
+				return fmt.Errorf("%w: No key provided", ErrorUserInput)
+			}
+
+			bun := artifact.NewBundle()		
+			f, err := os.Open(args[0])
+			if err != nil {
+				return fmt.Errorf("%w: %v", ErrorFileAccess, err)
+			}
+
+			if err := artifact.NewBundleDecoder(f).Decode(bun); err != nil {
+				return fmt.Errorf("%w: %v", ErrorEncoding, err)
+			}
+
+
+			n, err := bun.Write(cmd.OutOrStdout(), key)
+			log.Infof("%d bytes written to STDOUT", n)	
+
+			return err
+
+		},
+	}
+
+	extractCmd.Flags().String("key", "", "The key of the file to extract from the bundle")
+	extractCmd.MarkFlagRequired("key")
+
 	var cmd = &cobra.Command{
 		Use:   "bundle [FILE ...]",
 		Short: "Add reports to Gatecheck Report",
@@ -73,7 +106,10 @@ func NewBundleCmd() *cobra.Command {
 
 	cmd.Flags().StringP("output", "o", "", "output filename")
 	cmd.Flags().BoolP("allow-missing", "m", false, "Don't fail if a file doesn't exist")
+
 	_ = cmd.MarkFlagFilename("output", "gatecheck")
 	_ = cmd.MarkFlagRequired("output")
+
+	cmd.AddCommand(extractCmd)	
 	return cmd
 }

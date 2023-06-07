@@ -30,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Export to AWS S3
 - Support CycloneDX BOM and Vulnerabilities in Print, Bundle, Export, and Validate
 - Some debug logs focused on measuring performance
+- bundle extract command
 
 ## [0.0.9] - 2023-02-06
 

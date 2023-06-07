@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"math/rand"
@@ -12,6 +13,52 @@ import (
 
 	"github.com/gatecheckdev/gatecheck/pkg/artifact"
 )
+
+func TestExtractCmd(t *testing.T) {
+	mockBuf := bytes.NewBufferString("ABC-123")
+	a, _ := artifact.NewArtifact("mock_artifact.txt", mockBuf)
+	bun := artifact.NewBundle()
+	_ = bun.Add(a)
+
+	tempBundleFilename := path.Join(t.TempDir(), "bundle.gatecheck")
+
+	f, _ := os.Create(tempBundleFilename)
+
+	if err := artifact.NewBundleEncoder(f).Encode(bun); err != nil {
+		t.Fatal(err)
+	}
+	f.Close()
+
+	t.Run("success", func(t *testing.T) {
+		commandString := fmt.Sprintf("bundle extract --key %s %s", "mock_artifact.txt", tempBundleFilename)
+		out, err := Execute(commandString, CLIConfig{})
+		if err != nil {
+			t.Log(out)
+			t.Fatal(err)
+		}
+	})
+	t.Run("file-access-error", func(t *testing.T) {
+		commandString := fmt.Sprintf("bundle extract --key %s %s", "mock_artifact.txt", fileWithBadPermissions(t))
+		_, err := Execute(commandString, CLIConfig{})
+		if !errors.Is(err, ErrorFileAccess) {
+			t.Fatal(err)
+		}
+	})
+	t.Run("file-bad-encoding", func(t *testing.T) {
+		commandString := fmt.Sprintf("bundle extract --key %s %s", "mock_artifact.txt", fileWithBadJSON(t))
+		_, err := Execute(commandString, CLIConfig{})
+		if !errors.Is(err, ErrorEncoding) {
+			t.Fatal(err)
+		}
+	})
+	t.Run("file-bad-key", func(t *testing.T) {
+		commandString := fmt.Sprintf("bundle extract --key %s %s", "", tempBundleFilename)
+		_, err := Execute(commandString, CLIConfig{})
+		if !errors.Is(err, ErrorUserInput) {
+			t.Fatal(err)
+		}
+	})
+}
 
 func TestNewBundleCmd(t *testing.T) {
 
