@@ -12,6 +12,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - New ASCII Logo
 - Bundle logging to use internal logger
 - Sort Grype print by Severity, then by Package
+- EPSS Service will write to existing CVE slice instead of querying
+- Simplified EPSS API Queries with a better async strategy
+- Added Data Store that can query an imported CSV file for EPSS Scores
+- Added a download command that will pull the CSV file from the API
 
 ### Added
 
@@ -25,6 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Sort tables by single or multiple columns in ascending, descending or custom order
 - Export to AWS S3
 - Support CycloneDX BOM and Vulnerabilities in Print, Bundle, Export, and Validate
+- Some debug logs focused on measuring performance
 
 ## [0.0.9] - 2023-02-06
 

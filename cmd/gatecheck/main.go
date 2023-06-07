@@ -24,6 +24,7 @@ const ExitFileAccessFail int = 2
 const ExitValidationFail = 1
 
 func main() {
+
 	dojoKey := os.Getenv("GATECHECK_DD_API_KEY")
 	dojoURL := os.Getenv("GATECHECK_DD_API_URL")
 
@@ -69,15 +70,18 @@ func main() {
 
 	command.PersistentPreRun = func(_ *cobra.Command, _ []string) {
 		if cmd.GlobalVerboseOutput == false {
-			log.SetLogLevel(log.WarnLevel)
+			log.SetLogLevel(log.Disabled)
 		}
 		log.StartCLIOutput(command.ErrOrStderr())
+	}
+
+	command.PersistentPostRun = func(_ *cobra.Command, _ []string) {
+		log.Info("**** Command Execution Complete ****")
 	}
 
 	command.SilenceUsage = true
 
 	err := command.Execute()
-	log.Info("**** Command Execution Complete ****")
 
 	if errors.Is(err, cmd.ErrorFileAccess) {
 		command.PrintErrln(err)

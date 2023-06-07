@@ -8,6 +8,7 @@ import (
 	"os"
 	"path"
 	"testing"
+	"time"
 
 	"github.com/anchore/grype/grype/presenter/models"
 	"github.com/gatecheckdev/gatecheck/pkg/artifact"
@@ -17,7 +18,7 @@ import (
 func TestNewEPSSCmd(t *testing.T) {
 
 	t.Run("test-download-csv-success", func(t *testing.T) {
-		config := CLIConfig{EPSSService: mockEPSSService{returnN: 100_000, returnError: nil}}
+		config := CLIConfig{EPSSService: newMockEPSSService(nil, 100_000)}
 		commandString := fmt.Sprintf("epss download")
 		output, err := Execute(commandString, config)
 
@@ -29,7 +30,7 @@ func TestNewEPSSCmd(t *testing.T) {
 	})
 
 	t.Run("download-csv-fail", func(t *testing.T) {
-		config := CLIConfig{EPSSService: mockEPSSService{returnN: 0, returnError: epss.ErrAPIPartialFail}}
+		config := CLIConfig{EPSSService: newMockEPSSService(epss.ErrAPIPartialFail, 0)}
 		commandString := fmt.Sprintf("epss download")
 		_, err := Execute(commandString, config)
 
@@ -60,9 +61,9 @@ func TestNewEPSSCmd(t *testing.T) {
 		tempGrypeScanFile := MockAppendedGrypeReport(t, match)
 
 		commandString := fmt.Sprintf("epss %s", tempGrypeScanFile)
-		config := CLIConfig{EPSSService: mockEPSSService{returnError: nil, returnData: []epss.Data{
-			{CVE: "A", EPSS: "B", Percentile: "32", Date: "may 3, 2023", Severity: "Critical", URL: "github.com"},
-		}}}
+		config := CLIConfig{EPSSService: newMockEPSSService(nil, 100).withModFunction(func(c []epss.CVE) {
+			c[0] = epss.CVE{ID: "A", Probability: .01934, Percentile: .03294, ScoreDate: time.Now(), Severity: "Critical", Link: "github.com"}
+		})}
 
 		output, err := Execute(commandString, config)
 
@@ -73,10 +74,12 @@ func TestNewEPSSCmd(t *testing.T) {
 		t.Log(output)
 	})
 
+	regularConfig := CLIConfig{EPSSService: newMockEPSSService(nil, 100)}
+
 	t.Run("bad-file", func(t *testing.T) {
 		// Bad Grype file
 		commandString := fmt.Sprintf("epss %s", fileWithBadPermissions(t))
-		output, err := Execute(commandString, CLIConfig{EPSSService: mockEPSSService{}})
+		output, err := Execute(commandString, regularConfig) 
 		if errors.Is(err, ErrorFileAccess) != true {
 			t.Fatal(err)
 		}
@@ -84,7 +87,7 @@ func TestNewEPSSCmd(t *testing.T) {
 
 		// Bad EPSS File
 		commandString = fmt.Sprintf("epss %s -f %s", grypeTestReport, fileWithBadPermissions(t))
-		output, err = Execute(commandString, CLIConfig{EPSSService: mockEPSSService{}})
+		output, err = Execute(commandString, regularConfig)
 		if errors.Is(err, ErrorFileAccess) != true {
 			t.Fatal(err)
 		}
@@ -94,7 +97,7 @@ func TestNewEPSSCmd(t *testing.T) {
 	t.Run("bad-file-decode", func(t *testing.T) {
 		// bad Grype File encoding
 		commandString := fmt.Sprintf("epss %s", fileWithBadJSON(t))
-		output, err := Execute(commandString, CLIConfig{EPSSService: mockEPSSService{}})
+		output, err := Execute(commandString, regularConfig)
 		if !errors.Is(err, ErrorEncoding) {
 			t.Fatal(err)
 		}
@@ -102,8 +105,8 @@ func TestNewEPSSCmd(t *testing.T) {
 
 		// bad EPSS File encoding
 		commandString = fmt.Sprintf("epss %s -f %s", grypeTestReport, fileWithBadJSON(t))
-		output, err = Execute(commandString, CLIConfig{EPSSService: mockEPSSService{}})
-		if !errors.Is(err, epss.ErrDecode) {
+		output, err = Execute(commandString, regularConfig)
+		if !errors.Is(err, ErrorAPI) {
 			t.Fatal(err)
 		}
 		t.Log(output)
@@ -115,7 +118,7 @@ func TestNewEPSSCmd(t *testing.T) {
 		tempGrypeScanFile := MockAppendedGrypeReport(t, match)
 
 		commandString := fmt.Sprintf("epss %s", tempGrypeScanFile)
-		config := CLIConfig{EPSSService: mockEPSSService{returnError: errors.New("mock error")}}
+		config := CLIConfig{EPSSService: newMockEPSSService(errors.New("mock"), 0)}
 		output, err := Execute(commandString, config)
 
 		if errors.Is(err, ErrorAPI) != true {
@@ -134,7 +137,7 @@ func TestNewEPSSCmd(t *testing.T) {
 
 		output, err := Execute(commandString, CLIConfig{})
 
-		if !errors.Is(err, epss.ErrNotFound) {
+		if !errors.Is(err, ErrorAPI) {
 			t.Fatalf("Expected not found error, got: %v", err)
 		}
 
@@ -168,12 +171,22 @@ func MockAppendedGrypeReport(t *testing.T, match models.Match) string {
 
 type mockEPSSService struct {
 	returnError error
-	returnData  []epss.Data
 	returnN     int64
+	modFunc     func([]epss.CVE)
 }
 
-func (m mockEPSSService) Get(_ []epss.CVE) ([]epss.Data, error) {
-	return m.returnData, m.returnError
+func newMockEPSSService(returnError error, returnN int64) mockEPSSService {
+	return mockEPSSService{returnError: returnError, returnN: returnN, modFunc: func(c []epss.CVE) {}}
+}
+
+func (m mockEPSSService) withModFunction(modFunc func([]epss.CVE)) mockEPSSService {
+	m.modFunc = modFunc
+	return m
+}
+
+func (m mockEPSSService) WriteEPSS(input []epss.CVE) error {
+	m.modFunc(input)
+	return m.returnError
 }
 
 func (m mockEPSSService) WriteCSV(w io.Writer, url string) (int64, error) {

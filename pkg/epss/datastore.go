@@ -7,8 +7,14 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/gatecheckdev/gatecheck/internal/log"
 )
 
+type scores struct {
+	Probability string
+	Percentile  string
+}
 
 type DataStore struct {
 	data         map[string]scores
@@ -20,34 +26,22 @@ func NewDataStore() *DataStore {
 	return &DataStore{data: make(map[string]scores, estimatedLineCount)}
 }
 
-func (d *DataStore) Get(cve string) (Vulnerability, error) {
-	scores, ok := d.data[cve]
+func (d *DataStore) WriteEPSS(cves []CVE) error {
+	for i := range cves {
+		scores, ok := d.data[cves[i].ID]
+		if !ok {
+			return fmt.Errorf("%w: '%s'", ErrNotFound, cves[i].ID)
+		}
 
-	if !ok {
-		return Vulnerability{}, fmt.Errorf("%w: '%s'", ErrNotFound, cve)
+		prob, perc, err := parseScores(scores)
+		if err != nil {
+			return fmt.Errorf("%w: '%s'", ErrDecode, cves[i].ID)
+		}
+		cves[i].ScoreDate = d.ScoreDate()
+		cves[i].Probability = prob
+		cves[i].Percentile = perc
 	}
-	prob, err := strconv.ParseFloat(scores.Probability, 64)
-	if err != nil {
-		return Vulnerability{}, fmt.Errorf("%w: '%s'", ErrDecode, scores.Probability)
-	}
-	perc, err := strconv.ParseFloat(scores.Percentile, 64)
-	if err != nil {
-		return Vulnerability{}, fmt.Errorf("%w: '%s'", ErrDecode, scores.Percentile)
-	}
-	return Vulnerability{CVE: cve, Probability: prob, Percentile: perc}, nil
-}
-
-func (d *DataStore) Write(dataObj *Data) error {
-	if dataObj == nil {
-		return fmt.Errorf("%w: target is nil", ErrDecode)
-	}
-	scores, ok := d.data[dataObj.CVE]
-
-	if !ok {
-		return fmt.Errorf("%w: '%s'", ErrNotFound, dataObj.CVE)
-	}
-	dataObj.EPSS = scores.Probability
-	dataObj.Percentile = scores.Percentile
+	log.Infof("%d CVEs EPSS Scores Updated", len(cves))
 
 	return nil
 }
@@ -60,9 +54,17 @@ func (d *DataStore) ScoreDate() time.Time {
 	return d.scoreDate
 }
 
-type scores struct {
-	Probability string
-	Percentile  string
+func parseScores(s scores) (prob float64, perc float64, err error) {
+	var res [2]float64
+
+	for i, arg := range []string{s.Probability, s.Percentile} {
+		value, err := strconv.ParseFloat(arg, 64)
+		if err != nil {
+			return 0, 0, err
+		}
+		res[i] = value
+	}
+	return res[0], res[1], nil
 }
 
 type CSVDecoder struct {
@@ -74,6 +76,7 @@ func NewCSVDecoder(r io.Reader) *CSVDecoder {
 }
 
 func (c *CSVDecoder) Decode(store *DataStore) error {
+	defer func(started time.Time) { log.Infof("EPSS CSV decoding completed in %s", time.Since(started).String()) }(time.Now())
 	scanner := bufio.NewScanner(c.r)
 
 	scanner.Scan()
@@ -112,5 +115,6 @@ func (c *CSVDecoder) Decode(store *DataStore) error {
 
 		store.data[values[0]] = scores{Probability: values[1], Percentile: values[2]}
 	}
+
 	return nil
 }

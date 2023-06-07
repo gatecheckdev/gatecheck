@@ -11,6 +11,84 @@ import (
 	"testing"
 )
 
+func TestService_WriteEPSS(t *testing.T) {
+	t.Run("success", func(t *testing.T) {
+		server := mockServerWithData()
+		service := NewEPSSService(server.Client(), server.URL)
+
+		cves := []CVE{{ID: "CVE-2022-A"}, {ID: "CVE-2022-B"}, {ID: "CVE-2022-C"}, {ID: "CVE-2022-D"}, {ID: "CVE-2022-E"}}
+
+		if err := service.WriteEPSS(cves); err != nil {
+			t.Fatal(err)
+		}
+		for _, v := range cves {
+			if almostEqual(v.Probability, float64(0)) {
+				t.Fatalf("%+v probability almost equal to zero", v)
+			}
+			if almostEqual(v.Percentile, float64(0)) {
+				t.Fatalf("%+v percentile almost equal to zero", v)
+			}
+		}
+		t.Log(Sprint(cves))
+	})
+
+	t.Run("len-zero", func(t *testing.T) {
+		server := mockServerWithData()
+		service := NewEPSSService(server.Client(), server.URL)
+		if err := service.WriteEPSS([]CVE{}); err != nil {
+			t.Fatal(err)
+		}
+		if err := service.WriteEPSS(nil); err != nil {
+			t.Fatal(err)
+		}
+	})
+
+	t.Run("bad-request", func(t *testing.T) {
+		server := mockServerWithData()
+		service := NewEPSSService(server.Client(), server.URL)
+		server.Close()
+		if err := service.WriteEPSS([]CVE{{ID: "CVE-2022-A"}}); !errors.Is(err, ErrAPIPartialFail) {
+			t.Fatal(err)
+		}
+	})
+
+	t.Run("bad-request", func(t *testing.T) {
+		server := mockServer(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusBadGateway)
+		})
+		service := NewEPSSService(server.Client(), server.URL)
+		if err := service.WriteEPSS([]CVE{{ID: "CVE-2022-A"}}); !errors.Is(err, ErrAPIPartialFail) {
+			t.Fatal(err)
+		}
+	})
+
+	t.Run("decode-error", func(t *testing.T) {
+		server := mockServer(func(w http.ResponseWriter, r *http.Request) {
+			w.Write([]byte("{{{"))
+		})
+		service := NewEPSSService(server.Client(), server.URL)
+		if err := service.WriteEPSS([]CVE{{ID: "CVE-2022-A"}}); !errors.Is(err, ErrDecode) {
+			t.Fatal(err)
+		}
+	})
+
+	t.Run("parsing-errors", func(t *testing.T) {
+		server := mockServerWithCustomData([]ResponseData{{CVE: "CVE-2022-A", Percentile: "abc", EPSS: "0.09931"}})
+		service := NewEPSSService(server.Client(), server.URL)
+		if err := service.WriteEPSS([]CVE{{ID: "CVE-2022-A"}}); !errors.Is(err, ErrDecode) {
+			t.Fatal(err)
+		}
+
+		server = mockServerWithCustomData([]ResponseData{{CVE: "CVE-2022-A", Percentile: "0.09319", EPSS: "abc"}})
+		service = NewEPSSService(server.Client(), server.URL)
+		if err := service.WriteEPSS([]CVE{{ID: "CVE-2022-A"}}); !errors.Is(err, ErrDecode) {
+			t.Fatal(err)
+		}
+
+	})
+
+}
+
 func TestService_WriteCSV(t *testing.T) {
 
 	t.Run("success", func(t *testing.T) {
@@ -98,7 +176,11 @@ func TestService_WriteCSV(t *testing.T) {
 
 }
 
-func TestService_GetAll(t *testing.T) {
+func mockServer(h func(http.ResponseWriter, *http.Request)) *httptest.Server {
+	return httptest.NewServer(http.HandlerFunc(h))
+}
+
+func mockServerWithData() *httptest.Server {
 	server := mockServer(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
@@ -111,80 +193,38 @@ func TestService_GetAll(t *testing.T) {
 			Offset:     0,
 			Limit:      100,
 		}
+
 		parts := strings.Split(r.URL.Query().Get("cve"), ",")
 		for _, c := range parts {
-			resObj.Data = append(resObj.Data, Data{CVE: c, EPSS: "1.1", Percentile: "2.2", Date: "2022-1-1"})
+			resObj.Data = append(resObj.Data, ResponseData{CVE: c, EPSS: "1.1", Percentile: "2.2", Date: "2022-1-1"})
 		}
+
 		_ = json.NewEncoder(w).Encode(&resObj)
 	})
 
-	service := NewEPSSService(server.Client(), server.URL)
-	service.Endpoint = server.URL
-	service.BatchSize = 2
-
-	res, err := service.Get([]CVE{
-		{ID: "CVE-2022-E", Severity: "Critical", Link: "some-url.com/?data=5"},
-		{ID: "CVE-2022-A", Severity: "Critical", Link: "some-url.com/?data=2"},
-		{ID: "CVE-2022-D", Severity: "High", Link: "some-url.com/?data=3"},
-		{ID: "CVE-2022-C", Severity: "Medium", Link: "some-url.com/?data=8"},
-		{ID: "CVE-2022-B", Severity: "High", Link: "some-url.com/?data=1"},
-	})
-
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	t.Log("\n" + Sprint(res))
-
+	return server
 }
 
-func TestService_BadServer(t *testing.T) {
+func mockServerWithCustomData(input []ResponseData) *httptest.Server {
 	server := mockServer(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusInternalServerError)
-		_ = json.NewEncoder(w).Encode(map[string]string{"message": "Server Error"})
-	})
-
-	service := NewEPSSService(server.Client(), server.URL)
-	service.Endpoint = server.URL
-
-	_, err := service.Get([]CVE{{ID: "a"}, {ID: "b"}})
-
-	if errors.Is(err, ErrAPIPartialFail) != true {
-		t.Fatal(err)
-	}
-}
-
-func TestService_ClosedSever(t *testing.T) {
-	server := mockServer(func(w http.ResponseWriter, r *http.Request) {})
-	server.Close()
-
-	service := NewEPSSService(server.Client(), server.URL)
-	service.Endpoint = server.URL
-
-	_, err := service.Get([]CVE{{ID: "a"}, {ID: "b"}})
-	if errors.Is(err, ErrAPIPartialFail) != true {
-		t.Fatal(err)
-	}
-}
-
-func TestService_BadServerResponseJSON(t *testing.T) {
-	server := mockServer(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		_, _ = w.Write([]byte("{BAD JSON"))
+		resObj := response{
+			Status:     "OK",
+			StatusCode: 200,
+			Version:    "1.0",
+			Access:     "public",
+			Total:      5,
+			Offset:     0,
+			Limit:      100,
+		}
+
+		resObj.Data = input
+
+		_ = json.NewEncoder(w).Encode(&resObj)
 	})
 
-	service := NewEPSSService(server.Client(), server.URL)
-	service.Endpoint = server.URL
-
-	_, err := service.Get([]CVE{{ID: "a"}, {ID: "b"}})
-	if errors.Is(err, ErrAPIPartialFail) != true {
-		t.Fatal(err)
-	}
-}
-
-func mockServer(h func(http.ResponseWriter, *http.Request)) *httptest.Server {
-	return httptest.NewServer(http.HandlerFunc(h))
+	return server
 }
 
 type badWriter struct{}

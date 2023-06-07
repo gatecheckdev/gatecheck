@@ -27,8 +27,8 @@ type DDExportService interface {
 }
 
 type EPSSService interface {
-	Get([]epss.CVE) ([]epss.Data, error)
 	WriteCSV(w io.Writer, url string) (int64, error)
+	WriteEPSS([]epss.CVE) error
 }
 
 type AWSExportService interface {

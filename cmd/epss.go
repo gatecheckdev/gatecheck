@@ -21,11 +21,11 @@ func NewEPSSCmd(service EPSSService) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			url, _ := cmd.Flags().GetString("url")
 
-			n , err := service.WriteCSV(cmd.OutOrStdout(), url)
+			n, err := service.WriteCSV(cmd.OutOrStdout(), url)
 			if err != nil {
 				return fmt.Errorf("%w: %v", ErrorAPI, err)
 			}
-			
+
 			log.Infof("%d bytes written to STDOUT", n)
 			return nil
 		},
@@ -61,26 +61,27 @@ func NewEPSSCmd(service EPSSService) *cobra.Command {
 				return fmt.Errorf("%w: %v", ErrorEncoding, err)
 			}
 
-			CVEs := make([]epss.CVE, len(grypeScan.Matches))
+			cves := make([]epss.CVE, len(grypeScan.Matches))
 
 			for i, match := range grypeScan.Matches {
-				CVEs[i] = epss.CVE{
+				cves[i] = epss.CVE{
 					ID:       match.Vulnerability.ID,
 					Severity: match.Vulnerability.Severity,
 					Link:     match.Vulnerability.DataSource,
 				}
 			}
 
-			var output string
 			if csvFile != nil {
-				output, err = epssFromDataStore(csvFile, CVEs)
+				err = epssFromDataStore(csvFile, cves)
 			} else {
-				output, err = epssFromAPI(service, CVEs)
+				err = epssFromAPI(service, cves)
 			}
 
-			if err == nil {
-				cmd.Println(output)
+			if err != nil {
+				return fmt.Errorf("%w: %v", ErrorAPI, err)
 			}
+
+			cmd.Println(epss.Sprint(cves))
 
 			return err
 		},
@@ -93,33 +94,27 @@ func NewEPSSCmd(service EPSSService) *cobra.Command {
 	return EPSSCmd
 }
 
-func epssFromAPI(service EPSSService, CVEs []epss.CVE) (string, error) {
+func epssFromAPI(service EPSSService, CVEs []epss.CVE) error {
 
-	data, err := service.Get(CVEs)
+	err := service.WriteEPSS(CVEs)
 	if err != nil {
-		return "", fmt.Errorf("%w: %s", ErrorAPI, err)
+		return fmt.Errorf("%w: %s", ErrorAPI, err)
 	}
 
-	return epss.Sprint(data), nil
+	return nil
 }
 
-func epssFromDataStore(epssCSV io.Reader, CVEs []epss.CVE) (string, error) {
+func epssFromDataStore(epssCSV io.Reader, CVEs []epss.CVE) error {
 	store := epss.NewDataStore()
-	data := make([]epss.Data, len(CVEs))
 	if err := epss.NewCSVDecoder(epssCSV).Decode(store); err != nil {
-		return "", err
+		return err
 	}
 	log.Infof("EPSS CSV Datastore imported scores for %d CVEs\n", store.Len())
 
-	for i := range data {
-		data[i].CVE = CVEs[i].ID
-		data[i].Severity = CVEs[i].Severity
-		data[i].URL = CVEs[i].Link
-		data[i].Date = store.ScoreDate().Format("2006-01-02")
-		err := store.Write(&data[i])
-		if err != nil {
-			return "", err
-		}
+	if err := store.WriteEPSS(CVEs); err != nil {
+		return err
+
 	}
-	return epss.Sprint(data), nil
+
+	return nil
 }
