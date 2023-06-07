@@ -16,7 +16,7 @@ var GitleaksValidationFailed = errors.New("gitleaks validation failed")
 func (r GitleaksScanReport) String() string {
 	table := new(gcStrings.Table).WithHeader("Rule", "File", "Secret", "Commit")
 	for _, finding := range r {
-		secret := gcStrings.CleanAndAbbreviate(finding.Secret, 50)
+		secret := gcStrings.ClipLeft(finding.Secret, 50)
 		table = table.WithRow(finding.RuleID, finding.File, secret, finding.Commit)
 	}
 	return table.String()

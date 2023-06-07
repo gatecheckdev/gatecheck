@@ -16,6 +16,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Simplified EPSS API Queries with a better async strategy
 - Added Data Store that can query an imported CSV file for EPSS Scores
 - Added a download command that will pull the CSV file from the API
+- Semgrep table ordering and prefix clipping
+- "CleanAndAbreviate" rename to ClipLeft or ClipRight
 
 ### Added
 

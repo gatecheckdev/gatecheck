@@ -43,7 +43,7 @@ func (r CyclonedxSbomReport) bomString() string {
 			item.Name,
 			item.Version,
 			string(item.Type),
-			gcStrings.CleanAndAbbreviate(item.BOMRef, 50))
+			gcStrings.ClipLeft(item.BOMRef, 50))
 	}
 
 	// Sort the rows by Type then Name
@@ -191,7 +191,7 @@ LOOPMATCH:
 func findComponentInSBOM(ref string, sbom CyclonedxSbomReport) cdx.Component {
 	// If the component is not found, use the ref as default
 	comp := cdx.Component{
-		Name: gcStrings.CleanAndAbbreviate(ref, 50),
+		Name: gcStrings.ClipLeft(ref, 50),
 	}
 	if (&sbom).Components == nil {
 		return comp

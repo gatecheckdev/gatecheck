@@ -21,13 +21,14 @@ func (r SemgrepScanReport) String() string {
 		// Attempt type assertion on metadata since it's an interface{}
 		metadata, ok := item.Extra.Metadata.(map[string]interface{})
 		if ok != true {
-			table = table.WithRow(item.Path, line, item.Extra.Severity, "", "")
+			table = table.WithRow(gcStrings.ClipLeft(item.Path, 30), line, item.Extra.Severity, "", "")
 			continue
 		}
 
 		link := fmt.Sprintf("%v", metadata["shortlink"])
 		cwe := fmt.Sprintf("%v", metadata["cwe"])
-		table = table.WithRow(item.Path, line, item.Extra.Severity, link, cwe)
+		path := gcStrings.ClipRight(item.Path, 30)
+		table = table.WithRow(path, line, item.Extra.Severity, cwe, link)
 	}
 
 	return table.String()

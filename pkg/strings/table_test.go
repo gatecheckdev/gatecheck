@@ -39,9 +39,18 @@ func TestTable_WithHeader(t *testing.T) {
 func TestCleanAndAbbreviate(t *testing.T) {
 	input := "One fish Two Fish Red Fish Blue Fish"
 	expected := "One fish ..."
-	output := CleanAndAbbreviate(input, 12)
+	output := ClipLeft(input, 12)
 	if output != expected {
 		t.Fatal("For", input, "expected", expected, "got", output)
+	}
+}
+
+func TestCleanAndAbbreviatePrefix(t *testing.T) {
+	input := "1234567890"
+	want := "...90"
+	got :=  ClipRight(input, 2)
+	if got != want {
+		t.Fatal("got", got, "want", want)
 	}
 }
 

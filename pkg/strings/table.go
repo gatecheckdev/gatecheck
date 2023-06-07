@@ -141,7 +141,7 @@ func (t Table) divider() string {
 	return strings.Repeat("-", sum) + strings.Repeat("-", len(t.columnLengths())*3-1)
 }
 
-func CleanAndAbbreviate(s string, maxLength int) string {
+func ClipLeft(s string, maxLength int) string {
 	if len(s) > maxLength {
 		s = s[:maxLength-3] + "..."
 	}
@@ -149,6 +149,17 @@ func CleanAndAbbreviate(s string, maxLength int) string {
 	s = strings.ReplaceAll(s, "\n", "\\n")
 	return s
 }
+
+func ClipRight(s string, maxLength int) string {
+	if len(s) > maxLength {
+		s = "..." + s[len(s) - maxLength:]
+	}
+
+	s = strings.ReplaceAll(s, "\r", "\\r")
+	s = strings.ReplaceAll(s, "\n", "\\n")
+	return s
+}
+
 
 func MaxInt(a int, b int) int {
 	if a > b {
