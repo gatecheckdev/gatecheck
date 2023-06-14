@@ -28,15 +28,9 @@ func NewDataStore() *DataStore {
 
 func (d *DataStore) WriteEPSS(cves []CVE) error {
 	for i := range cves {
-		scores, ok := d.data[cves[i].ID]
-		if !ok {
-			return fmt.Errorf("%w: '%s'", ErrNotFound, cves[i].ID)
-		}
+		scores := d.data[cves[i].ID]
 
-		prob, perc, err := parseScores(scores)
-		if err != nil {
-			return fmt.Errorf("%w: '%s'", ErrDecode, cves[i].ID)
-		}
+		prob, perc := parseScores(scores)
 		cves[i].ScoreDate = d.ScoreDate()
 		cves[i].Probability = prob
 		cves[i].Percentile = perc
@@ -54,17 +48,17 @@ func (d *DataStore) ScoreDate() time.Time {
 	return d.scoreDate
 }
 
-func parseScores(s scores) (prob float64, perc float64, err error) {
+func parseScores(s scores) (prob float64, perc float64) {
 	var res [2]float64
 
 	for i, arg := range []string{s.Probability, s.Percentile} {
 		value, err := strconv.ParseFloat(arg, 64)
 		if err != nil {
-			return 0, 0, err
+			return 0, 0
 		}
 		res[i] = value
 	}
-	return res[0], res[1], nil
+	return res[0], res[1]
 }
 
 type CSVDecoder struct {
