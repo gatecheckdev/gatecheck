@@ -1,20 +1,24 @@
 package cmd
 
 import (
-	"bytes"
-	"context"
 	"fmt"
 	"io"
 	"os"
-	"time"
+	"strings"
 
+	"github.com/dustin/go-humanize"
 	"github.com/gatecheckdev/gatecheck/internal/log"
-	"github.com/gatecheckdev/gatecheck/pkg/artifact"
+	"github.com/gatecheckdev/gatecheck/pkg/archive"
+	"github.com/gatecheckdev/gatecheck/pkg/artifacts/cyclonedx"
+	"github.com/gatecheckdev/gatecheck/pkg/artifacts/gitleaks"
+	"github.com/gatecheckdev/gatecheck/pkg/artifacts/grype"
+	"github.com/gatecheckdev/gatecheck/pkg/artifacts/semgrep"
+	"github.com/gatecheckdev/gatecheck/pkg/format"
 	"github.com/spf13/cobra"
 )
 
 // NewPrintCommand will pretty print a report file table, r can be piped input from standard out
-func NewPrintCommand(decodeTimeout time.Duration, pipedFile *os.File) *cobra.Command {
+func NewPrintCommand(pipedFile *os.File, newAsyncDecoder func() AsyncDecoder) *cobra.Command {
 	var command = &cobra.Command{
 		Use:     "print [FILE ...]",
 		Short:   "Pretty print a gatecheck report or security scan report",
@@ -23,22 +27,18 @@ func NewPrintCommand(decodeTimeout time.Duration, pipedFile *os.File) *cobra.Com
 
 			if pipedFile != nil {
 				log.Infof("Piped File Received: %s", pipedFile.Name())
-				err := ParseAndFPrint(pipedFile, cmd.OutOrStdout(), decodeTimeout)
-				if err != nil {
-					return fmt.Errorf("%w: %v", ErrorEncoding, err)
-				}
+				v, _ := newAsyncDecoder().DecodeFrom(pipedFile)
+				printArtifact(cmd.OutOrStdout(), v, newAsyncDecoder)
 			}
 
-			for _, v := range args {
-				log.Infof("Opening file: %s", v)
-				f, err := os.Open(v)
+			for _, filename := range args {
+				log.Infof("Opening file: %s", filename)
+				f, err := os.Open(filename)
 				if err != nil {
 					return fmt.Errorf("%w: %v", ErrorFileAccess, err)
 				}
-				err = ParseAndFPrint(f, cmd.OutOrStdout(), decodeTimeout)
-				if err != nil {
-					return fmt.Errorf("%w: %v", ErrorEncoding, err)
-				}
+				v, _ := newAsyncDecoder().DecodeFrom(f)
+				printArtifact(cmd.OutOrStdout(), v, newAsyncDecoder)
 			}
 
 			return nil
@@ -48,38 +48,52 @@ func NewPrintCommand(decodeTimeout time.Duration, pipedFile *os.File) *cobra.Com
 	return command
 }
 
-func ParseAndFPrint(r io.Reader, w io.Writer, timeout time.Duration) error {
-	var err error
-
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-
-	rType, b, err := artifact.ReadWithContext(ctx, r)
-
-	if err != nil {
-		return err
+func printArtifact(w io.Writer, v any, newDecoder func() AsyncDecoder) {
+	outputString := ""
+	if v == nil {
+		strings.NewReader("fail").WriteTo(w)
+		return
+	}
+	switch v.(type) {
+	case *grype.ScanReport:
+		outputString = v.(*grype.ScanReport).String()
+	case *semgrep.ScanReport:
+		outputString = v.(*semgrep.ScanReport).String()
+	case *gitleaks.ScanReport:
+		outputString = v.(*gitleaks.ScanReport).String()
+	case *cyclonedx.ScanReport:
+		outputString = v.(*cyclonedx.ScanReport).String()
+	case *archive.Bundle:
+		printBundleContentTable(w, v.(*archive.Bundle), newDecoder)
+		return
 	}
 
-	buf := bytes.NewBuffer(b)
-	log.Infof("Bytes received: %d", len(b))
-	log.Infof("Detected Type: %s", rType)
+	_, _ = strings.NewReader(outputString).WriteTo(w)
 
-	// No need to check decode errors since it's decoded in the DetectReportType Function
-	switch rType {
-	case artifact.Cyclonedx:
-		_, err = fmt.Fprintln(w, artifact.DecodeJSON[artifact.CyclonedxSbomReport](buf))
-	case artifact.Semgrep:
-		_, err = fmt.Fprintln(w, artifact.DecodeJSON[artifact.SemgrepScanReport](buf))
-	case artifact.Grype:
-		_, err = fmt.Fprintln(w, artifact.DecodeJSON[artifact.GrypeScanReport](buf))
-	case artifact.Gitleaks:
-		_, err = fmt.Fprintln(w, artifact.DecodeJSON[artifact.GitleaksScanReport](buf))
-	case artifact.GatecheckBundle:
-		bundle := artifact.DecodeBundle(buf)
-		_, err = fmt.Fprintln(w, bundle.String())
-	default:
-		_, err = fmt.Fprintln(w, "Unsupported file type")
+}
+
+func printBundleContentTable(w io.Writer, bundle *archive.Bundle, newDecoder func() AsyncDecoder) {
+
+	table := format.NewTable()
+	table.AppendRow("Type", "Label", "Digest", "Size")
+
+	for label, descriptor := range bundle.Manifest().Files {
+		decoder := newDecoder()
+		_, _ = bundle.WriteFileTo(decoder, label)
+		obj, _ := decoder.Decode()
+		typeStr := "Generic"
+		fileSize := bundle.FileSize(label)
+		switch obj.(type) {
+		case *grype.ScanReport:
+			typeStr = grype.ReportType
+		case *semgrep.ScanReport:
+			typeStr = semgrep.ReportType
+		case *gitleaks.ScanReport:
+			typeStr = gitleaks.ReportType
+		case *cyclonedx.ScanReport:
+			typeStr = cyclonedx.ReportType
+		}
+		table.AppendRow(typeStr, label, descriptor.Digest, humanize.Bytes(uint64(fileSize)))
 	}
-
-	return err
+	_, _ = format.NewTableWriter(table).WriteTo(w)
 }

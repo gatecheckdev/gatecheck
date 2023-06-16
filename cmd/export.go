@@ -4,13 +4,16 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
+	"io"
 	"os"
 	"time"
 
 	"github.com/gatecheckdev/gatecheck/internal/log"
-	"github.com/gatecheckdev/gatecheck/pkg/artifact"
+	"github.com/gatecheckdev/gatecheck/pkg/artifacts/cyclonedx"
+	"github.com/gatecheckdev/gatecheck/pkg/artifacts/gitleaks"
+	"github.com/gatecheckdev/gatecheck/pkg/artifacts/grype"
+	"github.com/gatecheckdev/gatecheck/pkg/artifacts/semgrep"
 	"github.com/gatecheckdev/gatecheck/pkg/export/defectdojo"
 	"github.com/spf13/cobra"
 )
@@ -18,6 +21,7 @@ import (
 func NewExportCmd(
 	ddService DDExportService,
 	ddTimeout time.Duration,
+	newAsyncDecoder func() AsyncDecoder,
 	ddEngagement defectdojo.EngagementQuery,
 	awsService AWSExportService,
 	awsTimeout time.Duration,
@@ -36,48 +40,52 @@ func NewExportCmd(
 		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			fullBom, _ := cmd.Flags().GetBool("full-bom")
-			// Open the file
+
 			log.Infof("Opening file: %s", args[0])
 			f, err := os.Open(args[0])
 			if err != nil {
 				return fmt.Errorf("%w: %v", ErrorFileAccess, err)
 			}
 
-			ctx, cancel := context.WithTimeout(context.Background(), ddTimeout)
-			defer cancel()
+			log.Infof("Decoding file: %s", args[0])
 
-			rType, fileBytes, err := artifact.ReadWithContext(ctx, f)
-			log.Infof("file size: %d", len(fileBytes))
-			log.Infof("Detected File Type: %s", rType)
-			if err != nil {
-				return fmt.Errorf("%w: %v", ErrorEncoding, err)
-			}
+			decoder := newAsyncDecoder()
+			exportBuf := new(bytes.Buffer)
+			multiWriter := io.MultiWriter(decoder, exportBuf)
+
+			_, _ = io.Copy(multiWriter, f)
+			obj, _ := decoder.Decode()
 
 			var ddScanType defectdojo.ScanType
-			switch rType {
-			case artifact.Cyclonedx:
-				ddScanType = defectdojo.CycloneDX
-			case artifact.Grype:
+			switch obj.(type) {
+			case *grype.ScanReport:
 				ddScanType = defectdojo.Grype
-			case artifact.Semgrep:
+			case *semgrep.ScanReport:
 				ddScanType = defectdojo.Semgrep
-			case artifact.Gitleaks:
+			case *gitleaks.ScanReport:
 				ddScanType = defectdojo.Gitleaks
+			case *cyclonedx.ScanReport:
+				ddScanType = defectdojo.CycloneDX
 			default:
 				return fmt.Errorf("%w: Unsupported file type", ErrorEncoding)
 			}
 
-			if rType != artifact.Cyclonedx && fullBom {
-				return errors.New("--full-bom is only permitted with a CycloneDx file")
+			if ddScanType != defectdojo.CycloneDX && fullBom {
+				return fmt.Errorf("%w: --full-bom is only permitted with a CycloneDx file", ErrorUserInput)
 			}
 
 			if fullBom {
-				buf := bytes.NewBuffer(fileBytes)
-				c := artifact.DecodeJSON[artifact.CyclonedxSbomReport](buf)
-				fileBytes, _ = json.Marshal(c.ShimComponentsAsVulnerabilities())
+				log.Info("Shimming components as vulnerabilities with 'none' severity")
+				report := obj.(*cyclonedx.ScanReport)
+				report = report.ShimComponentsAsVulnerabilities()
+				exportBuf = new(bytes.Buffer)
+				_ = json.NewEncoder(exportBuf).Encode(report)
 			}
 
-			return ddService.Export(ctx, bytes.NewBuffer(fileBytes), ddEngagement, ddScanType)
+			ctx, cancel := context.WithTimeout(context.Background(), ddTimeout)
+			defer cancel()
+
+			return ddService.Export(ctx, exportBuf, ddEngagement, ddScanType)
 		},
 	}
 

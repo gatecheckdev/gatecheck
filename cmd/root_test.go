@@ -3,23 +3,24 @@ package cmd
 import (
 	"bytes"
 	"os"
+	"path"
 	"strings"
 	"testing"
-	"time"
 )
 
 var (
-	semgrepTestReport  = "../test/semgrep-sast-report.json"
-	gitleaksTestReport = "../test/gitleaks-report.json"
-	grypeTestReport    = "../test/grype-report.json"
-	epssTestCSV        = "../test/epss_scores-2023-06-01.csv"
-	kevTestFile        = "../test/known_exploited_vulnerabilities.json"
+	semgrepTestReport   = "../test/semgrep-sast-report.json"
+	gitleaksTestReport  = "../test/gitleaks-report.json"
+	grypeTestReport     = "../test/grype-report.json"
+	cyclonedxTestReport = "../test/cyclonedx-grype-sbom.json"
+	epssTestCSV         = "../test/epss_scores-2023-06-01.csv"
+	kevTestFile         = "../test/known_exploited_vulnerabilities.json"
 )
 
 func Test_RootCommand(t *testing.T) {
 	t.Parallel()
 	t.Run("logo", func(t *testing.T) {
-		out, err := Execute("", CLIConfig{AutoDecoderTimeout: time.Nanosecond})
+		out, err := Execute("", CLIConfig{})
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -52,7 +53,7 @@ func Test_RootCommand(t *testing.T) {
 }
 
 func Test_InitCommand(t *testing.T) {
-	out, err := Execute("config init", CLIConfig{AutoDecoderTimeout: time.Nanosecond})
+	out, err := Execute("config init", CLIConfig{})
 	if err != nil {
 		t.FailNow()
 	}
@@ -60,6 +61,18 @@ func Test_InitCommand(t *testing.T) {
 		t.FailNow()
 	}
 	t.Log(out)
+}
+
+func Test_InfoCommand(t *testing.T) {
+	_, err := Execute("config info", CLIConfig{
+		ConfigFileUsed: "mockfile",
+		ConfigMap:      map[string]any{"gatecheck_mock_key": "mock value"},
+		ConfigPath:     "mock.path"})
+
+	if err != nil {
+		t.FailNow()
+	}
+
 }
 
 // Helper Functions
@@ -75,11 +88,53 @@ func Execute(command string, config CLIConfig) (commandOutput string, commandErr
 	return buf.String(), err
 }
 
-func MustOpen(filename string, failFunc func(args ...any)) *os.File {
+func MustOpen(filename string, t *testing.T) *os.File {
 	f, err := os.Open(filename)
 	if err != nil {
-		failFunc(err)
+		t.Fatal(err)
 		return nil
 	}
 	return f
 }
+
+func fileWithBadPermissions(t *testing.T) (filename string) {
+	n := path.Join(t.TempDir(), "bad-file")
+	f, err := os.Create(n)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if err := f.Chmod(0000); err != nil {
+		t.Fatal(err)
+	}
+	_ = f.Close()
+
+	return n
+}
+
+func fileWithBadJSON(t *testing.T) (filename string) {
+	n := path.Join(t.TempDir(), "bad-file.json")
+
+	if err := os.WriteFile(n, []byte("{{"), 0664); err != nil {
+		t.Fatal(err)
+	}
+
+	return n
+}
+
+func MustCreate(filename string, t *testing.T) *os.File {
+	f, err := os.Create(filename)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return f
+}
+
+func MustRead(filename string, t *testing.T) []byte {
+	b, err := os.ReadFile(filename)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return b
+}
+

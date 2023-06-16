@@ -3,113 +3,93 @@ package cmd
 import (
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"path"
 
 	"github.com/gatecheckdev/gatecheck/internal/log"
-	"github.com/gatecheckdev/gatecheck/pkg/artifact"
+	"github.com/gatecheckdev/gatecheck/pkg/archive"
 	"github.com/spf13/cobra"
 )
 
-func NewBundleCmd() *cobra.Command {
-
-	var extractCmd = &cobra.Command{
-		Use: "extract <GATECHECK BUNDLE>",
-		Short: "Extract a specific file from a gatecheck bundle",
-		Args: cobra.ExactArgs(1),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			key, _ := cmd.Flags().GetString("key")
-			if key == "" {
-				return fmt.Errorf("%w: No key provided", ErrorUserInput)
-			}
-
-			bun := artifact.NewBundle()		
-			f, err := os.Open(args[0])
-			if err != nil {
-				return fmt.Errorf("%w: %v", ErrorFileAccess, err)
-			}
-
-			if err := artifact.NewBundleDecoder(f).Decode(bun); err != nil {
-				return fmt.Errorf("%w: %v", ErrorEncoding, err)
-			}
-
-
-			n, err := bun.Write(cmd.OutOrStdout(), key)
-			log.Infof("%d bytes written to STDOUT", n)	
-
-			return err
-
-		},
-	}
-
-	extractCmd.Flags().String("key", "", "The key of the file to extract from the bundle")
-	extractCmd.MarkFlagRequired("key")
-
-	var cmd = &cobra.Command{
+func NewBundleCmd(newAsyncDecoder func() AsyncDecoder) *cobra.Command {
+	var bundleCmd = &cobra.Command{
 		Use:   "bundle [FILE ...]",
-		Short: "Add reports to Gatecheck Report",
+		Short: "Create a compressed tarball with artifacts",
+		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			// Flag is required, ignore errors
 			outputFilename, _ := cmd.Flags().GetString("output")
-			flagAllowMissing, _ := cmd.Flags().GetBool("allow-missing")
+			allowMissingFlag, _ := cmd.Flags().GetBool("skip-missing")
+			properties, _ := cmd.Flags().GetStringToString("properties")
 
-			log.Infof("Opening target output Bundle file: %s", outputFilename)
-			outputFile, err := os.OpenFile(outputFilename, os.O_CREATE|os.O_RDWR, 0644)
-
+			outputFile, err := os.OpenFile(outputFilename, os.O_CREATE|os.O_RDWR, 0664)
 			if err != nil {
-				return fmt.Errorf("%w: %v", ErrorFileAccess, err)
+				return fmt.Errorf("%w: bundle output file: %v", ErrorFileAccess, err)
 			}
+			info, _ := outputFile.Stat()
 
-			bun := artifact.NewBundle()
-			// Attempt to decode the file into the bundle object
-			if info, _ := outputFile.Stat(); info.Size() != 0 {
-				log.Infof("Existing Bundle File Size: %d", info.Size())
-				log.Infof("Decoding bundle...")
-				if err := artifact.NewBundleDecoder(outputFile).Decode(bun); err != nil {
-					return fmt.Errorf("%w: %v", ErrorEncoding, err)
+			var bundle *archive.Bundle
+			if info.Size() != 0 {
+				obj, err := archive.NewBundleDecoder().DecodeFrom(outputFile)
+				if err != nil {
+					return fmt.Errorf("%w: existing bundle decoding: %v", ErrorEncoding, err)
 				}
-				log.Info("Successful bundle decode, new files will be added to existing bundle")
+				bundle = obj.(*archive.Bundle)
 			}
 
-			// Open each file, create a bundle artifact and add it to the bundle object
-			for _, v := range args {
-				log.Infof("Opening File: %s", v)
-				f, err := os.Open(v)
-				if errors.Is(err, os.ErrNotExist) && flagAllowMissing {
-					log.Warnf("%s does not exist, skipping", v)
+			if bundle == nil {
+				bundle = archive.NewBundle()
+			}
+			for _, filename := range args {
+				f, err := os.Open(filename)
+				if errors.Is(err, os.ErrNotExist) && allowMissingFlag {
+					log.Infof("%s does not exist --skip-missing flag active", filename)
 					continue
 				}
-
 				if err != nil {
-					return fmt.Errorf("%w: %v", ErrorFileAccess, err)
+					return fmt.Errorf("%w: bundle argument: %v", ErrorFileAccess, err)
 				}
-				label := path.Base(v)
-				// File already opened, shouldn't have a reason to error
-				art, _ := artifact.NewArtifact(label, f)
-
-				// Error would only occur on a missing label which isn't possible here
-				_ = bun.Add(art)
-
-				log.Infof("New Artifact: %s", art.String())
+				label := path.Base(filename)
+				log.Infof("Adding file with label %s to bundle", label)
+				_ = bundle.AddFrom(f, label, properties)
 			}
-			log.Info(bun.String())
 
-			log.Info("Truncating existing file..")
+			log.Info("Truncating existing file...")
 			_ = outputFile.Truncate(0)
-			_, _ = outputFile.Seek(0, 0)
-
-			log.Info("Writing bundle to file..")
-			// Finish by encoding the bundle to the file
-			return artifact.NewBundleEncoder(outputFile).Encode(bun)
+			_, _ = outputFile.Seek(0, io.SeekStart)
+			log.Info("Writing bundle to file...")
+			return archive.NewBundleEncoder(outputFile).Encode(bundle)
 		},
 	}
 
-	cmd.Flags().StringP("output", "o", "", "output filename")
-	cmd.Flags().BoolP("allow-missing", "m", false, "Don't fail if a file doesn't exist")
+	var lsCmd = &cobra.Command{
+		Use:   "ls [FILE]",
+		Args:  cobra.MaximumNArgs(1),
+		Short: "List contents in bundle",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			filename := archive.DefaultBundleFilename
+			if len(args) == 1 {
+				filename = args[0]
+			}
+			f, err := os.Open(filename)
+			if err != nil {
+				return fmt.Errorf("%w: bundle file: %v", ErrorFileAccess, err)
+			}
+			obj, err := archive.NewBundleDecoder().DecodeFrom(f)
+			if err != nil {
+				return fmt.Errorf("%w: bundle decoding: %v", ErrorEncoding, err)
+			}
+			bundle := obj.(*archive.Bundle)
+			printBundleContentTable(cmd.OutOrStdout(), bundle, newAsyncDecoder)
+			return nil
+		},
+	}
 
-	_ = cmd.MarkFlagFilename("output", "gatecheck")
-	_ = cmd.MarkFlagRequired("output")
+	bundleCmd.AddCommand(lsCmd)
+	bundleCmd.Flags().StringP("output", "o", archive.DefaultBundleFilename, "output bundle file")
+	bundleCmd.Flags().BoolP("skip-missing", "m", false, "Don't fail if a file doesn't exist")
+	bundleCmd.Flags().StringToStringP("properties", "p", nil, "Artifact properties in key=value format")
+	bundleCmd.MarkFlagFilename("output")
+	return bundleCmd
 
-	cmd.AddCommand(extractCmd)	
-	return cmd
 }

@@ -1,3 +1,4 @@
+version: "1"
 cyclonedx:
   critical: 10
   high: 10
@@ -13,6 +14,8 @@ grype:
   low: 100
   negligible: -1
   unknown: -1
+  epssAllowThreshold: 0.1
+  epssDenyThreshold: 0.9
   allowList:
     - id: CVE-2022-3219
       reason: some important reason to allow this finding

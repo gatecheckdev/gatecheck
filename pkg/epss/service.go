@@ -1,182 +1,176 @@
 package epss
 
 import (
+	"bufio"
 	"compress/gzip"
-	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
-	"math"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 
+	"github.com/anchore/grype/grype/presenter/models"
 	"github.com/gatecheckdev/gatecheck/internal/log"
-
-	gcStrings "github.com/gatecheckdev/gatecheck/pkg/strings"
+	gce "github.com/gatecheckdev/gatecheck/pkg/encoding"
 )
 
-type response struct {
-	Status     string         `json:"status"`
-	StatusCode int            `json:"status-code"`
-	Version    string         `json:"version"`
-	Access     string         `json:"access"`
-	Total      int            `json:"total"`
-	Offset     int            `json:"offset"`
-	Limit      int            `json:"limit"`
-	Data       []ResponseData `json:"data"`
+var ErrAPI = errors.New("EPSS API error")
+
+const supportedModel = "v2023.03.01"
+const modelDateLayout = "2006-01-02T15:04:05-0700"
+const DefaultBaseURL = "https://epss.cyentia.com"
+
+type CVE struct {
+	ID          string
+	Severity    string
+	Link        string
+	ScoreDate   time.Time
+	Probability float64
+	Percentile  float64
 }
 
-type ResponseData struct {
-	CVE        string `json:"cve"`
-	EPSS       string `json:"epss"`
-	Percentile string `json:"percentile"`
-	Date       string `json:"date"`
-	Severity   string `json:"severity,omitempty"`
-	URL        string `json:"url,omitempty"`
-}
-
-type result struct {
-	data  ResponseData
-	Error error
-}
-
-func NewEPSSService(c *http.Client, endpoint string) *Service {
-	return &Service{client: c, BatchSize: 10, Endpoint: endpoint}
+type Scores struct {
+	EPSS       string
+	Percentile string
 }
 
 type Service struct {
-	client    *http.Client
-	BatchSize int
-	Endpoint  string
+	r            io.Reader
+	dataStore    map[string]Scores
+	modelVersion string
+	scoreDate    time.Time
 }
 
-func (s Service) WriteCSV(w io.Writer, url string) (int64, error) {
-	defer func(started time.Time) { log.Infof("EPSS CSV writing completed in %s", time.Since(started).String()) }(time.Now())
-	req, _ := http.NewRequest("GET", url, nil)
-
-	res, err := s.client.Do(req)
-	if err != nil {
-		return 0, fmt.Errorf("%w: %v", ErrAPIPartialFail, err)
-	}
-
-	if res.StatusCode != http.StatusOK {
-		log.Warnf("Download CSV Status: %s", res.Status)
-		return 0, fmt.Errorf("%w: %v", ErrAPIPartialFail, err)
-	}
-
-	reader, err := gzip.NewReader(res.Body)
-	if err != nil {
-		return 0, fmt.Errorf("%w: %v", ErrDecode, err)
-	}
-
-	n, err := io.Copy(w, reader)
-	if err != nil {
-		return n, fmt.Errorf("%w :%v", ErrEncode, err)
-	}
-	reader.Close()
-	return n, nil
+// NewService initializes internal structures, and lazily assigns reader.
+func NewService(r io.Reader) *Service {
+	return &Service{r: r, dataStore: make(map[string]Scores)}
 }
 
-// WriteEPSS will write probability and percentile scores to each element in input querying on the ID field
-func (s Service) WriteEPSS(input []CVE) error {
-	defer func(started time.Time) { log.Infof("WriteEPSS for %d CVEs completed in %s", len(input), time.Since(started).String()) }(time.Now())
-
-	if len(input) == 0 || input == nil {
-		return nil
+func (s *Service) GetCVEs(matches []models.Match) ([]CVE, error) {
+	cves := make([]CVE, 0, len(matches))
+	var errs error
+	for _, match := range matches {
+		cve, err := s.GetCVE(match)
+		errs = errors.Join(errs, err)
+		cves = append(cves, cve)
 	}
-	index := 0
-	end := s.BatchSize
-	errChan := make(chan error)
-	doneChan := make(chan struct{})
-	min := func(a int, b int) int {
-		return int(math.Min(float64(a), float64(b)))
+	return cves, errs
+}
+
+func (s *Service) GetCVE(match models.Match) (CVE, error) {
+	scores, ok := s.dataStore[match.Vulnerability.ID]
+	cve := CVE{
+		ID:        match.Vulnerability.ID,
+		Severity:  match.Vulnerability.Severity,
+		Link:      match.Vulnerability.DataSource,
+		ScoreDate: s.scoreDate,
 	}
-	var wg sync.WaitGroup
-
-	for index < len(input) {
-		end = min(index+s.BatchSize, len(input))
-		wg.Add(1)
-		go executeQuery(s, input[index:end], errChan, &wg)
-		index += s.BatchSize
+	if !ok {
+		log.Warnf("No score found for '%s'", match.Vulnerability.ID)
+		return cve, nil
 	}
+	epssValue, err := strconv.ParseFloat(scores.EPSS, 64)
+	if err != nil {
+		return cve, fmt.Errorf("%w: failed to parse EPSS Score for ID: '%s': %v",
+			gce.ErrEncoding, match.Vulnerability.ID, err)
+	}
+	cve.Probability = epssValue
+	percentileValue, err := strconv.ParseFloat(scores.Percentile, 64)
+	if err != nil {
+		return cve, fmt.Errorf("%w: failed to parse Percentile for ID: '%s': %v",
+			gce.ErrEncoding, match.Vulnerability.ID, err)
+	}
+	cve.Percentile = percentileValue
+	return cve, nil
+}
 
-	go func() {
-		wg.Wait()
-		doneChan <- struct{}{}
-	}()
-
-	select {
-	case <-doneChan:
-		return nil
-	case err := <-errChan:
+// Fetch uses the internal reader to fill the internal dataStore
+func (s *Service) Fetch() error {
+	defer func(started time.Time) { log.Infof("EPSS CSV decoding completed in %s", time.Since(started).String()) }(time.Now())
+	scanner := bufio.NewScanner(s.r)
+	scanner.Scan()
+	if err := scanner.Err(); err != nil {
 		return err
 	}
-}
-
-func executeQuery(s Service, input []CVE, errChan chan error, wg *sync.WaitGroup) {
-	defer wg.Done()
-	ids := make([]string, len(input))
-	for i := range ids {
-		ids[i] = input[i].ID
+	parts := strings.Split(scanner.Text(), ",")
+	if len(parts) != 2 {
+		return fmt.Errorf("%w: CSV Reader detected malformed metadata header: '%s'", gce.ErrEncoding, scanner.Text())
 	}
-	url := s.Endpoint + "?cve=" + strings.Join(ids, ",")
-	res, err := s.client.Get(url)
+
+	s.modelVersion = strings.ReplaceAll(parts[0], "#model_version:", "")
+
+	if s.modelVersion != supportedModel {
+		return fmt.Errorf("%w: CSV Reader detected invalid model version: '%s'", gce.ErrEncoding, scanner.Text())
+	}
+
+	sDate, err := time.Parse(modelDateLayout, strings.ReplaceAll(parts[1], "score_date:", ""))
 	if err != nil {
-		errChan <- fmt.Errorf("%w: %s", ErrAPIPartialFail, err)
-		return
+		return fmt.Errorf("%w: CSV Reader detected invalid date format in metadata: '%s'", gce.ErrEncoding, scanner.Text())
 	}
-	if res.StatusCode != http.StatusOK {
-		log.Warn(url)
-		log.Warn(res.Status)
-		errChan <- fmt.Errorf("%w: %s", ErrAPIPartialFail, res.Status)
-		return
-	}
-	var resObj response
-	if err := json.NewDecoder(res.Body).Decode(&resObj); err != nil {
-		errChan <- fmt.Errorf("%w: %v", ErrDecode, err)
-		return
+	s.scoreDate = sDate
+
+	// Next Line should be header
+	scanner.Scan()
+
+	if scanner.Text() != "cve,epss,percentile" {
+		return fmt.Errorf("%w: CSV Reader detected malformed header: '%s'", gce.ErrEncoding, scanner.Text())
 	}
 
-	inputMap := make(map[string]*CVE, len(input))
-	for i := range input {
-		inputMap[input[i].ID] = &input[i]
+	for scanner.Scan() {
+		line := scanner.Text()
+		// Add the newline back in so it would make a full file hash
+		values := strings.Split(line, ",")
+
+		if len(values) != 3 {
+			return fmt.Errorf("%w: CSV Reader detected malformed data: %s", gce.ErrEncoding, values)
+		}
+
+		s.dataStore[values[0]] = Scores{EPSS: values[1], Percentile: values[2]}
 	}
 
-	for _, data := range resObj.Data {
-		inputMap[data.CVE].Link = data.URL
-		prob, err := strconv.ParseFloat(data.EPSS, 64)
-		if err != nil {
-			errChan <- fmt.Errorf("%w: %v", ErrDecode, err)
-			return
-		}
-		perc, err := strconv.ParseFloat(data.Percentile, 64)
-		if err != nil {
-			errChan <- fmt.Errorf("%w: %v", ErrDecode, err)
-			return
-		}
-		inputMap[data.CVE].Probability = prob
-		inputMap[data.CVE].Percentile = perc
-	}
+	return nil
 }
 
-func Sprint(input []CVE) string {
+// data source (API Agent / CSV File / ORAS / Buf) reader -> Service.ReadFrom(r)
 
-	table := new(gcStrings.Table).WithHeader("CVE", "Severity", "EPSS", "Percentile", "Date", "Link")
+type APIAgent struct {
+	client       *http.Client
+	url          string
+	gunzipReader io.Reader
+}
 
-	percentage := func(f float64) string {
-		return fmt.Sprintf("%.2f%%", 100*f)
+func NewAgent(client *http.Client, baseURL string) *APIAgent {
+	return &APIAgent{client: client, url: baseURL}
+}
+
+func (a *APIAgent) Read(p []byte) (int, error) {
+	if a.gunzipReader != nil {
+		return a.gunzipReader.Read(p)
 	}
 
-	for _, cve := range input {
-		table = table.WithRow(cve.ID, cve.Severity, percentage(cve.Probability), percentage(cve.Percentile), cve.ScoreDate.Format("2006-01-02"), cve.Link)
+	today := time.Now()
+	endpoint := fmt.Sprintf("epss_scores-%d-%s-%s.csv.gz", today.Year(), today.Format("01"), today.Format("02"))
+	url, _ := url.JoinPath(a.url, endpoint)
+	req, _ := http.NewRequest(http.MethodGet, url, nil)
+	log.Infof("EPSS GET Request URL: %s", url)
+
+	res, err := a.client.Do(req)
+	if err != nil {
+		return 0, fmt.Errorf("%w: target url: '%s': %v", ErrAPI, url, err)
 	}
 
-	// Dsc because EPSS has been converted into a percentage
-	table = table.SortBy([]gcStrings.SortBy{
-		{Name: "EPSS", Mode: gcStrings.Dsc},
-	}).Sort()
+	if res.StatusCode != http.StatusOK {
+		log.Warnf("EPSS GET error request status: %s", res.Status)
+		return 0, fmt.Errorf("%w: EPSS GET Request failed", ErrAPI)
+	}
 
-	return table.String()
+	gunzipReader, err := gzip.NewReader(res.Body)
+	if err != nil {
+		return 0, fmt.Errorf("%w: gzip decompression of response body failed: %v", gce.ErrEncoding, err)
+	}
+	a.gunzipReader = gunzipReader
+	return gunzipReader.Read(p)
 }

@@ -1,29 +1,28 @@
 package cmd
 
 import (
-	"encoding/json"
 	"fmt"
 	"io"
 	"os"
-	"time"
+	"sort"
 
 	"github.com/gatecheckdev/gatecheck/internal/log"
-	"github.com/gatecheckdev/gatecheck/pkg/artifact"
+	"github.com/gatecheckdev/gatecheck/pkg/artifacts/grype"
 	"github.com/gatecheckdev/gatecheck/pkg/epss"
+	"github.com/gatecheckdev/gatecheck/pkg/format"
 	"github.com/spf13/cobra"
 )
 
-func NewEPSSCmd(service EPSSService) *cobra.Command {
+func NewEPSSCmd(EPSSDownloadAgent io.Reader) *cobra.Command {
 
 	var downloadCmd = &cobra.Command{
 		Use:   "download",
 		Short: "EPSS CSV with scores for all CVEs (outputs to STDOUT)",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			url, _ := cmd.Flags().GetString("url")
 
-			n, err := service.WriteCSV(cmd.OutOrStdout(), url)
+			n, err := io.Copy(cmd.OutOrStdout(), EPSSDownloadAgent)
 			if err != nil {
-				return fmt.Errorf("%w: %v", ErrorAPI, err)
+				return err
 			}
 
 			log.Infof("%d bytes written to STDOUT", n)
@@ -31,90 +30,83 @@ func NewEPSSCmd(service EPSSService) *cobra.Command {
 		},
 	}
 
-	today := time.Now()
-	defaultURL := fmt.Sprintf("https://epss.cyentia.com/epss_scores-%d-%s-%s.csv.gz", today.Year(), today.Format("01"), today.Format("02"))
-	downloadCmd.Flags().StringP("url", "u", defaultURL, "The URL for the CSV file")
-
 	var EPSSCmd = &cobra.Command{
 		Use:   "epss <Grype FILE>",
 		Short: "Query first.org for Exploit Prediction Scoring System (EPSS)",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			var grypeScan artifact.GrypeScanReport
 			var csvFile *os.File
 			var err error
+			var service *epss.Service
 
-			csvFilename, _ := cmd.Flags().GetString("file")
+			csvFilename, _ := cmd.Flags().GetString("epss-file")
+			fetchFlag, _ := cmd.Flags().GetBool("fetch")
 
-			f, err := os.Open(args[0])
+			grypeFile, err := os.Open(args[0])
 			if err != nil {
 				return fmt.Errorf("%w: %v", ErrorFileAccess, err)
 			}
+
+			if fetchFlag {
+				service = epss.NewService(EPSSDownloadAgent)
+			}
+
 			if csvFilename != "" {
 				csvFile, err = os.Open(csvFilename)
 				if err != nil {
 					return fmt.Errorf("%w: %v", ErrorFileAccess, err)
 				}
+				service = epss.NewService(csvFile)
 			}
 
-			if err := json.NewDecoder(f).Decode(&grypeScan); err != nil {
+			if service == nil {
+				return fmt.Errorf("%w: No EPSS file or --fetch flag", ErrorUserInput)
+			}
+
+			r, err := grype.NewReportDecoder().DecodeFrom(grypeFile)
+
+			if err != nil {
 				return fmt.Errorf("%w: %v", ErrorEncoding, err)
 			}
 
-			cves := make([]epss.CVE, len(grypeScan.Matches))
+			grypeScan := r.(*grype.ScanReport)
 
-			for i, match := range grypeScan.Matches {
-				cves[i] = epss.CVE{
-					ID:       match.Vulnerability.ID,
-					Severity: match.Vulnerability.Severity,
-					Link:     match.Vulnerability.DataSource,
-				}
+			if err := service.Fetch(); err != nil {
+				return err
 			}
-
-			if csvFile != nil {
-				err = epssFromDataStore(csvFile, cves)
-			} else {
-				err = epssFromAPI(service, cves)
-			}
-
+			cves, err := service.GetCVEs(grypeScan.Matches)
 			if err != nil {
-				return fmt.Errorf("%w: %v", ErrorAPI, err)
+				return err
 			}
 
-			cmd.Println(epss.Sprint(cves))
-
+			_, err = format.NewTableWriter(epssTable(cves)).WriteTo(cmd.OutOrStderr())
 			return err
 		},
 	}
 
 	EPSSCmd.AddCommand(downloadCmd)
 
-	EPSSCmd.Flags().StringP("file", "f", "", "A downloaded CSV File with scores, note: will not query API")
+	EPSSCmd.Flags().StringP("epss-file", "e", "", "A downloaded CSV File with scores, note: will not query API")
+	EPSSCmd.Flags().Bool("fetch", false, "Fetch EPSS scores from API")
 
 	return EPSSCmd
 }
 
-func epssFromAPI(service EPSSService, CVEs []epss.CVE) error {
+func epssTable(input []epss.CVE) *format.Table {
 
-	err := service.WriteEPSS(CVEs)
-	if err != nil {
-		return fmt.Errorf("%w: %s", ErrorAPI, err)
+	table := format.NewTable()
+
+	table.AppendRow("CVE", "Severity", "EPSS Score", "Percentile", "Link")
+
+	for _, cve := range input {
+		table.AppendRow(cve.ID, cve.Severity, fmt.Sprintf("%.5f", cve.Probability),
+			fmt.Sprintf("%.2f%%", 100*cve.Percentile), cve.Link)
 	}
 
-	return nil
-}
+	table.SetSort(2, func(a, b string) bool {
+		return a > b
+	})
+	sort.Sort(table)
 
-func epssFromDataStore(epssCSV io.Reader, CVEs []epss.CVE) error {
-	store := epss.NewDataStore()
-	if err := epss.NewCSVDecoder(epssCSV).Decode(store); err != nil {
-		return err
-	}
-	log.Infof("EPSS CSV Datastore imported scores for %d CVEs\n", store.Len())
-
-	if err := store.WriteEPSS(CVEs); err != nil {
-		return err
-
-	}
-
-	return nil
+	return table
 }

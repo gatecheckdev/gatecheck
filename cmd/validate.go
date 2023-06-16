@@ -2,167 +2,186 @@ package cmd
 
 import (
 	"bytes"
-	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"os"
-	"strings"
-	"time"
 
-	"github.com/gatecheckdev/gatecheck/pkg/artifact"
-	"github.com/gatecheckdev/gatecheck/pkg/blacklist"
+	"github.com/gatecheckdev/gatecheck/pkg/archive"
+	"github.com/gatecheckdev/gatecheck/pkg/artifacts/cyclonedx"
+	"github.com/gatecheckdev/gatecheck/pkg/artifacts/gitleaks"
+	"github.com/gatecheckdev/gatecheck/pkg/artifacts/grype"
+	"github.com/gatecheckdev/gatecheck/pkg/artifacts/semgrep"
+	gce "github.com/gatecheckdev/gatecheck/pkg/encoding"
+	"github.com/gatecheckdev/gatecheck/pkg/epss"
+	"github.com/gatecheckdev/gatecheck/pkg/kev"
+	gcv "github.com/gatecheckdev/gatecheck/pkg/validate"
+
 	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v3"
 )
 
-func NewValidateCmd(decodeTimeout time.Duration) *cobra.Command {
+type AnyValidator interface {
+	Validate(objPtr any, configReader io.Reader) error
+	ValidateFrom(objReader io.Reader, configReader io.Reader) error
+}
+
+func NewValidateCmd(newAsyncDecoder func() AsyncDecoder, KEVDownloadAgent io.Reader, EPSSDownloadAgent io.Reader) *cobra.Command {
+	var validateAny func(obj any, configBytes []byte) error
+
+	var kevService *kev.Service
+	var epssService *epss.Service
+
 	var cmd = &cobra.Command{
 		Use:   "validate [FILE]",
 		Short: "Validate reports or a bundle using thresholds set in the Gatecheck configuration file",
 		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			var config artifact.Config
-			var kevBlacklist artifact.KEVCatalog
-			var grypeScan artifact.GrypeScanReport
-
-			var validationError error = nil
 
 			configFilename, _ := cmd.Flags().GetString("config")
-			kevFilename, _ := cmd.Flags().GetString("blacklist")
-			audit, _ := cmd.Flags().GetBool("audit")
+			kevFilename, _ := cmd.Flags().GetString("kev-file")
+			epssFilename, _ := cmd.Flags().GetString("epss-file")
 
-			// Open the config file
-			configFile, err := os.Open(configFilename)
+			auditFlag, _ := cmd.Flags().GetBool("audit")
+			kevFetchFlag, _ := cmd.Flags().GetBool("fetch-kev")
+			epssFetchFlag, _ := cmd.Flags().GetBool("fetch-epss")
+
+			objFile, err := os.Open(args[0])
 			if err != nil {
-				return fmt.Errorf("%w: %v", ErrorFileAccess, err)
-			}
-			if err := yaml.NewDecoder(configFile).Decode(&config); err != nil {
-				return fmt.Errorf("%w: %v", ErrorEncoding, err)
+				return fmt.Errorf("%w: Report / bundle: %v", ErrorFileAccess, err)
 			}
 
-			// Open the target file
-			targetBytes, err := os.ReadFile(args[0])
+			decoder := newAsyncDecoder()
+			obj, err := decoder.DecodeFrom(objFile)
 			if err != nil {
-				return fmt.Errorf("%w: %v", ErrorFileAccess, err)
+				return fmt.Errorf("%w: Async decoding: %v", ErrorEncoding, err)
 			}
 
-			err = ParseAndValidate(bytes.NewBuffer(targetBytes), config, decodeTimeout)
-			cmd.PrintErrln(err)
+			configFileBytes, err := os.ReadFile(configFilename)
 			if err != nil {
-				validationError = ErrorValidation
+				return fmt.Errorf("%w: config file: %v", ErrorFileAccess, err)
 			}
 
-			// Return early if no KEV file passed
-			if kevFilename == "" {
-				if audit {
-					return nil
+			if kevFetchFlag || kevFilename != "" {
+				kevService, err = getKEVService(kevFilename, KEVDownloadAgent)
+				if err != nil {
+					return err
 				}
-				return validationError
 			}
 
-			kevFile, err := os.Open(kevFilename)
-			if err != nil {
-				return fmt.Errorf("%w: %v", ErrorFileAccess, err)
+			if epssFetchFlag || epssFilename != "" {
+				epssService, err = getEPSSService(epssFilename, EPSSDownloadAgent)
+				if err != nil {
+					return err
+				}
 			}
 
-			if err := json.NewDecoder(kevFile).Decode(&kevBlacklist); err != nil {
-				return fmt.Errorf("%w: %v", ErrorEncoding, err)
+			err = validateAny(obj, configFileBytes)
+			if err != nil && !errors.Is(err, gcv.ErrValidation) {
+				return err
 			}
 
-			// Decode for Grype and return an error on fail because only grype can be validated with a blacklist
-			if err := json.NewDecoder(bytes.NewBuffer(targetBytes)).Decode(&grypeScan); err != nil {
-				return fmt.Errorf("%w: only Grype Reports are supported with KEV: %v", ErrorEncoding, err)
-			}
-
-			vulnerabilities := blacklist.BlacklistedVulnerabilities(grypeScan, kevBlacklist)
-
-			cmd.Println(blacklist.StringBlacklistedVulnerabilities(kevBlacklist.CatalogVersion, vulnerabilities))
-
-			cmd.Println(fmt.Sprintf("%d Vulnerabilities listed on CISA Known Exploited Vulnerabilities Blacklist",
-				len(vulnerabilities)))
-
-			if len(vulnerabilities) > 0 {
-				validationError = ErrorValidation
-			}
-
-			if audit == true {
+			if err != nil && auditFlag {
+				cmd.PrintErrf("[Audit]: %v\n", err)
 				return nil
 			}
 
-			return validationError
+			if err != nil {
+				return fmt.Errorf("%w: %v", ErrorValidation, err)
+			}
+			return nil
+
 		},
+	}
+
+	validateAny = func(obj any, configBytes []byte) error {
+		if bundle, ok := obj.(*archive.Bundle); ok {
+			validationErrors := make(map[string]error, 0)
+			for label := range bundle.Manifest().Files {
+				decoder := newAsyncDecoder()
+				_, _ = bundle.WriteFileTo(decoder, label)
+				obj, _ := decoder.Decode()
+				if decoder.FileType() == gce.GenericFileType {
+					continue
+				}
+				if err := validateAny(obj, configBytes); err != nil {
+					validationErrors[label] = err
+				}
+			}
+
+			if len(validationErrors) == 0 {
+				return nil
+			}
+			validationError := ErrorValidation
+			for k, v := range validationErrors {
+				errors.Join(validationError, fmt.Errorf("bundle artifact file '%s': %w", k, v))
+			}
+			return validationError
+		}
+
+		switch obj.(type) {
+
+		case *semgrep.ScanReport:
+			return semgrep.NewValidator().Validate(obj, bytes.NewReader(configBytes))
+		case *gitleaks.ScanReport:
+			return gitleaks.NewValidator().Validate(obj, bytes.NewReader(configBytes))
+		case *cyclonedx.ScanReport:
+			return cyclonedx.NewValidator().Validate(obj, bytes.NewReader(configBytes))
+		}
+
+		// This function is called after the async decoder so it has to be a defined type
+		report := obj.(*grype.ScanReport)
+		var kevValidationErr, epssValidationErr error
+		if kevService != nil {
+			kevValidationErr = kev.NewValidator(kevService).Validate(report)
+		}
+		if epssService != nil {
+			// EPSS Validation modifies the report by removing approved vulnerabilities
+			epssValidationErr = epss.NewValidator(epssService).Validate(report.Matches, bytes.NewReader(configBytes))
+			if !errors.Is(epssValidationErr, gcv.ErrValidation) && epssValidationErr != nil {
+				return fmt.Errorf("%w: %v", ErrorAPI, epssValidationErr)
+			}
+		}
+		return errors.Join(kevValidationErr, epssValidationErr, grype.NewValidator().Validate(report, bytes.NewBuffer(configBytes)))
+
 	}
 
 	cmd.Flags().Bool("audit", false, "Exit w/ Code 0 even if validation fails")
 	cmd.Flags().StringP("config", "c", "", "A Gatecheck configuration file with thresholds")
-	cmd.Flags().StringP("blacklist", "k", "", "A CISA KEV Blacklist file")
+
+	cmd.Flags().StringP("kev-file", "k", "", "A CISA KEV catalog file, JSON or CSV and cross reference Grype report")
+	cmd.Flags().Bool("fetch-kev", false, "Download a CISA KEV catalog file and cross reference Grype report")
+
+	cmd.Flags().StringP("epss-file", "e", "", "A downloaded CSV File with scores, note: will not query API")
+	cmd.Flags().Bool("fetch-epss", false, "Download EPSS scores from API")
 
 	_ = cmd.MarkFlagRequired("config")
+	cmd.MarkFlagsMutuallyExclusive("kev-file", "fetch-kev")
+	cmd.MarkFlagsMutuallyExclusive("epss-file", "fetch-epss")
 	return cmd
 }
 
-func ParseAndValidate(r io.Reader, config artifact.Config, timeout time.Duration) error {
-	var err error
-
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-
-	rType, b, err := artifact.ReadWithContext(ctx, r)
-
+func getKEVService(filename string, downloadAgent io.Reader) (*kev.Service, error) {
+	if filename == "" {
+		service := kev.NewService(downloadAgent)
+		return service, service.Fetch()
+	}
+	f, err := os.Open(filename)
 	if err != nil {
-		return err
+		return nil, fmt.Errorf("%w: KEV File: %v", ErrorFileAccess, err)
 	}
+	service := kev.NewService(f)
+	return service, service.Fetch()
+}
 
-	buf := bytes.NewBuffer(b)
-
-	// No need to check decode errors since it's decoded in the DetectReportType Function
-	switch rType {
-	case artifact.Semgrep:
-		if config.Semgrep == nil {
-			return errors.New("no Semgrep configuration specified")
-		}
-		err = artifact.ValidateSemgrep(*config.Semgrep, artifact.DecodeJSON[artifact.SemgrepScanReport](buf))
-	case artifact.Cyclonedx:
-		if config.Cyclonedx == nil {
-			return errors.New("no CycloneDx configuration specified")
-		}
-		err = artifact.ValidateCyclonedx(*config.Cyclonedx, artifact.DecodeJSON[artifact.CyclonedxSbomReport](buf))
-	case artifact.Grype:
-		if config.Grype == nil {
-			return errors.New("no Grype configuration specified")
-		}
-		err = artifact.ValidateGrype(*config.Grype, artifact.DecodeJSON[artifact.GrypeScanReport](buf))
-	case artifact.Gitleaks:
-		if config.Gitleaks == nil {
-			return errors.New("no Gitleaks configuration specified")
-		}
-		err = artifact.ValidateGitleaks(*config.Gitleaks, artifact.DecodeJSON[artifact.GitleaksScanReport](buf))
-	case artifact.GatecheckBundle:
-		var errStrings []string
-		bundle := artifact.DecodeBundle(buf)
-		if err := bundle.ValidateCyclonedx(config.Cyclonedx); err != nil {
-			errStrings = append(errStrings, err.Error())
-		}
-		if err := bundle.ValidateGrype(config.Grype); err != nil {
-			errStrings = append(errStrings, err.Error())
-		}
-		if err := bundle.ValidateSemgrep(config.Semgrep); err != nil {
-			errStrings = append(errStrings, err.Error())
-		}
-		if err := bundle.ValidateGitleaks(config.Gitleaks); err != nil {
-			errStrings = append(errStrings, err.Error())
-		}
-		if len(errStrings) == 0 {
-			return nil
-		}
-		return errors.New(strings.Join(errStrings, "\n"))
-
-	default:
-		err = errors.New("unsupported scan type")
+func getEPSSService(filename string, downloadAgent io.Reader) (*epss.Service, error) {
+	if filename == "" {
+		service := epss.NewService(downloadAgent)
+		return service, service.Fetch()
 	}
-
-	return err
-
+	f, err := os.Open(filename)
+	if err != nil {
+		return nil, fmt.Errorf("%w: EPSS File: %v", ErrorFileAccess, err)
+	}
+	service := epss.NewService(f)
+	return service, service.Fetch()
 }

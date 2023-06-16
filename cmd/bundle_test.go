@@ -4,175 +4,75 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"math/rand"
-	"os"
 	"path"
 	"strings"
 	"testing"
-	"time"
 
-	"github.com/gatecheckdev/gatecheck/pkg/artifact"
+	"github.com/gatecheckdev/gatecheck/pkg/archive"
 )
 
-func TestExtractCmd(t *testing.T) {
-	mockBuf := bytes.NewBufferString("ABC-123")
-	a, _ := artifact.NewArtifact("mock_artifact.txt", mockBuf)
-	bun := artifact.NewBundle()
-	_ = bun.Add(a)
-
-	tempBundleFilename := path.Join(t.TempDir(), "bundle.gatecheck")
-
-	f, _ := os.Create(tempBundleFilename)
-
-	if err := artifact.NewBundleEncoder(f).Encode(bun); err != nil {
-		t.Fatal(err)
-	}
-	f.Close()
-
-	t.Run("success", func(t *testing.T) {
-		commandString := fmt.Sprintf("bundle extract --key %s %s", "mock_artifact.txt", tempBundleFilename)
-		out, err := Execute(commandString, CLIConfig{})
-		if err != nil {
-			t.Log(out)
-			t.Fatal(err)
-		}
-	})
-	t.Run("file-access-error", func(t *testing.T) {
-		commandString := fmt.Sprintf("bundle extract --key %s %s", "mock_artifact.txt", fileWithBadPermissions(t))
-		_, err := Execute(commandString, CLIConfig{})
-		if !errors.Is(err, ErrorFileAccess) {
-			t.Fatal(err)
-		}
-	})
-	t.Run("file-bad-encoding", func(t *testing.T) {
-		commandString := fmt.Sprintf("bundle extract --key %s %s", "mock_artifact.txt", fileWithBadJSON(t))
-		_, err := Execute(commandString, CLIConfig{})
-		if !errors.Is(err, ErrorEncoding) {
-			t.Fatal(err)
-		}
-	})
-	t.Run("file-bad-key", func(t *testing.T) {
-		commandString := fmt.Sprintf("bundle extract --key %s %s", "", tempBundleFilename)
-		_, err := Execute(commandString, CLIConfig{})
-		if !errors.Is(err, ErrorUserInput) {
-			t.Fatal(err)
-		}
-	})
-}
-
 func TestNewBundleCmd(t *testing.T) {
+	config := CLIConfig{NewAsyncDecoderFunc: NewAsyncDecoder}
+	mockObj := map[string]string{"key": "value"}
+	tempFile := func(p string) string { return path.Join(t.TempDir(), p) }
 
-	t.Run("file-access-error", func(t *testing.T) {
-		outFile := path.Join(t.TempDir(), "bundle.gatecheck")
-		commandString := fmt.Sprintf("bundle -o %s %s", outFile, fileWithBadPermissions(t))
-		_, err := Execute(commandString, CLIConfig{})
-		if errors.Is(err, ErrorFileAccess) != true {
-			t.Fatal(err)
+	testTable := []struct {
+		label     string
+		cmdString string
+		wantErr   error
+	}{
+		{label: "bundle-error", cmdString: fmt.Sprintf("bundle -o %s %s", fileWithBadPermissions(t), fileWithBadJSON(t)), wantErr: ErrorFileAccess},
+		{label: "existing-bundle-error", cmdString: fmt.Sprintf("bundle -o %s %s", writeTempAny(mockObj, t), fileWithBadJSON(t)), wantErr: ErrorEncoding},
+		{label: "arugment-file-error", cmdString: fmt.Sprintf("bundle -o %s %s", tempFile("bundle-1.tar.gz"), fileWithBadPermissions(t)), wantErr: ErrorFileAccess},
+		{label: "missing-file", cmdString: fmt.Sprintf("bundle -mo %s %s %s", tempFile("bundle-2.tar.gz"), writeTempAny(mockObj, t), "nonexistingfile.txt"), wantErr: nil},
+		{label: "ls-file-error", cmdString: "bundle ls", wantErr: ErrorFileAccess},
+		{label: "ls-file-encoding-error", cmdString: fmt.Sprintf("bundle ls %s", writeTempAny(mockObj, t)), wantErr: ErrorEncoding},
+	}
+
+	for _, testCase := range testTable {
+		t.Run(testCase.label, func(t *testing.T) {
+			out, err := Execute(testCase.cmdString, config)
+			t.Log(out)
+			if !errors.Is(err, testCase.wantErr) {
+				t.Fatalf("want: %v got: %v", testCase.wantErr, err)
+			}
+		})
+	}
+
+	t.Run("existing-bundle", func(t *testing.T) {
+		bundle := archive.NewBundle()
+		_ = bundle.AddFrom(MustOpen(grypeTestReport, t), "grype-report.json", nil)
+		_ = bundle.AddFrom(MustOpen(semgrepTestReport, t), "semgrep-report.json", nil)
+		bundleFilename := path.Join(t.TempDir(), "bundle.tar.gz")
+		_ = archive.NewBundleEncoder(MustCreate(bundleFilename, t)).Encode(bundle)
+
+		tempFilename := path.Join(t.TempDir(), "file-1.txt")
+		_, _ = strings.NewReader("ABCDEF").WriteTo(MustCreate(tempFilename, t))
+
+		cmdString := fmt.Sprintf("bundle -o %s %s", bundleFilename, tempFilename)
+		if _, err := Execute(cmdString, config); err != nil {
+			t.Fatalf("want: %v got: %v", nil, err)
 		}
-	})
 
-	t.Run("bad-output-file", func(t *testing.T) {
-		commandString := fmt.Sprintf("bundle -o %s %s", fileWithBadPermissions(t), fileWithBadPermissions(t))
-		_, err := Execute(commandString, CLIConfig{})
-		if errors.Is(err, ErrorFileAccess) != true {
-			t.Fatal(err)
-		}
-	})
-
-	t.Run("bad-decode", func(t *testing.T) {
-		commandString := fmt.Sprintf("bundle -vo %s %s", fileWithBadJSON(t), fileWithBadJSON(t))
-		_, err := Execute(commandString, CLIConfig{})
-		if errors.Is(err, ErrorEncoding) != true {
-			t.Fatal(err)
-		}
-	})
-
-	t.Run("bad-permission", func(t *testing.T) {
-		outFile := path.Join(t.TempDir(), "bundle.gatecheck")
-		commandString := fmt.Sprintf("bundle -vo %s %s", outFile, fileWithBadPermissions(t))
-		_, err := Execute(commandString, CLIConfig{})
-		if errors.Is(err, ErrorFileAccess) != true {
-			t.Fatal(err)
-		}
-	})
-
-	t.Run("new-bundle", func(t *testing.T) {
-		outFile := path.Join(t.TempDir(), "bundle.gatecheck")
-		targetFile := path.Join(t.TempDir(), "random-1.file")
-		b := make([]byte, 1000)
-
-		_, _ = rand.Read(b)
-		if err := os.WriteFile(targetFile, b, 0664); err != nil {
-			t.Fatal(err)
-		}
-		commandString := fmt.Sprintf("bundle -vo %s %s", outFile, targetFile)
-		_, err := Execute(commandString, CLIConfig{AutoDecoderTimeout: time.Second * 2})
+		obj, err := archive.NewBundleDecoder().DecodeFrom(MustOpen(bundleFilename, t))
 		if err != nil {
 			t.Fatal(err)
 		}
-
-		// Check bundle for the artifact
-		postOutFile := MustOpen(outFile, t.Fatal)
-		bun := artifact.DecodeBundle(postOutFile)
-		genericFile, ok := bun.Generic["random-1.file"]
-		if !ok {
-			t.Fatal("Could not extract generic file")
+		buf := new(bytes.Buffer)
+		decodedBundle := obj.(*archive.Bundle)
+		_, err = decodedBundle.WriteFileTo(buf, "file-1.txt")
+		t.Log(buf.String())
+		if err != nil {
+			t.Fatal(err)
 		}
-
-		if len(genericFile.Content) != 1000 {
-			t.Fatal("Invalid decoded file size")
+		if buf.String() != "ABCDEF" {
+			t.Fatalf("want: %s got: %s", "ABCDEF", buf.String())
 		}
-
-		t.Run("print-test", func(t *testing.T) {
-			commandString := fmt.Sprintf("print %s", outFile)
-			output, err := Execute(commandString, CLIConfig{AutoDecoderTimeout: time.Second * 2})
-			if err != nil {
-				t.Fatal(err)
-			}
-			if strings.Contains(output, "random-1.file") != true {
-				t.Log(output)
-				t.Fatal("unexpected content")
-			}
-		})
-
-		t.Run("existing-bundle", func(t *testing.T) {
-			secondFile := path.Join(t.TempDir(), "random-2.file")
-			b := make([]byte, 2000)
-			_, _ = rand.Read(b)
-			if err := os.WriteFile(secondFile, b, 0664); err != nil {
-				t.Fatal(err)
-			}
-			commandString := fmt.Sprintf("bundle -vo %s %s", outFile, secondFile)
-			output, err := Execute(commandString, CLIConfig{})
-			if err != nil {
-				t.Fatal(err)
-			}
-			t.Log(output)
-		})
-
-		t.Run("empty-file", func(t *testing.T) {
-			emptyFile := path.Join(t.TempDir(), "empty.file")
-			if err := os.WriteFile(emptyFile, []byte{}, 0664); err != nil {
-				t.Fatal(err)
-			}
-			commandString := fmt.Sprintf("bundle -vo %s %s", outFile, emptyFile)
-			output, err := Execute(commandString, CLIConfig{})
-			if err != nil {
-				t.Fatal(err)
-			}
-			t.Log(output)
-		})
-
-		t.Run("allow-missing", func(t *testing.T) {
-			someFile := path.Join(t.TempDir(), "some.file")
-
-			commandString := fmt.Sprintf("bundle -mvo %s %s", outFile, someFile)
-			output, err := Execute(commandString, CLIConfig{})
-			if err != nil {
-				t.Fatal(err)
-			}
-			t.Log(output)
-		})
+		cmdString = fmt.Sprintf("bundle ls %s", bundleFilename)
+		out, err := Execute(cmdString, config)
+		if err != nil {
+			t.Fatalf("want: %v got: %v", nil, err)
+		}
+		t.Log(out)
 	})
-
 }
