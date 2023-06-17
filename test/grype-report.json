@@ -29406,6 +29406,90 @@
      }
     ]
    }
+  },
+  {
+    "vulnerability": {
+      "id": "CVE-2023-1999",
+      "dataSource": "http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2023-1999",
+      "namespace": "alpine:distro:alpine:3.17",
+      "severity": "Unknown",
+      "urls": [
+        "http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2023-1999"
+      ],
+      "cvss": [],
+      "fix": {
+        "versions": [
+          "1.2.4-r2"
+        ],
+        "state": "fixed"
+      },
+      "advisories": []
+    },
+    "relatedVulnerabilities": [],
+    "matchDetails": [
+      {
+        "type": "exact-direct-match",
+        "matcher": "apk-matcher",
+        "searchedBy": {
+          "distro": {
+            "type": "alpine",
+            "version": "3.17.3"
+          },
+          "namespace": "alpine:distro:alpine:3.17",
+          "package": {
+            "name": "libwebp",
+            "version": "1.2.4-r1"
+          }
+        },
+        "found": {
+          "versionConstraint": "< 1.2.4-r2 (apk)",
+          "vulnerabilityID": "CVE-2023-1999"
+        }
+      },
+      {
+        "type": "exact-indirect-match",
+        "matcher": "apk-matcher",
+        "searchedBy": {
+          "distro": {
+            "type": "alpine",
+            "version": "3.17.3"
+          },
+          "namespace": "alpine:distro:alpine:3.17",
+          "package": {
+            "name": "libwebp",
+            "version": "1.2.4-r1"
+          }
+        },
+        "found": {
+          "versionConstraint": "< 1.2.4-r2 (apk)",
+          "vulnerabilityID": "CVE-2023-1999"
+        }
+      }
+    ],
+    "artifact": {
+      "name": "libwebp",
+      "version": "1.2.4-r1",
+      "type": "apk",
+      "locations": [
+        {
+          "path": "/lib/apk/db/installed",
+          "layerID": "sha256:d2b3998e9df2706eb65e687a2dea5ab569c64f4f1b869aa80ecfb41c2e9b5463"
+        }
+      ],
+      "language": "",
+      "licenses": [
+        "BSD-3-Clause"
+      ],
+      "cpes": [
+        "cpe:2.3:a:libwebp:libwebp:1.2.4-r1:*:*:*:*:*:*:*"
+      ],
+      "purl": "pkg:apk/alpine/libwebp@1.2.4-r1?arch=x86_64&distro=alpine-3.17.3",
+      "upstreams": [
+        {
+          "name": "libwebp"
+        }
+      ]
+    }
   }
  ],
  "source": {
