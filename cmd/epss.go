@@ -14,8 +14,7 @@ import (
 )
 
 func NewEPSSCmd(service EPSSService) *cobra.Command {
-
-	var downloadCmd = &cobra.Command{
+	downloadCmd := &cobra.Command{
 		Use:   "download",
 		Short: "EPSS CSV with scores for all CVEs (outputs to STDOUT)",
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -35,7 +34,7 @@ func NewEPSSCmd(service EPSSService) *cobra.Command {
 	defaultURL := fmt.Sprintf("https://epss.cyentia.com/epss_scores-%d-%s-%s.csv.gz", today.Year(), today.Format("01"), today.Format("02"))
 	downloadCmd.Flags().StringP("url", "u", defaultURL, "The URL for the CSV file")
 
-	var EPSSCmd = &cobra.Command{
+	EPSSCmd := &cobra.Command{
 		Use:   "epss <Grype FILE>",
 		Short: "Query first.org for Exploit Prediction Scoring System (EPSS)",
 		Args:  cobra.ExactArgs(1),
@@ -95,7 +94,6 @@ func NewEPSSCmd(service EPSSService) *cobra.Command {
 }
 
 func epssFromAPI(service EPSSService, CVEs []epss.CVE) error {
-
 	err := service.WriteEPSS(CVEs)
 	if err != nil {
 		return fmt.Errorf("%w: %s", ErrorAPI, err)
@@ -113,7 +111,6 @@ func epssFromDataStore(epssCSV io.Reader, CVEs []epss.CVE) error {
 
 	if err := store.WriteEPSS(CVEs); err != nil {
 		return err
-
 	}
 
 	return nil

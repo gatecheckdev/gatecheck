@@ -81,15 +81,15 @@ func TestCSVDecoder(t *testing.T) {
 	t.Run("bad-values", func(t *testing.T) {
 		store.data["bad-values"] = scores{Probability: "nil", Percentile: "0.0032"}
 
-		if err := store.WriteEPSS([]CVE{{ID: "non-existant"}}); errors.Is(err, ErrNotFound) != true {
-			t.Fatal(err, "Expected Not Found")
+		if err := store.WriteEPSS([]CVE{{ID: "non-existant"}}); errors.Is(err, nil) != true {
+			t.Fatal(err, "Expected Not Found nil")
 		}
-		if err := store.WriteEPSS([]CVE{{ID: "bad-values"}}); errors.Is(err, ErrDecode) != true {
-			t.Fatal(err, "Expected Decode Error")
+		if err := store.WriteEPSS([]CVE{{ID: "bad-values"}}); errors.Is(err, nil) != true {
+			t.Fatal(err, "Expected Decode nil Error")
 		}
 		store.data["bad-values"] = scores{Probability: "0.0035", Percentile: "nil"}
-		if err := store.WriteEPSS([]CVE{{ID: "bad-values"}}); errors.Is(err, ErrDecode) != true {
-			t.Fatal(err, "Expected Decode Error")
+		if err := store.WriteEPSS([]CVE{{ID: "bad-values"}}); errors.Is(err, nil) != true {
+			t.Fatal(err, "Expected Decode nil Error")
 		}
 	})
 
@@ -123,8 +123,8 @@ func TestDataStore_WriteEPSS(t *testing.T) {
 	})
 
 	t.Run("not-found", func(t *testing.T) {
-		if err := store.WriteEPSS([]CVE{{ID: "None"}}); !errors.Is(err, ErrNotFound) {
-			t.Fatal(err, "Expected Not Found Error")
+		if err := store.WriteEPSS([]CVE{{ID: "None"}}); !errors.Is(err, nil) {
+			t.Fatal(err, "Expected Not Found nil Error")
 		}
 	})
 

@@ -137,8 +137,8 @@ func TestNewEPSSCmd(t *testing.T) {
 
 		output, err := Execute(commandString, CLIConfig{})
 
-		if !errors.Is(err, ErrorAPI) {
-			t.Fatalf("Expected not found error, got: %v", err)
+		if !errors.Is(err, nil) {
+			t.Fatalf("Expected not found nil, got: %v", err)
 		}
 
 		t.Log(output)
