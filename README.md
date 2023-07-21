@@ -20,10 +20,10 @@ Gatecheck is stateless so self-hosting and provisioning servers is not required.
 - [X] Exploit Prediction Scoring System (EPSS) Querying
 - [X] CISA Known Exploited Vulnerabilities (KEV) Blacklisting
 - [X] Artifact Integrity Verification
-- [ ] Whitelist Management
+- [X] Whitelist Management
 - [ ] Deployment Verification & Validation
 
-## Getting started
+## Getting Started
 
 The fastest way to get started with Gatecheck is to download the pre-built binaries for your target system.
 
@@ -46,22 +46,32 @@ Print scans in a table
 
 ```shell
 gatecheck print grype-report.json gitleaks-report.json semgrep-report.json
-Severity   | Package             | Version            | Link                                                        
--------------------------------------------------------------------------------------------------------------------
-Critical   | curl                | 7.74.0-1.3+deb11u1 | https://security-tracker.debian.org/tracker/CVE-2021-22945  
-Critical   | libcurl4            | 7.74.0-1.3+deb11u1 | https://security-tracker.debian.org/tracker/CVE-2021-22945  
+┌──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ Severity   │ Package               │ Version          │ Link                                                         │
+├──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ Critical   │ vm2                   │ 3.9.17           │ https://github.com/advisories/GHSA-cchq-frgv-rjh5            │
+│ Critical   │ vm2                   │ 3.9.17           │ https://github.com/advisories/GHSA-whpj-8f3w-67p5            │
+│ Critical   │ marsdb                │ 0.6.11           │ https://github.com/advisories/GHSA-5mrr-rgp6-x4gr            │
+│ Critical   │ jsonwebtoken          │ 0.1.0            │ https://github.com/advisories/GHSA-c7hr-j4mj-j2w6            │
 ...
 
-Rule            | File                   | Secret                                              | Commit                                  
------------------------------------------------------------------------------------------------------------------------------------------
-jwt             | path/forgedJwt.spec.ts | eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJkYXRhIj...  | 1d1571854621f9fa4150e6fae93b24504d4e5a11
-generic-api-key | path/totpSetup.spec.ts | IFTXE3SPOEYVURT2MRYGI52TKJ4HC3KH                    | 1d1571854621f9fa4150e6fae93b24504d4e5a11
+┌──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ Rule            │ File                                                           │ secret                                             │ Commit                                   │
+├──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ generic-api-key │ .travis.yml                                                    │ ...f53beaa4f097b5a49754c4edb8e95d59088bac519607637 │ 8a474274d6fa9335c23fe1ca2dc19688e7dffac5 │
+│ jwt             │ cypress/integration/e2e/forgedJwt.spec.ts                      │ ...fQ.gShXDT5TrE5736mpIbfVDEcQbLfteJaQUG7Z0PH8Xc8' │ 1d1571854621f9fa4150e6fae93b24504d4e5a11 │
+│ jwt             │ cypress/integration/e2e/forgedJwt.spec.ts                      │ ...fQ.gShXDT5TrE5736mpIbfVDEcQbLfteJaQUG7Z0PH8Xc8" │ cb7bddb172d7d01e6403c8551689c3e0a7fb47bf │
+│ generic-api-key │ cypress/integration/e2e/totpSetup.spec.ts                      │ IFTXE3SPOEYVURT2MRYGI52TKJ4HC3KH                   │ 1d1571854621f9fa4150e6fae93b24504d4e5a11 │
+│ generic-api-key │ cypress/integration/e2e/totpSetup.spec.ts                      │ IFTXE3SPOEYVURT2MRYGI52TKJ4HC3KH                   │ b19993bcee5587459474fc495f35977f542d26e8 │
 ...
 
-Path              | Line | Level   | link                | CWE Message                                                                                   
---------------------------------------------------------------------------------------------------------
-lib/insecurity.ts | 55   | WARNING | https://sg.run/4xN9 | CWE-798: Use of Hard-coded Credentials
-lib/insecurity.ts | 53   | WARNING | https://sg.run/kXNo | CWE-522: Insufficiently Protected Credentials
+┌────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ Severity │ Path                           │ Line  │ CWE Message                                                                                      │ Link                │
+├────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ ERROR    │ frontend/src/...guard.spec.ts  │ 40    │ [CWE-321: Use of Hard-coded Cryptographic Key]                                                   │ https://sg.run/05N5 │
+│ ERROR    │ frontend/src/...onent.spec.ts  │ 50    │ [CWE-321: Use of Hard-coded Cryptographic Key]                                                   │ https://sg.run/05N5 │
+│ ERROR    │ frontend/src/...onent.spec.ts  │ 56    │ [CWE-321: Use of Hard-coded Cryptographic Key]                                                   │ https://sg.run/05N5 │
+│ ERROR    │ data/static/users.yml          │ 150   │ [CWE-798: Use of Hard-coded Credentials]                                                         │ https://sg.run/l2o5 │
 ...  
 ```
 
@@ -79,6 +89,7 @@ Using the `--audit` flag will exit with code 0
 ### Validation with KEV Catalog 
 
 Use the `-k` flag to provide a [CISA Known Exploited Vulnerabilities Catalog (JSON)](https://www.cisa.gov/known-exploited-vulnerabilities-catalog)
+Or `--fetch-kev` to query the API without a file
 
 ```shell
 gatecheck validate -c gatecheck.yaml -k known-exploited-vulnerabilities.json grype-report.json
@@ -92,22 +103,49 @@ Catalog Version: 2022.11.08
 Error: validation
 ```
 
+### Settings
+Settings can be applied with environment variables or using a settings.env file
+
+To see the applied settings
+```shell
+gatecheck config info
+```
+expected file: `settings.env`
+
+```shell
+GATECHECK_AWS_PROFILE=
+GATECHECK_DD_COMMIT_HASH=
+GATECHECK_DD_TAGS=
+GATECHECK_AWS_BUCKET=
+GATECHECK_DD_BRANCH_TAG=
+GATECHECK_DD_SOURCE_URL=
+GATECHECK_DD_API_URL=
+GATECHECK_DD_API_KEY=
+GATECHECK_DD_PRODUCT_TYPE=
+GATECHECK_DD_ENGAGEMENT=
+GATECHECK_KEV_URL='https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json'
+GATECHECK_DD_PRODUCT=
+GATECHECK_EPSS_URL='https://epss.cyentia.com'
+```
+
 ### EPSS
 
 Automatically queries the [Exploit Prediction Scoring System, by First](https://www.first.org/epss/) API and cross reference
 using a Grype Report file.
 
 ```shell
-CVE              | Severity   | EPSS   | Percentile | Date       | Link
----------------------------------------------------------------------------------------------------------------------------------
-CVE-2011-3389    | Medium     | 40.95% | 98.22%     | 2023-01-23 | https://security-tracker.debian.org/tracker/CVE-2011-3389
-CVE-2011-3389    | Medium     | 40.95% | 98.22%     | 2023-01-23 | https://security-tracker.debian.org/tracker/CVE-2011-3389
-CVE-2022-0778    | High       | 35.45% | 97.80%     | 2023-01-23 | https://security-tracker.debian.org/tracker/CVE-2022-0778
-CVE-2022-1271    | Unknown    | 25.98% | 96.99%     | 2023-01-23 | https://security-tracker.debian.org/tracker/CVE-2022-1271
-CVE-2018-25032   | High       | 23.44% | 96.63%     | 2023-01-23 | https://security-tracker.debian.org/tracker/CVE-2018-25032
-CVE-2022-23852   | Critical   | 20.15% | 96.32%     | 2023-01-23 | https://security-tracker.debian.org/tracker/CVE-2022-23852
-CVE-2022-23990   | Critical   | 19.17% | 96.23%     | 2023-01-23 | https://security-tracker.debian.org/tracker/CVE-2022-23990
-CVE-2022-25315   | Critical   | 17.17% | 96.07%     | 2023-01-23 | https://security-tracker.debian.org/tracker/CVE-2022-25315
+┌───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ CVE                 │ Severity   │ EPSS Score │ Percentile │ Link                                                         │
+├───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ CVE-2019-1010024    │ Negligible │ 0.02258    │ 88.09%     │ https://security-tracker.debian.org/tracker/CVE-2019-1010024 │
+│ GHSA-jf85-cpcp-j695 │ Critical   │ 0.01552    │ 85.44%     │ https://github.com/advisories/GHSA-jf85-cpcp-j695            │
+│ CVE-2019-1010023    │ Negligible │ 0.01081    │ 82.35%     │ https://security-tracker.debian.org/tracker/CVE-2019-1010023 │
+│ GHSA-p6mc-m468-83gw │ High       │ 0.01036    │ 81.94%     │ https://github.com/advisories/GHSA-p6mc-m468-83gw            │
+│ CVE-2010-4756       │ Negligible │ 0.00824    │ 79.68%     │ https://security-tracker.debian.org/tracker/CVE-2010-4756    │
+│ GHSA-c7hr-j4mj-j2w6 │ Critical   │ 0.00659    │ 76.83%     │ https://github.com/advisories/GHSA-c7hr-j4mj-j2w6            │
+│ GHSA-c7hr-j4mj-j2w6 │ Critical   │ 0.00659    │ 76.83%     │ https://github.com/advisories/GHSA-c7hr-j4mj-j2w6            │
+│ CVE-2007-6755       │ Negligible │ 0.00614    │ 75.93%     │ https://security-tracker.debian.org/tracker/CVE-2007-6755    │
+│ CVE-2007-6755       │ Negligible │ 0.00614    │ 75.93%     │ https://security-tracker.debian.org/tracker/CVE-2007-6755    │
 ...
 ```
 
@@ -156,24 +194,10 @@ gatecheck export s3 grype-report.json \
   --key upload/path/to/grype-report.json
 ```
 
-## Blacklist Validation
-Gatecheck relies on [CISA Known Exploited Vulnerabilities](https://www.cisa.gov/known-exploited-vulnerabilities) to
-provide blacklist validation.
-You can take a Grype report and a CISA KEV blacklist file and see if any of the vulnerabilities are found in that Grype
-report.
-
-```shell
-gatecheck validate --blacklist kev.json -c gatecheck.yaml grype-report.json
-```
-
-If `--audit` flag is used, it will exit code 0 after printing the report.
-Otherwise, it will exit code 1 for a Validation Error.
-
-
 ### Config
 
 The configuration file has the threshold for each artifact.
-The Gatecheck config (```gatecheck.yaml``` by default) is a customizable collection of tool specific configuration 
+The Gatecheck config (`gatecheck.yaml` by default) is a customizable collection of tool specific configuration 
 files.
 This file is where the thresholds are set.
 
@@ -181,7 +205,32 @@ This file is where the thresholds are set.
 gatecheck config init > gatecheck.yaml
 cat gatecheck.yaml
 
+cyclonedx:
+    allowList:
+        - id: example allow id
+          reason: example reason
+    denyList:
+        - id: example deny id
+          reason: example reason
+    required: false
+    critical: -1
+    high: -1
+    medium: -1
+    low: -1
+    info: -1
+    none: -1
+    unknown: -1
+gitleaks:
+    secretsAllowed: true
 grype:
+    allowList:
+        - id: example allow id
+          reason: example reason
+    denyList:
+        - id: example deny id
+          reason: example reason
+    epssAllowThreshold: 1
+    epssDenyThreshold: 1
     critical: -1
     high: -1
     medium: -1
@@ -192,32 +241,30 @@ semgrep:
     info: -1
     warning: -1
     error: -1
-gitleaks:
-    SecretsAllowed: false
 ```
 
 ### Bundle
 
 Artifacts and generic files can be bundled using Gatecheck.
 The files are compressed which reduces the total file size while preserving data.
+The resulting file is a gatecheck-bundle.tar.gz file
 
 To create a new bundle
+
 ```shell
-gatecheck bundle -o bundle.gatecheck grype-report.json semgrep-sast-report.json random.file
+gatecheck bundle grype-report.json semgrep-sast-report.json
 ```
 
 To view the files in a bundle
+
 ```shell
 gatecheck print bundle.gatecheck
-
-Type         | Label                    | Digest                                                           | Size
----------------------------------------------------------------------------------------------------------------------
-Grype        | grype-report.json        | 588E5969C6205FFD3F5531EB643B6D6BB9FF4CBB862BD9BC180DC2867D3A1A18 | 940 kB
-Semgrep      | semgrep-sast-report.json | 377C6C86987DFB649266432DF2A741917EC7D225CA883A6ABDC176AA44519F84 | 172 kB
-Gitleaks     |                          |                                                                  | 0 B
-Generic File | random.file              | 1C87B6727F523662DF714F06A94EA27FA4D9050C38F4F7712BD4663FFBFDFA01 | 13 B
-
-                                                                                                Total Size: 1.1 MB
+┌──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ Type                      │ Label                    │ Digest                                                           │ Size   │
+├──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ Semgrep Scan Report       │ semgrep-sast-report.json │ 2423f27d67cc9e2aeabc83c0b47e1fe30ddcc23846e17e29e611ea4206b39326 │ 265 kB │
+│ Anchore Grype Scan Report │ grype-report.json        │ 4f90f3faf608d854def3d6c9ac014200af7dff81ea8b177e5093baf4d76c07fe │ 232 kB │
+└──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
 To validate all files in the bundle with a configuration file

@@ -9,6 +9,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- *Major Refactoring*
+- Bundling is now a gzipped tarball with a manifest file
+- Using "Agents" for KEV and EPSS downloading, simplify interface
+- Encoding package refactor, using generics 
+- Common validation pattern between artifacts
+- Report artifacts as isolated packages instead
+- Table refactor for simplified table formatting
+- Table sorting pattern updated
+- Table printing to use unicode pretty borders
+
+### Added
+- EPSS Allow and Deny Thresholds
+
+### Removed
+- Config object in favor of using a map[string]any which makes it easier to support new reports in the future
+- Encoding package that relied decodeBytes functions
+ 
+## [0.0.10] - 2023-06-07 
+
+### Changed
+
 - New ASCII Logo
 - Bundle logging to use internal logger
 - Sort Grype print by Severity, then by Package
