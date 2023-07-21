@@ -34,9 +34,10 @@ const ExitValidationFail = 1
 
 func main() {
 	viper.SetConfigType("env")
-	viper.SetConfigName("gatecheck")
-	viper.AddConfigPath("$HOME/.config/gatecheck/")
+	viper.SetConfigName("settings")
 	viper.AddConfigPath(".")
+	viper.AddConfigPath("$HOME/.config/gatecheck/")
+
 	viper.SetDefault("GATECHECK_KEV_URL", kev.DefaultBaseURL)
 	viper.SetDefault("GATECHECK_EPSS_URL", epss.DefaultBaseURL)
 	viper.SetDefault("GATECHECK_DD_API_KEY", "")
@@ -55,7 +56,7 @@ func main() {
 
 	if err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
-			fmt.Println(err)
+			fmt.Println("viper configuration error:", err)
 			os.Exit(ExitSystemFail)
 		}
 	}
@@ -138,6 +139,7 @@ func main() {
 	}
 
 	if err != nil {
+		command.PrintErrln(err)
 		os.Exit(ExitSystemFail)
 	}
 

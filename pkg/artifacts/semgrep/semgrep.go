@@ -70,9 +70,9 @@ func checkReport(report *ScanReport) error {
 }
 
 type Config struct {
-	Info     int  `yaml:"info" json:"info"`
-	Warning  int  `yaml:"warning" json:"warning"`
-	Error    int  `yaml:"error" json:"error"`
+	Info    int `yaml:"info" json:"info"`
+	Warning int `yaml:"warning" json:"warning"`
+	Error   int `yaml:"error" json:"error"`
 }
 
 func validateFunc(scanReport ScanReport, config Config) error {
@@ -97,6 +97,7 @@ func validateFunc(scanReport ScanReport, config Config) error {
 	}
 
 	log.Infof("Semgrep Findings: %v", format.PrettyPrintMap(found))
+	log.Infof("Semgrep Thresholds: %v", format.PrettyPrintMap(allowed))
 	if len(errStrings) == 0 {
 		return nil
 	}

@@ -44,6 +44,8 @@ func TestService_GetCVEs(t *testing.T) {
 	matches := []models.Match{
 		{Vulnerability: models.Vulnerability{VulnerabilityMetadata: models.VulnerabilityMetadata{ID: "cve-1"}}},
 		{Vulnerability: models.Vulnerability{VulnerabilityMetadata: models.VulnerabilityMetadata{ID: "cve-2"}}},
+		{Vulnerability: models.Vulnerability{VulnerabilityMetadata: models.VulnerabilityMetadata{ID: "ghsa-1"}},
+			RelatedVulnerabilities: []models.VulnerabilityMetadata{{ID: "cve-1"}}},
 	}
 	t.Run("found", func(t *testing.T) {
 		cves, err := service.GetCVEs(matches)
@@ -66,8 +68,21 @@ func TestService_GetCVEs(t *testing.T) {
 			t.Fatal(err)
 		}
 		t.Log(cves)
-		if cves[2].Probability != 0 || cves[2].Percentile != 0 {
-			t.Fatal(cves[2])
+		if cves[3].Probability != 0 || cves[3].Percentile != 0 {
+			t.Fatal("Prob and Percentile should be 0:", cves[3])
+		}
+	})
+
+	t.Run("not-found-or-related-not-found", func(t *testing.T) {
+		matches := append(matches, models.Match{Vulnerability: models.Vulnerability{VulnerabilityMetadata: models.VulnerabilityMetadata{ID: "ghsa-5"}},
+			RelatedVulnerabilities: []models.VulnerabilityMetadata{{ID: "cve-5"}}})
+		cves, err := service.GetCVEs(matches)
+		if err != nil {
+			t.Fatal(err)
+		}
+		t.Log(cves)
+		if cves[3].Probability != 0 || cves[3].Percentile != 0 {
+			t.Fatal("Prob and Percentile should be 0:", cves[3])
 		}
 	})
 

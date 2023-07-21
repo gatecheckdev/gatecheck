@@ -99,8 +99,15 @@ func epssTable(input []epss.CVE) *format.Table {
 	table.AppendRow("CVE", "Severity", "EPSS Score", "Percentile", "Link")
 
 	for _, cve := range input {
-		table.AppendRow(cve.ID, cve.Severity, fmt.Sprintf("%.5f", cve.Probability),
-			fmt.Sprintf("%.2f%%", 100*cve.Percentile), cve.Link)
+		prob := "-"
+		perc := "-"
+		if cve.Probability != 0 {
+			prob = fmt.Sprintf("%.5f", cve.Probability)
+		}
+		if cve.Percentile != 0 {
+			perc = fmt.Sprintf("%.2f%%", 100*cve.Percentile)
+		}
+		table.AppendRow(cve.ID, cve.Severity, prob, perc, cve.Link)
 	}
 
 	table.SetSort(2, func(a, b string) bool {

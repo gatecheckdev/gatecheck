@@ -61,16 +61,25 @@ func (s *Service) GetCVEs(matches []models.Match) ([]CVE, error) {
 }
 
 func (s *Service) GetCVE(match models.Match) (CVE, error) {
-	scores, ok := s.dataStore[match.Vulnerability.ID]
 	cve := CVE{
 		ID:        match.Vulnerability.ID,
 		Severity:  match.Vulnerability.Severity,
 		Link:      match.Vulnerability.DataSource,
 		ScoreDate: s.scoreDate,
 	}
+	scores, ok := s.dataStore[match.Vulnerability.ID]
 	if !ok {
-		log.Warnf("No score found for '%s'", match.Vulnerability.ID)
-		return cve, nil
+		if len(match.RelatedVulnerabilities) == 0 {
+			log.Warnf("No score found for '%s'", match.Vulnerability.ID)
+			return cve, nil
+		}
+		if _, ok = s.dataStore[match.RelatedVulnerabilities[0].ID]; !ok {
+			log.Warnf("No score found for '%s' or related CVE '%s'",
+				match.Vulnerability.ID, match.RelatedVulnerabilities[0].ID)
+
+			return cve, nil
+		}
+		scores = s.dataStore[match.RelatedVulnerabilities[0].ID]
 	}
 	epssValue, err := strconv.ParseFloat(scores.EPSS, 64)
 	if err != nil {

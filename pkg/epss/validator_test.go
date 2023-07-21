@@ -44,7 +44,7 @@ func TestValidator_Validate(t *testing.T) {
 	})
 
 	t.Run("success-fail", func(t *testing.T) {
-		configMap := map[string]any{grype.ConfigFieldName: grype.Config{EPSSAllowThreshold: .2, EPSSDenyThreshold: .45}}
+		configMap := map[string]any{grype.ConfigFieldName: grype.Config{EPSSAllowThreshold: .2, EPSSDenyThreshold: .45, AllowList: []grype.ListItem{{Id: "cve-5"}}}}
 		configBuf := new(bytes.Buffer)
 		_ = yaml.NewEncoder(configBuf).Encode(configMap)
 		err := NewValidator(service).Validate(matches, configBuf)

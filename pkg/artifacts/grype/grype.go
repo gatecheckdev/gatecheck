@@ -119,6 +119,7 @@ LOOPMATCH:
 		found[match.Vulnerability.Severity] += 1
 	}
 	log.Infof("Grype Findings: %v", format.PrettyPrintMap(found))
+	log.Infof("Grype Thresholds: %v", format.PrettyPrintMap(allowed))
 
 	var errStrings []string
 

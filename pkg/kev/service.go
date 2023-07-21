@@ -75,14 +75,14 @@ func (s *Service) MatchedVulnerabilities(r *grype.ScanReport) []models.Match {
 	if r == nil || r.Matches == nil {
 		return make([]models.Match, 0)
 	}
-	filteredMatches := slices.DeleteFunc(r.Matches, func(m models.Match) bool {
+	matchesInKEVCatalog := slices.DeleteFunc(r.Matches, func(m models.Match) bool {
 		inCatalog := slices.ContainsFunc(s.catalog.Vulnerabilities, func(vul Vulnerability) bool {
 			return m.Vulnerability.ID == vul.CveID
 		})
 		// Delete if not in catalog
 		return !inCatalog
 	})
-	return filteredMatches
+	return matchesInKEVCatalog
 }
 
 type APIAgent struct {
@@ -102,6 +102,7 @@ func (a *APIAgent) Read(p []byte) (int, error) {
 	}
 
 	req, _ := http.NewRequest(http.MethodGet, a.url, nil)
+	log.Infof("KEV GET Request URL: %s", a.url)
 
 	res, err := a.client.Do(req)
 	if err != nil {
@@ -109,7 +110,7 @@ func (a *APIAgent) Read(p []byte) (int, error) {
 	}
 
 	if res.StatusCode != http.StatusOK {
-		log.Warnf("Download CSV Status: %s", res.Status)
+		log.Warnf("Request Status: %s", res.Status)
 		return 0, fmt.Errorf("%w: status: %s", kevAPIErr, res.Status)
 	}
 

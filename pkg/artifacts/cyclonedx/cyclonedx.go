@@ -198,6 +198,7 @@ LOOPMATCH:
 
 	}
 	log.Infof("CycloneDx Findings: %v", format.PrettyPrintMap(found))
+	log.Infof("CycloneDx Thresholds: %v", format.PrettyPrintMap(allowed))
 
 	var errs []error
 

@@ -11,6 +11,7 @@ import (
 	"github.com/gatecheckdev/gatecheck/internal/log"
 	"github.com/gatecheckdev/gatecheck/pkg/artifacts/grype"
 	gcv "github.com/gatecheckdev/gatecheck/pkg/validate"
+	"golang.org/x/exp/slices"
 )
 
 type Validator struct {
@@ -54,6 +55,11 @@ func (v *Validator) Validate(matches []models.Match, configReader io.Reader) err
 			allowedIDs = append(allowedIDs, fmt.Sprintf("%s (%s)", cve.ID, strconv.FormatFloat(cve.Probability, 'f', -1, 64)))
 			continue
 		}
+		// check config allow list
+		inAllowList := slices.ContainsFunc(config.AllowList, func(allowedCVE grype.ListItem) bool { return allowedCVE.Id == cve.ID })
+		if inAllowList {
+			continue
+		}
 		if cve.Probability >= config.EPSSDenyThreshold {
 			deniedIDs = append(deniedIDs, fmt.Sprintf("%s (%s)", cve.ID, strconv.FormatFloat(cve.Probability, 'f', -1, 64)))
 		}
@@ -63,13 +69,13 @@ func (v *Validator) Validate(matches []models.Match, configReader io.Reader) err
 	if len(allowedIDs) != 0 {
 		allowedStr = strings.Join(allowedIDs, ", ")
 	}
-	log.Infof("EPSS allowed vulnerabilities[%d]: %s", len(allowedIDs), allowedStr)
+	log.Infof("EPSS Validation: allowed vulnerabilities[%d]: %s", len(allowedIDs), allowedStr)
 
 	deniedStr := ""
 	if len(deniedIDs) != 0 {
 		deniedStr = strings.Join(deniedIDs, ", ")
 	}
-	log.Infof("EPSS denied vulnerabilities[%d]: %s", len(deniedIDs), deniedStr)
+	log.Infof("EPSS Validation: denied vulnerabilities[%d]: %s", len(deniedIDs), deniedStr)
 
 	if len(deniedIDs) > 0 {
 		return fmt.Errorf("%w: %d vulnerabilities have EPSS scores over deny threshold %s",

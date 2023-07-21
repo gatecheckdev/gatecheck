@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 
+	"github.com/gatecheckdev/gatecheck/internal/log"
 	"github.com/gatecheckdev/gatecheck/pkg/archive"
 	"github.com/gatecheckdev/gatecheck/pkg/artifacts/cyclonedx"
 	"github.com/gatecheckdev/gatecheck/pkg/artifacts/gitleaks"
@@ -88,6 +89,7 @@ func NewValidateCmd(newAsyncDecoder func() AsyncDecoder, KEVDownloadAgent io.Rea
 			if err != nil {
 				return fmt.Errorf("%w: %v", ErrorValidation, err)
 			}
+			log.Info("successfully passed validation")
 			return nil
 
 		},
@@ -97,6 +99,7 @@ func NewValidateCmd(newAsyncDecoder func() AsyncDecoder, KEVDownloadAgent io.Rea
 		if bundle, ok := obj.(*archive.Bundle); ok {
 			validationErrors := make(map[string]error, 0)
 			for label := range bundle.Manifest().Files {
+				log.Infof("Validating bundle file labeled: %s", label)
 				decoder := newAsyncDecoder()
 				_, _ = bundle.WriteFileTo(decoder, label)
 				obj, _ := decoder.Decode()
