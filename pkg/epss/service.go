@@ -14,7 +14,9 @@ import (
 
 	"github.com/anchore/grype/grype/presenter/models"
 	"github.com/gatecheckdev/gatecheck/internal/log"
+	"github.com/gatecheckdev/gatecheck/pkg/artifacts/grype"
 	gce "github.com/gatecheckdev/gatecheck/pkg/encoding"
+	gcv "github.com/gatecheckdev/gatecheck/pkg/validate"
 )
 
 var ErrAPI = errors.New("EPSS API error")
@@ -47,6 +49,45 @@ type Service struct {
 // NewService initializes internal structures, and lazily assigns reader.
 func NewService(r io.Reader) *Service {
 	return &Service{r: r, dataStore: make(map[string]Scores)}
+}
+
+func (s *Service) GrypeDenyRuleFunc() func([]models.Match, grype.Config) error {
+
+	grypeDenyRule := func(matches []models.Match, config grype.Config) error {
+		return gcv.ValidateFunc(matches, func(match models.Match) error {
+			cve, _ := s.GetCVE(match)
+
+			if config.EPSSDenyThreshold == 0 || cve.Probability == 0 {
+				return nil
+			}
+
+			if cve.Probability < config.EPSSDenyThreshold {
+				return nil
+			}
+			denyStr := strconv.FormatFloat(config.EPSSDenyThreshold, 'f', -1, 64)
+			probStr := strconv.FormatFloat(cve.Probability, 'f', -1, 64)
+
+			rule := fmt.Sprintf("EPSS Score Over Deny Threshold %s", denyStr)
+			id := fmt.Sprintf("%s (%s)", cve.ID, probStr)
+			return gcv.NewFailedRuleError(rule, id)
+		})
+	}
+
+	return grypeDenyRule
+}
+
+func (s *Service) GrypeAllowRuleFunc() func(models.Match, grype.Config) bool {
+	grypeAllowRule := func(match models.Match, config grype.Config) bool {
+		cve, _ := s.GetCVE(match)
+
+		if config.EPSSAllowThreshold == 0 || cve.Probability == 0 {
+			return false
+		}
+
+		return cve.Probability < config.EPSSAllowThreshold
+	}
+
+	return grypeAllowRule
 }
 
 func (s *Service) GetCVEs(matches []models.Match) ([]CVE, error) {

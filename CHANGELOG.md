@@ -18,9 +18,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Table refactor for simplified table formatting
 - Table sorting pattern updated
 - Table printing to use unicode pretty borders
+- Fully refactored the validation pattern
 
 ### Added
 - EPSS Allow and Deny Thresholds
+- Validation rules via functions that can be layered
 
 ### Removed
 - Config object in favor of using a map[string]any which makes it easier to support new reports in the future

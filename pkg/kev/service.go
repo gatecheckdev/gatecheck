@@ -11,6 +11,7 @@ import (
 	"github.com/gatecheckdev/gatecheck/internal/log"
 	"github.com/gatecheckdev/gatecheck/pkg/artifacts/grype"
 	gce "github.com/gatecheckdev/gatecheck/pkg/encoding"
+	gcv "github.com/gatecheckdev/gatecheck/pkg/validate"
 	"golang.org/x/exp/slices"
 )
 
@@ -56,6 +57,25 @@ type Service struct {
 
 func NewService(r io.Reader) *Service {
 	return &Service{reader: r, catalog: &Catalog{}}
+}
+
+func (s *Service) NewValidator() gcv.Validator[models.Match, grype.Config] {
+	return gcv.NewValidator[models.Match, grype.Config]().WithValidationRules(s.GrypeDenyRuleFunc())
+}
+
+func (s *Service) GrypeDenyRuleFunc() func([]models.Match, grype.Config) error {
+	denyRule := func(matches []models.Match, _ grype.Config) error {
+		return gcv.ValidateFunc(matches, func(match models.Match) error {
+			inCatalog := slices.ContainsFunc(s.catalog.Vulnerabilities, func(vul Vulnerability) bool {
+				return match.Vulnerability.ID == vul.CveID
+			})
+			if !inCatalog {
+				return nil
+			}
+			return gcv.NewFailedRuleError("Matched to KEV Catalog", match.Vulnerability.ID)
+		})
+	}
+	return denyRule
 }
 
 func (s *Service) Fetch() error {

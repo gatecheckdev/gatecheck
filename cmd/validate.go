@@ -21,17 +21,11 @@ import (
 	"github.com/spf13/cobra"
 )
 
-type AnyValidator interface {
-	Validate(objPtr any, configReader io.Reader) error
-	ValidateFrom(objReader io.Reader, configReader io.Reader) error
-}
-
 func NewValidateCmd(newAsyncDecoder func() AsyncDecoder, KEVDownloadAgent io.Reader, EPSSDownloadAgent io.Reader) *cobra.Command {
 	var validateAny func(obj any, configBytes []byte) error
 
 	var kevService *kev.Service
 	var epssService *epss.Service
-
 	var cmd = &cobra.Command{
 		Use:   "validate [FILE]",
 		Short: "Validate reports or a bundle using thresholds set in the Gatecheck configuration file",
@@ -77,7 +71,7 @@ func NewValidateCmd(newAsyncDecoder func() AsyncDecoder, KEVDownloadAgent io.Rea
 			}
 
 			err = validateAny(obj, configFileBytes)
-			if err != nil && !errors.Is(err, gcv.ErrValidation) {
+			if err != nil && !errors.Is(err, gcv.ErrFailedRule) {
 				return err
 			}
 
@@ -122,29 +116,32 @@ func NewValidateCmd(newAsyncDecoder func() AsyncDecoder, KEVDownloadAgent io.Rea
 		}
 
 		switch obj.(type) {
-
 		case *semgrep.ScanReport:
-			return semgrep.NewValidator().Validate(obj, bytes.NewReader(configBytes))
+			return semgrep.NewValidator().ReadConfigAndValidate(obj.(*semgrep.ScanReport).Results,
+				bytes.NewReader(configBytes), semgrep.ConfigFieldName)
 		case *gitleaks.ScanReport:
-			return gitleaks.NewValidator().Validate(obj, bytes.NewReader(configBytes))
+			return gitleaks.NewValidator().ReadConfigAndValidate(*obj.(*gitleaks.ScanReport),
+				bytes.NewReader(configBytes), gitleaks.ConfigFieldName)
 		case *cyclonedx.ScanReport:
-			return cyclonedx.NewValidator().Validate(obj, bytes.NewReader(configBytes))
+			return cyclonedx.NewValidator().ReadConfigAndValidate(*obj.(*cyclonedx.ScanReport).Vulnerabilities,
+				bytes.NewReader(configBytes), cyclonedx.ConfigFieldName)
 		}
 
 		// This function is called after the async decoder so it has to be a defined type
 		report := obj.(*grype.ScanReport)
-		var kevValidationErr, epssValidationErr error
+		var kevValidationErr error
 		if kevService != nil {
-			kevValidationErr = kev.NewValidator(kevService).Validate(report)
+			kevValidationErr = kevService.NewValidator().Validate(report.Matches, grype.Config{})
 		}
+
+		grypeValidator := grype.NewValidator()
 		if epssService != nil {
-			// EPSS Validation modifies the report by removing approved vulnerabilities
-			epssValidationErr = epss.NewValidator(epssService).Validate(report.Matches, bytes.NewReader(configBytes))
-			if !errors.Is(epssValidationErr, gcv.ErrValidation) && epssValidationErr != nil {
-				return fmt.Errorf("%w: %v", ErrorAPI, epssValidationErr)
-			}
+			grypeValidator = grypeValidator.WithAllowRules(epssService.GrypeAllowRuleFunc())
+			grypeValidator = grypeValidator.WithValidationRules(epssService.GrypeDenyRuleFunc())
 		}
-		return errors.Join(kevValidationErr, epssValidationErr, grype.NewValidator().Validate(report, bytes.NewBuffer(configBytes)))
+
+		grypeErr := grypeValidator.ReadConfigAndValidate(report.Matches, bytes.NewReader(configBytes), grype.ConfigFieldName)
+		return errors.Join(kevValidationErr, grypeErr)
 
 	}
 

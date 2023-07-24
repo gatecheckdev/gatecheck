@@ -10,7 +10,6 @@ import (
 
 	gce "github.com/gatecheckdev/gatecheck/pkg/encoding"
 	gcv "github.com/gatecheckdev/gatecheck/pkg/validate"
-	"gopkg.in/yaml.v2"
 )
 
 const TestReport string = "../../../test/gitleaks-report.json"
@@ -76,17 +75,14 @@ func TestEncoding_EdgeCases(t *testing.T) {
 }
 
 func TestValidation_success(t *testing.T) {
-	grypeFile := MustOpen(TestReport, t)
-	configMap := map[string]Config{ConfigFieldName: {
-		SecretsAllowed: false,
-	}}
+	reportFile := MustOpen(TestReport, t)
+	r, _ := NewReportDecoder().DecodeFrom(reportFile)
+	report := r.(*ScanReport)
+	err := NewValidator().Validate(*report, Config{SecretsAllowed: false})
 
-	encodedConfig := new(bytes.Buffer)
-	_ = yaml.NewEncoder(encodedConfig).Encode(configMap)
-
-	err := NewValidator().ValidateFrom(grypeFile, encodedConfig)
-	if !errors.Is(err, gcv.ErrValidation) {
-		t.Fatalf("want: %v got: %v", gcv.ErrValidation, err)
+	t.Log(err)
+	if !errors.Is(err, gcv.ErrFailedRule) {
+		t.Fatalf("want: %v got: %v", gcv.ErrFailedRule, err)
 	}
 }
 
@@ -104,12 +100,12 @@ func TestValidateFunc(t *testing.T) {
 	}{
 		{label: "no-matches", report: ScanReport{}, config: Config{}, wantErr: nil},
 		{label: "critical-found-allowed", report: report, config: Config{SecretsAllowed: true}, wantErr: nil},
-		{label: "critical-found-not-allowed", report: report, config: Config{SecretsAllowed: false}, wantErr: gcv.ErrValidation},
+		{label: "critical-found-not-allowed", report: report, config: Config{SecretsAllowed: false}, wantErr: gcv.ErrFailedRule},
 	}
 
 	for _, testCase := range testTable {
 		t.Run(testCase.label, func(t *testing.T) {
-			if err := validateFunc(testCase.report, testCase.config); !errors.Is(err, testCase.wantErr) {
+			if err := NewValidator().Validate(testCase.report, testCase.config); !errors.Is(err, testCase.wantErr) {
 				t.Fatalf("want: %v got: %v", testCase.wantErr, err)
 			}
 		})

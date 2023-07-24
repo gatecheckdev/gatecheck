@@ -1,7 +1,6 @@
 package semgrep
 
 import (
-	"bytes"
 	"errors"
 	"os"
 	"strings"
@@ -10,7 +9,6 @@ import (
 	gosemgrep "github.com/BacchusJackson/go-semgrep"
 	gce "github.com/gatecheckdev/gatecheck/pkg/encoding"
 	gcv "github.com/gatecheckdev/gatecheck/pkg/validate"
-	"gopkg.in/yaml.v2"
 )
 
 const TestReport string = "../../../test/semgrep-sast-report.json"
@@ -35,18 +33,14 @@ func TestEncoding_success(t *testing.T) {
 }
 
 func TestValidation_success(t *testing.T) {
-	grypeFile := MustOpen(TestReport, t)
-	configMap := map[string]Config{ConfigFieldName: {
-		Error:   0,
-		Warning: 0,
-	}}
+	reportFile := MustOpen(TestReport, t)
+	config := Config{Error: 0, Warning: 0}
+	report, _ := NewReportDecoder().DecodeFrom(reportFile)
 
-	encodedConfig := new(bytes.Buffer)
-	_ = yaml.NewEncoder(encodedConfig).Encode(configMap)
-
-	err := NewValidator().ValidateFrom(grypeFile, encodedConfig)
-	if !errors.Is(err, gcv.ErrValidation) {
-		t.Fatalf("want: %v got: %v", gcv.ErrValidation, err)
+	err := NewValidator().Validate(report.(*ScanReport).Results, config)
+	t.Log(err)
+	if !errors.Is(err, gcv.ErrFailedRule) {
+		t.Fatalf("want: %v got: %v", gcv.ErrFailedRule, err)
 	}
 }
 
@@ -75,7 +69,7 @@ func TestCheckReport(t *testing.T) {
 
 }
 
-func TestValidateFunc(t *testing.T) {
+func TestThresholdRule(t *testing.T) {
 	report := ScanReport{Errors: make([]gosemgrep.CliError, 0)}
 	report.Paths.Scanned = make([]string, 0)
 	report.Results = append(report.Results, gosemgrep.CliMatch{Extra: gosemgrep.CliMatchExtra{Severity: "ERROR", Metadata: gosemgrep.CliMatchExtra{Severity: "ERROR"}}})
@@ -87,13 +81,13 @@ func TestValidateFunc(t *testing.T) {
 		wantErr error
 	}{
 		{label: "no-matches", report: ScanReport{}, config: Config{}, wantErr: nil},
-		{label: "critical-found-allowed", report: report, config: Config{Error: -1}, wantErr: nil},
-		{label: "critical-found-not-allowed", report: report, config: Config{Error: 0}, wantErr: gcv.ErrValidation},
+		{label: "found-allowed", report: report, config: Config{Error: -1, Warning: -1, Info: -1}, wantErr: nil},
+		{label: "found-not-allowed", report: report, config: Config{Error: 0, Warning: 0, Info: 0}, wantErr: gcv.ErrFailedRule},
 	}
 
 	for _, testCase := range testTable {
 		t.Run(testCase.label, func(t *testing.T) {
-			if err := validateFunc(testCase.report, testCase.config); !errors.Is(err, testCase.wantErr) {
+			if err := ThresholdRule(testCase.report.Results, testCase.config); !errors.Is(err, testCase.wantErr) {
 				t.Fatalf("want: %v got: %v", testCase.wantErr, err)
 			}
 		})

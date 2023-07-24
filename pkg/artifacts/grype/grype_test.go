@@ -33,21 +33,125 @@ func TestEncoding_success(t *testing.T) {
 	}
 }
 
-func TestValidation_success(t *testing.T) {
-	grypeFile := MustOpen(GrypeTestReport, t)
-	configMap := map[string]Config{ConfigFieldName: {
-		Critical: 0,
-		High:     0,
-	}}
-
-	encodedConfig := new(bytes.Buffer)
-	_ = yaml.NewEncoder(encodedConfig).Encode(configMap)
-	t.Log(encodedConfig.String())
-
-	err := NewValidator().ValidateFrom(grypeFile, encodedConfig)
-	if !errors.Is(err, gcv.ErrValidation) {
-		t.Fatalf("want: %v got: %v", gcv.ErrValidation, err)
+func TestValidate(t *testing.T) {
+	matches := []models.Match{
+		{Vulnerability: models.Vulnerability{VulnerabilityMetadata: models.VulnerabilityMetadata{ID: "cve-1", Severity: "Critical"}}},
+		{Vulnerability: models.Vulnerability{VulnerabilityMetadata: models.VulnerabilityMetadata{ID: "cve-2", Severity: "Critical"}}},
+		{Vulnerability: models.Vulnerability{VulnerabilityMetadata: models.VulnerabilityMetadata{ID: "cve-3", Severity: "Critical"}}},
+		{Vulnerability: models.Vulnerability{VulnerabilityMetadata: models.VulnerabilityMetadata{ID: "cve-4", Severity: "High"}}},
+		{Vulnerability: models.Vulnerability{VulnerabilityMetadata: models.VulnerabilityMetadata{ID: "cve-5", Severity: "High"}}},
+		{Vulnerability: models.Vulnerability{VulnerabilityMetadata: models.VulnerabilityMetadata{ID: "cve-6", Severity: "Medium"}}},
 	}
+
+	type TestTable struct {
+		label   string
+		wantErr error
+		config  Config
+		matches []models.Match
+	}
+	testTable := []TestTable{
+		{label: "fail-validation-1", matches: matches, config: Config{Critical: 0, High: -1, Medium: -1, Low: -1, Negligible: -1, Unknown: -1},
+			wantErr: gcv.ErrFailedRule},
+		{label: "fail-validation-2", matches: matches, config: Config{Critical: 0, High: 1, Medium: 5, Low: -1, Negligible: -1, Unknown: -1},
+			wantErr: gcv.ErrFailedRule},
+
+		{label: "pass-validation-1", matches: matches, config: Config{Critical: -1, High: -1, Medium: -1, Low: -1, Negligible: -1, Unknown: -1},
+			wantErr: nil},
+		{label: "pass-validation-2", matches: matches, config: Config{Critical: 4, High: 2, Medium: 5, Low: -1, Negligible: -1, Unknown: -1},
+			wantErr: nil},
+	}
+
+	t.Run("threshold-rule", func(t *testing.T) {
+		for _, testCase := range testTable {
+			t.Run(testCase.label, func(t *testing.T) {
+				err := ThresholdRule(testCase.matches, testCase.config)
+				t.Log(err)
+				if !errors.Is(err, testCase.wantErr) {
+					t.Fatalf("want: %v got: %v", gcv.ErrFailedRule, err)
+				}
+			})
+		}
+	})
+
+	testTable = []TestTable{
+		{label: "DenyList-1", matches: matches, config: Config{Critical: -1, High: -1, Medium: -1, Low: -1, Negligible: -1, Unknown: -1,
+			DenyList: []ListItem{{Id: "cve-1"}}}, wantErr: gcv.ErrFailedRule},
+		{label: "DenyList-2", matches: matches, config: Config{Critical: 4, High: 2, Medium: 5, Low: -1, Negligible: -1, Unknown: -1,
+			DenyList: []ListItem{{Id: "cve-1"}}}, wantErr: gcv.ErrFailedRule},
+		{label: "DenyList-3", matches: matches, config: Config{Critical: -1, High: -1, Medium: -1, Low: -1, Negligible: -1, Unknown: -1,
+			DenyList: []ListItem{{Id: "cve-99"}}}, wantErr: nil},
+	}
+
+	t.Run("denyList-rule", func(t *testing.T) {
+		for _, testCase := range testTable {
+			t.Run(testCase.label, func(t *testing.T) {
+				err := DenyListRule(testCase.matches, testCase.config)
+				t.Log(err)
+				if !errors.Is(err, testCase.wantErr) {
+					t.Fatalf("want: %v got: %v", gcv.ErrFailedRule, err)
+				}
+			})
+		}
+	})
+
+	t.Run("allowList-rule", func(t *testing.T) {
+		match := models.Match{Vulnerability: models.Vulnerability{VulnerabilityMetadata: models.VulnerabilityMetadata{ID: "cve-1", Severity: "Critical"}}}
+		config := Config{Critical: 0, High: -1, Medium: -1, Low: -1, Negligible: -1, Unknown: -1, AllowList: []ListItem{{Id: "cve-1"}}}
+		if !AllowListRule(match, config) {
+			t.Fatal("want true")
+		}
+	})
+}
+
+func TestValidator(t *testing.T) {
+	matches := []models.Match{
+		{Vulnerability: models.Vulnerability{VulnerabilityMetadata: models.VulnerabilityMetadata{ID: "cve-1", Severity: "Critical"}}},
+		{Vulnerability: models.Vulnerability{VulnerabilityMetadata: models.VulnerabilityMetadata{ID: "cve-2", Severity: "Critical"}}},
+		{Vulnerability: models.Vulnerability{VulnerabilityMetadata: models.VulnerabilityMetadata{ID: "cve-3", Severity: "Critical"}}},
+		{Vulnerability: models.Vulnerability{VulnerabilityMetadata: models.VulnerabilityMetadata{ID: "cve-4", Severity: "High"}}},
+		{Vulnerability: models.Vulnerability{VulnerabilityMetadata: models.VulnerabilityMetadata{ID: "cve-5", Severity: "High"}}},
+		{Vulnerability: models.Vulnerability{VulnerabilityMetadata: models.VulnerabilityMetadata{ID: "cve-6", Severity: "Medium"}}},
+		{Vulnerability: models.Vulnerability{VulnerabilityMetadata: models.VulnerabilityMetadata{ID: "cve-7", Severity: "Low"}}},
+	}
+	testCase := []struct {
+		label   string
+		wantErr error
+		config  Config
+	}{
+		{label: "pass-validation-1", wantErr: nil, config: Config{Critical: -1, High: -1, Medium: -1, Low: -1, Negligible: -1, Unknown: -1}},
+		{label: "pass-validation-2", wantErr: nil, config: Config{Critical: 5, High: 5, Medium: -1, Low: -1, Negligible: -1, Unknown: -1}},
+
+		{label: "fail-validation-1", wantErr: gcv.ErrFailedRule, config: Config{Critical: 0, High: 0, Medium: -1, Low: -1, Negligible: -1, Unknown: -1}},
+		{label: "fail-validation-2", wantErr: gcv.ErrFailedRule, config: Config{Critical: 2, High: 1, Medium: -1, Low: -1, Negligible: -1, Unknown: -1}},
+
+		{label: "pass-validation-allowlist", wantErr: nil, config: Config{Critical: -1, High: -1, Medium: -1, Low: 0, Negligible: -1, Unknown: -1,
+			AllowList: []ListItem{{Id: "cve-7"}}}},
+
+		{label: "fail-validation-denylist", wantErr: gcv.ErrFailedRule, config: Config{Critical: -1, High: -1, Medium: -1, Low: -1, Negligible: -1, Unknown: -1,
+			DenyList: []ListItem{{Id: "cve-1"}}}},
+	}
+
+	for _, testCase := range testCase {
+		t.Run(testCase.label, func(t *testing.T) {
+
+			err := NewValidator().Validate(matches, testCase.config)
+			t.Log(err)
+			if !errors.Is(err, testCase.wantErr) {
+				t.Fatalf("want: %v got: %v", testCase.wantErr, err)
+			}
+		})
+	}
+
+	t.Run("readConfigAndValidate", func(t *testing.T) {
+		config := Config{Critical: -1, High: -1, Medium: -1, Low: -1, Negligible: -1, Unknown: -1}
+		configBuf := new(bytes.Buffer)
+		_ = yaml.NewEncoder(configBuf).Encode(map[string]any{ConfigFieldName: config})
+
+		err := NewValidator().ReadConfigAndValidate(matches, configBuf, ConfigFieldName)
+		if err != nil {
+			t.Fatal(err)
+		}
+	})
 }
 
 func TestCheckReport(t *testing.T) {
@@ -57,52 +161,10 @@ func TestCheckReport(t *testing.T) {
 	if err := checkReport(&ScanReport{}); !errors.Is(err, gce.ErrFailedCheck) {
 		t.Fatalf("want: %v got: %v", gce.ErrFailedCheck, err)
 	}
-
-}
-
-func TestValidateFunc(t *testing.T) {
-	reportOne := ScanReport{}
-	reportOne.Matches = append(reportOne.Matches, models.Match{Vulnerability: models.Vulnerability{
-		VulnerabilityMetadata: models.VulnerabilityMetadata{ID: "abc-123", Severity: "Critical"},
-	}})
-
-	testTable := []struct {
-		label   string
-		report  ScanReport
-		config  Config
-		wantErr error
-	}{
-		{label: "no-matches", report: ScanReport{}, config: Config{}, wantErr: nil},
-		{label: "critical-found-allowed", report: reportOne, config: Config{Critical: -1}, wantErr: nil},
-		{label: "critical-found-not-allowed", report: reportOne, config: Config{Critical: 0}, wantErr: gcv.ErrValidation},
-		{label: "critical-found-allowed-denylist", report: reportOne,
-			config: Config{Critical: -1, DenyList: []ListItem{{Id: "abc-123", Reason: "mock reason"}}}, wantErr: gcv.ErrValidation},
-		{label: "critical-found-not-allowed-allowlist", report: reportOne,
-			config: Config{Critical: 0, AllowList: []ListItem{{Id: "abc-123", Reason: "mock reason"}}}, wantErr: nil},
-	}
-
-	for _, testCase := range testTable {
-		t.Run(testCase.label, func(t *testing.T) {
-			if err := validateFunc(testCase.report, testCase.config); !errors.Is(err, testCase.wantErr) {
-				t.Fatalf("want: %v got: %v", testCase.wantErr, err)
-			}
-		})
-	}
-}
-
-func TestScanReport_Remove(t *testing.T) {
-	report := ScanReport{}
-	report.Matches = []models.Match{
-		{Vulnerability: models.Vulnerability{VulnerabilityMetadata: models.VulnerabilityMetadata{ID: "cve-1", Severity: "Critical"}}},
-		{Vulnerability: models.Vulnerability{VulnerabilityMetadata: models.VulnerabilityMetadata{ID: "cve-2", Severity: "Critical"}}},
-		{Vulnerability: models.Vulnerability{VulnerabilityMetadata: models.VulnerabilityMetadata{ID: "cve-3", Severity: "Critical"}}},
-		{Vulnerability: models.Vulnerability{VulnerabilityMetadata: models.VulnerabilityMetadata{ID: "cve-4", Severity: "Critical"}}},
-		{Vulnerability: models.Vulnerability{VulnerabilityMetadata: models.VulnerabilityMetadata{ID: "cve-5", Severity: "Critical"}}},
-	}
-
-	report.RemoveMatches(ByIDs("cve-2", "cve-4"))
-	if len(report.Matches) != 3 {
-		t.Fatalf("want: match count 3 got: %d", len(report.Matches))
+	report := &ScanReport{}
+	report.Descriptor.Name = "grype"
+	if err := checkReport(report); err != nil {
+		t.Fatal(err)
 	}
 }
 

@@ -41,8 +41,8 @@ type Config struct {
 	SecretsAllowed bool `yaml:"secretsAllowed" json:"secretsAllowed"`
 }
 
-func NewValidator() *gcv.Validator[ScanReport, Config] {
-	return gcv.NewValidator[ScanReport, Config](ConfigFieldName, NewReportDecoder(), validateFunc)
+func NewValidator() gcv.Validator[Finding, Config] {
+	return gcv.NewValidator[Finding, Config]().WithValidationRules(NoSecretsRule)
 }
 
 func NewReportDecoder() *ReportDecoder {
@@ -86,14 +86,15 @@ func (d *ReportDecoder) FileType() string {
 	return ReportType
 }
 
-func validateFunc(scanReport ScanReport, config Config) error {
-	if len(scanReport) == 0 {
+func NoSecretsRule(findings []Finding, config Config) error {
+	if len(findings) == 0 {
 		return nil
 	}
-	msg := fmt.Sprintf("Gitleaks: %d secrets detected", len(scanReport))
+	msg := fmt.Sprintf("Gitleaks: %d secrets detected", len(findings))
 	log.Info(msg)
 	if config.SecretsAllowed {
 		return nil
 	}
-	return fmt.Errorf("%w: %s", gcv.ErrValidation, msg)
+	return gcv.NewFailedRuleError("No Secrets Allowed. Found", fmt.Sprint(len(findings)))
+
 }

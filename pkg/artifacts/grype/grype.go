@@ -1,15 +1,15 @@
 package grype
 
 import (
+	"errors"
 	"fmt"
 	"sort"
-	"strings"
 
 	"github.com/anchore/grype/grype/presenter/models"
-	"github.com/gatecheckdev/gatecheck/internal/log"
 	gce "github.com/gatecheckdev/gatecheck/pkg/encoding"
 	"github.com/gatecheckdev/gatecheck/pkg/format"
 	gcv "github.com/gatecheckdev/gatecheck/pkg/validate"
+	"golang.org/x/exp/slices"
 )
 
 const ReportType = "Anchore Grype Scan Report"
@@ -30,27 +30,6 @@ func (r *ScanReport) String() string {
 	sort.Sort(table)
 
 	return format.NewTableWriter(table).String()
-}
-
-func (r *ScanReport) RemoveMatches(shouldRemove func(m models.Match) bool) {
-	newMatches := make([]models.Match, 0)
-	for _, match := range r.Matches {
-		if !shouldRemove(match) {
-			newMatches = append(newMatches, match)
-		}
-	}
-	r.Matches = newMatches
-}
-
-func ByIDs(ids ...string) func(m models.Match) bool {
-	return func(m models.Match) bool {
-		for _, removeID := range ids {
-			if m.Vulnerability.ID == removeID {
-				return true
-			}
-		}
-		return false
-	}
 }
 
 type Config struct {
@@ -75,8 +54,61 @@ func NewReportDecoder() *gce.JSONWriterDecoder[ScanReport] {
 	return gce.NewJSONWriterDecoder[ScanReport](ReportType, checkReport)
 }
 
-func NewValidator() *gcv.Validator[ScanReport, Config] {
-	return gcv.NewValidator[ScanReport, Config](ConfigFieldName, NewReportDecoder(), validateFunc)
+func NewValidator() gcv.Validator[models.Match, Config] {
+	validator := gcv.NewValidator[models.Match, Config]()
+	validator = validator.WithAllowRules(AllowListRule)
+	validator = validator.WithValidationRules(ThresholdRule, DenyListRule)
+	return validator
+}
+
+func ThresholdRule(matches []models.Match, config Config) error {
+	allowed := map[string]int{
+		"Critical":   config.Critical,
+		"High":       config.High,
+		"Medium":     config.Medium,
+		"Low":        config.Low,
+		"Negligible": config.Negligible,
+		"Unknown":    config.Unknown,
+	}
+
+	found := make(map[string]int, 6)
+	for severity := range allowed {
+		found[severity] = 0
+	}
+
+	for _, match := range matches {
+		found[match.Vulnerability.Severity] += 1
+	}
+
+	var errs error
+	for severity, allowThreshold := range allowed {
+		if allowThreshold == -1 {
+			continue
+		}
+		if found[severity] > allowThreshold {
+			rule := fmt.Sprintf("%s allowed %d found", severity, allowThreshold)
+			errs = errors.Join(errs, gcv.NewFailedRuleError(rule, fmt.Sprint(found[severity])))
+		}
+	}
+	return errs
+}
+
+func DenyListRule(matches []models.Match, config Config) error {
+	return gcv.ValidateFunc(matches, func(m models.Match) error {
+		inDenyList := slices.ContainsFunc(config.DenyList, func(denyListItem ListItem) bool {
+			return m.Vulnerability.ID == denyListItem.Id
+		})
+		if !inDenyList {
+			return nil
+		}
+		return gcv.NewFailedRuleError("Custom DenyList", m.Vulnerability.ID)
+	})
+}
+
+func AllowListRule(match models.Match, config Config) bool {
+	return slices.ContainsFunc(config.AllowList, func(allowedItem ListItem) bool {
+		return match.Vulnerability.ID == allowedItem.Id
+	})
 }
 
 func checkReport(report *ScanReport) error {
@@ -87,61 +119,4 @@ func checkReport(report *ScanReport) error {
 		return fmt.Errorf("%w: Missing Descriptor name", gce.ErrFailedCheck)
 	}
 	return nil
-}
-
-func validateFunc(scanReport ScanReport, config Config) error {
-
-	found := map[string]int{"Critical": 0, "High": 0, "Medium": 0, "Low": 0, "Negligible": 0, "Unknown": 0}
-	allowed := map[string]int{
-		"Critical": config.Critical, "High": config.High, "Medium": config.Medium,
-		"Low": config.Low, "Negligible": config.Negligible, "Unknown": config.Unknown,
-	}
-	foundDenied := make([]models.Match, 0)
-
-LOOPMATCH:
-	for matchIndex, match := range scanReport.Matches {
-
-		for _, allowed := range config.AllowList {
-			if strings.Compare(match.Vulnerability.ID, allowed.Id) == 0 {
-
-				log.Infof("%s Allowed. Reason: %s", match.Vulnerability.ID, allowed.Reason)
-				continue LOOPMATCH
-			}
-		}
-
-		for _, denied := range config.DenyList {
-			if match.Vulnerability.ID == denied.Id {
-				log.Infof("%s Denied. Reason: %s", match.Vulnerability.ID, denied.Reason)
-				foundDenied = append(foundDenied, scanReport.Matches[matchIndex])
-			}
-		}
-
-		found[match.Vulnerability.Severity] += 1
-	}
-	log.Infof("Grype Findings: %v", format.PrettyPrintMap(found))
-	log.Infof("Grype Thresholds: %v", format.PrettyPrintMap(allowed))
-
-	var errStrings []string
-
-	for severity := range found {
-		// A -1 in config means all allowed
-		if allowed[severity] == -1 {
-			continue
-		}
-		if found[severity] > allowed[severity] {
-			s := fmt.Sprintf("%s (%d found > %d allowed)", severity, found[severity], allowed[severity])
-			errStrings = append(errStrings, s)
-		}
-	}
-
-	if len(foundDenied) != 0 {
-		deniedReport := &ScanReport{Matches: foundDenied}
-		errStrings = append(errStrings, fmt.Sprintf("Denied Vulnerabilities\n%s", deniedReport))
-	}
-
-	if len(errStrings) == 0 {
-		return nil
-	}
-
-	return fmt.Errorf("%w: %s", gcv.ErrValidation, strings.Join(errStrings, ", "))
 }

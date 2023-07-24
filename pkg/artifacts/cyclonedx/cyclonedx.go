@@ -10,10 +10,10 @@ import (
 	"strings"
 
 	cdx "github.com/CycloneDX/cyclonedx-go"
-	"github.com/gatecheckdev/gatecheck/internal/log"
 	gce "github.com/gatecheckdev/gatecheck/pkg/encoding"
 	"github.com/gatecheckdev/gatecheck/pkg/format"
 	gcv "github.com/gatecheckdev/gatecheck/pkg/validate"
+	"golang.org/x/exp/slices"
 )
 
 const ReportType = "CycloneDX Report"
@@ -46,7 +46,6 @@ func (r ScanReport) String() string {
 	vulTable := format.NewTable()
 	vulTable.AppendRow("Severity", "Package", "Version", "Link")
 	severities := make(map[string]int)
-
 
 	for _, vul := range *r.Vulnerabilities {
 		severity := string(highestVulnerability(*vul.Ratings).Severity)
@@ -160,69 +159,64 @@ type ListItem struct {
 	Reason string `yaml:"reason" json:"reason"`
 }
 
-func NewValidator() *gcv.Validator[ScanReport, Config] {
-	return gcv.NewValidator[ScanReport, Config](ConfigFieldName, NewReportDecoder(), validateFunc)
+func NewValidator() gcv.Validator[cdx.Vulnerability, Config] {
+	validator := gcv.NewValidator[cdx.Vulnerability, Config]()
+	validator = validator.WithValidationRules(ThresholdRule, DenyListRule)
+	validator = validator.WithAllowRules(AllowListRule)
+	return validator
 }
 
-func validateFunc(report ScanReport, config Config) error {
-	found := map[string]int{"Critical": 0, "High": 0, "Medium": 0, "Low": 0, "Info": 0, "None": 0, "Unknown": 0}
+func ThresholdRule(vuls []cdx.Vulnerability, config Config) error {
 	allowed := map[string]int{
-		"Critical": config.Critical, "High": config.High, "Medium": config.Medium,
-		"Low": config.Low, "None": config.None, "Info": config.Info, "Unknown": config.Unknown,
+		"Critical": config.Critical,
+		"High":     config.High,
+		"Medium":   config.Medium,
+		"Low":      config.Low,
+		"Info":     config.Info,
+		"None":     config.None,
+		"Unknown":  config.Unknown,
 	}
-	log.Info("config values: " + format.PrettyPrintMap[string, int](allowed))
 
-	foundDenied := make([]cdx.Vulnerability, 0)
+	found := make(map[string]int, 7)
+	for severity := range allowed {
+		found[severity] = 0
+	}
 
-LOOPMATCH:
-	for _, item := range *report.Vulnerabilities {
-
-		for _, allowed := range config.AllowList {
-			if strings.ToLower((&item).ID) == strings.ToLower(allowed.Id) {
-
-				log.Infof("%s Allowed. Reason: %s", (&item).ID, allowed.Reason)
-				continue LOOPMATCH
-			}
-		}
-
-		for _, denied := range config.DenyList {
-			if strings.ToLower((&item).ID) == strings.ToLower(denied.Id) {
-				log.Infof("%s Denied. Reason: %s", (&item).ID, denied.Reason)
-				foundDenied = append(foundDenied, item)
-			}
-		}
-
-		severity := strings.ToLower(string(highestVulnerability(*item.Ratings).Severity))
+	for _, vul := range vuls {
+		severity := strings.ToLower(string(highestVulnerability(*vul.Ratings).Severity))
 		severity = strings.ToUpper(severity[:1]) + severity[1:]
 		found[severity] += 1
-
 	}
-	log.Infof("CycloneDx Findings: %v", format.PrettyPrintMap(found))
-	log.Infof("CycloneDx Thresholds: %v", format.PrettyPrintMap(allowed))
 
-	var errs []error
-
-	for severity := range found {
-		// A -1 in config means all allowed
-		if allowed[severity] == -1 {
+	var errs error
+	for severity, allowThreshold := range allowed {
+		if allowThreshold == -1 {
 			continue
 		}
-		if found[severity] > allowed[severity] {
-			s := fmt.Errorf("%s (%d found > %d allowed)", severity, found[severity], allowed[severity])
-			errs = append(errs, s)
+		if found[severity] > allowThreshold {
+			rule := fmt.Sprintf("%s allowed %d found", severity, allowThreshold)
+			errs = errors.Join(errs, gcv.NewFailedRuleError(rule, fmt.Sprint(found[severity])))
 		}
 	}
+	return errs
+}
 
-	if len(foundDenied) != 0 {
-		deniedReport := &ScanReport{Vulnerabilities: &foundDenied}
-		errs = append(errs, fmt.Errorf("denied vulnerabilities: %s", deniedReport))
-	}
+func AllowListRule(vul cdx.Vulnerability, config Config) bool {
+	return slices.ContainsFunc(config.AllowList, func(allowListItem ListItem) bool {
+		return strings.ToLower(vul.ID) == strings.ToLower(allowListItem.Id)
+	})
+}
 
-	if len(errs) == 0 {
-		return nil
-	}
-
-	return fmt.Errorf("%w: %s", gcv.ErrValidation, errors.Join(errs...))
+func DenyListRule(vuls []cdx.Vulnerability, config Config) error {
+	return gcv.ValidateFunc(vuls, func(vul cdx.Vulnerability) error {
+		inDenyList := slices.ContainsFunc(config.DenyList, func(allowListItem ListItem) bool {
+			return strings.ToLower(vul.ID) == strings.ToLower(allowListItem.Id)
+		})
+		if !inDenyList {
+			return nil
+		}
+		return gcv.NewFailedRuleError("Custom DenyList", vul.ID)
+	})
 }
 
 func (r *ScanReport) ShimComponentsAsVulnerabilities() *ScanReport {

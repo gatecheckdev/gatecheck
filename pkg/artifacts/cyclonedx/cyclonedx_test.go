@@ -11,7 +11,6 @@ import (
 	cdx "github.com/CycloneDX/cyclonedx-go"
 	gce "github.com/gatecheckdev/gatecheck/pkg/encoding"
 	gcv "github.com/gatecheckdev/gatecheck/pkg/validate"
-	"gopkg.in/yaml.v3"
 )
 
 const CyclonedxGrypeReport string = "../../../test/cyclonedx-grype-sbom.json"
@@ -43,6 +42,7 @@ func TestEncoding(t *testing.T) {
 				t.Fatalf("want: <10 got: %d", len(*report.Vulnerabilities))
 			}
 
+			t.Log("\n" + ScanReport{}.String())
 			t.Log("\n" + report.String())
 			if !strings.Contains(report.String(), "library") {
 				t.Fatal("'library' should exist in string")
@@ -110,9 +110,7 @@ func TestValidation(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 
 		config := Config{Critical: -1, High: -1, Medium: -1, Low: -1, Info: -1, None: -1, Unknown: -1}
-		configBuf := new(bytes.Buffer)
-		_ = yaml.NewEncoder(configBuf).Encode(map[string]any{ConfigFieldName: config})
-		if err := NewValidator().Validate(report, configBuf); err != nil {
+		if err := NewValidator().Validate(*report.Vulnerabilities, config); err != nil {
 			t.Fatal(err)
 		}
 	})
@@ -120,10 +118,8 @@ func TestValidation(t *testing.T) {
 	t.Run("fail", func(t *testing.T) {
 
 		config := Config{Critical: 0, High: 0, Medium: -1, Low: -1, Info: -1, None: -1, Unknown: -1}
-		configBuf := new(bytes.Buffer)
-		_ = yaml.NewEncoder(configBuf).Encode(map[string]any{ConfigFieldName: config})
-		if err := NewValidator().Validate(report, configBuf); !errors.Is(err, gcv.ErrValidation) {
-			t.Fatalf("want: %v got: %v", gcv.ErrValidation, err)
+		if err := NewValidator().Validate(*report.Vulnerabilities, config); !errors.Is(err, gcv.ErrFailedRule) {
+			t.Fatalf("want: %v got: %v", gcv.ErrFailedRule, err)
 		}
 	})
 }
@@ -144,9 +140,7 @@ func TestCyclonedxDenyList(t *testing.T) {
 
 	t.Log(report)
 
-	configBuf := new(bytes.Buffer)
-	_ = yaml.NewEncoder(configBuf).Encode(map[string]any{ConfigFieldName: config})
-	if err := NewValidator().Validate(report, configBuf); err == nil {
+	if err := NewValidator().Validate(*report.Vulnerabilities, config); err == nil {
 		t.Fatal("Expected Validation error for CVE-2023-3")
 	}
 }
@@ -167,10 +161,7 @@ func TestCyclonedxAllowList(t *testing.T) {
 
 	t.Log(report)
 
-	configBuf := new(bytes.Buffer)
-	_ = yaml.NewEncoder(configBuf).Encode(map[string]any{ConfigFieldName: config})
-	t.Log(configBuf.String())
-	if err := NewValidator().Validate(report, configBuf); err != nil {
+	if err := NewValidator().Validate(*report.Vulnerabilities, config); err != nil {
 		t.Fatal(err)
 	}
 }

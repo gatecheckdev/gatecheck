@@ -158,8 +158,8 @@ func TestValidate_EPSS(t *testing.T) {
 		_, err := Execute(commandString, cliconfig)
 
 		t.Log(err)
-		if !errors.Is(err, ErrorAPI) {
-			t.Fatalf("want: %v got: %v", ErrorAPI, err)
+		if err == nil {
+			t.Fatal("Expected errors for validation and failed API requests")
 		}
 	})
 

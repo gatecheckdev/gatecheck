@@ -1,12 +1,11 @@
 package semgrep
 
 import (
+	"errors"
 	"fmt"
 	"sort"
-	"strings"
 
 	semgrep "github.com/BacchusJackson/go-semgrep"
-	"github.com/gatecheckdev/gatecheck/internal/log"
 	gce "github.com/gatecheckdev/gatecheck/pkg/encoding"
 	"github.com/gatecheckdev/gatecheck/pkg/format"
 	gcv "github.com/gatecheckdev/gatecheck/pkg/validate"
@@ -49,8 +48,8 @@ func NewReportDecoder() *gce.JSONWriterDecoder[ScanReport] {
 	return gce.NewJSONWriterDecoder[ScanReport](ReportType, checkReport)
 }
 
-func NewValidator() *gcv.Validator[ScanReport, Config] {
-	return gcv.NewValidator[ScanReport, Config](ConfigFieldName, NewReportDecoder(), validateFunc)
+func NewValidator() gcv.Validator[semgrep.CliMatch, Config] {
+	return gcv.NewValidator[semgrep.CliMatch, Config]().WithValidationRules(ThresholdRule)
 }
 
 func checkReport(report *ScanReport) error {
@@ -75,33 +74,31 @@ type Config struct {
 	Error   int `yaml:"error" json:"error"`
 }
 
-func validateFunc(scanReport ScanReport, config Config) error {
-	allowed := map[string]int{"INFO": config.Info, "WARNING": config.Warning, "ERROR": config.Error}
-	found := map[string]int{"INFO": 0, "WARNING": 0, "ERROR": 0}
-
-	for _, result := range scanReport.Results {
-		found[result.Extra.Severity] += 1
+func ThresholdRule(matches []semgrep.CliMatch, config Config) error {
+	allowed := map[string]int{
+		"INFO":    config.Info,
+		"WARNING": config.Warning,
+		"ERROR":   config.Error,
 	}
 
-	var errStrings []string
+	found := make(map[string]int, 3)
+	for severity := range allowed {
+		found[severity] = 0
+	}
 
-	for severity := range found {
-		// A -1 in config means all allowed
-		if allowed[severity] == -1 {
+	for _, match := range matches {
+		found[match.Extra.Severity] += 1
+	}
+
+	var errs error
+	for severity, allowThreshold := range allowed {
+		if allowThreshold == -1 {
 			continue
 		}
-		if found[severity] > allowed[severity] {
-			s := fmt.Sprintf("%s (%d found > %d allowed)", severity, found[severity], allowed[severity])
-			errStrings = append(errStrings, s)
+		if found[severity] > allowThreshold {
+			rule := fmt.Sprintf("%s allowed %d found", severity, allowThreshold)
+			errs = errors.Join(errs, gcv.NewFailedRuleError(rule, fmt.Sprint(found[severity])))
 		}
 	}
-
-	log.Infof("Semgrep Findings: %v", format.PrettyPrintMap(found))
-	log.Infof("Semgrep Thresholds: %v", format.PrettyPrintMap(allowed))
-	if len(errStrings) == 0 {
-		return nil
-	}
-
-	return fmt.Errorf("%w: %s", gcv.ErrValidation, strings.Join(errStrings, ", "))
-
+	return errs
 }
