@@ -36,5 +36,12 @@ install_deps:
 	$(info ******************** downloading dependencies ********************)
 	go get -v ./...
 
+# Make sure to have GITHUB_TOKEN env variable defined
+release_snapshot:
+	goreleaser release --snapshot --clean
+
+release:
+	goreleaser release --clean
+
 clean:
 	rm -rf $(BIN)
