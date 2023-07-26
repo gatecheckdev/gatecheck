@@ -34,3 +34,7 @@ func TestPrettyPrintMap(t *testing.T) {
 	obj := map[string]string{"Key A": "Value A", "Key B": "Value B"}
 	t.Log(PrettyPrintMap(obj))
 }
+func TestPrettyPrintMapOrdered(t *testing.T) {
+	obj := map[string]string{"Key A": "Value A", "Key B": "Value B"}
+	t.Log(PrettyPrintMapOrdered(obj, []string{"Key B", "Key A"}))
+}

@@ -6,6 +6,7 @@ import (
 	"sort"
 
 	semgrep "github.com/BacchusJackson/go-semgrep"
+	"github.com/gatecheckdev/gatecheck/internal/log"
 	gce "github.com/gatecheckdev/gatecheck/pkg/encoding"
 	"github.com/gatecheckdev/gatecheck/pkg/format"
 	gcv "github.com/gatecheckdev/gatecheck/pkg/validate"
@@ -69,21 +70,26 @@ func checkReport(report *ScanReport) error {
 }
 
 type Config struct {
-	Info    int `yaml:"info" json:"info"`
-	Warning int `yaml:"warning" json:"warning"`
 	Error   int `yaml:"error" json:"error"`
+	Warning int `yaml:"warning" json:"warning"`
+	Info    int `yaml:"info" json:"info"`
 }
 
 func ThresholdRule(matches []semgrep.CliMatch, config Config) error {
+	orderedKeys := []string{"ERROR", "WARNING", "INFO"}
+
 	allowed := map[string]int{
-		"INFO":    config.Info,
-		"WARNING": config.Warning,
-		"ERROR":   config.Error,
+		orderedKeys[0]: config.Error,
+		orderedKeys[1]: config.Warning,
+		orderedKeys[2]: config.Info,
 	}
 
-	found := make(map[string]int, 3)
-	for severity := range allowed {
-		found[severity] = 0
+	log.Infof("Semgrep Threshold Validation Rules: %s", format.PrettyPrintMapOrdered(allowed, orderedKeys))
+
+	found := map[string]int{
+		orderedKeys[0]: 0,
+		orderedKeys[1]: 0,
+		orderedKeys[2]: 0,
 	}
 
 	for _, match := range matches {
@@ -100,5 +106,7 @@ func ThresholdRule(matches []semgrep.CliMatch, config Config) error {
 			errs = errors.Join(errs, gcv.NewFailedRuleError(rule, fmt.Sprint(found[severity])))
 		}
 	}
+
+	log.Infof("Semgrep Threshold Validation Found: %s", format.PrettyPrintMapOrdered(found, orderedKeys))
 	return errs
 }

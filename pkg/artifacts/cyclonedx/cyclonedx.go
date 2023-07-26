@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	cdx "github.com/CycloneDX/cyclonedx-go"
+	"github.com/gatecheckdev/gatecheck/internal/log"
 	gce "github.com/gatecheckdev/gatecheck/pkg/encoding"
 	"github.com/gatecheckdev/gatecheck/pkg/format"
 	gcv "github.com/gatecheckdev/gatecheck/pkg/validate"
@@ -167,6 +168,7 @@ func NewValidator() gcv.Validator[cdx.Vulnerability, Config] {
 }
 
 func ThresholdRule(vuls []cdx.Vulnerability, config Config) error {
+	orderedKeys := []string{"Critical", "High", "Medium", "Low", "Info", "None", "Unknown"}
 	allowed := map[string]int{
 		"Critical": config.Critical,
 		"High":     config.High,
@@ -176,6 +178,7 @@ func ThresholdRule(vuls []cdx.Vulnerability, config Config) error {
 		"None":     config.None,
 		"Unknown":  config.Unknown,
 	}
+	log.Infof("CycloneDX Threshold Validation Rules: %s", format.PrettyPrintMapOrdered(allowed, orderedKeys))
 
 	found := make(map[string]int, 7)
 	for severity := range allowed {
@@ -198,6 +201,7 @@ func ThresholdRule(vuls []cdx.Vulnerability, config Config) error {
 			errs = errors.Join(errs, gcv.NewFailedRuleError(rule, fmt.Sprint(found[severity])))
 		}
 	}
+	log.Infof("CycloneDX Threshold Validation Found: %s", format.PrettyPrintMapOrdered(found, orderedKeys))
 	return errs
 }
 
@@ -208,6 +212,7 @@ func AllowListRule(vul cdx.Vulnerability, config Config) bool {
 }
 
 func DenyListRule(vuls []cdx.Vulnerability, config Config) error {
+	log.Info("CycloneDX Custom DenyList Rule")
 	return gcv.ValidateFunc(vuls, func(vul cdx.Vulnerability) error {
 		inDenyList := slices.ContainsFunc(config.DenyList, func(allowListItem ListItem) bool {
 			return strings.ToLower(vul.ID) == strings.ToLower(allowListItem.Id)
@@ -215,7 +220,7 @@ func DenyListRule(vuls []cdx.Vulnerability, config Config) error {
 		if !inDenyList {
 			return nil
 		}
-		return gcv.NewFailedRuleError("Custom DenyList", vul.ID)
+		return gcv.NewFailedRuleError("CycloneDX Custom DenyList Rule", vul.ID)
 	})
 }
 

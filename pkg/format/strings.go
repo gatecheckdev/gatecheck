@@ -54,3 +54,11 @@ func PrettyPrintMap[K comparable, V any](m map[K]V) string {
 	}
 	return fmt.Sprintf("(%s)", strings.Join(s, ", "))
 }
+
+func PrettyPrintMapOrdered[K comparable, V any](m map[K]V, orderedKeys []K) string {
+	s := make([]string, 0, len(orderedKeys))
+	for _, key := range orderedKeys {
+		s = append(s, fmt.Sprintf("%v: %v", key, m[key]))
+	}
+	return fmt.Sprintf("(%s)", strings.Join(s, ", "))
+}

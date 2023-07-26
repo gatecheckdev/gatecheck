@@ -93,7 +93,7 @@ func NewValidateCmd(newAsyncDecoder func() AsyncDecoder, KEVDownloadAgent io.Rea
 		if bundle, ok := obj.(*archive.Bundle); ok {
 			validationErrors := make(map[string]error, 0)
 			for label := range bundle.Manifest().Files {
-				log.Infof("Validating bundle file labeled: %s", label)
+				log.Infof("Validate bundle file labeled: %s", label)
 				decoder := newAsyncDecoder()
 				_, _ = bundle.WriteFileTo(decoder, label)
 				obj, _ := decoder.Decode()

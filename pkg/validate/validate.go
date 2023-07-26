@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/gatecheckdev/gatecheck/internal/log"
 	"golang.org/x/exp/slices"
 	"gopkg.in/yaml.v3"
 )
@@ -46,7 +47,6 @@ func NewValidator[ObjectT any, ConfigT any]() Validator[ObjectT, ConfigT] {
 
 func (v Validator[ObjectT, ConfigT]) Validate(objects []ObjectT, config ConfigT) error {
 	var errs error
-
 	filteredObjects := slices.DeleteFunc(objects, func(obj ObjectT) bool {
 		for _, allow := range v.allowListRules {
 			if allow(obj, config) {
@@ -56,6 +56,7 @@ func (v Validator[ObjectT, ConfigT]) Validate(objects []ObjectT, config ConfigT)
 		return false
 	})
 
+	log.Infof("Items filtered by AllowList: %d of %d", len(objects) - len(filteredObjects), len(objects))
 	for _, validate := range v.validationRules {
 		errs = errors.Join(errs, validate(filteredObjects, config))
 	}

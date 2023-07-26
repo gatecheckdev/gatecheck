@@ -65,6 +65,7 @@ func (s *Service) NewValidator() gcv.Validator[models.Match, grype.Config] {
 
 func (s *Service) GrypeDenyRuleFunc() func([]models.Match, grype.Config) error {
 	denyRule := func(matches []models.Match, _ grype.Config) error {
+		log.Infof("Grype KEV Catalog Validation Rule: Checking %d vulnerabilities", len(matches))
 		return gcv.ValidateFunc(matches, func(match models.Match) error {
 			inCatalog := slices.ContainsFunc(s.catalog.Vulnerabilities, func(vul Vulnerability) bool {
 				return match.Vulnerability.ID == vul.CveID

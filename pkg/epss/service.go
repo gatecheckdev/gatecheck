@@ -60,11 +60,12 @@ func (s *Service) GrypeDenyRuleFunc() func([]models.Match, grype.Config) error {
 			if config.EPSSDenyThreshold == 0 || cve.Probability == 0 {
 				return nil
 			}
+			denyStr := strconv.FormatFloat(config.EPSSDenyThreshold, 'f', -1, 64)
+			log.Infof("Grype EPSS Deny Rule Validation Threshold: %s", denyStr)
 
 			if cve.Probability < config.EPSSDenyThreshold {
 				return nil
 			}
-			denyStr := strconv.FormatFloat(config.EPSSDenyThreshold, 'f', -1, 64)
 			probStr := strconv.FormatFloat(cve.Probability, 'f', -1, 64)
 
 			rule := fmt.Sprintf("EPSS Score Over Deny Threshold %s", denyStr)

@@ -6,6 +6,7 @@ import (
 	"sort"
 
 	"github.com/anchore/grype/grype/presenter/models"
+	"github.com/gatecheckdev/gatecheck/internal/log"
 	gce "github.com/gatecheckdev/gatecheck/pkg/encoding"
 	"github.com/gatecheckdev/gatecheck/pkg/format"
 	gcv "github.com/gatecheckdev/gatecheck/pkg/validate"
@@ -62,14 +63,16 @@ func NewValidator() gcv.Validator[models.Match, Config] {
 }
 
 func ThresholdRule(matches []models.Match, config Config) error {
+	orderedKeys := []string{"Critical", "High", "Medium", "Low", "Negligible", "Unknown"}
 	allowed := map[string]int{
-		"Critical":   config.Critical,
-		"High":       config.High,
-		"Medium":     config.Medium,
-		"Low":        config.Low,
-		"Negligible": config.Negligible,
-		"Unknown":    config.Unknown,
+		orderedKeys[0]: config.Critical,
+		orderedKeys[1]: config.High,
+		orderedKeys[2]: config.Medium,
+		orderedKeys[3]: config.Low,
+		orderedKeys[4]: config.Negligible,
+		orderedKeys[5]: config.Unknown,
 	}
+	log.Infof("Grype Threshold Validation Rule Allowed: %s", format.PrettyPrintMapOrdered(allowed, orderedKeys))
 
 	found := make(map[string]int, 6)
 	for severity := range allowed {
@@ -90,10 +93,12 @@ func ThresholdRule(matches []models.Match, config Config) error {
 			errs = errors.Join(errs, gcv.NewFailedRuleError(rule, fmt.Sprint(found[severity])))
 		}
 	}
+	log.Infof("Grype Threshold Validation Found: %s", format.PrettyPrintMapOrdered(found, orderedKeys))
 	return errs
 }
 
 func DenyListRule(matches []models.Match, config Config) error {
+	log.Info("Grype Custom DenyList Rule")
 	return gcv.ValidateFunc(matches, func(m models.Match) error {
 		inDenyList := slices.ContainsFunc(config.DenyList, func(denyListItem ListItem) bool {
 			return m.Vulnerability.ID == denyListItem.Id
@@ -101,7 +106,7 @@ func DenyListRule(matches []models.Match, config Config) error {
 		if !inDenyList {
 			return nil
 		}
-		return gcv.NewFailedRuleError("Custom DenyList", m.Vulnerability.ID)
+		return gcv.NewFailedRuleError("Grype Custom DenyList Rule", m.Vulnerability.ID)
 	})
 }
 
