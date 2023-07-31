@@ -17,7 +17,6 @@ require (
 	github.com/spf13/viper v1.16.0
 	github.com/zricethezav/gitleaks/v8 v8.17.0
 	golang.org/x/exp v0.0.0-20230713183714-613f0c0eb8a1
-	gopkg.in/yaml.v2 v2.4.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 
