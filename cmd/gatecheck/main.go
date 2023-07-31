@@ -95,7 +95,7 @@ func main() {
 	viper.AddConfigPath(".")
 
 	command := cmd.NewRootCommand(cmd.CLIConfig{
-		Version:           "0.1.0",
+		Version:           "0.1.1",
 		PipedInput:        pipedFile,
 		EPSSDownloadAgent: epss.NewAgent(http.DefaultClient, viper.GetString("GATECHECK_EPSS_URL")),
 		KEVDownloadAgent:  kev.NewAgent(http.DefaultClient, viper.GetString("GATECHECK_KEV_URL")),

@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [UNRELEASED]
 
+## [0.1.1]
+
+### Changed
+
+- Bug fix, EPSS to use current UTC time 
+
 ## [0.1.0] - 2023-07-26
 
 ### Changed
