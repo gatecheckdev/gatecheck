@@ -9,6 +9,7 @@ import (
 	"os"
 	"time"
 
+	gio "github.com/gatecheckdev/gatecheck/internal/io"
 	"github.com/gatecheckdev/gatecheck/internal/log"
 	"github.com/gatecheckdev/gatecheck/pkg/artifacts/cyclonedx"
 	"github.com/gatecheckdev/gatecheck/pkg/artifacts/gitleaks"
@@ -95,18 +96,13 @@ func NewExportCmd(
 		Short: "Export raw scan report to AWS S3",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			// Open the file
-			f, err := os.Open(args[0])
-			if err != nil {
-				return fmt.Errorf("%w: %v", ErrorFileAccess, err)
-			}
 
 			objectKey, _ := cmd.Flags().GetString("key")
 
 			ctx, cancel := context.WithTimeout(context.Background(), awsTimeout)
 			defer cancel()
 
-			return awsService.Export(ctx, f, objectKey)
+			return awsService.Export(ctx, gio.NewLazyReader(args[0]), objectKey)
 		},
 	}
 	awsCmd.Flags().String("key", "", "The AWS S3 object key for the location in the bucket")

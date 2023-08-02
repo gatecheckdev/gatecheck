@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 
+	gio "github.com/gatecheckdev/gatecheck/internal/io"
 	"github.com/gatecheckdev/gatecheck/internal/log"
 	"github.com/gatecheckdev/gatecheck/pkg/archive"
 	"github.com/gatecheckdev/gatecheck/pkg/artifacts/cyclonedx"
@@ -23,6 +24,7 @@ import (
 
 func NewValidateCmd(newAsyncDecoder func() AsyncDecoder, KEVDownloadAgent io.Reader, EPSSDownloadAgent io.Reader) *cobra.Command {
 	var validateAny func(obj any, configBytes []byte) error
+	var validateBundle func(bundle *archive.Bundle, configBytes []byte) error
 
 	var kevService *kev.Service
 	var epssService *epss.Service
@@ -39,14 +41,10 @@ func NewValidateCmd(newAsyncDecoder func() AsyncDecoder, KEVDownloadAgent io.Rea
 			auditFlag, _ := cmd.Flags().GetBool("audit")
 			kevFetchFlag, _ := cmd.Flags().GetBool("fetch-kev")
 			epssFetchFlag, _ := cmd.Flags().GetBool("fetch-epss")
-
-			objFile, err := os.Open(args[0])
-			if err != nil {
-				return fmt.Errorf("%w: Report / bundle: %v", ErrorFileAccess, err)
-			}
+			log.Infof("Audit Mode: %v", auditFlag)
 
 			decoder := newAsyncDecoder()
-			obj, err := decoder.DecodeFrom(objFile)
+			obj, err := decoder.DecodeFrom(gio.NewLazyReader(args[0]))
 			if err != nil {
 				return fmt.Errorf("%w: Async decoding: %v", ErrorEncoding, err)
 			}
@@ -91,40 +89,25 @@ func NewValidateCmd(newAsyncDecoder func() AsyncDecoder, KEVDownloadAgent io.Rea
 
 	validateAny = func(obj any, configBytes []byte) error {
 		if bundle, ok := obj.(*archive.Bundle); ok {
-			validationErrors := make(map[string]error, 0)
-			for label := range bundle.Manifest().Files {
-				log.Infof("Validate bundle file labeled: %s", label)
-				decoder := newAsyncDecoder()
-				_, _ = bundle.WriteFileTo(decoder, label)
-				obj, _ := decoder.Decode()
-				if decoder.FileType() == gce.GenericFileType {
-					continue
-				}
-				if err := validateAny(obj, configBytes); err != nil {
-					validationErrors[label] = err
-				}
-			}
-
-			if len(validationErrors) == 0 {
-				return nil
-			}
-			validationError := ErrorValidation
-			for k, v := range validationErrors {
-				errors.Join(validationError, fmt.Errorf("bundle artifact file '%s': %w", k, v))
-			}
-			return validationError
+			return validateBundle(bundle, configBytes)
 		}
 
 		switch obj.(type) {
 		case *semgrep.ScanReport:
-			return semgrep.NewValidator().ReadConfigAndValidate(obj.(*semgrep.ScanReport).Results,
+			err := semgrep.NewValidator().ReadConfigAndValidate(obj.(*semgrep.ScanReport).Results,
 				bytes.NewReader(configBytes), semgrep.ConfigFieldName)
+			log.Infof("semgrep report validation result: %v", err)
+			return err
 		case *gitleaks.ScanReport:
-			return gitleaks.NewValidator().ReadConfigAndValidate(*obj.(*gitleaks.ScanReport),
+			err := gitleaks.NewValidator().ReadConfigAndValidate(*obj.(*gitleaks.ScanReport),
 				bytes.NewReader(configBytes), gitleaks.ConfigFieldName)
+			log.Infof("gitleaks report validation result: %v", err)
+			return err
 		case *cyclonedx.ScanReport:
-			return cyclonedx.NewValidator().ReadConfigAndValidate(*obj.(*cyclonedx.ScanReport).Vulnerabilities,
+			err := cyclonedx.NewValidator().ReadConfigAndValidate(*obj.(*cyclonedx.ScanReport).Vulnerabilities,
 				bytes.NewReader(configBytes), cyclonedx.ConfigFieldName)
+			log.Infof("cyclonedx report validation result: %v", err)
+			return err
 		}
 
 		// This function is called after the async decoder so it has to be a defined type
@@ -141,8 +124,25 @@ func NewValidateCmd(newAsyncDecoder func() AsyncDecoder, KEVDownloadAgent io.Rea
 		}
 
 		grypeErr := grypeValidator.ReadConfigAndValidate(report.Matches, bytes.NewReader(configBytes), grype.ConfigFieldName)
-		return errors.Join(kevValidationErr, grypeErr)
+		err := errors.Join(kevValidationErr, grypeErr)
+		log.Infof("grype report validation result: %v", err)
+		return err
+	}
 
+	validateBundle = func(bundle *archive.Bundle, configBytes []byte) error {
+		var bundleValidationError error
+		for label := range bundle.Manifest().Files {
+			log.Infof("Validate bundle file labeled: %s", label)
+			decoder := newAsyncDecoder()
+			_, _ = bundle.WriteFileTo(decoder, label)
+			obj, _ := decoder.Decode()
+			if decoder.FileType() == gce.GenericFileType {
+				continue
+			}
+			err := validateAny(obj, configBytes)
+			bundleValidationError = errors.Join(bundleValidationError, err)
+		}
+		return bundleValidationError
 	}
 
 	cmd.Flags().Bool("audit", false, "Exit w/ Code 0 even if validation fails")
@@ -165,11 +165,7 @@ func getKEVService(filename string, downloadAgent io.Reader) (*kev.Service, erro
 		service := kev.NewService(downloadAgent)
 		return service, service.Fetch()
 	}
-	f, err := os.Open(filename)
-	if err != nil {
-		return nil, fmt.Errorf("%w: KEV File: %v", ErrorFileAccess, err)
-	}
-	service := kev.NewService(f)
+	service := kev.NewService(gio.NewLazyReader(filename))
 	return service, service.Fetch()
 }
 
@@ -178,10 +174,6 @@ func getEPSSService(filename string, downloadAgent io.Reader) (*epss.Service, er
 		service := epss.NewService(downloadAgent)
 		return service, service.Fetch()
 	}
-	f, err := os.Open(filename)
-	if err != nil {
-		return nil, fmt.Errorf("%w: EPSS File: %v", ErrorFileAccess, err)
-	}
-	service := epss.NewService(f)
+	service := epss.NewService(gio.NewLazyReader(filename))
 	return service, service.Fetch()
 }

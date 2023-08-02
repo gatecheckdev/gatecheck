@@ -25,7 +25,6 @@ func TestNewBundleCmd(t *testing.T) {
 		{label: "existing-bundle-error", cmdString: fmt.Sprintf("bundle -o %s %s", writeTempAny(mockObj, t), fileWithBadJSON(t)), wantErr: ErrorEncoding},
 		{label: "arugment-file-error", cmdString: fmt.Sprintf("bundle -o %s %s", tempFile("bundle-1.tar.gz"), fileWithBadPermissions(t)), wantErr: ErrorFileAccess},
 		{label: "missing-file", cmdString: fmt.Sprintf("bundle -mo %s %s %s", tempFile("bundle-2.tar.gz"), writeTempAny(mockObj, t), "nonexistingfile.txt"), wantErr: nil},
-		{label: "ls-file-error", cmdString: "bundle ls", wantErr: ErrorFileAccess},
 		{label: "ls-file-encoding-error", cmdString: fmt.Sprintf("bundle ls %s", writeTempAny(mockObj, t)), wantErr: ErrorEncoding},
 	}
 

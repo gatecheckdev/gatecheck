@@ -103,16 +103,16 @@ func TestNewEPSSCmd(t *testing.T) {
 		// Bad Grype file
 		commandString := fmt.Sprintf("epss -e %s %s", epssTestCSV, fileWithBadPermissions(t))
 		output, err := Execute(commandString, regularConfig)
-		if errors.Is(err, ErrorFileAccess) != true {
-			t.Fatal(err)
+		if !errors.Is(err, ErrorEncoding) {
+			t.Fatalf("want: %v got: %v", ErrorEncoding, err)
 		}
 		t.Log(output)
 
 		// Bad EPSS File
 		commandString = fmt.Sprintf("epss -e %s %s", fileWithBadPermissions(t), grypeTestReport)
 		output, err = Execute(commandString, regularConfig)
-		if errors.Is(err, ErrorFileAccess) != true {
-			t.Fatal(err)
+		if !errors.Is(err, os.ErrPermission) {
+			t.Fatalf("want: %v got: %v", os.ErrPermission, err)
 		}
 		t.Log(output)
 	})

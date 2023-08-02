@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"os"
 	"path"
 	"strings"
 	"testing"
@@ -18,6 +19,7 @@ import (
 	"github.com/gatecheckdev/gatecheck/pkg/artifacts/grype"
 	"github.com/gatecheckdev/gatecheck/pkg/artifacts/semgrep"
 	gce "github.com/gatecheckdev/gatecheck/pkg/encoding"
+	gcv "github.com/gatecheckdev/gatecheck/pkg/validate"
 	"github.com/gatecheckdev/gatecheck/pkg/kev"
 	"gopkg.in/yaml.v3"
 )
@@ -183,16 +185,16 @@ func TestValidate_EPSS(t *testing.T) {
 func TestGetKEVService(t *testing.T) {
 	t.Run("file-access", func(t *testing.T) {
 		_, err := getKEVService(fileWithBadPermissions(t), nil)
-		if !errors.Is(err, ErrorFileAccess) {
-			t.Fatalf("want: %v got: %v", ErrorFileAccess, err)
+		if !errors.Is(err, gce.ErrIO) {
+			t.Fatalf("want: %v got: %v", gce.ErrIO, err)
 		}
 	})
 }
 func TestGetEPSSService(t *testing.T) {
 	t.Run("file-access", func(t *testing.T) {
 		_, err := getEPSSService(fileWithBadPermissions(t), nil)
-		if !errors.Is(err, ErrorFileAccess) {
-			t.Fatalf("want: %v got: %v", ErrorFileAccess, err)
+		if !errors.Is(err, os.ErrPermission) {
+			t.Fatalf("want: %v got: %v", os.ErrPermission, err)
 		}
 	})
 }
@@ -314,8 +316,9 @@ func TestValidateCmd(t *testing.T) {
 		{label: "bundle-pass", wantErr: nil, reportFunc: tempBundleFileFunc, configFunc: fileFunc(configPassFilename)},
 		{label: "bundle-fail", wantErr: ErrorValidation, reportFunc: tempBundleFileFunc, configFunc: fileFunc(configFailFilename)},
 
-		{label: "bad-object-file", wantErr: ErrorFileAccess, reportFunc: fileWithBadPermissions, configFunc: fileWithBadPermissions},
+		{label: "bad-object-file", wantErr: ErrorEncoding, reportFunc: fileWithBadPermissions, configFunc: fileWithBadPermissions},
 		{label: "bad-config-file", wantErr: ErrorFileAccess, reportFunc: fileFunc(grypeTestReport), configFunc: fileWithBadPermissions},
+		{label: "bad-config-file-decode", wantErr: gcv.ErrConfig, reportFunc: fileFunc(grypeTestReport), configFunc: fileWithBadJSON},
 		{label: "decode-error", wantErr: ErrorEncoding, reportFunc: fileWithBadJSON, configFunc: fileFunc(configPassFilename)},
 	}
 

@@ -116,31 +116,17 @@ func TestNewExport_DDCmd(t *testing.T) {
 }
 
 func TestExportS3Cmd(t *testing.T) {
+	config := CLIConfig{
+		AWSExportService: mockAWSExportService{exportResponse: nil},
+		AWSExportTimeout: time.Second * 3,
+	}
 
-	t.Run("success", func(t *testing.T) {
-		f := MustOpen(grypeTestReport, t)
+	commandString := fmt.Sprintf("export s3 %s --key a/b/c", grypeTestReport)
 
-		commandString := fmt.Sprintf("export s3 %s --key a/b/c", f.Name())
-
-		_, err := Execute(commandString, CLIConfig{
-			AWSExportService: mockAWSExportService{exportResponse: nil},
-			AWSExportTimeout: time.Second * 3,
-		})
-		if err != nil {
-			t.Fatal(err)
-		}
-	})
-
-	t.Run("bad-permissions", func(t *testing.T) {
-
-		commandString := fmt.Sprintf("export s3 %s --key a/b/c", fileWithBadPermissions(t))
-		out, err := Execute(commandString, CLIConfig{})
-
-		if errors.Is(err, ErrorFileAccess) != true {
-			t.Log(out)
-			t.Fatal(err)
-		}
-	})
+	_, err := Execute(commandString, config)
+	if err != nil {
+		t.Fatal(err)
+	}
 }
 
 func AsyncDecoderFunc() AsyncDecoder {

@@ -1,12 +1,12 @@
 package cmd
 
 import (
-	"fmt"
 	"io"
 	"os"
 	"strings"
 
 	"github.com/dustin/go-humanize"
+	gio "github.com/gatecheckdev/gatecheck/internal/io"
 	"github.com/gatecheckdev/gatecheck/internal/log"
 	"github.com/gatecheckdev/gatecheck/pkg/archive"
 	"github.com/gatecheckdev/gatecheck/pkg/artifacts/cyclonedx"
@@ -32,12 +32,7 @@ func NewPrintCommand(pipedFile *os.File, newAsyncDecoder func() AsyncDecoder) *c
 			}
 
 			for _, filename := range args {
-				log.Infof("Opening file: %s", filename)
-				f, err := os.Open(filename)
-				if err != nil {
-					return fmt.Errorf("%w: %v", ErrorFileAccess, err)
-				}
-				v, _ := newAsyncDecoder().DecodeFrom(f)
+				v, _ := newAsyncDecoder().DecodeFrom(gio.NewLazyReader(filename))
 				printArtifact(cmd.OutOrStdout(), v, newAsyncDecoder)
 			}
 

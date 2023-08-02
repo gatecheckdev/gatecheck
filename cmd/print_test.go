@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"os"
 	"path"
@@ -81,15 +80,6 @@ func Test_PrintCommand(t *testing.T) {
 			}
 			t.Log(out)
 		})
-	})
-
-	t.Run("bad-file", func(t *testing.T) {
-		badFile := fileWithBadPermissions(t)
-		config := CLIConfig{NewAsyncDecoderFunc: AsyncDecoderFunc}
-
-		if _, err := Execute("print "+badFile, config); errors.Is(err, ErrorFileAccess) != true {
-			t.Fatal("Expected error for bad file, got", err)
-		}
 	})
 
 	t.Run("unsupported-file", func(t *testing.T) {

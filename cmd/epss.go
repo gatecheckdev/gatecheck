@@ -3,9 +3,9 @@ package cmd
 import (
 	"fmt"
 	"io"
-	"os"
 	"sort"
 
+	gio "github.com/gatecheckdev/gatecheck/internal/io"
 	"github.com/gatecheckdev/gatecheck/internal/log"
 	"github.com/gatecheckdev/gatecheck/pkg/artifacts/grype"
 	"github.com/gatecheckdev/gatecheck/pkg/epss"
@@ -35,35 +35,25 @@ func NewEPSSCmd(EPSSDownloadAgent io.Reader) *cobra.Command {
 		Short: "Query first.org for Exploit Prediction Scoring System (EPSS)",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			var csvFile *os.File
 			var err error
 			var service *epss.Service
 
 			csvFilename, _ := cmd.Flags().GetString("epss-file")
 			fetchFlag, _ := cmd.Flags().GetBool("fetch")
 
-			grypeFile, err := os.Open(args[0])
-			if err != nil {
-				return fmt.Errorf("%w: %v", ErrorFileAccess, err)
-			}
-
 			if fetchFlag {
 				service = epss.NewService(EPSSDownloadAgent)
 			}
 
 			if csvFilename != "" {
-				csvFile, err = os.Open(csvFilename)
-				if err != nil {
-					return fmt.Errorf("%w: %v", ErrorFileAccess, err)
-				}
-				service = epss.NewService(csvFile)
+				service = epss.NewService(gio.NewLazyReader(csvFilename))
 			}
 
 			if service == nil {
 				return fmt.Errorf("%w: No EPSS file or --fetch flag", ErrorUserInput)
 			}
 
-			r, err := grype.NewReportDecoder().DecodeFrom(grypeFile)
+			r, err := grype.NewReportDecoder().DecodeFrom(gio.NewLazyReader(args[0]))
 
 			if err != nil {
 				return fmt.Errorf("%w: %v", ErrorEncoding, err)
@@ -88,6 +78,7 @@ func NewEPSSCmd(EPSSDownloadAgent io.Reader) *cobra.Command {
 
 	EPSSCmd.Flags().StringP("epss-file", "e", "", "A downloaded CSV File with scores, note: will not query API")
 	EPSSCmd.Flags().Bool("fetch", false, "Fetch EPSS scores from API")
+	EPSSCmd.MarkFlagsMutuallyExclusive("epss-file", "fetch")
 
 	return EPSSCmd
 }
