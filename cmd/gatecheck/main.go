@@ -31,6 +31,7 @@ const ExitSystemFail int = -1
 const ExitOk int = 0
 const ExitFileAccessFail int = 2
 const ExitValidationFail = 1
+const GatecheckVersion = "v0.1.2"
 
 func main() {
 	viper.SetConfigType("env")
@@ -95,7 +96,7 @@ func main() {
 	viper.AddConfigPath(".")
 
 	command := cmd.NewRootCommand(cmd.CLIConfig{
-		Version:           "0.1.1",
+		Version:           GatecheckVersion,
 		PipedInput:        pipedFile,
 		EPSSDownloadAgent: epss.NewAgent(http.DefaultClient, viper.GetString("GATECHECK_EPSS_URL")),
 		KEVDownloadAgent:  kev.NewAgent(http.DefaultClient, viper.GetString("GATECHECK_KEV_URL")),

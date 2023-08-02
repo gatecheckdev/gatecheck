@@ -7,10 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [UNRELEASED]
 
-## [0.1.1]
+## [0.1.2] - 2023-08-02
 
 ### Changed
 
+- Updated dependencies
 - Bug fix, EPSS to use current UTC time 
 - Bug fix, validation command has a seperate bundle function to prevent error overwriting on recursive calls
 
