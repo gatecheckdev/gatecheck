@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [UNRELEASED]
 
+- Bug fix, Revert EPSS from using UTC time back to Now/Local time
+
 ## [0.1.2] - 2023-08-02
 
 ### Changed
