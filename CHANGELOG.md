@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [UNRELEASED]
 
+## [0.1.3] - 2023-08-04
+
+### Fixed
+
+- Bug with EPSS Time Zone (may need further discovery down the line)
+- LazyReader Export bug (AWS API wants to seek on the body which doesn't work on the LazyReader)
+
 ## [0.1.2] - 2023-08-02
 
 ### Changed
