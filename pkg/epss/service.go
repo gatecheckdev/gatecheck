@@ -202,7 +202,7 @@ func (a *APIAgent) Read(p []byte) (int, error) {
 		return a.gunzipReader.Read(p)
 	}
 
-	today := time.Now().UTC()
+	today := time.Now()
 	endpoint := fmt.Sprintf("epss_scores-%d-%s-%s.csv.gz", today.Year(), today.Format("01"), today.Format("02"))
 	url, _ := url.JoinPath(a.url, endpoint)
 	req, _ := http.NewRequest(http.MethodGet, url, nil)
