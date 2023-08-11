@@ -28,6 +28,7 @@ jobs:
           - macOS
         go:
           - 20
+          - 21
     name: '${{ matrix.platform }} | 1.${{ matrix.go }}.x'
     runs-on: ${{ matrix.platform }}-latest
     steps:
