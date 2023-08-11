@@ -46,6 +46,18 @@ func Test_PrintCommand(t *testing.T) {
 		}
 		t.Log(out)
 	})
+	t.Run("gitleaks_no_secrets", func(t *testing.T) {
+		fn := path.Join(t.TempDir(), "gitleaks-report.json")
+		f := MustCreate(fn, t)
+		f.WriteString("[]\n")
+		f.Close()
+		out, err := Execute("print "+fn, config)
+		if err != nil {
+			t.Fatal(err)
+		}
+		t.Log(out)
+	})
+
 	t.Run("cyclonedx", func(t *testing.T) {
 		f := MustOpen(cyclonedxTestReport, t)
 		out, err := Execute("print "+f.Name(), config)

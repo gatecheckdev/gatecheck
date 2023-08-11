@@ -63,16 +63,16 @@ func (d *ReportDecoder) DecodeFrom(r io.Reader) (any, error) {
 }
 
 func (d *ReportDecoder) Decode() (any, error) {
-	// Edge Case: report with no findings
-	if d.String() == "[]" {
-		return &ScanReport{}, nil
-	}
-
 	obj := ScanReport{}
-	err := json.NewDecoder(d).Decode(&obj)
-
+	jsonDecoder := json.NewDecoder(d)
+	jsonDecoder.DisallowUnknownFields()
+	err := jsonDecoder.Decode(&obj)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %v", gce.ErrEncoding, err)
+	}
+	if len(obj) == 0 {
+		log.Info("decoded a gitleaks report with no findings")
+		return &obj, nil
 	}
 
 	if obj[0].RuleID == "" {
