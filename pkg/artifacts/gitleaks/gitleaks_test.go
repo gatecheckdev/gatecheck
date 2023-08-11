@@ -15,7 +15,7 @@ import (
 const TestReport string = "../../../test/gitleaks-report.json"
 
 func TestEncoding(t *testing.T) {
-	t.Run("sucess", func(t *testing.T) {
+	t.Run("success", func(t *testing.T) {
 		decoder := NewReportDecoder()
 		obj, err := decoder.DecodeFrom(MustOpen(TestReport, t))
 		if err != nil {
