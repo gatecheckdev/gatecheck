@@ -14,25 +14,46 @@ import (
 
 const TestReport string = "../../../test/gitleaks-report.json"
 
-func TestEncoding_success(t *testing.T) {
-	decoder := NewReportDecoder()
-	obj, err := decoder.DecodeFrom(MustOpen(TestReport, t))
-	if err != nil {
-		t.Fatal(err)
-	}
-	report, ok := obj.(*ScanReport)
-	if !ok {
-		t.Fatalf("want: *ScanReport got: %T", obj)
-	}
-	if len(*report) < 2 {
-		t.Fatalf("want: <2 got: %d", len(*report))
-	}
+func TestEncoding(t *testing.T) {
+	t.Run("sucess", func(t *testing.T) {
+		decoder := NewReportDecoder()
+		obj, err := decoder.DecodeFrom(MustOpen(TestReport, t))
+		if err != nil {
+			t.Fatal(err)
+		}
+		report, ok := obj.(*ScanReport)
+		if !ok {
+			t.Fatalf("want: *ScanReport got: %T", obj)
+		}
+		if len(*report) < 2 {
+			t.Fatalf("want: <2 got: %d", len(*report))
+		}
 
-	t.Log(report.String())
-	t.Log(decoder.FileType())
-	if !strings.Contains(report.String(), "generic-api-key") {
-		t.Fatal("'generic-api-key' should exist in string")
-	}
+		t.Log(report.String())
+		t.Log(decoder.FileType())
+		if !strings.Contains(report.String(), "generic-api-key") {
+			t.Fatal("'generic-api-key' should exist in string")
+		}
+	})
+	t.Run("invalid-report", func(t *testing.T) {
+		decoder := NewReportDecoder()
+		_, err := decoder.DecodeFrom(strings.NewReader("[{\"name\":\"bacchus\"}]\n"))
+		if !errors.Is(err, gce.ErrEncoding) {
+			t.Fatalf("want: %v got: %v", gce.ErrEncoding, err)
+		}
+	})
+	t.Run("no-serects", func(t *testing.T) {
+		decoder := NewReportDecoder()
+		obj, err := decoder.DecodeFrom(strings.NewReader("[]\n"))
+		if err != nil {
+			t.Fatal(err)
+		}
+		report, ok := obj.(*ScanReport)
+		if !ok {
+			t.Fatalf("want: *ScanReport got: %T", obj)
+		}
+		t.Log(report)
+	})
 }
 
 type badReader struct{}
