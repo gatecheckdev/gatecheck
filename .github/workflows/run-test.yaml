@@ -1,9 +1,6 @@
 name: CICD
 on:
   pull_request:
-  push:
-    branches:
-      - main
 jobs:
   Describe:
     runs-on: ubuntu-latest
