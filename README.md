@@ -113,18 +113,23 @@ gatecheck config info
 expected file: `settings.env`
 
 ```shell
-GATECHECK_AWS_PROFILE=
-GATECHECK_DD_COMMIT_HASH=
-GATECHECK_DD_TAGS=
 GATECHECK_AWS_BUCKET=
-GATECHECK_DD_BRANCH_TAG=
-GATECHECK_DD_SOURCE_URL=
-GATECHECK_DD_API_URL=
+GATECHECK_AWS_PROFILE=
 GATECHECK_DD_API_KEY=
+GATECHECK_DD_API_URL=
+GATECHECK_DD_BRANCH_TAG=
+GATECHECK_DD_COMMIT_HASH=
+GATECHECK_DD_SOURCE_URL=
 GATECHECK_DD_PRODUCT_TYPE=
-GATECHECK_DD_ENGAGEMENT=
-GATECHECK_KEV_URL='https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json'
 GATECHECK_DD_PRODUCT=
+GATECHECK_DD_ENGAGEMENT=
+GATECHECK_DD_TAGS=
+GATECHECK_DD_DEDUPLICATION_ON_ENGAGEMENT=false
+GATECHECK_DD_CLOSE_OLD_FINDINGS=false
+GATECHECK_DD_CLOSE_OLD_FINDINGS_PRODUCT_SCOPE=false
+GATECHECK_DD_CREATE_FINDING_GROUPS_FOR_ALL_FINDINGS=true
+GATECHECK_DD_ENABLE_SIMPLE_RISK_ACCEPTANCE=false
+GATECHECK_KEV_URL='https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json'
 GATECHECK_EPSS_URL='https://epss.cyentia.com'
 ```
 
@@ -173,6 +178,15 @@ Environment Variables:
 - GATECHECK_DD_SOURCE_URL
 - GATECHECK_DD_TAGS
 
+The following environment variables may be used to provide more control over how scans are imported into DefectDojo.
+
+Environment Variables (defaults):
+- GATECHECK_DD_DEDUPLICATION_ON_ENGAGEMENT=false
+- GATECHECK_DD_CLOSE_OLD_FINDINGS=false
+- GATECHECK_DD_CLOSE_OLD_FINDINGS_PRODUCT_SCOPE=false
+- GATECHECK_DD_CREATE_FINDING_GROUPS_FOR_ALL_FINDINGS=true
+- GATECHECK_DD_ENABLE_SIMPLE_RISK_ACCEPTANCE=false
+
 ```shell
 gatecheck export defect-dojo grype-report.json
 ```
@@ -181,13 +195,13 @@ gatecheck export defect-dojo grype-report.json
 
 [Developer Guide | AWS SDK for Go V2](https://aws.github.io/aws-sdk-go-v2/docs/)
 
-The AWS S3 upload bucket name must be supplied as an environment variable, `AWS_BUCKET`.
-To upload artifacts to S3, ensure the configured `AWS_PROFILE` has write access to `AWS_BUCKET`.
+The AWS S3 upload bucket name must be supplied as an environment variable, `GATECHECK_AWS_BUCKET`.
+To upload artifacts to S3, ensure the configured `GATECHECK_AWS_PROFILE` has write access to `GATECHECK_AWS_BUCKET`.
 Currently, the exporter uses the AWS SDK for Go V2 to upload artifacts to AWS S3.
 
 Environment Variables:
-- AWS_BUCKET
-- AWS_PROFILE
+- GATECHECK_AWS_BUCKET
+- GATECHECK_AWS_PROFILE
 
 ```shell
 gatecheck export s3 grype-report.json \
@@ -247,7 +261,7 @@ semgrep:
 
 Artifacts and generic files can be bundled using Gatecheck.
 The files are compressed which reduces the total file size while preserving data.
-The resulting file is a gatecheck-bundle.tar.gz file
+The resulting file is a `gatecheck-bundle.tar.gz` file
 
 To create a new bundle
 
@@ -258,7 +272,7 @@ gatecheck bundle grype-report.json semgrep-sast-report.json
 To view the files in a bundle
 
 ```shell
-gatecheck print bundle.gatecheck
+gatecheck print gatecheck-bundle.tar.gz
 ┌──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
 │ Type                      │ Label                    │ Digest                                                           │ Size   │
 ├──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
@@ -270,5 +284,5 @@ gatecheck print bundle.gatecheck
 To validate all files in the bundle with a configuration file
 
 ```shell
-gatecheck validate -c gatecheck.yaml bundle.gatecheck
+gatecheck validate -c gatecheck.yaml gatecheck-bundle.tar.gz
 ```

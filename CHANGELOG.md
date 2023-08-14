@@ -7,9 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [UNRELEASED]
 
+### Added
+
+- EnableSimpleRiskAcceptance Products API settings option
+- DeduplicationOnEngagement Engagements API settings option
+- CloseOldFindings Import-Scan API settings option
+- CloseOldFindingsProductScope Import-Scan API settings option
+- CreateFindingGroupsForAllFindings Import-Scan API settings option
+
 ### Fixed
 
 - Bug where Gitleaks report with no secrets aren't properly decoded
+
+### Changed
+
+- Update DefectDojo Export Service calls and unit-tests
+- Update README documentation
 
 ## [0.1.3] - 2023-08-04
 
