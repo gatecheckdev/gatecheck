@@ -50,6 +50,11 @@ func main() {
 	viper.SetDefault("GATECHECK_DD_SOURCE_URL", "")
 	viper.SetDefault("GATECHECK_DD_COMMIT_HASH", "")
 	viper.SetDefault("GATECHECK_DD_TAGS", "")
+	viper.SetDefault("GATECHECK_DD_DEDUPLICATION_ON_ENGAGEMENT", false)
+	viper.SetDefault("GATECHECK_DD_CLOSE_OLD_FINDINGS", false)
+	viper.SetDefault("GATECHECK_DD_CLOSE_OLD_FINDINGS_PRODUCT_SCOPE", false)
+	viper.SetDefault("GATECHECK_DD_CREATE_FINDING_GROUPS_FOR_ALL_FINDINGS", true)
+	viper.SetDefault("GATECHECK_DD_ENABLE_SIMPLE_RISK_ACCEPTANCE", false)
 	viper.SetDefault("GATECHECK_AWS_BUCKET", "")
 	viper.SetDefault("GATECHECK_AWS_PROFILE", "")
 	viper.AutomaticEnv()
@@ -65,18 +70,24 @@ func main() {
 	dojoKey := viper.GetString("GATECHECK_DD_API_KEY")
 	dojoURL := viper.GetString("GATECHECK_DD_API_URL")
 
+	dojoCloseOldFindings := viper.GetBool("GATECHECK_DD_CLOSE_OLD_FINDINGS")
+	dojoCloseOldFindingsProductScope := viper.GetBool("GATECHECK_DD_CLOSE_OLD_FINDINGS_PRODUCT_SCOPE")
+	dojoCreateFindingGroupsForAllFindings := viper.GetBool("GATECHECK_DD_CREATE_FINDING_GROUPS_FOR_ALL_FINDINGS")
+
 	ddEngagement := defectdojo.EngagementQuery{
-		ProductTypeName: viper.GetString("GATECHECK_DD_PRODUCT_TYPE"),
-		ProductName:     viper.GetString("GATECHECK_DD_PRODUCT"),
-		Name:            viper.GetString("GATECHECK_DD_ENGAGEMENT"),
-		Duration:        time.Hour * 48,
-		BranchTag:       viper.GetString("GATECHECK_DD_BRANCH_TAG"),
-		SourceURL:       viper.GetString("GATECHECK_DD_SOURCE_URL"),
-		CommitHash:      viper.GetString("GATECHECK_DD_COMMIT_HASH"),
-		Tags:            strings.Split(viper.GetString("GATECHECK_DD_TAGS"), ","),
+		ProductTypeName:            viper.GetString("GATECHECK_DD_PRODUCT_TYPE"),
+		ProductName:                viper.GetString("GATECHECK_DD_PRODUCT"),
+		Name:                       viper.GetString("GATECHECK_DD_ENGAGEMENT"),
+		Duration:                   time.Hour * 48,
+		BranchTag:                  viper.GetString("GATECHECK_DD_BRANCH_TAG"),
+		SourceURL:                  viper.GetString("GATECHECK_DD_SOURCE_URL"),
+		CommitHash:                 viper.GetString("GATECHECK_DD_COMMIT_HASH"),
+		Tags:                       strings.Split(viper.GetString("GATECHECK_DD_TAGS"), ","),
+		DeduplicationOnEngagement:  viper.GetBool("GATECHECK_DD_DEDUPLICATION_ON_ENGAGEMENT"),
+		EnableSimpleRiskAcceptance: viper.GetBool("GATECHECK_DD_ENABLE_SIMPLE_RISK_ACCEPTANCE"),
 	}
 
-	dojoService := defectdojo.NewService(http.DefaultClient, dojoKey, dojoURL)
+	dojoService := defectdojo.NewService(http.DefaultClient, dojoKey, dojoURL, dojoCloseOldFindings, dojoCloseOldFindingsProductScope, dojoCreateFindingGroupsForAllFindings)
 
 	awsBucket := viper.GetString("GATECHECK_AWS_BUCKET")
 	awsProfile := viper.GetString("GATECHECK_AWS_PROFILE")

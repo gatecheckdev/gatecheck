@@ -82,7 +82,7 @@ func TestService_postJSON(t *testing.T) {
 	t.Run("closed-server", func(t *testing.T) {
 		server := httptest.NewServer(nopHandler())
 		server.Close()
-		service := NewService(server.Client(), "", server.URL)
+		service := NewService(server.Client(), "", server.URL, false, false, true)
 		b, _ := json.Marshal(TestStruct{A: "test test"})
 		if _, err := service.postJSON(service.url, bytes.NewBuffer(b)); err == nil {
 			t.Fatal("Expected error for closed server")
@@ -90,7 +90,7 @@ func TestService_postJSON(t *testing.T) {
 	})
 	t.Run("bad-status", func(t *testing.T) {
 		server := httptest.NewServer(badStatusHandler())
-		service := NewService(server.Client(), "", server.URL)
+		service := NewService(server.Client(), "", server.URL, false, false, true)
 		b, _ := json.Marshal(TestStruct{A: "test test"})
 		if _, err := service.postJSON(service.url, bytes.NewBuffer(b)); err == nil {
 			t.Fatal("Expected error for bad status")
@@ -98,7 +98,7 @@ func TestService_postJSON(t *testing.T) {
 	})
 	t.Run("success", func(t *testing.T) {
 		server := httptest.NewServer(customResponseHandler(http.StatusCreated, TestStruct{A: "received"}))
-		service := NewService(server.Client(), "", server.URL)
+		service := NewService(server.Client(), "", server.URL, false, false, true)
 		b, _ := json.Marshal(TestStruct{A: "test test"})
 		body, err := service.postJSON(service.url, bytes.NewBuffer(b))
 		if err != nil {
@@ -120,7 +120,7 @@ func TestService_postScan(t *testing.T) {
 
 	t.Run("bad-reader", func(t *testing.T) {
 		server := httptest.NewServer(customResponseHandler(http.StatusCreated, TestStruct{A: "received"}))
-		service := NewService(server.Client(), "", server.URL)
+		service := NewService(server.Client(), "", server.URL, false, false, true)
 		if err := service.postScan(badReader{}, Grype, engagement{}); err == nil {
 			t.Fatal("Expected an error for a bad reader")
 		}
@@ -129,7 +129,7 @@ func TestService_postScan(t *testing.T) {
 	t.Run("close-server", func(t *testing.T) {
 		server := httptest.NewServer(nopHandler())
 		server.Close()
-		service := NewService(server.Client(), "", server.URL)
+		service := NewService(server.Client(), "", server.URL, false, false, true)
 		if err := service.postScan(bytes.NewBuffer(randomBytes), Grype, engagement{}); err == nil {
 			t.Fatal("Expected an error for a closed server")
 		}
@@ -137,7 +137,7 @@ func TestService_postScan(t *testing.T) {
 
 	t.Run("bad-status", func(t *testing.T) {
 		server := httptest.NewServer(badStatusHandler())
-		service := NewService(server.Client(), "", server.URL)
+		service := NewService(server.Client(), "", server.URL, false, false, true)
 		if err := service.postScan(bytes.NewBuffer(randomBytes), Grype, engagement{}); err == nil {
 			t.Fatal("Expected an error for a bad server status")
 		}
@@ -145,7 +145,7 @@ func TestService_postScan(t *testing.T) {
 
 	t.Run("success", func(t *testing.T) {
 		server := httptest.NewServer(filePartHandler())
-		service := NewService(server.Client(), "", server.URL)
+		service := NewService(server.Client(), "", server.URL, false, false, true)
 
 		if err := service.postScan(bytes.NewBuffer(randomBytes), Grype, engagement{}); err != nil {
 			t.Fatal(err)
@@ -159,7 +159,7 @@ func TestService_productType(t *testing.T) {
 		serverRes := paginatedResponse[productType]{Results: []productType{{Name: "A", Id: 2}}}
 
 		server := httptest.NewServer(customResponseHandler(http.StatusOK, serverRes))
-		service := NewService(server.Client(), "", server.URL)
+		service := NewService(server.Client(), "", server.URL, false, false, true)
 
 		prodType, err := service.productType(EngagementQuery{ProductTypeName: "A"})
 		if err != nil {
@@ -173,7 +173,7 @@ func TestService_productType(t *testing.T) {
 
 	t.Run("bad-query", func(t *testing.T) {
 		server := httptest.NewServer(badStatusHandler())
-		service := NewService(server.Client(), "", server.URL)
+		service := NewService(server.Client(), "", server.URL, false, false, true)
 
 		if _, err := service.productType(EngagementQuery{}); err == nil {
 			t.Fatal("Expected error for bad query")
@@ -184,7 +184,7 @@ func TestService_productType(t *testing.T) {
 		serverRes := paginatedResponse[productType]{Results: []productType{{Name: "A", Id: 2}}}
 
 		server := httptest.NewServer(customResponseHandler(http.StatusOK, serverRes))
-		service := NewService(server.Client(), "", server.URL)
+		service := NewService(server.Client(), "", server.URL, false, false, true)
 
 		_, err := service.productType(EngagementQuery{Name: "B"})
 		if err == nil {
@@ -196,7 +196,7 @@ func TestService_productType(t *testing.T) {
 		serverGETRes := paginatedResponse[productType]{Results: []productType{{Name: "A", Id: 2}}}
 		serverPOSTRes := productType{Name: "B", Id: 3}
 		server := httptest.NewServer(customRouteHandler(serverGETRes, serverPOSTRes))
-		service := NewService(server.Client(), "", server.URL)
+		service := NewService(server.Client(), "", server.URL, false, false, true)
 
 		prodType, err := service.productType(EngagementQuery{ProductTypeName: "B"})
 		if err != nil {
@@ -214,7 +214,7 @@ func TestService_product(t *testing.T) {
 		serverRes := paginatedResponse[product]{Results: []product{{Name: "A", Id: 2, ProdType: 5}}}
 
 		server := httptest.NewServer(customResponseHandler(http.StatusOK, serverRes))
-		service := NewService(server.Client(), "", server.URL)
+		service := NewService(server.Client(), "", server.URL, false, false, true)
 
 		product, err := service.product(EngagementQuery{ProductName: "A"}, productType{Id: 5})
 		if err != nil {
@@ -228,7 +228,7 @@ func TestService_product(t *testing.T) {
 
 	t.Run("bad-query", func(t *testing.T) {
 		server := httptest.NewServer(badStatusHandler())
-		service := NewService(server.Client(), "", server.URL)
+		service := NewService(server.Client(), "", server.URL, false, false, true)
 
 		if _, err := service.product(EngagementQuery{}, productType{Id: 5}); err == nil {
 			t.Fatal("Expected error for bad query")
@@ -239,7 +239,7 @@ func TestService_product(t *testing.T) {
 		serverRes := paginatedResponse[product]{Results: []product{{Name: "A", Id: 2}}}
 
 		server := httptest.NewServer(customResponseHandler(http.StatusOK, serverRes))
-		service := NewService(server.Client(), "", server.URL)
+		service := NewService(server.Client(), "", server.URL, false, false, true)
 
 		_, err := service.product(EngagementQuery{Name: "B"}, productType{Id: 5})
 		if err == nil {
@@ -251,7 +251,7 @@ func TestService_product(t *testing.T) {
 		serverGETRes := paginatedResponse[product]{Results: []product{{Name: "A", Id: 2, ProdType: 6}}}
 		serverPOSTRes := product{Name: "B", Id: 3, ProdType: 5}
 		server := httptest.NewServer(customRouteHandler(serverGETRes, serverPOSTRes))
-		service := NewService(server.Client(), "", server.URL)
+		service := NewService(server.Client(), "", server.URL, false, false, true)
 
 		prodType, err := service.product(EngagementQuery{ProductName: "B"}, productType{Id: 5})
 		if err != nil {
@@ -268,7 +268,7 @@ func TestService_engagement(t *testing.T) {
 		serverRes := paginatedResponse[engagement]{Results: []engagement{{Name: "A", Id: 2, Product: 7}}}
 
 		server := httptest.NewServer(customResponseHandler(http.StatusOK, serverRes))
-		service := NewService(server.Client(), "", server.URL)
+		service := NewService(server.Client(), "", server.URL, false, false, true)
 
 		eng, err := service.engagement(EngagementQuery{Name: "A"}, product{Id: 7})
 		if err != nil {
@@ -282,7 +282,7 @@ func TestService_engagement(t *testing.T) {
 
 	t.Run("bad-query", func(t *testing.T) {
 		server := httptest.NewServer(badStatusHandler())
-		service := NewService(server.Client(), "", server.URL)
+		service := NewService(server.Client(), "", server.URL, false, false, true)
 
 		if _, err := service.engagement(EngagementQuery{}, product{Id: 7}); err == nil {
 			t.Fatal("Expected error for bad query")
@@ -293,7 +293,7 @@ func TestService_engagement(t *testing.T) {
 		serverRes := paginatedResponse[engagement]{Results: []engagement{{Name: "A", Id: 2}}}
 
 		server := httptest.NewServer(customResponseHandler(http.StatusOK, serverRes))
-		service := NewService(server.Client(), "", server.URL)
+		service := NewService(server.Client(), "", server.URL, false, false, true)
 
 		_, err := service.engagement(EngagementQuery{Name: "B"}, product{Id: 5})
 		if err == nil {
@@ -305,7 +305,7 @@ func TestService_engagement(t *testing.T) {
 		serverGETRes := paginatedResponse[engagement]{Results: []engagement{{Name: "A", Id: 2, Product: 6}}}
 		serverPOSTRes := engagement{Name: "B", Id: 3, Product: 7}
 		server := httptest.NewServer(customRouteHandler(serverGETRes, serverPOSTRes))
-		service := NewService(server.Client(), "", server.URL)
+		service := NewService(server.Client(), "", server.URL, false, false, true)
 
 		eng, err := service.engagement(EngagementQuery{ProductName: "B"}, product{Id: 7})
 		if err != nil {
@@ -320,7 +320,7 @@ func Test_export(t *testing.T) {
 	t.Run("bad-productType", func(t *testing.T) {
 		serverRes := paginatedResponse[productType]{Results: []productType{{Name: "A", Id: 2}}}
 		server := httptest.NewServer(customResponseHandler(http.StatusOK, serverRes))
-		service := NewService(server.Client(), "", server.URL)
+		service := NewService(server.Client(), "", server.URL, false, false, true)
 		server.Close()
 		if err := service.export(bytes.NewBufferString("a"), EngagementQuery{}, Grype); err == nil {
 			t.Fatal("Expected error for bad product type query")
@@ -333,7 +333,7 @@ func Test_export(t *testing.T) {
 		}
 
 		server := httptest.NewServer(mapHandler(routeTable))
-		service := NewService(server.Client(), "", server.URL)
+		service := NewService(server.Client(), "", server.URL, false, false, true)
 		if err := service.export(bytes.NewBufferString("a"), EngagementQuery{ProductTypeName: "A"}, Grype); err == nil {
 			t.Fatal("Expected error for bad product query")
 		}
@@ -349,7 +349,7 @@ func Test_export(t *testing.T) {
 		eq := EngagementQuery{ProductTypeName: "A", ProductName: "some product", Tags: strings.Split(tags, ",")}
 
 		server := httptest.NewServer(mapHandler(routeTable))
-		service := NewService(server.Client(), "", server.URL)
+		service := NewService(server.Client(), "", server.URL, false, false, true)
 		if err := service.export(bytes.NewBufferString("a"), eq, Grype); err == nil {
 			t.Fatal("Expected error for bad product query")
 		}
@@ -367,7 +367,7 @@ func Test_export(t *testing.T) {
 		eq := EngagementQuery{ProductTypeName: "A", ProductName: "some product", Name: "some engagement", Tags: strings.Split(tags, ",")}
 
 		server := httptest.NewServer(mapHandler(routeTable))
-		service := NewService(server.Client(), "", server.URL)
+		service := NewService(server.Client(), "", server.URL, false, false, true)
 		if err := service.export(bytes.NewBufferString("a"), eq, Grype); err != nil {
 			t.Fatal(err)
 		}
@@ -387,7 +387,7 @@ func TestService_Export(t *testing.T) {
 		eq := EngagementQuery{ProductTypeName: "A", ProductName: "some product", Name: "some engagement", Tags: strings.Split(tags, ",")}
 
 		server := httptest.NewServer(mapHandler(routeTable))
-		service := NewService(server.Client(), "", server.URL)
+		service := NewService(server.Client(), "", server.URL, false, false, true)
 		if err := service.Export(context.Background(), bytes.NewBufferString("a"), eq, Grype); err != nil {
 			t.Fatal(err)
 		}
@@ -398,7 +398,7 @@ func TestService_Export(t *testing.T) {
 		eq := EngagementQuery{ProductTypeName: "A", ProductName: "some product", Name: "some engagement", Tags: strings.Split(tags, ",")}
 
 		server := httptest.NewServer(nopHandler())
-		service := NewService(server.Client(), "", server.URL)
+		service := NewService(server.Client(), "", server.URL, false, false, true)
 		service.BackoffDuration = time.Nanosecond
 		server.Close()
 		if err := service.Export(context.Background(), bytes.NewBufferString("a"), eq, Grype); err == nil {
@@ -409,7 +409,7 @@ func TestService_Export(t *testing.T) {
 	t.Run("time-out", func(t *testing.T) {
 
 		server := httptest.NewServer(timeoutHandler())
-		service := NewService(server.Client(), "", server.URL)
+		service := NewService(server.Client(), "", server.URL, false, false, true)
 
 		ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*1)
 		defer cancel()

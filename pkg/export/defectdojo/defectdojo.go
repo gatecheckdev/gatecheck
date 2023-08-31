@@ -38,35 +38,43 @@ const (
 const contentTypeJSON = "application/json"
 
 type EngagementQuery struct {
-	ProductTypeName string
-	ProductName     string
-	Name            string
-	Duration        time.Duration
-	BranchTag       string
-	SourceURL       string
-	CommitHash      string
-	Tags            []string
+	ProductTypeName            string
+	ProductName                string
+	Name                       string
+	Duration                   time.Duration
+	BranchTag                  string
+	SourceURL                  string
+	CommitHash                 string
+	Tags                       []string
+	DeduplicationOnEngagement  bool
+	EnableSimpleRiskAcceptance bool
 }
 
 // Service can be used to export scans to Defect Dojo
 type Service struct {
-	Retry               int       // How many times to retry on a failed export
-	DescriptionTime     time.Time // The time zone used when auto generating the description
-	DescriptionTimezone string
-	BackoffDuration     time.Duration // The interval for the exponential back off retry
-	client              *http.Client
-	key                 string
-	url                 string
+	Retry                             int       // How many times to retry on a failed export
+	DescriptionTime                   time.Time // The time zone used when auto generating the description
+	DescriptionTimezone               string
+	BackoffDuration                   time.Duration // The interval for the exponential back off retry
+	client                            *http.Client
+	key                               string
+	url                               string
+	CloseOldFindings                  bool
+	CloseOldFindingsProductScope      bool
+	CreateFindingGroupsForAllFindings bool
 }
 
-func NewService(client *http.Client, key string, url string) Service {
+func NewService(client *http.Client, key string, url string, closeOldFindings bool, closeOldFindingsProductScope bool, createFindingGroupsForAllFindings bool) Service {
 	return Service{
-		client:          client,
-		key:             key,
-		url:             url,
-		DescriptionTime: time.Now(),
-		Retry:           3,
-		BackoffDuration: time.Second,
+		client:                            client,
+		key:                               key,
+		url:                               url,
+		CloseOldFindings:                  closeOldFindings,
+		CloseOldFindingsProductScope:      closeOldFindingsProductScope,
+		CreateFindingGroupsForAllFindings: createFindingGroupsForAllFindings,
+		DescriptionTime:                   time.Now(),
+		Retry:                             3,
+		BackoffDuration:                   time.Second,
 	}
 }
 
@@ -174,9 +182,12 @@ func (s Service) product(e EngagementQuery, prodType productType) (product, erro
 	}
 
 	buf := new(bytes.Buffer)
-	_ = json.NewEncoder(buf).Encode(product{Name: e.ProductName,
-		Description: s.description(),
-		ProdType:    prodType.Id})
+	_ = json.NewEncoder(buf).Encode(product{
+		Name:                       e.ProductName,
+		Description:                s.description(),
+		ProdType:                   prodType.Id,
+		EnableSimpleRiskAcceptance: e.EnableSimpleRiskAcceptance,
+	})
 
 	resBody, err := s.postJSON(url, buf)
 	if err != nil {
@@ -238,6 +249,10 @@ func (s Service) postScan(r io.Reader, scanType ScanType, e engagement) error {
 	writer := multipart.NewWriter(payload)
 	_ = writer.WriteField("engagement", strconv.Itoa(e.Id))
 	_ = writer.WriteField("scan_type", string(scanType))
+	_ = writer.WriteField("deduplication_on_engagement", strconv.FormatBool(e.DeduplicationOnEngagement))
+	_ = writer.WriteField("close_old_findings", strconv.FormatBool(s.CloseOldFindings))
+	_ = writer.WriteField("close_old_findings_product_scope", strconv.FormatBool(s.CloseOldFindingsProductScope))
+	_ = writer.WriteField("create_finding_groups_for_all_findings", strconv.FormatBool(s.CreateFindingGroupsForAllFindings))
 
 	filePart, _ := writer.CreateFormFile("file", fmt.Sprintf("%s report.json", scanType))
 
