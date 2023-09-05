@@ -2,12 +2,12 @@ package cmd
 
 import (
 	"io"
+	"log/slog"
 	"os"
 	"strings"
 
 	"github.com/dustin/go-humanize"
 	gio "github.com/gatecheckdev/gatecheck/internal/io"
-	"github.com/gatecheckdev/gatecheck/internal/log"
 	"github.com/gatecheckdev/gatecheck/pkg/archive"
 	"github.com/gatecheckdev/gatecheck/pkg/artifacts/cyclonedx"
 	"github.com/gatecheckdev/gatecheck/pkg/artifacts/gitleaks"
@@ -17,8 +17,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// NewPrintCommand will pretty print a report file table, r can be piped input from standard out
-func NewPrintCommand(pipedFile *os.File, newAsyncDecoder func() AsyncDecoder) *cobra.Command {
+func newPrintCommand(pipedFile *os.File, newAsyncDecoder func() AsyncDecoder) *cobra.Command {
 	var command = &cobra.Command{
 		Use:     "print [FILE ...]",
 		Short:   "Pretty print a gatecheck report or security scan report",
@@ -26,7 +25,7 @@ func NewPrintCommand(pipedFile *os.File, newAsyncDecoder func() AsyncDecoder) *c
 		RunE: func(cmd *cobra.Command, args []string) error {
 
 			if pipedFile != nil {
-				log.Infof("Piped File Received: %s", pipedFile.Name())
+				slog.Debug("piped file detected", "filename", pipedFile.Name())
 				v, _ := newAsyncDecoder().DecodeFrom(pipedFile)
 				printArtifact(cmd.OutOrStdout(), v, newAsyncDecoder)
 			}

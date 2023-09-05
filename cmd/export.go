@@ -6,10 +6,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log/slog"
 	"os"
 	"time"
 
-	"github.com/gatecheckdev/gatecheck/internal/log"
 	"github.com/gatecheckdev/gatecheck/pkg/artifacts/cyclonedx"
 	"github.com/gatecheckdev/gatecheck/pkg/artifacts/gitleaks"
 	"github.com/gatecheckdev/gatecheck/pkg/artifacts/grype"
@@ -18,21 +18,19 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func NewExportCmd(
-	ddService DDExportService,
+func newExportCmd(
+	ddService ddExportService,
 	ddTimeout time.Duration,
 	newAsyncDecoder func() AsyncDecoder,
 	ddEngagement defectdojo.EngagementQuery,
-	awsService AWSExportService,
+	awsService awsExportService,
 	awsTimeout time.Duration,
 ) *cobra.Command {
-	// gatecheck export command
 	exportCmd := &cobra.Command{
 		Use:   "export",
 		Short: "Export a report to a target location",
 	}
 
-	// gatecheck export defect-dojo command
 	defectDojoCmd := &cobra.Command{
 		Use:     "defect-dojo [FILE]",
 		Short:   "Export raw scan report to DefectDojo",
@@ -41,13 +39,13 @@ func NewExportCmd(
 		RunE: func(cmd *cobra.Command, args []string) error {
 			fullBom, _ := cmd.Flags().GetBool("full-bom")
 
-			log.Infof("Opening file: %s", args[0])
+			slog.Info("Open", "filename", args[0])
 			f, err := os.Open(args[0])
 			if err != nil {
 				return fmt.Errorf("%w: %v", ErrorFileAccess, err)
 			}
 
-			log.Infof("Decoding file: %s", args[0])
+			slog.Info("Decode", "filename", args[0])
 
 			decoder := newAsyncDecoder()
 			exportBuf := new(bytes.Buffer)
@@ -75,7 +73,7 @@ func NewExportCmd(
 			}
 
 			if fullBom {
-				log.Info("Shimming components as vulnerabilities with 'none' severity")
+				slog.Info("Shimming components as vulnerabilities with 'none' severity")
 				report := obj.(*cyclonedx.ScanReport)
 				report = report.ShimComponentsAsVulnerabilities()
 				exportBuf = new(bytes.Buffer)

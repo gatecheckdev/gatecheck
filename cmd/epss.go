@@ -3,17 +3,17 @@ package cmd
 import (
 	"fmt"
 	"io"
+	"log/slog"
 	"sort"
 
 	gio "github.com/gatecheckdev/gatecheck/internal/io"
-	"github.com/gatecheckdev/gatecheck/internal/log"
 	"github.com/gatecheckdev/gatecheck/pkg/artifacts/grype"
 	"github.com/gatecheckdev/gatecheck/pkg/epss"
 	"github.com/gatecheckdev/gatecheck/pkg/format"
 	"github.com/spf13/cobra"
 )
 
-func NewEPSSCmd(EPSSDownloadAgent io.Reader) *cobra.Command {
+func newEPSSCmd(EPSSDownloadAgent io.Reader) *cobra.Command {
 
 	var downloadCmd = &cobra.Command{
 		Use:   "download",
@@ -25,7 +25,7 @@ func NewEPSSCmd(EPSSDownloadAgent io.Reader) *cobra.Command {
 				return err
 			}
 
-			log.Infof("%d bytes written to STDOUT", n)
+			slog.Info("write to STDOUT", "bytes_written", n)
 			return nil
 		},
 	}

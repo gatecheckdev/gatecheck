@@ -134,7 +134,7 @@ func TestCyclonedxDenyList(t *testing.T) {
 	addCyclonedxVul(report, "Low", "CVE-2023-3")
 
 	config := Config{Critical: -1, High: -1, Medium: -1, Low: -1, Info: -1, None: -1, Unknown: -1}
-	config.DenyList = []ListItem{{Id: "CVE-2023-3", Reason: "Because..."}}
+	config.DenyList = []ListItem{{ID: "CVE-2023-3", Reason: "Because..."}}
 
 	t.Log(config.DenyList)
 
@@ -155,7 +155,7 @@ func TestCyclonedxAllowList(t *testing.T) {
 	addCyclonedxVul(report, "Low", "CVE-2023-3")
 
 	config := Config{Critical: 0, High: -1, Medium: -1, Low: -1, Info: -1, None: -1, Unknown: -1}
-	config.AllowList = []ListItem{{Id: "CVE-2023-1", Reason: "Because..."}}
+	config.AllowList = []ListItem{{ID: "CVE-2023-1", Reason: "Because..."}}
 
 	t.Log(config.AllowList)
 
@@ -214,7 +214,7 @@ func TestHighestSeverityRating(t *testing.T) {
 	}
 }
 
-func addCyclonedxVul(r *ScanReport, severity string, id string) {
+func addCyclonedxVul(r *ScanReport, _ string, id string) {
 	vuln := cdx.Vulnerability{
 		ID:      id,
 		Ratings: &[]cdx.VulnerabilityRating{{Severity: cdx.SeverityHigh}},

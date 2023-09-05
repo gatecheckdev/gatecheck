@@ -12,7 +12,7 @@ import (
 
 func TestValidateFunc(t *testing.T) {
 	sample := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
-	err := ValidateFunc(sample, func(value int) error {
+	err := DenyFunc(sample, func(value int) error {
 		isEven := value%2 == 0
 		if isEven {
 			return nil
@@ -33,7 +33,7 @@ func isEven(values []int, config mockConfig) error {
 	if !config.Enabled {
 		return nil
 	}
-	return ValidateFunc(values, func(value int) error {
+	return DenyFunc(values, func(value int) error {
 		if value%2 == 0 {
 			return nil
 		}
@@ -45,7 +45,7 @@ func underFive(values []int, config mockConfig) error {
 	if !config.Enabled {
 		return nil
 	}
-	return ValidateFunc(values, func(value int) error {
+	return DenyFunc(values, func(value int) error {
 		if value < 5 {
 			return nil
 		}

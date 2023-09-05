@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Update to go 1.21
+- log custom to slog
 
 ### Added
 
@@ -18,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CloseOldFindings Import-Scan API settings option
 - CloseOldFindingsProductScope Import-Scan API settings option
 - CreateFindingGroupsForAllFindings Import-Scan API settings option
+- Documentation for exported functions and structs
 
 ### Fixed
 

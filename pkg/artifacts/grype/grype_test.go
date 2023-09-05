@@ -75,11 +75,11 @@ func TestValidate(t *testing.T) {
 
 	testTable = []TestTable{
 		{label: "DenyList-1", matches: matches, config: Config{Critical: -1, High: -1, Medium: -1, Low: -1, Negligible: -1, Unknown: -1,
-			DenyList: []ListItem{{Id: "cve-1"}}}, wantErr: gcv.ErrFailedRule},
+			DenyList: []ListItem{{ID: "cve-1"}}}, wantErr: gcv.ErrFailedRule},
 		{label: "DenyList-2", matches: matches, config: Config{Critical: 4, High: 2, Medium: 5, Low: -1, Negligible: -1, Unknown: -1,
-			DenyList: []ListItem{{Id: "cve-1"}}}, wantErr: gcv.ErrFailedRule},
+			DenyList: []ListItem{{ID: "cve-1"}}}, wantErr: gcv.ErrFailedRule},
 		{label: "DenyList-3", matches: matches, config: Config{Critical: -1, High: -1, Medium: -1, Low: -1, Negligible: -1, Unknown: -1,
-			DenyList: []ListItem{{Id: "cve-99"}}}, wantErr: nil},
+			DenyList: []ListItem{{ID: "cve-99"}}}, wantErr: nil},
 	}
 
 	t.Run("denyList-rule", func(t *testing.T) {
@@ -96,7 +96,7 @@ func TestValidate(t *testing.T) {
 
 	t.Run("allowList-rule", func(t *testing.T) {
 		match := models.Match{Vulnerability: models.Vulnerability{VulnerabilityMetadata: models.VulnerabilityMetadata{ID: "cve-1", Severity: "Critical"}}}
-		config := Config{Critical: 0, High: -1, Medium: -1, Low: -1, Negligible: -1, Unknown: -1, AllowList: []ListItem{{Id: "cve-1"}}}
+		config := Config{Critical: 0, High: -1, Medium: -1, Low: -1, Negligible: -1, Unknown: -1, AllowList: []ListItem{{ID: "cve-1"}}}
 		if !AllowListRule(match, config) {
 			t.Fatal("want true")
 		}
@@ -125,10 +125,10 @@ func TestValidator(t *testing.T) {
 		{label: "fail-validation-2", wantErr: gcv.ErrFailedRule, config: Config{Critical: 2, High: 1, Medium: -1, Low: -1, Negligible: -1, Unknown: -1}},
 
 		{label: "pass-validation-allowlist", wantErr: nil, config: Config{Critical: -1, High: -1, Medium: -1, Low: 0, Negligible: -1, Unknown: -1,
-			AllowList: []ListItem{{Id: "cve-7"}}}},
+			AllowList: []ListItem{{ID: "cve-7"}}}},
 
 		{label: "fail-validation-denylist", wantErr: gcv.ErrFailedRule, config: Config{Critical: -1, High: -1, Medium: -1, Low: -1, Negligible: -1, Unknown: -1,
-			DenyList: []ListItem{{Id: "cve-1"}}}},
+			DenyList: []ListItem{{ID: "cve-1"}}}},
 	}
 
 	for _, testCase := range testCase {

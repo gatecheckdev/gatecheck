@@ -1,3 +1,4 @@
+// Package epss contains data models and the service for cross referencing vulnerabilities with EPSS scores.
 package epss
 
 import (
@@ -6,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -13,18 +15,21 @@ import (
 	"time"
 
 	"github.com/anchore/grype/grype/presenter/models"
-	"github.com/gatecheckdev/gatecheck/internal/log"
 	"github.com/gatecheckdev/gatecheck/pkg/artifacts/grype"
 	gce "github.com/gatecheckdev/gatecheck/pkg/encoding"
 	gcv "github.com/gatecheckdev/gatecheck/pkg/validate"
 )
 
+// ErrAPI errors in EPSS API requests
 var ErrAPI = errors.New("EPSS API error")
+
+// DefaultBaseURL for EPSS FIRST API
+const DefaultBaseURL = "https://epss.cyentia.com"
 
 const supportedModel = "v2023.03.01"
 const modelDateLayout = "2006-01-02T15:04:05-0700"
-const DefaultBaseURL = "https://epss.cyentia.com"
 
+// CVE data model
 type CVE struct {
 	ID          string
 	Severity    string
@@ -34,11 +39,13 @@ type CVE struct {
 	Percentile  float64
 }
 
+// Scores data model for EPSS result
 type Scores struct {
 	EPSS       string
 	Percentile string
 }
 
+// Service used to perform EPSS API request or decoding from a file
 type Service struct {
 	r            io.Reader
 	dataStore    map[string]Scores
@@ -51,17 +58,18 @@ func NewService(r io.Reader) *Service {
 	return &Service{r: r, dataStore: make(map[string]Scores)}
 }
 
+// GrypeDenyRuleFunc returns the function used as a deny rule cross referenced with service data store
 func (s *Service) GrypeDenyRuleFunc() func([]models.Match, grype.Config) error {
 
 	grypeDenyRule := func(matches []models.Match, config grype.Config) error {
-		return gcv.ValidateFunc(matches, func(match models.Match) error {
+		return gcv.DenyFunc(matches, func(match models.Match) error {
 			cve, _ := s.GetCVE(match)
 
 			if config.EPSSDenyThreshold == 0 || cve.Probability == 0 {
 				return nil
 			}
 			denyStr := strconv.FormatFloat(config.EPSSDenyThreshold, 'f', -1, 64)
-			log.Infof("Grype EPSS Deny Rule Validation Threshold: %s", denyStr)
+			slog.Debug("grype epss validation", "threshold", denyStr)
 
 			if cve.Probability < config.EPSSDenyThreshold {
 				return nil
@@ -77,6 +85,7 @@ func (s *Service) GrypeDenyRuleFunc() func([]models.Match, grype.Config) error {
 	return grypeDenyRule
 }
 
+// GrypeAllowRuleFunc returns the function used for allow rule cross referenced with internal service data store
 func (s *Service) GrypeAllowRuleFunc() func(models.Match, grype.Config) bool {
 	grypeAllowRule := func(match models.Match, config grype.Config) bool {
 		cve, _ := s.GetCVE(match)
@@ -91,6 +100,7 @@ func (s *Service) GrypeAllowRuleFunc() func(models.Match, grype.Config) bool {
 	return grypeAllowRule
 }
 
+// GetCVEs returns scores corresponding to each match
 func (s *Service) GetCVEs(matches []models.Match) ([]CVE, error) {
 	cves := make([]CVE, 0, len(matches))
 	var errs error
@@ -102,6 +112,7 @@ func (s *Service) GetCVEs(matches []models.Match) ([]CVE, error) {
 	return cves, errs
 }
 
+// GetCVE returns a score corresponding to a single match
 func (s *Service) GetCVE(match models.Match) (CVE, error) {
 	cve := CVE{
 		ID:        match.Vulnerability.ID,
@@ -112,12 +123,12 @@ func (s *Service) GetCVE(match models.Match) (CVE, error) {
 	scores, ok := s.dataStore[match.Vulnerability.ID]
 	if !ok {
 		if len(match.RelatedVulnerabilities) == 0 {
-			log.Warnf("No score found for '%s'", match.Vulnerability.ID)
+			slog.Warn("no score found", "cve", match.Vulnerability.ID)
 			return cve, nil
 		}
 		if _, ok = s.dataStore[match.RelatedVulnerabilities[0].ID]; !ok {
-			log.Warnf("No score found for '%s' or related CVE '%s'",
-				match.Vulnerability.ID, match.RelatedVulnerabilities[0].ID)
+			slog.Warn("no score found for related vulnerability", "cve", match.Vulnerability.ID,
+				"related_cve", match.RelatedVulnerabilities[0].ID)
 
 			return cve, nil
 		}
@@ -140,7 +151,7 @@ func (s *Service) GetCVE(match models.Match) (CVE, error) {
 
 // Fetch uses the internal reader to fill the internal dataStore
 func (s *Service) Fetch() error {
-	defer func(started time.Time) { log.Infof("EPSS CSV decoding completed in %s", time.Since(started).String()) }(time.Now())
+	defer func(started time.Time) { slog.Info("decoding done", "elapsed", time.Since(started)) }(time.Now())
 	scanner := bufio.NewScanner(s.r)
 	scanner.Scan()
 	if err := scanner.Err(); err != nil {
@@ -187,16 +198,22 @@ func (s *Service) Fetch() error {
 
 // data source (API Agent / CSV File / ORAS / Buf) reader -> Service.ReadFrom(r)
 
+// APIAgent performs the actual API query
 type APIAgent struct {
 	client       *http.Client
 	url          string
 	gunzipReader io.Reader
 }
 
+// NewAgent used to customize the client and API URL
 func NewAgent(client *http.Client, baseURL string) *APIAgent {
 	return &APIAgent{client: client, url: baseURL}
 }
 
+// Read standard io.Reader implementation wrapped in a API request and gunzip.
+//
+// Any errors from the request will be returned during read. This is to provide
+// a common interface between API request and file based reading in the Service
 func (a *APIAgent) Read(p []byte) (int, error) {
 	if a.gunzipReader != nil {
 		return a.gunzipReader.Read(p)
@@ -206,7 +223,7 @@ func (a *APIAgent) Read(p []byte) (int, error) {
 	endpoint := fmt.Sprintf("epss_scores-%d-%s-%s.csv.gz", today.Year(), today.Format("01"), today.Format("02"))
 	url, _ := url.JoinPath(a.url, endpoint)
 	req, _ := http.NewRequest(http.MethodGet, url, nil)
-	log.Infof("EPSS GET Request URL: %s", url)
+	slog.Debug("epss request", "method", http.MethodGet, "url", url)
 
 	res, err := a.client.Do(req)
 	if err != nil {
@@ -214,7 +231,7 @@ func (a *APIAgent) Read(p []byte) (int, error) {
 	}
 
 	if res.StatusCode != http.StatusOK {
-		log.Warnf("EPSS GET error request status: %s", res.Status)
+		slog.Error("epss request", "status", res.Status)
 		return 0, fmt.Errorf("%w: EPSS GET Request failed", ErrAPI)
 	}
 

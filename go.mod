@@ -12,7 +12,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.38.1
 	github.com/dustin/go-humanize v1.0.1
 	github.com/johannesboyne/gofakes3 v0.0.0-20230506070712-04da935ef877
-	github.com/rs/zerolog v1.30.0
+	github.com/lmittmann/tint v1.0.1
 	github.com/spf13/cobra v1.7.0
 	github.com/spf13/viper v1.16.0
 	github.com/zricethezav/gitleaks/v8 v8.17.0
@@ -124,6 +124,7 @@ require (
 	github.com/pjbgf/sha1cd v0.3.0 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/rivo/uniseg v0.4.4 // indirect
+	github.com/rs/zerolog v1.30.0 // indirect
 	github.com/ryszard/goskiplist v0.0.0-20150312221310-2dfbae5fcf46 // indirect
 	github.com/saferwall/pe v1.4.4 // indirect
 	github.com/sassoftware/go-rpmutils v0.2.0 // indirect

@@ -4,16 +4,16 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"os"
 	"path"
 
 	gio "github.com/gatecheckdev/gatecheck/internal/io"
-	"github.com/gatecheckdev/gatecheck/internal/log"
 	"github.com/gatecheckdev/gatecheck/pkg/archive"
 	"github.com/spf13/cobra"
 )
 
-func NewBundleCmd(newAsyncDecoder func() AsyncDecoder) *cobra.Command {
+func newBundleCmd(newAsyncDecoder func() AsyncDecoder) *cobra.Command {
 	var bundleCmd = &cobra.Command{
 		Use:   "bundle [FILE ...]",
 		Short: "Create a compressed tarball with artifacts",
@@ -22,6 +22,7 @@ func NewBundleCmd(newAsyncDecoder func() AsyncDecoder) *cobra.Command {
 			outputFilename, _ := cmd.Flags().GetString("output")
 			allowMissingFlag, _ := cmd.Flags().GetBool("skip-missing")
 			properties, _ := cmd.Flags().GetStringToString("properties")
+			log := slog.Default().With("cmd", "bundle", "output_filename", outputFilename, "allow_missing", allowMissingFlag, "properties", properties)
 
 			outputFile, err := os.OpenFile(outputFilename, os.O_CREATE|os.O_RDWR, 0664)
 			if err != nil {
@@ -44,21 +45,21 @@ func NewBundleCmd(newAsyncDecoder func() AsyncDecoder) *cobra.Command {
 			for _, filename := range args {
 				f, err := os.Open(filename)
 				if errors.Is(err, os.ErrNotExist) && allowMissingFlag {
-					log.Infof("%s does not exist --skip-missing flag active", filename)
+					log.Info("does not exist --skip-missing flag active", "filename", filename)
 					continue
 				}
 				if err != nil {
 					return fmt.Errorf("%w: bundle argument: %v", ErrorFileAccess, err)
 				}
 				label := path.Base(filename)
-				log.Infof("Adding file with label %s to bundle", label)
+				log.Info("add to bundle", "label", label)
 				_ = bundle.AddFrom(f, label, properties)
 			}
 
-			log.Info("Truncating existing file...")
+			log.Info("Truncate existing file")
 			_ = outputFile.Truncate(0)
 			_, _ = outputFile.Seek(0, io.SeekStart)
-			log.Info("Writing bundle to file...")
+			log.Info("Write bundle to file")
 			return archive.NewBundleEncoder(outputFile).Encode(bundle)
 		},
 	}
