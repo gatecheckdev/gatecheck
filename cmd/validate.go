@@ -5,10 +5,10 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"os"
 
 	gio "github.com/gatecheckdev/gatecheck/internal/io"
-	"github.com/gatecheckdev/gatecheck/internal/log"
 	"github.com/gatecheckdev/gatecheck/pkg/archive"
 	"github.com/gatecheckdev/gatecheck/pkg/artifacts/cyclonedx"
 	"github.com/gatecheckdev/gatecheck/pkg/artifacts/gitleaks"
@@ -22,7 +22,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func NewValidateCmd(newAsyncDecoder func() AsyncDecoder, KEVDownloadAgent io.Reader, EPSSDownloadAgent io.Reader) *cobra.Command {
+func newValidateCmd(newAsyncDecoder func() AsyncDecoder, KEVDownloadAgent io.Reader, EPSSDownloadAgent io.Reader) *cobra.Command {
 	var validateAny func(obj any, configBytes []byte) error
 	var validateBundle func(bundle *archive.Bundle, configBytes []byte) error
 
@@ -41,7 +41,11 @@ func NewValidateCmd(newAsyncDecoder func() AsyncDecoder, KEVDownloadAgent io.Rea
 			auditFlag, _ := cmd.Flags().GetBool("audit")
 			kevFetchFlag, _ := cmd.Flags().GetBool("fetch-kev")
 			epssFetchFlag, _ := cmd.Flags().GetBool("fetch-epss")
-			log.Infof("Audit Mode: %v", auditFlag)
+
+			// TODO: potential vul?
+			slog.Info("command", "cmd", "validate", "audit_flag", auditFlag, "target_filename", args[0],
+				"config_filename", configFilename, "kev_filename", kevFilename,
+				"epss_filename", epssFilename, "fetch_kev", kevFetchFlag, "fetch_epss", epssFetchFlag)
 
 			decoder := newAsyncDecoder()
 			obj, err := decoder.DecodeFrom(gio.NewLazyReader(args[0]))
@@ -81,37 +85,37 @@ func NewValidateCmd(newAsyncDecoder func() AsyncDecoder, KEVDownloadAgent io.Rea
 			if err != nil {
 				return fmt.Errorf("%w: %v", ErrorValidation, err)
 			}
-			log.Info("successfully passed validation")
+			slog.Info("successfully passed validation")
 			return nil
 
 		},
 	}
 
-	validateAny = func(obj any, configBytes []byte) error {
-		if bundle, ok := obj.(*archive.Bundle); ok {
+	validateAny = func(v any, configBytes []byte) error {
+		if bundle, ok := v.(*archive.Bundle); ok {
 			return validateBundle(bundle, configBytes)
 		}
 
-		switch obj.(type) {
+		switch obj := v.(type) {
 		case *semgrep.ScanReport:
-			err := semgrep.NewValidator().ReadConfigAndValidate(obj.(*semgrep.ScanReport).Results,
+			err := semgrep.NewValidator().ReadConfigAndValidate(obj.Results,
 				bytes.NewReader(configBytes), semgrep.ConfigFieldName)
-			log.Infof("semgrep report validation result: %v", err)
+			slog.Info("semgrep report validation", "err", err)
 			return err
 		case *gitleaks.ScanReport:
-			err := gitleaks.NewValidator().ReadConfigAndValidate(*obj.(*gitleaks.ScanReport),
+			err := gitleaks.NewValidator().ReadConfigAndValidate(*obj,
 				bytes.NewReader(configBytes), gitleaks.ConfigFieldName)
-			log.Infof("gitleaks report validation result: %v", err)
+			slog.Info("gitleaks report validation", "err", err)
 			return err
 		case *cyclonedx.ScanReport:
-			err := cyclonedx.NewValidator().ReadConfigAndValidate(*obj.(*cyclonedx.ScanReport).Vulnerabilities,
+			err := cyclonedx.NewValidator().ReadConfigAndValidate(*obj.Vulnerabilities,
 				bytes.NewReader(configBytes), cyclonedx.ConfigFieldName)
-			log.Infof("cyclonedx report validation result: %v", err)
+			slog.Info("cyclonedx report validation", "err", err)
 			return err
 		}
 
 		// This function is called after the async decoder so it has to be a defined type
-		report := obj.(*grype.ScanReport)
+		report := v.(*grype.ScanReport)
 		var kevValidationErr error
 		if kevService != nil {
 			kevValidationErr = kevService.NewValidator().Validate(report.Matches, grype.Config{})
@@ -125,14 +129,14 @@ func NewValidateCmd(newAsyncDecoder func() AsyncDecoder, KEVDownloadAgent io.Rea
 
 		grypeErr := grypeValidator.ReadConfigAndValidate(report.Matches, bytes.NewReader(configBytes), grype.ConfigFieldName)
 		err := errors.Join(kevValidationErr, grypeErr)
-		log.Infof("grype report validation result: %v", err)
+		slog.Info("grype report validation", "err", err)
 		return err
 	}
 
 	validateBundle = func(bundle *archive.Bundle, configBytes []byte) error {
 		var bundleValidationError error
 		for label := range bundle.Manifest().Files {
-			log.Infof("Validate bundle file labeled: %s", label)
+			slog.Info("Validate bundle file", "label", label)
 			decoder := newAsyncDecoder()
 			_, _ = bundle.WriteFileTo(decoder, label)
 			obj, _ := decoder.Decode()

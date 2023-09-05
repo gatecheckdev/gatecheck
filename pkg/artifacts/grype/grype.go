@@ -1,23 +1,29 @@
+// Package grype defines data model, Config, Decoder, Validator, and validation rules for Anchore Grype vulnerability reports.
 package grype
 
 import (
 	"errors"
 	"fmt"
+	"log/slog"
 	"sort"
 
 	"github.com/anchore/grype/grype/presenter/models"
-	"github.com/gatecheckdev/gatecheck/internal/log"
 	gce "github.com/gatecheckdev/gatecheck/pkg/encoding"
 	"github.com/gatecheckdev/gatecheck/pkg/format"
 	gcv "github.com/gatecheckdev/gatecheck/pkg/validate"
 	"golang.org/x/exp/slices"
 )
 
+// ReportType the Grype Type plain text
 const ReportType = "Anchore Grype Scan Report"
+
+// ConfigFieldName ...
 const ConfigFieldName = "grype"
 
+// ScanReport data model for grype reports aliased from grype code base
 type ScanReport models.Document
 
+// String ...
 func (r *ScanReport) String() string {
 	table := format.NewTable()
 	table.AppendRow("Severity", "Package", "Version", "Link")
@@ -33,6 +39,7 @@ func (r *ScanReport) String() string {
 	return format.NewTableWriter(table).String()
 }
 
+// Config data model for grype thresholds configuration
 type Config struct {
 	AllowList          []ListItem `yaml:"allowList,omitempty" json:"allowList,omitempty"`
 	DenyList           []ListItem `yaml:"denyList,omitempty" json:"denyList,omitempty"`
@@ -46,15 +53,18 @@ type Config struct {
 	Unknown            int        `yaml:"unknown"    json:"unknown"`
 }
 
+// ListItem for Allow/Deny list
 type ListItem struct {
-	Id     string `yaml:"id"     json:"id"`
+	ID     string `yaml:"id"     json:"id"`
 	Reason string `yaml:"reason" json:"reason"`
 }
 
+// NewReportDecoder ...
 func NewReportDecoder() *gce.JSONWriterDecoder[ScanReport] {
 	return gce.NewJSONWriterDecoder[ScanReport](ReportType, checkReport)
 }
 
+// NewValidator ...
 func NewValidator() gcv.Validator[models.Match, Config] {
 	validator := gcv.NewValidator[models.Match, Config]()
 	validator = validator.WithAllowRules(AllowListRule)
@@ -62,6 +72,7 @@ func NewValidator() gcv.Validator[models.Match, Config] {
 	return validator
 }
 
+// ThresholdRule will error if there are more vulnerabilities in X severity
 func ThresholdRule(matches []models.Match, config Config) error {
 	orderedKeys := []string{"Critical", "High", "Medium", "Low", "Negligible", "Unknown"}
 	allowed := map[string]int{
@@ -72,7 +83,7 @@ func ThresholdRule(matches []models.Match, config Config) error {
 		orderedKeys[4]: config.Negligible,
 		orderedKeys[5]: config.Unknown,
 	}
-	log.Infof("Grype Threshold Validation Rule Allowed: %s", format.PrettyPrintMapOrdered(allowed, orderedKeys))
+	slog.Debug("grype threshold validation", "allowed", format.PrettyPrintMapOrdered(allowed, orderedKeys))
 
 	found := make(map[string]int, 6)
 	for severity := range allowed {
@@ -80,7 +91,7 @@ func ThresholdRule(matches []models.Match, config Config) error {
 	}
 
 	for _, match := range matches {
-		found[match.Vulnerability.Severity] += 1
+		found[match.Vulnerability.Severity]++
 	}
 
 	var errs error
@@ -93,15 +104,16 @@ func ThresholdRule(matches []models.Match, config Config) error {
 			errs = errors.Join(errs, gcv.NewFailedRuleError(rule, fmt.Sprint(found[severity])))
 		}
 	}
-	log.Infof("Grype Threshold Validation Found: %s", format.PrettyPrintMapOrdered(found, orderedKeys))
+	slog.Debug("grype threshold validation", "found", format.PrettyPrintMapOrdered(found, orderedKeys))
 	return errs
 }
 
+// DenyListRule reject vulnerabilities in custom deny list
 func DenyListRule(matches []models.Match, config Config) error {
-	log.Info("Grype Custom DenyList Rule")
-	return gcv.ValidateFunc(matches, func(m models.Match) error {
+	slog.Debug("grype custom deny list validation")
+	return gcv.DenyFunc(matches, func(m models.Match) error {
 		inDenyList := slices.ContainsFunc(config.DenyList, func(denyListItem ListItem) bool {
-			return m.Vulnerability.ID == denyListItem.Id
+			return m.Vulnerability.ID == denyListItem.ID
 		})
 		if !inDenyList {
 			return nil
@@ -110,9 +122,10 @@ func DenyListRule(matches []models.Match, config Config) error {
 	})
 }
 
+// AllowListRule allow vulnerabilities in custom allow list
 func AllowListRule(match models.Match, config Config) bool {
 	return slices.ContainsFunc(config.AllowList, func(allowedItem ListItem) bool {
-		return match.Vulnerability.ID == allowedItem.Id
+		return match.Vulnerability.ID == allowedItem.ID
 	})
 }
 

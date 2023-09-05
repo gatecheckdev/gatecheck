@@ -1,20 +1,21 @@
+// Package main executes the CLI for gatecheck
 package main
 
 import (
 	"context"
 	"errors"
-	"fmt"
+	"log/slog"
 	"net/http"
 	"os"
 	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/lmittmann/tint"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
 	"github.com/gatecheckdev/gatecheck/cmd"
-	"github.com/gatecheckdev/gatecheck/internal/log"
 	"github.com/gatecheckdev/gatecheck/pkg/archive"
 	"github.com/gatecheckdev/gatecheck/pkg/artifacts/cyclonedx"
 	"github.com/gatecheckdev/gatecheck/pkg/artifacts/gitleaks"
@@ -27,10 +28,12 @@ import (
 	"github.com/gatecheckdev/gatecheck/pkg/kev"
 )
 
-const ExitSystemFail int = -1
-const ExitOk int = 0
-const ExitFileAccessFail int = 2
-const ExitValidationFail = 1
+const exitSystemFail int = -1
+const exitOk int = 0
+const exitFileAccessFail int = 2
+const exitValidationFail = 1
+
+// GatecheckVersion see CHANGELOG.md
 const GatecheckVersion = "v0.2.0-pre"
 
 func main() {
@@ -62,8 +65,8 @@ func main() {
 
 	if err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
-			fmt.Println("viper configuration error:", err)
-			os.Exit(ExitSystemFail)
+			slog.Error("viper configuration error", "err", err)
+			os.Exit(exitSystemFail)
 		}
 	}
 
@@ -119,22 +122,26 @@ func main() {
 		AWSExportService: awsService,
 		AWSExportTimeout: 5 * time.Minute,
 
-		NewAsyncDecoderFunc: AsyncDecoderFunc,
+		NewAsyncDecoderFunc: asyncDecoderFunc,
 
 		ConfigMap:      viper.AllSettings(),
 		ConfigFileUsed: viper.ConfigFileUsed(),
 		ConfigPath:     "./gatecheck.env or $HOME/.config/gatecheck/gatecheck.env",
 	})
 
+	logLevel := slog.LevelDebug
+	var startTime time.Time
 	command.PersistentPreRun = func(_ *cobra.Command, _ []string) {
-		if cmd.GlobalVerboseOutput == false {
-			log.SetLogLevel(log.Disabled)
+		startTime = time.Now()
+		if !cmd.GlobalVerboseOutput {
+			logLevel = slog.LevelWarn
 		}
-		log.StartCLIOutput(command.ErrOrStderr())
 	}
+	slog.SetDefault(slog.New(tint.NewHandler(command.ErrOrStderr(), &tint.Options{Level: logLevel, TimeFormat: time.TimeOnly})))
 
 	command.PersistentPostRun = func(_ *cobra.Command, _ []string) {
-		log.Info("**** Command Execution Complete ****")
+		elapsed := time.Since(startTime)
+		slog.Info("command execution complete", "elapsed", elapsed)
 	}
 
 	command.SilenceUsage = true
@@ -142,23 +149,23 @@ func main() {
 	err = command.Execute()
 
 	if errors.Is(err, cmd.ErrorFileAccess) {
-		command.PrintErrln(err)
-		os.Exit(ExitFileAccessFail)
+		slog.Error("file access error", "err", err)
+		os.Exit(exitFileAccessFail)
 	}
 
 	if errors.Is(err, cmd.ErrorValidation) {
-		os.Exit(ExitValidationFail)
+		os.Exit(exitValidationFail)
 	}
 
 	if err != nil {
-		command.PrintErrln(err)
-		os.Exit(ExitSystemFail)
+		slog.Error("system failure", "err", err)
+		os.Exit(exitSystemFail)
 	}
 
-	os.Exit(ExitOk)
+	os.Exit(exitOk)
 }
 
-func AsyncDecoderFunc() cmd.AsyncDecoder {
+func asyncDecoderFunc() cmd.AsyncDecoder {
 	decoder := new(gce.AsyncDecoder).WithDecoders(
 		grype.NewReportDecoder(),
 		semgrep.NewReportDecoder(),

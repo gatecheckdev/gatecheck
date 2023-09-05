@@ -1,3 +1,4 @@
+// Package defectdojo handles exporting reports to Defect Dojo open source software
 package defectdojo
 
 import (
@@ -15,11 +16,12 @@ import (
 	"time"
 )
 
-var RequestError = errors.New("defect dojo request error")
+// ErrAPI an error in the request
+var ErrAPI = errors.New("defect dojo api request error")
 
-type ScanType string
-
+// ScanType Defect Dojo specific scan type values
 // Source for Scan Type Values https://demo.defectdojo.org/api/v2/doc/
+type ScanType string
 
 //	{
 //		"id": 54,
@@ -37,6 +39,7 @@ const (
 
 const contentTypeJSON = "application/json"
 
+// EngagementQuery data model for request
 type EngagementQuery struct {
 	ProductTypeName            string
 	ProductName                string
@@ -64,6 +67,7 @@ type Service struct {
 	CreateFindingGroupsForAllFindings bool
 }
 
+// NewService customize fields for each future query
 func NewService(client *http.Client, key string, url string, closeOldFindings bool, closeOldFindingsProductScope bool, createFindingGroupsForAllFindings bool) Service {
 	return Service{
 		client:                            client,
@@ -78,6 +82,7 @@ func NewService(client *http.Client, key string, url string, closeOldFindings bo
 	}
 }
 
+// Export execute export request
 func (s Service) Export(ctx context.Context, r io.Reader, e EngagementQuery, scanType ScanType) error {
 	c := make(chan error)
 
@@ -144,7 +149,7 @@ func (s Service) productType(e EngagementQuery) (productType, error) {
 		return returnedProductType, err
 	}
 
-	if errors.Is(err, errNotFound) == false {
+	if !errors.Is(err, errNotFound) {
 		return productType{}, err
 	}
 
@@ -166,7 +171,7 @@ func (s Service) product(e EngagementQuery, prodType productType) (product, erro
 	url := s.url + "/api/v2/products/"
 
 	var queryFunction = func(givenProduct product) bool {
-		productTypeMatches := givenProduct.ProdType == prodType.Id
+		productTypeMatches := givenProduct.ProdType == prodType.ID
 		productNameMatches := givenProduct.Name == e.ProductName
 		return productTypeMatches && productNameMatches
 	}
@@ -177,7 +182,7 @@ func (s Service) product(e EngagementQuery, prodType productType) (product, erro
 		return returnedProduct, err
 	}
 
-	if errors.Is(err, errNotFound) == false {
+	if !errors.Is(err, errNotFound) {
 		return product{}, err
 	}
 
@@ -185,7 +190,7 @@ func (s Service) product(e EngagementQuery, prodType productType) (product, erro
 	_ = json.NewEncoder(buf).Encode(product{
 		Name:                       e.ProductName,
 		Description:                s.description(),
-		ProdType:                   prodType.Id,
+		ProdType:                   prodType.ID,
 		EnableSimpleRiskAcceptance: e.EnableSimpleRiskAcceptance,
 	})
 
@@ -204,7 +209,7 @@ func (s Service) engagement(e EngagementQuery, prod product) (engagement, error)
 	url := s.url + "/api/v2/engagements/"
 
 	var queryFunction = func(givenEngagement engagement) bool {
-		productMatches := givenEngagement.Product == prod.Id
+		productMatches := givenEngagement.Product == prod.ID
 		engagementNameMatches := givenEngagement.Name == e.Name
 		return productMatches && engagementNameMatches
 	}
@@ -215,7 +220,7 @@ func (s Service) engagement(e EngagementQuery, prod product) (engagement, error)
 		return returnedEngagement, err
 	}
 
-	if errors.Is(err, errNotFound) == false {
+	if !errors.Is(err, errNotFound) {
 		return engagement{}, err
 	}
 
@@ -226,8 +231,8 @@ func (s Service) engagement(e EngagementQuery, prod product) (engagement, error)
 		Name: e.Name, Description: s.description(),
 		TargetStart: time.Now().In(loc).Format("2006-01-02"),
 		TargetEnd:   time.Now().In(loc).Add(e.Duration).Format("2006-01-02"),
-		Product:     prod.Id, Active: true, Status: "In Progress", EngagementType: "CI/CD", CommitHash: e.CommitHash,
-		BranchTag: e.BranchTag, SourceCodeManagementUri: e.SourceURL,
+		Product:     prod.ID, Active: true, Status: "In Progress", EngagementType: "CI/CD", CommitHash: e.CommitHash,
+		BranchTag: e.BranchTag, SourceCodeManagementURI: e.SourceURL,
 		Tags: e.Tags,
 	}
 	_ = json.NewEncoder(buf).Encode(newEngagement)
@@ -247,7 +252,7 @@ func (s Service) postScan(r io.Reader, scanType ScanType, e engagement) error {
 	// After getting an engagement, post the scan using a multipart form
 	payload := &bytes.Buffer{}
 	writer := multipart.NewWriter(payload)
-	_ = writer.WriteField("engagement", strconv.Itoa(e.Id))
+	_ = writer.WriteField("engagement", strconv.Itoa(e.ID))
 	_ = writer.WriteField("scan_type", string(scanType))
 	_ = writer.WriteField("deduplication_on_engagement", strconv.FormatBool(e.DeduplicationOnEngagement))
 	_ = writer.WriteField("close_old_findings", strconv.FormatBool(s.CloseOldFindings))
@@ -258,7 +263,7 @@ func (s Service) postScan(r io.Reader, scanType ScanType, e engagement) error {
 
 	// Copy the file content to the filePart
 	if _, err := io.Copy(filePart, r); err != nil {
-		return fmt.Errorf("Defect Dojo, can't write file to form %w\n", err)
+		return fmt.Errorf("defect dojo service can't write file to form %w", err)
 	}
 
 	contentType := writer.FormDataContentType()
@@ -277,7 +282,7 @@ func (s Service) postScan(r io.Reader, scanType ScanType, e engagement) error {
 	if res.StatusCode != http.StatusCreated {
 		msg, _ := io.ReadAll(res.Body)
 		return fmt.Errorf("%w: POST '%s' unexpected response code %d msg: %s",
-			RequestError, url, res.StatusCode, msg)
+			ErrAPI, url, res.StatusCode, msg)
 	}
 
 	return nil
@@ -297,7 +302,7 @@ func (s Service) postJSON(url string, reqBody io.Reader) (resBody io.ReadCloser,
 	if res.StatusCode != http.StatusCreated {
 		msg, _ := io.ReadAll(res.Body)
 		return nil, fmt.Errorf("%w: GET '%s' unexpected response code %d: msg: %s",
-			RequestError, url, res.StatusCode, string(msg))
+			ErrAPI, url, res.StatusCode, string(msg))
 	}
 	return res.Body, nil
 }
@@ -327,12 +332,12 @@ func query[T any](client *http.Client, key string, url string, queryFunc func(T)
 		if res.StatusCode != http.StatusOK {
 			msg, _ := io.ReadAll(res.Body)
 			return *new(T), fmt.Errorf("%w: GET '%s' unexpected response code %d msg: %s",
-				RequestError, next, res.StatusCode, msg)
+				ErrAPI, next, res.StatusCode, msg)
 		}
 
 		var response paginatedResponse[T]
 		if err := json.NewDecoder(res.Body).Decode(&response); err != nil {
-			return *new(T), fmt.Errorf("%w: %v", RequestError, err)
+			return *new(T), fmt.Errorf("%w: %v", ErrAPI, err)
 		}
 
 		for _, v := range response.Results {

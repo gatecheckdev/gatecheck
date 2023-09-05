@@ -1,3 +1,4 @@
+// Package cmd contains the ClI execution logic using cobra
 package cmd
 
 import (
@@ -19,22 +20,32 @@ import (
 )
 
 var (
-	ErrorFileAccess     = errors.New("File Access Failure")
-	ErrorEncoding       = errors.New("Encoding Failure")
-	ErrorValidation     = errors.New("Validation Failure")
-	ErrorAPI            = errors.New("API Failure")
-	ErrorUserInput      = errors.New("User Input Failure")
+	// ErrorFileAccess permissions, missing an expected file, etc.
+	ErrorFileAccess = errors.New("File Access Failure")
+	// ErrorEncoding anything dealing with encoding / decoding
+	ErrorEncoding = errors.New("Encoding Failure")
+	// ErrorValidation violations of validtion rules
+	ErrorValidation = errors.New("Validation Failure")
+	// ErrorAPI unexpected responses from APIs
+	ErrorAPI = errors.New("API Failure")
+	// ErrorUserInput unexpected or non-processable user input
+	ErrorUserInput = errors.New("User Input Failure")
+	// GlobalVerboseOutput defines the log level requested by the command
 	GlobalVerboseOutput = false
 )
 
-type DDExportService interface {
+type ddExportService interface {
 	Export(context.Context, io.Reader, defectdojo.EngagementQuery, defectdojo.ScanType) error
 }
 
-type AWSExportService interface {
+type awsExportService interface {
 	Export(context.Context, io.Reader, string) error
 }
 
+// AsyncDecoder decodes into a specific report type given content.
+//
+// The Async Decoder should read content and decode it into any number
+// of object types or return an encoding error
 type AsyncDecoder interface {
 	io.Writer
 	Decode() (any, error)
@@ -43,15 +54,16 @@ type AsyncDecoder interface {
 	Reset()
 }
 
+// CLIConfig used by all of the cmds
 type CLIConfig struct {
 	Version             string
 	PipedInput          *os.File
 	EPSSDownloadAgent   io.Reader
 	KEVDownloadAgent    io.Reader
-	DDExportService     DDExportService
+	DDExportService     ddExportService
 	DDEngagement        defectdojo.EngagementQuery
 	DDExportTimeout     time.Duration
-	AWSExportService    AWSExportService
+	AWSExportService    awsExportService
 	AWSExportTimeout    time.Duration
 	NewAsyncDecoderFunc func() AsyncDecoder
 	ConfigMap           map[string]any
@@ -59,12 +71,13 @@ type CLIConfig struct {
 	ConfigPath          string
 }
 
+// NewRootCommand configures the sub commands.
 func NewRootCommand(config CLIConfig) *cobra.Command {
 	command := &cobra.Command{
 		Use:     "gatecheck",
 		Version: config.Version,
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			cmd.Printf(GatecheckLogo)
+			cmd.Printf(gatecheckLogo)
 			return nil
 		},
 	}
@@ -73,13 +86,13 @@ func NewRootCommand(config CLIConfig) *cobra.Command {
 	command.PersistentFlags().BoolVarP(&GlobalVerboseOutput, "verbose", "v", false, "Verbose debug output")
 
 	// Commands
-	command.AddCommand(NewVersionCmd(config.Version))
-	command.AddCommand(NewPrintCommand(config.PipedInput, config.NewAsyncDecoderFunc))
-	command.AddCommand(NewConfigCmd(config.ConfigMap, config.ConfigFileUsed, config.ConfigPath))
-	command.AddCommand(NewValidateCmd(config.NewAsyncDecoderFunc, config.KEVDownloadAgent, config.EPSSDownloadAgent))
-	command.AddCommand(NewEPSSCmd(config.EPSSDownloadAgent))
+	command.AddCommand(newVersionCmd(config.Version))
+	command.AddCommand(newPrintCommand(config.PipedInput, config.NewAsyncDecoderFunc))
+	command.AddCommand(newConfigCmd(config.ConfigMap, config.ConfigFileUsed, config.ConfigPath))
+	command.AddCommand(newValidateCmd(config.NewAsyncDecoderFunc, config.KEVDownloadAgent, config.EPSSDownloadAgent))
+	command.AddCommand(newEPSSCmd(config.EPSSDownloadAgent))
 	command.AddCommand(
-		NewExportCmd(
+		newExportCmd(
 			config.DDExportService,
 			config.DDExportTimeout,
 			config.NewAsyncDecoderFunc,
@@ -88,16 +101,16 @@ func NewRootCommand(config CLIConfig) *cobra.Command {
 			config.AWSExportTimeout,
 		),
 	)
-	command.AddCommand(NewBundleCmd(config.NewAsyncDecoderFunc))
+	command.AddCommand(newBundleCmd(config.NewAsyncDecoderFunc))
 
 	return command
 }
 
-func NewVersionCmd(version string) *cobra.Command {
+func newVersionCmd(version string) *cobra.Command {
 	command := &cobra.Command{
 		Use: "version",
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			cmd.Printf(GatecheckLogo)
+			cmd.Printf(gatecheckLogo)
 			cmd.Println("A utility for aggregating, validating, and exporting vulnerability reports")
 			cmd.Println("Version:", version)
 			return nil
@@ -107,7 +120,7 @@ func NewVersionCmd(version string) *cobra.Command {
 	return command
 }
 
-func NewConfigCmd(configMap map[string]any, configFileUsed string, configPath string) *cobra.Command {
+func newConfigCmd(configMap map[string]any, configFileUsed string, configPath string) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "config",
 		Short: "Creates a new configuration file",
@@ -132,8 +145,8 @@ func NewConfigCmd(configMap map[string]any, configFileUsed string, configPath st
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			configMap := map[string]any{
 				grype.ConfigFieldName: grype.Config{
-					AllowList:          []grype.ListItem{{Id: "example allow id", Reason: "example reason"}},
-					DenyList:           []grype.ListItem{{Id: "example deny id", Reason: "example reason"}},
+					AllowList:          []grype.ListItem{{ID: "example allow id", Reason: "example reason"}},
+					DenyList:           []grype.ListItem{{ID: "example deny id", Reason: "example reason"}},
 					EPSSAllowThreshold: 1,
 					EPSSDenyThreshold:  1,
 					Critical:           -1,
@@ -152,8 +165,8 @@ func NewConfigCmd(configMap map[string]any, configFileUsed string, configPath st
 					SecretsAllowed: true,
 				},
 				cyclonedx.ConfigFieldName: cyclonedx.Config{
-					AllowList: []cyclonedx.ListItem{{Id: "example allow id", Reason: "example reason"}},
-					DenyList:  []cyclonedx.ListItem{{Id: "example deny id", Reason: "example reason"}},
+					AllowList: []cyclonedx.ListItem{{ID: "example allow id", Reason: "example reason"}},
+					DenyList:  []cyclonedx.ListItem{{ID: "example deny id", Reason: "example reason"}},
 					Required:  false,
 					Critical:  -1,
 					High:      -1,

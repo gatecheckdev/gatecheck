@@ -61,7 +61,7 @@ func TestAgent_Read(t *testing.T) {
 				{CveID: "cve-1"}, {CveID: "cve-3"}, {CveID: "cve-5"}, {CveID: "cve-7"}, {CveID: "cve-9"},
 			},
 		}
-		json.NewEncoder(w).Encode(catalog)
+		_ = json.NewEncoder(w).Encode(catalog)
 	}))
 
 	t.Run("success", func(t *testing.T) {

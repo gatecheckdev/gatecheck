@@ -1,3 +1,4 @@
+// Package cyclonedx provides data model, decoder, and validator for cyclonedx reports
 package cyclonedx
 
 import (
@@ -6,24 +7,29 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"sort"
 	"strings"
 
 	cdx "github.com/CycloneDX/cyclonedx-go"
-	"github.com/gatecheckdev/gatecheck/internal/log"
 	gce "github.com/gatecheckdev/gatecheck/pkg/encoding"
 	"github.com/gatecheckdev/gatecheck/pkg/format"
 	gcv "github.com/gatecheckdev/gatecheck/pkg/validate"
 	"golang.org/x/exp/slices"
 )
 
+// ReportType in plain text
 const ReportType = "CycloneDX Report"
+
+// ConfigFieldName the field name in the config map
 const ConfigFieldName = "cyclonedx"
 
+// ScanReport data model
 type ScanReport cdx.BOM
 
 var orderedSeverities = []string{"Critical", "High", "Medium", "Low", "Info", "None", "Unknown"}
 
+// String pretty formatted table
 func (r ScanReport) String() string {
 	if r.Components == nil {
 		return "No Components in Report"
@@ -86,7 +92,7 @@ func (r ScanReport) String() string {
 
 func severityIndex(s string) int {
 	for index, value := range orderedSeverities {
-		if strings.ToLower(value) == strings.ToLower(s) {
+		if strings.EqualFold(value, s) {
 			return index
 		}
 	}
@@ -102,14 +108,17 @@ func highestVulnerability(ratings []cdx.VulnerabilityRating) cdx.VulnerabilityRa
 	return ratings[0]
 }
 
+// ReportDecoder Custom decoder to handle multiple report types
 type ReportDecoder struct {
 	bytes.Buffer
 }
 
+// NewReportDecoder ...
 func NewReportDecoder() *ReportDecoder {
 	return new(ReportDecoder)
 }
 
+// Decode and check BOMFormat
 func (d *ReportDecoder) Decode() (any, error) {
 	report := new(ScanReport)
 	err := json.NewDecoder(d).Decode(report)
@@ -129,6 +138,7 @@ func (d *ReportDecoder) Decode() (any, error) {
 	return report, err
 }
 
+// DecodeFrom ...
 func (d *ReportDecoder) DecodeFrom(r io.Reader) (any, error) {
 
 	_, err := d.ReadFrom(r)
@@ -138,10 +148,12 @@ func (d *ReportDecoder) DecodeFrom(r io.Reader) (any, error) {
 	return d.Decode()
 }
 
+// FileType in plain text
 func (d *ReportDecoder) FileType() string {
 	return ReportType
 }
 
+// Config data model
 type Config struct {
 	AllowList []ListItem `yaml:"allowList,omitempty" json:"allowList,omitempty"`
 	DenyList  []ListItem `yaml:"denyList,omitempty" json:"denyList,omitempty"`
@@ -155,11 +167,13 @@ type Config struct {
 	Unknown   int        `yaml:"unknown"    json:"unknown"`
 }
 
+// ListItem for a specific allow/deny list record
 type ListItem struct {
-	Id     string `yaml:"id"     json:"id"`
+	ID     string `yaml:"id"     json:"id"`
 	Reason string `yaml:"reason" json:"reason"`
 }
 
+// NewValidator implementation of the generic validator
 func NewValidator() gcv.Validator[cdx.Vulnerability, Config] {
 	validator := gcv.NewValidator[cdx.Vulnerability, Config]()
 	validator = validator.WithValidationRules(ThresholdRule, DenyListRule)
@@ -167,6 +181,7 @@ func NewValidator() gcv.Validator[cdx.Vulnerability, Config] {
 	return validator
 }
 
+// ThresholdRule deny if X > vulnerabilities of Y Severity
 func ThresholdRule(vuls []cdx.Vulnerability, config Config) error {
 	orderedKeys := []string{"Critical", "High", "Medium", "Low", "Info", "None", "Unknown"}
 	allowed := map[string]int{
@@ -178,7 +193,6 @@ func ThresholdRule(vuls []cdx.Vulnerability, config Config) error {
 		"None":     config.None,
 		"Unknown":  config.Unknown,
 	}
-	log.Infof("CycloneDX Threshold Validation Rules: %s", format.PrettyPrintMapOrdered(allowed, orderedKeys))
 
 	found := make(map[string]int, 7)
 	for severity := range allowed {
@@ -188,7 +202,7 @@ func ThresholdRule(vuls []cdx.Vulnerability, config Config) error {
 	for _, vul := range vuls {
 		severity := strings.ToLower(string(highestVulnerability(*vul.Ratings).Severity))
 		severity = strings.ToUpper(severity[:1]) + severity[1:]
-		found[severity] += 1
+		found[severity]++
 	}
 
 	var errs error
@@ -201,21 +215,27 @@ func ThresholdRule(vuls []cdx.Vulnerability, config Config) error {
 			errs = errors.Join(errs, gcv.NewFailedRuleError(rule, fmt.Sprint(found[severity])))
 		}
 	}
-	log.Infof("CycloneDX Threshold Validation Found: %s", format.PrettyPrintMapOrdered(found, orderedKeys))
+
+	foundStr := format.PrettyPrintMapOrdered(found, orderedKeys)
+	allowedStr := format.PrettyPrintMapOrdered(allowed, orderedKeys)
+	slog.Debug("cyclonedx threshold validation", "allowed", allowedStr, "found", foundStr)
+
 	return errs
 }
 
+// AllowListRule for custom list
 func AllowListRule(vul cdx.Vulnerability, config Config) bool {
 	return slices.ContainsFunc(config.AllowList, func(allowListItem ListItem) bool {
-		return strings.ToLower(vul.ID) == strings.ToLower(allowListItem.Id)
+		return strings.EqualFold(vul.ID, allowListItem.ID)
 	})
 }
 
+// DenyListRule for custom list
 func DenyListRule(vuls []cdx.Vulnerability, config Config) error {
-	log.Info("CycloneDX Custom DenyList Rule")
-	return gcv.ValidateFunc(vuls, func(vul cdx.Vulnerability) error {
+	slog.Debug("cyclonedx custom deny list rule")
+	return gcv.DenyFunc(vuls, func(vul cdx.Vulnerability) error {
 		inDenyList := slices.ContainsFunc(config.DenyList, func(allowListItem ListItem) bool {
-			return strings.ToLower(vul.ID) == strings.ToLower(allowListItem.Id)
+			return strings.EqualFold(vul.ID, allowListItem.ID)
 		})
 		if !inDenyList {
 			return nil
@@ -224,6 +244,7 @@ func DenyListRule(vuls []cdx.Vulnerability, config Config) error {
 	})
 }
 
+// ShimComponentsAsVulnerabilities modify the report to add compontents as vulnerabilities with no score
 func (r *ScanReport) ShimComponentsAsVulnerabilities() *ScanReport {
 	nv := cdx.Vulnerability{
 		ID: "",

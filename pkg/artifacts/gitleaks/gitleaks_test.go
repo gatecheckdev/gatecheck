@@ -87,7 +87,7 @@ func TestEncoding_EdgeCases(t *testing.T) {
 	t.Run("missing-rule-id", func(t *testing.T) {
 		buf := new(bytes.Buffer)
 		report := ScanReport{Finding{}, Finding{}}
-		json.NewEncoder(buf).Encode(report)
+		_ = json.NewEncoder(buf).Encode(report)
 		_, err := NewReportDecoder().DecodeFrom(buf)
 		if !errors.Is(err, gce.ErrFailedCheck) {
 			t.Fatalf("want: %v got: %v", gce.ErrFailedCheck, err)

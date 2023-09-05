@@ -10,11 +10,13 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 )
 
+// Service used as a wrapper around the AWS S3 SDK
 type Service struct {
 	Bucket    string
 	AWSConfig aws.Config
 }
 
+// NewService ...
 func NewService(bucket string, config aws.Config) Service {
 	return Service{
 		AWSConfig: config,
@@ -22,6 +24,7 @@ func NewService(bucket string, config aws.Config) Service {
 	}
 }
 
+// Export to the target S3 bucket
 func (s Service) Export(ctx context.Context, r io.Reader, key string) error {
 
 	s3Client := s3.NewFromConfig(s.AWSConfig, func(o *s3.Options) {

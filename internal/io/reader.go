@@ -1,10 +1,10 @@
+// Package io contains convenience functions/operations for I/O
 package io
 
 import (
 	"io"
+	"log/slog"
 	"os"
-
-	"github.com/gatecheckdev/gatecheck/internal/log"
 )
 
 // LazyReader is a wrapper for *os.File which opens the file on read.
@@ -15,6 +15,7 @@ type LazyReader struct {
 	filename string
 }
 
+// NewLazyReader returns a LazyReader that won't open until read
 func NewLazyReader(filename string) *LazyReader {
 	return &LazyReader{filename: filename}
 }
@@ -28,7 +29,7 @@ func (r *LazyReader) Read(b []byte) (int, error) {
 		return n, err
 	}
 
-	log.Infof("LazyReader opening file '%s'", r.filename)
+	slog.Info("lazy reader open", "filename", r.filename)
 	f, err := os.Open(r.filename)
 	if err != nil {
 		return 0, err

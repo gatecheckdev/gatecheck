@@ -18,8 +18,7 @@ func TestNewEPSSCmd(t *testing.T) {
 
 	t.Run("test-download-csv-success", func(t *testing.T) {
 		config := CLIConfig{EPSSDownloadAgent: strings.NewReader("mock epss file")}
-		commandString := fmt.Sprintf("epss download")
-		output, err := Execute(commandString, config)
+		output, err := Execute("epss download", config)
 
 		if err != nil {
 			t.Fatal(err)
@@ -30,8 +29,7 @@ func TestNewEPSSCmd(t *testing.T) {
 
 	t.Run("download-csv-fail", func(t *testing.T) {
 		config := CLIConfig{EPSSDownloadAgent: &badReader{}}
-		commandString := fmt.Sprintf("epss download")
-		_, err := Execute(commandString, config)
+		_, err := Execute("epss download", config)
 
 		if err == nil {
 			t.Fatal("Expected error for bad reader")

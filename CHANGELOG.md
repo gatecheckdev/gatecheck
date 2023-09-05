@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Update to go 1.21
+- Custom logger implementation using zerolog to std lib slog
 
 ### Added
 
@@ -18,10 +19,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CloseOldFindings Import-Scan API settings option
 - CloseOldFindingsProductScope Import-Scan API settings option
 - CreateFindingGroupsForAllFindings Import-Scan API settings option
+- Documentation for exported functions and structs
 
 ### Fixed
 
 - Bug where Gitleaks report with no secrets aren't properly decoded
+- A bunch of golangci-lint complaints
 
 ### Changed
 

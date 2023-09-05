@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"math"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -107,8 +106,8 @@ func TestService(t *testing.T) {
 	badBody := "\nCVE-1999-0001,0.01167,0.83060,foo,bar"
 
 	mockServer := MockEPSSServer(t)
-	mockServer2 := MockBadStatusServer(t)
-	mockServer3 := mockBadContentService(t)
+	mockServer2 := MockBadStatusServer()
+	mockServer3 := mockBadContentService()
 	testTable := []struct {
 		label   string
 		reader  io.Reader
@@ -177,21 +176,21 @@ func MockEPSSServer(t *testing.T) *httptest.Server {
 	_, _ = io.Copy(writer, MustOpen(epssTestFilename, t))
 	writer.Close()
 	mockServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		io.Copy(w, inputBuf)
+		_, _ = io.Copy(w, inputBuf)
 	}))
 	return mockServer
 }
 
-func MockBadStatusServer(t *testing.T) *httptest.Server {
+func MockBadStatusServer() *httptest.Server {
 	mockServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
 	}))
 	return mockServer
 }
 
-func mockBadContentService(t *testing.T) *httptest.Server {
+func mockBadContentService() *httptest.Server {
 	mockServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		json.NewEncoder(w).Encode(map[string]string{"key": "value"})
+		_ = json.NewEncoder(w).Encode(map[string]string{"key": "value"})
 	}))
 	return mockServer
 
@@ -203,8 +202,4 @@ func MustOpen(filename string, t *testing.T) *os.File {
 		t.Fatal(err)
 	}
 	return f
-}
-
-func almostEqual(a float64, b float64) bool {
-	return math.Abs(a-b) < 1e-9
 }

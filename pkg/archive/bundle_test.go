@@ -41,7 +41,7 @@ func TestEncoding(t *testing.T) {
 		}
 
 		for key := range decodedBundle.content {
-			if bytes.Compare(decodedBundle.content[key], bundle.content[key]) != 0 {
+			if !bytes.Equal(decodedBundle.content[key], bundle.content[key]) {
 				t.Fatalf("for key: %s %s != %s", key, decodedBundle.content[key], bundle.content[key])
 			}
 		}
@@ -174,7 +174,7 @@ func zippedTarballReader(r io.Reader, tarHeader *tar.Header) *bytes.Buffer {
 	outputBuf := new(bytes.Buffer)
 	gw := gzip.NewWriter(outputBuf)
 	tw := tar.NewWriter(gw)
-	tw.WriteHeader(tarHeader)
+	_ = tw.WriteHeader(tarHeader)
 
 	_, _ = io.Copy(tw, r)
 	tw.Close()

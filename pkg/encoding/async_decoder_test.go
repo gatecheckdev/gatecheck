@@ -50,7 +50,6 @@ func TestAsyncDecoder(t *testing.T) {
 		_, err = NewAsyncDecoder(&badDecoder{}).DecodeFrom(strings.NewReader("Content"))
 		if !errors.Is(err, ErrIO) {
 			t.Fatalf("want: %v got: %v", ErrIO, err)
-			errors.Join()
 		}
 	})
 
