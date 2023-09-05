@@ -31,7 +31,7 @@ const ExitSystemFail int = -1
 const ExitOk int = 0
 const ExitFileAccessFail int = 2
 const ExitValidationFail = 1
-const GatecheckVersion = "v0.1.4-pre"
+const GatecheckVersion = "v0.2.0-pre"
 
 func main() {
 	viper.SetConfigType("env")
