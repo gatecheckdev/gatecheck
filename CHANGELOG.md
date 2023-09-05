@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [UNRELEASED]
 
+### Changed
+
+- Update to go 1.21
+
 ### Added
 
 - EnableSimpleRiskAcceptance Products API settings option

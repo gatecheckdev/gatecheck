@@ -1,6 +1,6 @@
 module github.com/gatecheckdev/gatecheck
 
-go 1.20
+go 1.21
 
 require (
 	github.com/BacchusJackson/go-semgrep v1.9.0
