@@ -1,10 +1,17 @@
 # Release Instructions
 
+Releasing is done by maintainers with permissions to bypass the PR only rule.
+This process assumes you are working from a fork with gatecheckdev/gatecheck as `upstream`.
+
 1. Update CLI version in cmd/gatecheck/main.go
 2. Update CHANGELOG.md
-3. Commit and Tag `git add . && git commit -m "release: v0.0.x" && git tag v0.0.x`
-4. Push commits and tags `git push -u origin release/v0.0.x && git push --tags`
-5. Run goreleaser command with ENV Variable `GITHUB_TOKEN="<token> make release`
+3. Tidy modules `go get -t -u ./... && go mod tidy && make test`
+3. Release commit should be signed `git commit -s -m "release: vx.x.x`
+4. Push commit to upstream `git push -u upstream main` 
+5. Wait for unit testing action to pass 
+6. git tag `git tag -sa "release" vx.x.x`
+7. git push tag `git push -u upstream vx.x.x`
+8. Run goreleaser command with ENV Variable `GITHUB_TOKEN="<token> make release`
 
 # References
 

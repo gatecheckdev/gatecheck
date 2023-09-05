@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Update to go 1.21
 - Custom logger implementation using zerolog to std lib slog
+- Release process documentation
 
 ### Added
 
