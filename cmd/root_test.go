@@ -14,7 +14,6 @@ var (
 	grypeTestReport     = "../test/grype-report.json"
 	cyclonedxTestReport = "../test/cyclonedx-grype-sbom.json"
 	epssTestCSV         = "../test/epss_scores-2023-06-01.csv"
-	kevTestFile         = "../test/known_exploited_vulnerabilities.json"
 )
 
 func Test_RootCommand(t *testing.T) {
@@ -137,4 +136,3 @@ func MustRead(filename string, t *testing.T) []byte {
 	}
 	return b
 }
-

@@ -133,7 +133,7 @@ func main() {
 	var startTime time.Time
 	command.PersistentPreRun = func(_ *cobra.Command, _ []string) {
 		startTime = time.Now()
-		if cmd.GlobalVerboseOutput == false {
+		if !cmd.GlobalVerboseOutput {
 			logLevel = slog.LevelWarn
 		}
 	}

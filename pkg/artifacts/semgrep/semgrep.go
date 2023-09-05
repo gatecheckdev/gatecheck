@@ -35,7 +35,7 @@ func (r ScanReport) String() string {
 		path := format.Summarize(item.Path, 30, format.ClipMiddle)
 		// Attempt type assertion on metadata since it's an interface{}
 		metadata, ok := item.Extra.Metadata.(map[string]interface{})
-		if ok != true {
+		if !ok {
 			table.AppendRow(item.Extra.Severity, path, line, "", "")
 			continue
 		}

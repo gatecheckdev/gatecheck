@@ -79,7 +79,7 @@ func TestEncoding(t *testing.T) {
 		buf := new(bytes.Buffer)
 		_ = json.NewEncoder(buf).Encode(report)
 
-		r, err := NewReportDecoder().DecodeFrom(buf)
+		_, err := NewReportDecoder().DecodeFrom(buf)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -91,7 +91,7 @@ func TestEncoding(t *testing.T) {
 		buf := new(bytes.Buffer)
 		_ = json.NewEncoder(buf).Encode(report)
 
-		r, err := NewReportDecoder().DecodeFrom(buf)
+		_, err := NewReportDecoder().DecodeFrom(buf)
 		if err != nil {
 			t.Fatal(err)
 		}

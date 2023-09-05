@@ -45,20 +45,20 @@ func newPrintCommand(pipedFile *os.File, newAsyncDecoder func() AsyncDecoder) *c
 func printArtifact(w io.Writer, v any, newDecoder func() AsyncDecoder) {
 	outputString := ""
 	if v == nil {
-		strings.NewReader("fail").WriteTo(w)
+		_, _ = strings.NewReader("fail").WriteTo(w)
 		return
 	}
-	switch v.(type) {
+	switch obj := v.(type) {
 	case *grype.ScanReport:
-		outputString = v.(*grype.ScanReport).String()
+		outputString = obj.String()
 	case *semgrep.ScanReport:
-		outputString = v.(*semgrep.ScanReport).String()
+		outputString = obj.String()
 	case *gitleaks.ScanReport:
-		outputString = v.(*gitleaks.ScanReport).String()
+		outputString = obj.String()
 	case *cyclonedx.ScanReport:
-		outputString = v.(*cyclonedx.ScanReport).String()
+		outputString = obj.String()
 	case *archive.Bundle:
-		printBundleContentTable(w, v.(*archive.Bundle), newDecoder)
+		printBundleContentTable(w, obj, newDecoder)
 		return
 	}
 

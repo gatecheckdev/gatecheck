@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Update to go 1.21
-- log custom to slog
+- Custom logger implementation using zerolog to std lib slog
 
 ### Added
 
@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Bug where Gitleaks report with no secrets aren't properly decoded
+- A bunch of golangci-lint complaints
 
 ### Changed
 

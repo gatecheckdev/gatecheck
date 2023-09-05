@@ -49,7 +49,7 @@ func Test_PrintCommand(t *testing.T) {
 	t.Run("gitleaks_no_secrets", func(t *testing.T) {
 		fn := path.Join(t.TempDir(), "gitleaks-report.json")
 		f := MustCreate(fn, t)
-		f.WriteString("[]\n")
+		_, _ = f.WriteString("[]\n")
 		f.Close()
 		out, err := Execute("print "+fn, config)
 		if err != nil {

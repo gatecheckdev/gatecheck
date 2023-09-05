@@ -91,31 +91,31 @@ func newValidateCmd(newAsyncDecoder func() AsyncDecoder, KEVDownloadAgent io.Rea
 		},
 	}
 
-	validateAny = func(obj any, configBytes []byte) error {
-		if bundle, ok := obj.(*archive.Bundle); ok {
+	validateAny = func(v any, configBytes []byte) error {
+		if bundle, ok := v.(*archive.Bundle); ok {
 			return validateBundle(bundle, configBytes)
 		}
 
-		switch obj.(type) {
+		switch obj := v.(type) {
 		case *semgrep.ScanReport:
-			err := semgrep.NewValidator().ReadConfigAndValidate(obj.(*semgrep.ScanReport).Results,
+			err := semgrep.NewValidator().ReadConfigAndValidate(obj.Results,
 				bytes.NewReader(configBytes), semgrep.ConfigFieldName)
 			slog.Info("semgrep report validation", "err", err)
 			return err
 		case *gitleaks.ScanReport:
-			err := gitleaks.NewValidator().ReadConfigAndValidate(*obj.(*gitleaks.ScanReport),
+			err := gitleaks.NewValidator().ReadConfigAndValidate(*obj,
 				bytes.NewReader(configBytes), gitleaks.ConfigFieldName)
 			slog.Info("gitleaks report validation", "err", err)
 			return err
 		case *cyclonedx.ScanReport:
-			err := cyclonedx.NewValidator().ReadConfigAndValidate(*obj.(*cyclonedx.ScanReport).Vulnerabilities,
+			err := cyclonedx.NewValidator().ReadConfigAndValidate(*obj.Vulnerabilities,
 				bytes.NewReader(configBytes), cyclonedx.ConfigFieldName)
 			slog.Info("cyclonedx report validation", "err", err)
 			return err
 		}
 
 		// This function is called after the async decoder so it has to be a defined type
-		report := obj.(*grype.ScanReport)
+		report := v.(*grype.ScanReport)
 		var kevValidationErr error
 		if kevService != nil {
 			kevValidationErr = kevService.NewValidator().Validate(report.Matches, grype.Config{})

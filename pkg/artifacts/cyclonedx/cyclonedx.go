@@ -92,7 +92,7 @@ func (r ScanReport) String() string {
 
 func severityIndex(s string) int {
 	for index, value := range orderedSeverities {
-		if strings.ToLower(value) == strings.ToLower(s) {
+		if strings.EqualFold(value, s) {
 			return index
 		}
 	}
@@ -226,7 +226,7 @@ func ThresholdRule(vuls []cdx.Vulnerability, config Config) error {
 // AllowListRule for custom list
 func AllowListRule(vul cdx.Vulnerability, config Config) bool {
 	return slices.ContainsFunc(config.AllowList, func(allowListItem ListItem) bool {
-		return strings.ToLower(vul.ID) == strings.ToLower(allowListItem.ID)
+		return strings.EqualFold(vul.ID, allowListItem.ID)
 	})
 }
 
@@ -235,7 +235,7 @@ func DenyListRule(vuls []cdx.Vulnerability, config Config) error {
 	slog.Debug("cyclonedx custom deny list rule")
 	return gcv.DenyFunc(vuls, func(vul cdx.Vulnerability) error {
 		inDenyList := slices.ContainsFunc(config.DenyList, func(allowListItem ListItem) bool {
-			return strings.ToLower(vul.ID) == strings.ToLower(allowListItem.ID)
+			return strings.EqualFold(vul.ID, allowListItem.ID)
 		})
 		if !inDenyList {
 			return nil

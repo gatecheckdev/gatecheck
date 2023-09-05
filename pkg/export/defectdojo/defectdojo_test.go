@@ -3,11 +3,11 @@ package defectdojo
 import (
 	"bytes"
 	"context"
+	"crypto/rand"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
-	"math/rand"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -116,7 +116,7 @@ func TestService_postJSON(t *testing.T) {
 
 func TestService_postScan(t *testing.T) {
 	randomBytes := make([]byte, 100)
-	rand.Read(randomBytes)
+	_, _ = rand.Read(randomBytes)
 
 	t.Run("bad-reader", func(t *testing.T) {
 		server := httptest.NewServer(customResponseHandler(http.StatusCreated, TestStruct{A: "received"}))
@@ -156,7 +156,7 @@ func TestService_postScan(t *testing.T) {
 func TestService_productType(t *testing.T) {
 
 	t.Run("existing", func(t *testing.T) {
-		serverRes := paginatedResponse[productType]{Results: []productType{{Name: "A", Id: 2}}}
+		serverRes := paginatedResponse[productType]{Results: []productType{{Name: "A", ID: 2}}}
 
 		server := httptest.NewServer(customResponseHandler(http.StatusOK, serverRes))
 		service := NewService(server.Client(), "", server.URL, false, false, true)
@@ -166,7 +166,7 @@ func TestService_productType(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		if prodType.Id != 2 {
+		if prodType.ID != 2 {
 			t.Fatal("Expected id==2")
 		}
 	})
@@ -181,7 +181,7 @@ func TestService_productType(t *testing.T) {
 	})
 
 	t.Run("bad-post", func(t *testing.T) {
-		serverRes := paginatedResponse[productType]{Results: []productType{{Name: "A", Id: 2}}}
+		serverRes := paginatedResponse[productType]{Results: []productType{{Name: "A", ID: 2}}}
 
 		server := httptest.NewServer(customResponseHandler(http.StatusOK, serverRes))
 		service := NewService(server.Client(), "", server.URL, false, false, true)
@@ -193,8 +193,8 @@ func TestService_productType(t *testing.T) {
 	})
 
 	t.Run("success", func(t *testing.T) {
-		serverGETRes := paginatedResponse[productType]{Results: []productType{{Name: "A", Id: 2}}}
-		serverPOSTRes := productType{Name: "B", Id: 3}
+		serverGETRes := paginatedResponse[productType]{Results: []productType{{Name: "A", ID: 2}}}
+		serverPOSTRes := productType{Name: "B", ID: 3}
 		server := httptest.NewServer(customRouteHandler(serverGETRes, serverPOSTRes))
 		service := NewService(server.Client(), "", server.URL, false, false, true)
 
@@ -211,17 +211,17 @@ func TestService_productType(t *testing.T) {
 func TestService_product(t *testing.T) {
 
 	t.Run("existing", func(t *testing.T) {
-		serverRes := paginatedResponse[product]{Results: []product{{Name: "A", Id: 2, ProdType: 5}}}
+		serverRes := paginatedResponse[product]{Results: []product{{Name: "A", ID: 2, ProdType: 5}}}
 
 		server := httptest.NewServer(customResponseHandler(http.StatusOK, serverRes))
 		service := NewService(server.Client(), "", server.URL, false, false, true)
 
-		product, err := service.product(EngagementQuery{ProductName: "A"}, productType{Id: 5})
+		product, err := service.product(EngagementQuery{ProductName: "A"}, productType{ID: 5})
 		if err != nil {
 			t.Fatal(err)
 		}
 
-		if product.Id != 2 {
+		if product.ID != 2 {
 			t.Fatal("Expected id==2")
 		}
 	})
@@ -230,30 +230,30 @@ func TestService_product(t *testing.T) {
 		server := httptest.NewServer(badStatusHandler())
 		service := NewService(server.Client(), "", server.URL, false, false, true)
 
-		if _, err := service.product(EngagementQuery{}, productType{Id: 5}); err == nil {
+		if _, err := service.product(EngagementQuery{}, productType{ID: 5}); err == nil {
 			t.Fatal("Expected error for bad query")
 		}
 	})
 
 	t.Run("bad-post", func(t *testing.T) {
-		serverRes := paginatedResponse[product]{Results: []product{{Name: "A", Id: 2}}}
+		serverRes := paginatedResponse[product]{Results: []product{{Name: "A", ID: 2}}}
 
 		server := httptest.NewServer(customResponseHandler(http.StatusOK, serverRes))
 		service := NewService(server.Client(), "", server.URL, false, false, true)
 
-		_, err := service.product(EngagementQuery{Name: "B"}, productType{Id: 5})
+		_, err := service.product(EngagementQuery{Name: "B"}, productType{ID: 5})
 		if err == nil {
 			t.Fatal("expected error for bad post")
 		}
 	})
 
 	t.Run("success", func(t *testing.T) {
-		serverGETRes := paginatedResponse[product]{Results: []product{{Name: "A", Id: 2, ProdType: 6}}}
-		serverPOSTRes := product{Name: "B", Id: 3, ProdType: 5}
+		serverGETRes := paginatedResponse[product]{Results: []product{{Name: "A", ID: 2, ProdType: 6}}}
+		serverPOSTRes := product{Name: "B", ID: 3, ProdType: 5}
 		server := httptest.NewServer(customRouteHandler(serverGETRes, serverPOSTRes))
 		service := NewService(server.Client(), "", server.URL, false, false, true)
 
-		prodType, err := service.product(EngagementQuery{ProductName: "B"}, productType{Id: 5})
+		prodType, err := service.product(EngagementQuery{ProductName: "B"}, productType{ID: 5})
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -265,17 +265,17 @@ func TestService_product(t *testing.T) {
 func TestService_engagement(t *testing.T) {
 
 	t.Run("existing", func(t *testing.T) {
-		serverRes := paginatedResponse[engagement]{Results: []engagement{{Name: "A", Id: 2, Product: 7}}}
+		serverRes := paginatedResponse[engagement]{Results: []engagement{{Name: "A", ID: 2, Product: 7}}}
 
 		server := httptest.NewServer(customResponseHandler(http.StatusOK, serverRes))
 		service := NewService(server.Client(), "", server.URL, false, false, true)
 
-		eng, err := service.engagement(EngagementQuery{Name: "A"}, product{Id: 7})
+		eng, err := service.engagement(EngagementQuery{Name: "A"}, product{ID: 7})
 		if err != nil {
 			t.Fatal(err)
 		}
 
-		if eng.Id != 2 {
+		if eng.ID != 2 {
 			t.Fatal("Expected id==2")
 		}
 	})
@@ -284,30 +284,30 @@ func TestService_engagement(t *testing.T) {
 		server := httptest.NewServer(badStatusHandler())
 		service := NewService(server.Client(), "", server.URL, false, false, true)
 
-		if _, err := service.engagement(EngagementQuery{}, product{Id: 7}); err == nil {
+		if _, err := service.engagement(EngagementQuery{}, product{ID: 7}); err == nil {
 			t.Fatal("Expected error for bad query")
 		}
 	})
 
 	t.Run("bad-post", func(t *testing.T) {
-		serverRes := paginatedResponse[engagement]{Results: []engagement{{Name: "A", Id: 2}}}
+		serverRes := paginatedResponse[engagement]{Results: []engagement{{Name: "A", ID: 2}}}
 
 		server := httptest.NewServer(customResponseHandler(http.StatusOK, serverRes))
 		service := NewService(server.Client(), "", server.URL, false, false, true)
 
-		_, err := service.engagement(EngagementQuery{Name: "B"}, product{Id: 5})
+		_, err := service.engagement(EngagementQuery{Name: "B"}, product{ID: 5})
 		if err == nil {
 			t.Fatal("expected error for bad post")
 		}
 	})
 
 	t.Run("success", func(t *testing.T) {
-		serverGETRes := paginatedResponse[engagement]{Results: []engagement{{Name: "A", Id: 2, Product: 6}}}
-		serverPOSTRes := engagement{Name: "B", Id: 3, Product: 7}
+		serverGETRes := paginatedResponse[engagement]{Results: []engagement{{Name: "A", ID: 2, Product: 6}}}
+		serverPOSTRes := engagement{Name: "B", ID: 3, Product: 7}
 		server := httptest.NewServer(customRouteHandler(serverGETRes, serverPOSTRes))
 		service := NewService(server.Client(), "", server.URL, false, false, true)
 
-		eng, err := service.engagement(EngagementQuery{ProductName: "B"}, product{Id: 7})
+		eng, err := service.engagement(EngagementQuery{ProductName: "B"}, product{ID: 7})
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -318,7 +318,7 @@ func TestService_engagement(t *testing.T) {
 
 func Test_export(t *testing.T) {
 	t.Run("bad-productType", func(t *testing.T) {
-		serverRes := paginatedResponse[productType]{Results: []productType{{Name: "A", Id: 2}}}
+		serverRes := paginatedResponse[productType]{Results: []productType{{Name: "A", ID: 2}}}
 		server := httptest.NewServer(customResponseHandler(http.StatusOK, serverRes))
 		service := NewService(server.Client(), "", server.URL, false, false, true)
 		server.Close()
@@ -329,7 +329,7 @@ func Test_export(t *testing.T) {
 
 	t.Run("bad-product", func(t *testing.T) {
 		routeTable := map[string]any{
-			"/api/v2/product_types/": paginatedResponse[productType]{Results: []productType{{Name: "A", Id: 2}}},
+			"/api/v2/product_types/": paginatedResponse[productType]{Results: []productType{{Name: "A", ID: 2}}},
 		}
 
 		server := httptest.NewServer(mapHandler(routeTable))
@@ -341,8 +341,8 @@ func Test_export(t *testing.T) {
 
 	t.Run("bad-engagement", func(t *testing.T) {
 		routeTable := map[string]any{
-			"/api/v2/product_types/": paginatedResponse[productType]{Results: []productType{{Name: "A", Id: 2}}},
-			"/api/v2/products/":      paginatedResponse[product]{Results: []product{{Name: "some product", Id: 5, ProdType: 2}}},
+			"/api/v2/product_types/": paginatedResponse[productType]{Results: []productType{{Name: "A", ID: 2}}},
+			"/api/v2/products/":      paginatedResponse[product]{Results: []product{{Name: "some product", ID: 5, ProdType: 2}}},
 		}
 
 		tags := "a-tab,b_tag"
@@ -357,9 +357,9 @@ func Test_export(t *testing.T) {
 
 	t.Run("success", func(t *testing.T) {
 		routeTable := map[string]any{
-			"/api/v2/product_types/": paginatedResponse[productType]{Results: []productType{{Name: "A", Id: 2}}},
-			"/api/v2/products/":      paginatedResponse[product]{Results: []product{{Name: "some product", Id: 5, ProdType: 2}}},
-			"/api/v2/engagements/":   paginatedResponse[engagement]{Results: []engagement{{Name: "some engagement", Id: 7, Product: 5}}},
+			"/api/v2/product_types/": paginatedResponse[productType]{Results: []productType{{Name: "A", ID: 2}}},
+			"/api/v2/products/":      paginatedResponse[product]{Results: []product{{Name: "some product", ID: 5, ProdType: 2}}},
+			"/api/v2/engagements/":   paginatedResponse[engagement]{Results: []engagement{{Name: "some engagement", ID: 7, Product: 5}}},
 			"/api/v2/import-scan/":   TestStruct{A: "Good"},
 		}
 
@@ -377,9 +377,9 @@ func Test_export(t *testing.T) {
 func TestService_Export(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		routeTable := map[string]any{
-			"/api/v2/product_types/": paginatedResponse[productType]{Results: []productType{{Name: "A", Id: 2}}},
-			"/api/v2/products/":      paginatedResponse[product]{Results: []product{{Name: "some product", Id: 5, ProdType: 2}}},
-			"/api/v2/engagements/":   paginatedResponse[engagement]{Results: []engagement{{Name: "some engagement", Id: 7, Product: 5}}},
+			"/api/v2/product_types/": paginatedResponse[productType]{Results: []productType{{Name: "A", ID: 2}}},
+			"/api/v2/products/":      paginatedResponse[product]{Results: []product{{Name: "some product", ID: 5, ProdType: 2}}},
+			"/api/v2/engagements/":   paginatedResponse[engagement]{Results: []engagement{{Name: "some engagement", ID: 7, Product: 5}}},
 			"/api/v2/import-scan/":   TestStruct{A: "Good"},
 		}
 

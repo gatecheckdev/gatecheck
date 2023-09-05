@@ -108,7 +108,7 @@ func newExportCmd(
 		},
 	}
 	awsCmd.Flags().String("key", "", "The AWS S3 object key for the location in the bucket")
-	awsCmd.MarkFlagRequired("key")
+	_ = awsCmd.MarkFlagRequired("key")
 
 	exportCmd.PersistentFlags().BoolP("full-bom", "m", false, "CycloneDx: Adds all the components with no vulnerabilities as SeverityNone")
 	exportCmd.AddCommand(defectDojoCmd)

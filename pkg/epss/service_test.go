@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"math"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -177,7 +176,7 @@ func MockEPSSServer(t *testing.T) *httptest.Server {
 	_, _ = io.Copy(writer, MustOpen(epssTestFilename, t))
 	writer.Close()
 	mockServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		io.Copy(w, inputBuf)
+		_, _ = io.Copy(w, inputBuf)
 	}))
 	return mockServer
 }
@@ -191,7 +190,7 @@ func MockBadStatusServer() *httptest.Server {
 
 func mockBadContentService() *httptest.Server {
 	mockServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		json.NewEncoder(w).Encode(map[string]string{"key": "value"})
+		_ = json.NewEncoder(w).Encode(map[string]string{"key": "value"})
 	}))
 	return mockServer
 
@@ -203,8 +202,4 @@ func MustOpen(filename string, t *testing.T) *os.File {
 		t.Fatal(err)
 	}
 	return f
-}
-
-func almostEqual(a float64, b float64) bool {
-	return math.Abs(a-b) < 1e-9
 }

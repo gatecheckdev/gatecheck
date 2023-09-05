@@ -1,3 +1,4 @@
+// Package encoding provides generic abstractions for decoding common formats
 package encoding
 
 import (
@@ -7,8 +8,10 @@ import (
 	"sync"
 )
 
+// GenericFileType files that cannot be decoded by any provided decoders
 const GenericFileType string = "Generic"
 
+// WriterDecoder can be implemented for custom decoders
 type WriterDecoder interface {
 	io.Writer
 	Decode() (any, error)
@@ -16,23 +19,27 @@ type WriterDecoder interface {
 	FileType() string
 }
 
+// AsyncDecoder generic implementation
 type AsyncDecoder struct {
 	bytes.Buffer
 	decoders []WriterDecoder
 	fileType string
 }
 
+// NewAsyncDecoder provide decoders to run
 func NewAsyncDecoder(decs ...WriterDecoder) *AsyncDecoder {
 	decoder := new(AsyncDecoder)
 	decoder.decoders = decs
 	return decoder
 }
 
+// WithDecoders set decoders, will overwrite any provided in NewAsyncDecoder
 func (d *AsyncDecoder) WithDecoders(decs ...WriterDecoder) *AsyncDecoder {
 	d.decoders = decs
 	return d
 }
 
+// DecodeFrom see Decode
 func (d *AsyncDecoder) DecodeFrom(r io.Reader) (any, error) {
 	_, err := d.ReadFrom(r)
 	if err != nil {
@@ -41,6 +48,7 @@ func (d *AsyncDecoder) DecodeFrom(r io.Reader) (any, error) {
 	return d.Decode()
 }
 
+// Decode attempt to decode across all decoders, first to succeed without error wins
 func (d *AsyncDecoder) Decode() (any, error) {
 	if len(d.decoders) == 0 {
 		return nil, fmt.Errorf("%w: no decoders provided", ErrEncoding)
@@ -59,7 +67,7 @@ func (d *AsyncDecoder) Decode() (any, error) {
 		if err != nil {
 			return nil, fmt.Errorf("%w: %v", ErrIO, err)
 		}
-		reader.Seek(0, 0)
+		_, _ = reader.Seek(0, 0)
 		go func(decoder WriterDecoder) {
 			v, err := decoder.Decode()
 

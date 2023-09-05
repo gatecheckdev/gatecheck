@@ -63,9 +63,9 @@ func TestNewJSONWriterDecoder(t *testing.T) {
 
 	_ = json.NewEncoder(goodBuf).Encode(&mockPerson{FirstName: "Tony", LastName: "Stark", Age: 53})
 
-	t.Log(string(goodBuf.Bytes()))
+	t.Log(goodBuf.String())
 
-	badBuf.ReadFrom(strings.NewReader("}}}"))
+	_, _ = badBuf.ReadFrom(strings.NewReader("}}}"))
 
 	testTable := []struct {
 		label         string
@@ -107,9 +107,9 @@ func TestNewYAMLWriterDecoder(t *testing.T) {
 
 	_ = yaml.NewEncoder(goodBuf).Encode(&mockPerson{FirstName: "Tony", LastName: "Stark", Age: 53})
 
-	t.Log(string(goodBuf.Bytes()))
+	t.Log(goodBuf.String())
 
-	badBuf.ReadFrom(strings.NewReader("}}}"))
+	_, _ = badBuf.ReadFrom(strings.NewReader("}}}"))
 
 	testTable := []struct {
 		label         string

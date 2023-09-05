@@ -87,7 +87,7 @@ func newBundleCmd(newAsyncDecoder func() AsyncDecoder) *cobra.Command {
 	bundleCmd.Flags().StringP("output", "o", archive.DefaultBundleFilename, "output bundle file")
 	bundleCmd.Flags().BoolP("skip-missing", "m", false, "Don't fail if a file doesn't exist")
 	bundleCmd.Flags().StringToStringP("properties", "p", nil, "Artifact properties in key=value format")
-	bundleCmd.MarkFlagFilename("output")
+	_ = bundleCmd.MarkFlagFilename("output")
 	return bundleCmd
 
 }
