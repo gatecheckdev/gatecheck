@@ -6,7 +6,7 @@ This process assumes you are working from a fork with gatecheckdev/gatecheck as 
 1. Update CLI version in cmd/gatecheck/main.go
 2. Update CHANGELOG.md
 3. Tidy modules `go get -t -u=patch ./... && go mod tidy && make test`
-4. Release commit should be signed `git commit -S -m "release: vx.x.x`
+4. Release commit should be signed `git commit -s -m "release: vx.x.x`
 4. Push commit to upstream `git push -u upstream main` 
 6. Wait for unit testing action to pass 
 7. git tag `git tag -sa "release" vx.x.x`
