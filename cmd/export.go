@@ -39,13 +39,13 @@ func newExportCmd(
 		RunE: func(cmd *cobra.Command, args []string) error {
 			fullBom, _ := cmd.Flags().GetBool("full-bom")
 
-			slog.Info("Open", "filename", args[0])
+			slog.Debug("Open", "filename", args[0])
 			f, err := os.Open(args[0])
 			if err != nil {
 				return fmt.Errorf("%w: %v", ErrorFileAccess, err)
 			}
 
-			slog.Info("Decode", "filename", args[0])
+			slog.Debug("Decode", "filename", args[0])
 
 			decoder := newAsyncDecoder()
 			exportBuf := new(bytes.Buffer)
@@ -73,7 +73,7 @@ func newExportCmd(
 			}
 
 			if fullBom {
-				slog.Info("Shimming components as vulnerabilities with 'none' severity")
+				slog.Debug("Shimming components as vulnerabilities with 'none' severity")
 				report := obj.(*cyclonedx.ScanReport)
 				report = report.ShimComponentsAsVulnerabilities()
 				exportBuf = new(bytes.Buffer)

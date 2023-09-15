@@ -29,7 +29,7 @@ func (r *LazyReader) Read(b []byte) (int, error) {
 		return n, err
 	}
 
-	slog.Info("lazy reader open", "filename", r.filename)
+	slog.Debug("lazy reader open", "filename", r.filename)
 	f, err := os.Open(r.filename)
 	if err != nil {
 		return 0, err

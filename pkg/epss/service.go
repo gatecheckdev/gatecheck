@@ -151,7 +151,7 @@ func (s *Service) GetCVE(match models.Match) (CVE, error) {
 
 // Fetch uses the internal reader to fill the internal dataStore
 func (s *Service) Fetch() error {
-	defer func(started time.Time) { slog.Info("decoding done", "elapsed", time.Since(started)) }(time.Now())
+	defer func(started time.Time) { slog.Debug("decoding done", "elapsed", time.Since(started)) }(time.Now())
 	scanner := bufio.NewScanner(s.r)
 	scanner.Scan()
 	if err := scanner.Err(); err != nil {
