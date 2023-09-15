@@ -43,7 +43,7 @@ func newValidateCmd(newAsyncDecoder func() AsyncDecoder, KEVDownloadAgent io.Rea
 			epssFetchFlag, _ := cmd.Flags().GetBool("fetch-epss")
 
 			// TODO: potential vul?
-			slog.Info("command", "cmd", "validate", "audit_flag", auditFlag, "target_filename", args[0],
+			slog.Debug("command", "cmd", "validate", "audit_flag", auditFlag, "target_filename", args[0],
 				"config_filename", configFilename, "kev_filename", kevFilename,
 				"epss_filename", epssFilename, "fetch_kev", kevFetchFlag, "fetch_epss", epssFetchFlag)
 
@@ -78,7 +78,7 @@ func newValidateCmd(newAsyncDecoder func() AsyncDecoder, KEVDownloadAgent io.Rea
 			}
 
 			if err != nil && auditFlag {
-				cmd.PrintErrf("[Audit]: %v\n", err)
+				slog.Warn("[Audit]: %v\n", err)
 				return nil
 			}
 
