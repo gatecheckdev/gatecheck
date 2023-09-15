@@ -8,7 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
+	"log/slog"
 	"math"
 	"mime/multipart"
 	"net/http"
@@ -65,6 +65,7 @@ type Service struct {
 	CloseOldFindings                  bool
 	CloseOldFindingsProductScope      bool
 	CreateFindingGroupsForAllFindings bool
+	log                               *slog.Logger
 }
 
 // NewService customize fields for each future query
@@ -79,38 +80,48 @@ func NewService(client *http.Client, key string, url string, closeOldFindings bo
 		DescriptionTime:                   time.Now(),
 		Retry:                             3,
 		BackoffDuration:                   time.Second,
+		log:                               slog.Default().With("export_service", "defect_dojo", "url", url),
 	}
 }
 
 // Export execute export request
 func (s Service) Export(ctx context.Context, r io.Reader, e EngagementQuery, scanType ScanType) error {
-	c := make(chan error)
+	c := make(chan struct {
+		attempt int
+		errs    error
+	})
 
 	go func() {
-		var err error
+		result := struct {
+			attempt int
+			errs    error
+		}{}
+
 		for i := 0; i < s.Retry; i++ {
-			err = s.export(r, e, scanType)
-			if err == nil {
-				close(c)
-				return
+			result.attempt++
+			err := s.export(r, e, scanType)
+			result.errs = errors.Join(result.errs, err)
+
+			if err != nil {
+				// Sleep for 2 ^ backoff, seconds
+				sleepFor := time.Duration(int64(math.Pow(2, float64(i)))) * s.BackoffDuration
+				slog.Warn("export", "attempt", result.attempt, "err", err, "retry_after", sleepFor.String())
+				time.Sleep(sleepFor)
+				continue
 			}
-			// Sleep for 2 ^ backoff, seconds
-			sleepFor := time.Duration(int64(math.Pow(2, float64(i)))) * s.BackoffDuration
-			log.Printf("Export Attempt %d / %d, will Retrying after %s. Error: %v\n", i+1, s.Retry,
-				sleepFor.String(), err)
-			time.Sleep(sleepFor)
-		}
-		c <- err
+			c <- result
+			break
+		} // end for
+		c <- result
 	}()
 
 	for {
 		select {
-		case err, ok := <-c:
-			if !ok {
-				return nil
-			}
-			return err
+		case result := <-c:
+			slog.Error("all attempts failed", "result", result)
+			return result.errs
 		case <-ctx.Done():
+			slog.Warn("context cancelled")
 			return ctx.Err()
 		}
 	}
@@ -137,31 +148,34 @@ func (s Service) export(r io.Reader, e EngagementQuery, scanType ScanType) error
 
 func (s Service) productType(e EngagementQuery) (productType, error) {
 	url := s.url + "/api/v2/product_types/"
+	log := s.log.With("url", url)
+	log.Debug("product type request", "query", e)
 
-	var queryFunction = func(givenProductType productType) bool {
-		productTypeNameMatches := givenProductType.Name == e.ProductTypeName
-		return productTypeNameMatches
-	}
+	returnedProductType, err := query[productType](s.client, s.key, url, func(p productType) bool {
+		return p.Name == e.ProductTypeName
+	})
 
-	returnedProductType, err := query[productType](s.client, s.key, url, queryFunction)
-
-	if err == nil {
-		return returnedProductType, err
-	}
-
-	if !errors.Is(err, errNotFound) {
+	switch {
+	case err == nil:
+		return returnedProductType, nil
+	case err == errNotFound:
+		log.Debug("not found, will create")
+		break
+	case err != nil:
+		log.Error("", "err", err)
 		return productType{}, err
 	}
 
 	buf := new(bytes.Buffer)
-	_ = json.NewEncoder(buf).Encode(productType{Name: e.ProductTypeName,
-		Description: s.description()})
+	_ = json.NewEncoder(buf).Encode(productType{Name: e.ProductTypeName, Description: s.description()})
 
 	resBody, err := s.postJSON(url, buf)
+
 	if err != nil {
 		return productType{}, err
 	}
-	var newProductType productType
+
+	newProductType := productType{}
 	err = json.NewDecoder(resBody).Decode(&newProductType)
 
 	return newProductType, err
@@ -169,20 +183,23 @@ func (s Service) productType(e EngagementQuery) (productType, error) {
 
 func (s Service) product(e EngagementQuery, prodType productType) (product, error) {
 	url := s.url + "/api/v2/products/"
+	log := s.log.With("url", url, "product_type", prodType, "product", e.ProductName)
+	log.Debug("product request", "query", e)
 
-	var queryFunction = func(givenProduct product) bool {
+	returnedProduct, err := query[product](s.client, s.key, url, func(givenProduct product) bool {
 		productTypeMatches := givenProduct.ProdType == prodType.ID
 		productNameMatches := givenProduct.Name == e.ProductName
 		return productTypeMatches && productNameMatches
-	}
+	})
 
-	returnedProduct, err := query[product](s.client, s.key, url, queryFunction)
-
-	if err == nil {
-		return returnedProduct, err
-	}
-
-	if !errors.Is(err, errNotFound) {
+	switch {
+	case err == nil:
+		return returnedProduct, nil
+	case err == errNotFound:
+		log.Debug("product not found, will create")
+		break
+	case err != nil:
+		log.Error("fail to get product", "err", err)
 		return product{}, err
 	}
 
@@ -198,7 +215,8 @@ func (s Service) product(e EngagementQuery, prodType productType) (product, erro
 	if err != nil {
 		return product{}, err
 	}
-	var newProduct product
+
+	newProduct := product{}
 	err = json.NewDecoder(resBody).Decode(&newProduct)
 
 	return newProduct, err
@@ -207,6 +225,9 @@ func (s Service) product(e EngagementQuery, prodType productType) (product, erro
 func (s Service) engagement(e EngagementQuery, prod product) (engagement, error) {
 
 	url := s.url + "/api/v2/engagements/"
+
+	log := s.log.With("url", url, "product_type", e.ProductTypeName, "product", e.ProductName)
+	log.Debug("egagement request", "query", e)
 
 	var queryFunction = func(givenEngagement engagement) bool {
 		productMatches := givenEngagement.Product == prod.ID
@@ -250,6 +271,7 @@ func (s Service) engagement(e EngagementQuery, prod product) (engagement, error)
 func (s Service) postScan(r io.Reader, scanType ScanType, e engagement) error {
 	url := s.url + "/api/v2/import-scan/"
 	// After getting an engagement, post the scan using a multipart form
+	log := s.log.With("url", url, "scan_type", scanType)
 	payload := &bytes.Buffer{}
 	writer := multipart.NewWriter(payload)
 	_ = writer.WriteField("engagement", strconv.Itoa(e.ID))
@@ -259,23 +281,27 @@ func (s Service) postScan(r io.Reader, scanType ScanType, e engagement) error {
 	_ = writer.WriteField("close_old_findings_product_scope", strconv.FormatBool(s.CloseOldFindingsProductScope))
 	_ = writer.WriteField("create_finding_groups_for_all_findings", strconv.FormatBool(s.CreateFindingGroupsForAllFindings))
 
-	filePart, _ := writer.CreateFormFile("file", fmt.Sprintf("%s report.json", scanType))
+	// Leave error checking to io.Copy and just log for debugging purposes, error unlikely to occur
+	filePart, createFormErr := writer.CreateFormFile("file", fmt.Sprintf("%s report.json", scanType))
 
 	// Copy the file content to the filePart
 	if _, err := io.Copy(filePart, r); err != nil {
+		log.Error("failed io.copy to file part", "err", err, "create_form_err", createFormErr)
 		return fmt.Errorf("defect dojo service can't write file to form %w", err)
 	}
 
 	contentType := writer.FormDataContentType()
 	_ = writer.Close()
 
-	req, _ := http.NewRequest(http.MethodPost, url, payload)
+	req, newReqErr := http.NewRequest(http.MethodPost, url, payload)
+
 	req.Header.Set("Content-Type", contentType)
 	req.Header.Set("Authorization", fmt.Sprintf("Token %s", s.key))
 
 	res, err := s.client.Do(req)
 
 	if err != nil {
+		log.Error("request", "err", err, "newReqErr", newReqErr)
 		return err
 	}
 
@@ -289,18 +315,22 @@ func (s Service) postScan(r io.Reader, scanType ScanType, e engagement) error {
 }
 
 func (s Service) postJSON(url string, reqBody io.Reader) (resBody io.ReadCloser, err error) {
-	req, _ := http.NewRequest(http.MethodPost, url, reqBody)
+	// just log this error because it's unlikely and would fail client anyway since Do check for nil
+	log := s.log.With("url", url)
+	req, newReqErr := http.NewRequest(http.MethodPost, url, reqBody)
 	req.Header.Set("Content-Type", contentTypeJSON)
 	req.Header.Set("Authorization", fmt.Sprintf("Token %s", s.key))
 
 	res, err := s.client.Do(req)
 
 	if err != nil {
+		s.log.Error("failed request", "err", err, "url", url, "new_req_err", newReqErr)
 		return nil, err
 	}
 
 	if res.StatusCode != http.StatusCreated {
-		msg, _ := io.ReadAll(res.Body)
+		msg, readErr := io.ReadAll(res.Body)
+		log.Error("non 201 response", "url", url, "msg", msg, "read_body_err", readErr)
 		return nil, fmt.Errorf("%w: GET '%s' unexpected response code %d: msg: %s",
 			ErrAPI, url, res.StatusCode, string(msg))
 	}
@@ -309,28 +339,30 @@ func (s Service) postJSON(url string, reqBody io.Reader) (resBody io.ReadCloser,
 
 func (s Service) description() string {
 	timeStamp := s.DescriptionTime.Format("02 January 2006, 15:04")
-
 	return fmt.Sprintf("Auto-generated by Gatecheck %s %s", timeStamp, s.DescriptionTimezone)
 }
 
 var errNotFound = errors.New("no results found")
 
+// query will perform the query and use the queryFunc to determine a match, parsing through paginated responses
 func query[T any](client *http.Client, key string, url string, queryFunc func(T) bool) (T, error) {
-
+	log := slog.Default().With("func", "query", "url", url)
 	next := url
 
 	for next != "" {
-		req, _ := http.NewRequest(http.MethodGet, next, nil)
+		req, newReqErr := http.NewRequest(http.MethodGet, next, nil)
 		req.Header.Set("Authorization", fmt.Sprintf("Token %s", key))
 
 		res, err := client.Do(req)
 
 		if err != nil {
+			log.Error("failed query", "err", err, "new_req_err", newReqErr)
 			return *new(T), err
 		}
 
 		if res.StatusCode != http.StatusOK {
-			msg, _ := io.ReadAll(res.Body)
+			msg, readErr := io.ReadAll(res.Body)
+			log.Error("non 200 response", "url", url, "msg", msg, "read_body_err", readErr)
 			return *new(T), fmt.Errorf("%w: GET '%s' unexpected response code %d msg: %s",
 				ErrAPI, next, res.StatusCode, msg)
 		}
