@@ -1,10 +1,6 @@
 BIN="./bin"
 SRC=$(shell find . -name "*.go")
 
-ifeq (, $(shell which richgo))
-$(warning "could not find richgo in $(PATH), run: go install github.com/kyoh86/richgo@latest")
-endif
-
 .PHONY: fmt test install_deps clean coverage ocov
 
 default: all
@@ -22,7 +18,7 @@ fmt:
 
 test: install_deps
 	$(info ******************** running tests ********************)
-	richgo test -cover ./...
+	go test -cover ./...
 
 coverage:
 	$(info ******************** running test coverage ********************)
