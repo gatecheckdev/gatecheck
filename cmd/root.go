@@ -30,8 +30,6 @@ var (
 	ErrorAPI = errors.New("API Failure")
 	// ErrorUserInput unexpected or non-processable user input
 	ErrorUserInput = errors.New("User Input Failure")
-	// GlobalVerboseOutput defines the log level requested by the command
-	GlobalVerboseOutput = false
 )
 
 type ddExportService interface {
@@ -81,9 +79,6 @@ func NewRootCommand(config CLIConfig) *cobra.Command {
 			return nil
 		},
 	}
-
-	// Global Flags
-	command.PersistentFlags().BoolVarP(&GlobalVerboseOutput, "verbose", "v", false, "Verbose debug output")
 
 	// Commands
 	command.AddCommand(newVersionCmd(config.Version))

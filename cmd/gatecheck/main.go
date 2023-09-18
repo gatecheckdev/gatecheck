@@ -129,19 +129,24 @@ func main() {
 		ConfigPath:     "./gatecheck.env or $HOME/.config/gatecheck/gatecheck.env",
 	})
 
-	logLevel := slog.LevelDebug
+	slog.SetDefault(slog.New(tint.NewHandler(command.ErrOrStderr(), &tint.Options{Level: slog.LevelWarn, TimeFormat: time.TimeOnly})))
+	command.PersistentFlags().BoolP("verbose", "v", false, "verbose output")
+
 	var startTime time.Time
-	command.PersistentPreRun = func(_ *cobra.Command, _ []string) {
+	command.PersistentPreRun = func(cm *cobra.Command, _ []string) {
 		startTime = time.Now()
-		if !cmd.GlobalVerboseOutput {
-			logLevel = slog.LevelWarn
+		verbose, err := command.PersistentFlags().GetBool("verbose")
+		if err != nil {
+			panic(err)
+		}
+		if verbose {
+			slog.SetDefault(slog.New(tint.NewHandler(command.ErrOrStderr(), &tint.Options{Level: slog.LevelDebug, TimeFormat: time.TimeOnly})))
 		}
 	}
-	slog.SetDefault(slog.New(tint.NewHandler(command.ErrOrStderr(), &tint.Options{Level: logLevel, TimeFormat: time.TimeOnly})))
 
 	command.PersistentPostRun = func(_ *cobra.Command, _ []string) {
 		elapsed := time.Since(startTime)
-		slog.Info("command execution complete", "elapsed", elapsed)
+		slog.Debug("command execution complete", "elapsed", elapsed)
 	}
 
 	command.SilenceUsage = true
