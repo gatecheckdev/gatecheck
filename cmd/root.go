@@ -2,10 +2,12 @@
 package cmd
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"os"
 	"strings"
 	"time"
@@ -50,6 +52,18 @@ type AsyncDecoder interface {
 	DecodeFrom(r io.Reader) (any, error)
 	FileType() string
 	Reset()
+}
+
+// fileOrEmptyBuf attempts to open a file. Open error, it will return an empty buffer
+// this is an error handling convinence function, make sure caller throws error
+// if content is expected
+func fileOrEmptyBuf(filename string) io.Reader {
+	f, err := os.Open(filename)
+	if err != nil {
+		slog.Error("failed to open file", "err", err)
+		return new(bytes.Buffer)
+	}
+	return f
 }
 
 // CLIConfig used by all of the cmds

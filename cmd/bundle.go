@@ -8,7 +8,6 @@ import (
 	"os"
 	"path"
 
-	gio "github.com/gatecheckdev/gatecheck/internal/io"
 	"github.com/gatecheckdev/gatecheck/pkg/archive"
 	"github.com/spf13/cobra"
 )
@@ -73,7 +72,7 @@ func newBundleCmd(newAsyncDecoder func() AsyncDecoder) *cobra.Command {
 			if len(args) == 1 {
 				filename = args[0]
 			}
-			obj, err := archive.NewBundleDecoder().DecodeFrom(gio.NewLazyReader(filename))
+			obj, err := archive.NewBundleDecoder().DecodeFrom(fileOrEmptyBuf(filename))
 			if err != nil {
 				return fmt.Errorf("%w: bundle decoding: %v", ErrorEncoding, err)
 			}

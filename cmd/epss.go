@@ -6,7 +6,6 @@ import (
 	"log/slog"
 	"sort"
 
-	gio "github.com/gatecheckdev/gatecheck/internal/io"
 	"github.com/gatecheckdev/gatecheck/pkg/artifacts/grype"
 	"github.com/gatecheckdev/gatecheck/pkg/epss"
 	"github.com/gatecheckdev/gatecheck/pkg/format"
@@ -46,23 +45,23 @@ func newEPSSCmd(EPSSDownloadAgent io.Reader) *cobra.Command {
 			}
 
 			if csvFilename != "" {
-				service = epss.NewService(gio.NewLazyReader(csvFilename))
+				service = epss.NewService(fileOrEmptyBuf(csvFilename))
 			}
 
 			if service == nil {
 				return fmt.Errorf("%w: No EPSS file or --fetch flag", ErrorUserInput)
 			}
 
-			r, err := grype.NewReportDecoder().DecodeFrom(gio.NewLazyReader(args[0]))
+			r, err := grype.NewReportDecoder().DecodeFrom(fileOrEmptyBuf(args[0]))
 
 			if err != nil {
-				return fmt.Errorf("%w: %v", ErrorEncoding, err)
+				return fmt.Errorf("%w: decoding grype file: %v", ErrorEncoding, err)
 			}
 
 			grypeScan := r.(*grype.ScanReport)
 
 			if err := service.Fetch(); err != nil {
-				return err
+				return fmt.Errorf("service fetch error: %w", err)
 			}
 			cves, err := service.GetCVEs(grypeScan.Matches)
 			if err != nil {

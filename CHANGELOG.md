@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Added additional logging for defect dojo export
 
+### Fixed
+- Removed lazy reader in favor of fileOrEmptyBuf for better error handling
+- Verbose flag bug where the CLI would always be log level debug instead of warn
+
 ## [0.2.1] - 2023-09-12
 
 ### Changed

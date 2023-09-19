@@ -12,6 +12,7 @@ import (
 
 	"github.com/anchore/grype/grype/presenter/models"
 	"github.com/gatecheckdev/gatecheck/pkg/artifacts/grype"
+	gce "github.com/gatecheckdev/gatecheck/pkg/encoding"
 )
 
 func TestNewEPSSCmd(t *testing.T) {
@@ -109,8 +110,8 @@ func TestNewEPSSCmd(t *testing.T) {
 		// Bad EPSS File
 		commandString = fmt.Sprintf("epss -e %s %s", fileWithBadPermissions(t), grypeTestReport)
 		output, err = Execute(commandString, regularConfig)
-		if !errors.Is(err, os.ErrPermission) {
-			t.Fatalf("want: %v got: %v", os.ErrPermission, err)
+		if !errors.Is(err, gce.ErrEncoding) {
+			t.Fatalf("want: %v got: %v", gce.ErrEncoding, err)
 		}
 		t.Log(output)
 	})

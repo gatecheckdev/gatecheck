@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/dustin/go-humanize"
-	gio "github.com/gatecheckdev/gatecheck/internal/io"
 	"github.com/gatecheckdev/gatecheck/pkg/archive"
 	"github.com/gatecheckdev/gatecheck/pkg/artifacts/cyclonedx"
 	"github.com/gatecheckdev/gatecheck/pkg/artifacts/gitleaks"
@@ -25,13 +24,13 @@ func newPrintCommand(pipedFile *os.File, newAsyncDecoder func() AsyncDecoder) *c
 		RunE: func(cmd *cobra.Command, args []string) error {
 
 			if pipedFile != nil {
-				slog.Debug("piped file detected", "filename", pipedFile.Name())
-				v, _ := newAsyncDecoder().DecodeFrom(pipedFile)
+				v, err := newAsyncDecoder().DecodeFrom(pipedFile)
+				slog.Debug("print piped file", "cmd", "print", "async_decode_err", err)
 				printArtifact(cmd.OutOrStdout(), v, newAsyncDecoder)
 			}
 
 			for _, filename := range args {
-				v, _ := newAsyncDecoder().DecodeFrom(gio.NewLazyReader(filename))
+				v, _ := newAsyncDecoder().DecodeFrom(fileOrEmptyBuf(filename))
 				printArtifact(cmd.OutOrStdout(), v, newAsyncDecoder)
 			}
 

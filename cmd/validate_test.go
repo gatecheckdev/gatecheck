@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"os"
 	"path"
 	"strings"
 	"testing"
@@ -19,8 +18,8 @@ import (
 	"github.com/gatecheckdev/gatecheck/pkg/artifacts/grype"
 	"github.com/gatecheckdev/gatecheck/pkg/artifacts/semgrep"
 	gce "github.com/gatecheckdev/gatecheck/pkg/encoding"
-	gcv "github.com/gatecheckdev/gatecheck/pkg/validate"
 	"github.com/gatecheckdev/gatecheck/pkg/kev"
+	gcv "github.com/gatecheckdev/gatecheck/pkg/validate"
 	"gopkg.in/yaml.v3"
 )
 
@@ -185,16 +184,16 @@ func TestValidate_EPSS(t *testing.T) {
 func TestGetKEVService(t *testing.T) {
 	t.Run("file-access", func(t *testing.T) {
 		_, err := getKEVService(fileWithBadPermissions(t), nil)
-		if !errors.Is(err, gce.ErrIO) {
-			t.Fatalf("want: %v got: %v", gce.ErrIO, err)
+		if !errors.Is(err, gce.ErrEncoding) {
+			t.Fatalf("want: %v got: %v", gce.ErrEncoding, err)
 		}
 	})
 }
 func TestGetEPSSService(t *testing.T) {
 	t.Run("file-access", func(t *testing.T) {
 		_, err := getEPSSService(fileWithBadPermissions(t), nil)
-		if !errors.Is(err, os.ErrPermission) {
-			t.Fatalf("want: %v got: %v", os.ErrPermission, err)
+		if !errors.Is(err, gce.ErrEncoding) {
+			t.Fatalf("want: %v got: %v", gce.ErrEncoding, err)
 		}
 	})
 }

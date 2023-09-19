@@ -8,7 +8,6 @@ import (
 	"log/slog"
 	"os"
 
-	gio "github.com/gatecheckdev/gatecheck/internal/io"
 	"github.com/gatecheckdev/gatecheck/pkg/archive"
 	"github.com/gatecheckdev/gatecheck/pkg/artifacts/cyclonedx"
 	"github.com/gatecheckdev/gatecheck/pkg/artifacts/gitleaks"
@@ -48,9 +47,11 @@ func newValidateCmd(newAsyncDecoder func() AsyncDecoder, KEVDownloadAgent io.Rea
 				"epss_filename", epssFilename, "fetch_kev", kevFetchFlag, "fetch_epss", epssFetchFlag)
 
 			decoder := newAsyncDecoder()
-			obj, err := decoder.DecodeFrom(gio.NewLazyReader(args[0]))
+
+			obj, err := decoder.DecodeFrom(fileOrEmptyBuf(args[0]))
 			if err != nil {
-				return fmt.Errorf("%w: Async decoding: %v", ErrorEncoding, err)
+				slog.Error("failed async decoding", "filename", args[0], "err", err, "cmd", "validate")
+				return fmt.Errorf("%w: async decoding: %v", ErrorEncoding, err)
 			}
 
 			configFileBytes, err := os.ReadFile(configFilename)
@@ -169,7 +170,9 @@ func getKEVService(filename string, downloadAgent io.Reader) (*kev.Service, erro
 		service := kev.NewService(downloadAgent)
 		return service, service.Fetch()
 	}
-	service := kev.NewService(gio.NewLazyReader(filename))
+
+	service := kev.NewService(fileOrEmptyBuf(filename))
+
 	return service, service.Fetch()
 }
 
@@ -178,6 +181,7 @@ func getEPSSService(filename string, downloadAgent io.Reader) (*epss.Service, er
 		service := epss.NewService(downloadAgent)
 		return service, service.Fetch()
 	}
-	service := epss.NewService(gio.NewLazyReader(filename))
+
+	service := epss.NewService(fileOrEmptyBuf(filename))
 	return service, service.Fetch()
 }
