@@ -133,8 +133,8 @@ func checkReport(report *ScanReport) error {
 	if report == nil {
 		return gce.ErrFailedCheck
 	}
-	if report.Descriptor.Name != "grype" {
-		return fmt.Errorf("%w: Missing Descriptor name", gce.ErrFailedCheck)
+	if report.Descriptor.Timestamp == "" {
+		return fmt.Errorf("%w: Missing descriptor.timestamp", gce.ErrFailedCheck)
 	}
 	return nil
 }

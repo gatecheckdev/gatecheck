@@ -8,6 +8,7 @@ import (
 	"path"
 	"strings"
 	"testing"
+	"time"
 
 	gosemgrep "github.com/BacchusJackson/go-semgrep"
 	cdx "github.com/CycloneDX/cyclonedx-go"
@@ -23,9 +24,11 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+var mockTimeStr = time.Unix(0, 0).String()
+
 func TestValidate_KEV(t *testing.T) {
 	grypeReport := grype.ScanReport{}
-	grypeReport.Descriptor.Name = "grype"
+	grypeReport.Descriptor.Timestamp = mockTimeStr
 	grypeReport.Matches = append(grypeReport.Matches,
 		models.Match{Vulnerability: models.Vulnerability{VulnerabilityMetadata: models.VulnerabilityMetadata{ID: "cve-1", Severity: "Critical"}}},
 		models.Match{Vulnerability: models.Vulnerability{VulnerabilityMetadata: models.VulnerabilityMetadata{ID: "cve-2", Severity: "Critical"}}},
@@ -99,7 +102,7 @@ func TestValidate_KEV(t *testing.T) {
 
 func TestValidate_EPSS(t *testing.T) {
 	grypeReport := grype.ScanReport{}
-	grypeReport.Descriptor.Name = "grype"
+	grypeReport.Descriptor.Timestamp = mockTimeStr
 	grypeReport.Matches = append(grypeReport.Matches,
 		models.Match{Vulnerability: models.Vulnerability{VulnerabilityMetadata: models.VulnerabilityMetadata{ID: "cve-1", Severity: "Critical"}}},
 		models.Match{Vulnerability: models.Vulnerability{VulnerabilityMetadata: models.VulnerabilityMetadata{ID: "cve-2", Severity: "Critical"}}},
@@ -200,7 +203,7 @@ func TestGetEPSSService(t *testing.T) {
 
 func TestAuditFlag(t *testing.T) {
 	grypeReport := grype.ScanReport{}
-	grypeReport.Descriptor.Name = "grype"
+	grypeReport.Descriptor.Timestamp = mockTimeStr
 	grypeReport.Matches = append(grypeReport.Matches, models.Match{Vulnerability: models.Vulnerability{
 		VulnerabilityMetadata: models.VulnerabilityMetadata{ID: "abc-123", Severity: "Critical"},
 	}})
@@ -232,7 +235,7 @@ func TestValidateCmd(t *testing.T) {
 	}
 
 	grypeReport := grype.ScanReport{}
-	grypeReport.Descriptor.Name = "grype"
+	grypeReport.Descriptor.Timestamp = mockTimeStr
 	grypeReport.Matches = append(grypeReport.Matches, models.Match{Vulnerability: models.Vulnerability{
 		VulnerabilityMetadata: models.VulnerabilityMetadata{ID: "abc-123", Severity: "Critical"},
 	}})

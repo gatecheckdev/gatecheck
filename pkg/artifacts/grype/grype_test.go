@@ -5,6 +5,7 @@ import (
 	"errors"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/anchore/grype/grype/presenter/models"
 	gce "github.com/gatecheckdev/gatecheck/pkg/encoding"
@@ -162,7 +163,7 @@ func TestCheckReport(t *testing.T) {
 		t.Fatalf("want: %v got: %v", gce.ErrFailedCheck, err)
 	}
 	report := &ScanReport{}
-	report.Descriptor.Name = "grype"
+	report.Descriptor.Timestamp = time.Unix(0, 0).String()
 	if err := checkReport(report); err != nil {
 		t.Fatal(err)
 	}

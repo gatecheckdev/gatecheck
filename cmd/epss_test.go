@@ -9,6 +9,7 @@ import (
 	"path"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/anchore/grype/grype/presenter/models"
 	"github.com/gatecheckdev/gatecheck/pkg/artifacts/grype"
@@ -59,7 +60,8 @@ func TestNewEPSSCmd(t *testing.T) {
 		_, _ = sb.WriteString("cve-1,badvalue,0.00021\n")
 
 		grypeReport := &grype.ScanReport{}
-		grypeReport.Descriptor.Name = "grype"
+		grypeReport.Descriptor.Timestamp = time.Unix(0, 0).String()
+
 		grypeReport.Matches = append(grypeReport.Matches,
 			models.Match{Vulnerability: models.Vulnerability{VulnerabilityMetadata: models.VulnerabilityMetadata{ID: "cve-1", Severity: "Critical"}}})
 
