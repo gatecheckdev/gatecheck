@@ -34,7 +34,7 @@ const exitFileAccessFail int = 2
 const exitValidationFail = 1
 
 // GatecheckVersion see CHANGELOG.md
-const GatecheckVersion = "v0.2.1"
+const GatecheckVersion = "v0.2.2"
 
 func main() {
 	viper.SetConfigType("env")

@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [UNRELEASED]
 
+## [0.2.2] - 2023-10-3
+
 ### Changed
 
 - Added additional logging for defect dojo export
