@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Removed lazy reader in favor of fileOrEmptyBuf for better error handling
 - Verbose flag bug where the CLI would always be log level debug instead of warn
+- Grype decoder checkReport will use descriptor Timestamp instead of name since name is not a required field
 
 ## [0.2.1] - 2023-09-12
 
