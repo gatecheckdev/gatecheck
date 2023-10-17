@@ -32,8 +32,10 @@ func newExportCmd(
 	}
 
 	defectDojoCmd := &cobra.Command{
-		Use:     "defect-dojo [FILE]",
-		Short:   "Export raw scan report to DefectDojo",
+		Use:   "defect-dojo [FILE]",
+		Short: "Export raw scan report to DefectDojo",
+		Deprecated: `This command is deprecated and will be removed in future versions. 
+			The recommendation is to use the Defect Dojo REST API`,
 		Aliases: []string{"dd"},
 		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
