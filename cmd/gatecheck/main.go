@@ -34,7 +34,7 @@ const exitFileAccessFail int = 2
 const exitValidationFail = 1
 
 // GatecheckVersion see CHANGELOG.md
-const GatecheckVersion = "v0.2.2"
+const GatecheckVersion = "v0.2.3-rc.1"
 
 func main() {
 	viper.SetConfigType("env")
@@ -52,7 +52,6 @@ func main() {
 	viper.SetDefault("GATECHECK_DD_BRANCH_TAG", "")
 	viper.SetDefault("GATECHECK_DD_SOURCE_URL", "")
 	viper.SetDefault("GATECHECK_DD_COMMIT_HASH", "")
-	viper.SetDefault("GATECHECK_DD_TAGS", "")
 	viper.SetDefault("GATECHECK_DD_DEDUPLICATION_ON_ENGAGEMENT", false)
 	viper.SetDefault("GATECHECK_DD_CLOSE_OLD_FINDINGS", false)
 	viper.SetDefault("GATECHECK_DD_CLOSE_OLD_FINDINGS_PRODUCT_SCOPE", false)
@@ -60,6 +59,15 @@ func main() {
 	viper.SetDefault("GATECHECK_DD_ENABLE_SIMPLE_RISK_ACCEPTANCE", false)
 	viper.SetDefault("GATECHECK_AWS_BUCKET", "")
 	viper.SetDefault("GATECHECK_AWS_PROFILE", "")
+	// **Required:** Override the active (findings) setting/status from the tool
+	// Note: `false` will import all findings as `Inactive`
+	viper.SetDefault("GATECHECK_DD_IMPORT_SCAN_ACTIVE", true)
+	// **Required:** Override the verified (findings) setting/status from the tool
+	viper.SetDefault("GATECHECK_DD_IMPORT_SCAN_VERIFIED", false)
+	// **Required (as of 2023-10-13):** Add tags that help describe this scan
+	viper.SetDefault("GATECHECK_DD_TAGS", "")
+	// Choose an option to automatically group new findings by the chosen option
+	viper.SetDefault("GATECHECK_DD_GROUP_BY", "")
 	viper.AutomaticEnv()
 	err := viper.ReadInConfig()
 
@@ -76,6 +84,9 @@ func main() {
 	dojoCloseOldFindings := viper.GetBool("GATECHECK_DD_CLOSE_OLD_FINDINGS")
 	dojoCloseOldFindingsProductScope := viper.GetBool("GATECHECK_DD_CLOSE_OLD_FINDINGS_PRODUCT_SCOPE")
 	dojoCreateFindingGroupsForAllFindings := viper.GetBool("GATECHECK_DD_CREATE_FINDING_GROUPS_FOR_ALL_FINDINGS")
+	dojoImportScanActive := viper.GetBool("GATECHECK_DD_IMPORT_SCAN_ACTIVE")
+	dojoImportScanVerified := viper.GetBool("GATECHECK_DD_IMPORT_SCAN_VERIFIED")
+	dojoGroupBy := viper.GetString("GATECHECK_DD_GROUP_BY")
 
 	ddEngagement := defectdojo.EngagementQuery{
 		ProductTypeName:            viper.GetString("GATECHECK_DD_PRODUCT_TYPE"),
@@ -90,7 +101,7 @@ func main() {
 		EnableSimpleRiskAcceptance: viper.GetBool("GATECHECK_DD_ENABLE_SIMPLE_RISK_ACCEPTANCE"),
 	}
 
-	dojoService := defectdojo.NewService(http.DefaultClient, dojoKey, dojoURL, dojoCloseOldFindings, dojoCloseOldFindingsProductScope, dojoCreateFindingGroupsForAllFindings)
+	dojoService := defectdojo.NewService(http.DefaultClient, dojoKey, dojoURL, dojoCloseOldFindings, dojoCloseOldFindingsProductScope, dojoCreateFindingGroupsForAllFindings, dojoImportScanActive, dojoImportScanVerified, dojoGroupBy)
 
 	awsBucket := viper.GetString("GATECHECK_AWS_BUCKET")
 	awsProfile := viper.GetString("GATECHECK_AWS_PROFILE")
