@@ -65,11 +65,14 @@ type Service struct {
 	CloseOldFindings                  bool
 	CloseOldFindingsProductScope      bool
 	CreateFindingGroupsForAllFindings bool
+	ImportScanActive                  bool
+	ImportScanVerified                bool
+	GroupBy                           string
 	log                               *slog.Logger
 }
 
 // NewService customize fields for each future query
-func NewService(client *http.Client, key string, url string, closeOldFindings bool, closeOldFindingsProductScope bool, createFindingGroupsForAllFindings bool) Service {
+func NewService(client *http.Client, key string, url string, closeOldFindings bool, closeOldFindingsProductScope bool, createFindingGroupsForAllFindings bool, importScanActive bool, importScanVerified bool, groupBy string) Service {
 	return Service{
 		client:                            client,
 		key:                               key,
@@ -77,6 +80,9 @@ func NewService(client *http.Client, key string, url string, closeOldFindings bo
 		CloseOldFindings:                  closeOldFindings,
 		CloseOldFindingsProductScope:      closeOldFindingsProductScope,
 		CreateFindingGroupsForAllFindings: createFindingGroupsForAllFindings,
+		ImportScanActive:                  importScanActive,
+		ImportScanVerified:                importScanVerified,
+		GroupBy:                           groupBy,
 		DescriptionTime:                   time.Now(),
 		Retry:                             3,
 		BackoffDuration:                   time.Second,
@@ -118,6 +124,9 @@ func (s Service) Export(ctx context.Context, r io.Reader, e EngagementQuery, sca
 	for {
 		select {
 		case result := <-c:
+			if result.errs == nil {
+				return nil
+			}
 			slog.Error("all attempts failed", "result", result)
 			return result.errs
 		case <-ctx.Done():
@@ -280,6 +289,9 @@ func (s Service) postScan(r io.Reader, scanType ScanType, e engagement) error {
 	_ = writer.WriteField("close_old_findings", strconv.FormatBool(s.CloseOldFindings))
 	_ = writer.WriteField("close_old_findings_product_scope", strconv.FormatBool(s.CloseOldFindingsProductScope))
 	_ = writer.WriteField("create_finding_groups_for_all_findings", strconv.FormatBool(s.CreateFindingGroupsForAllFindings))
+	_ = writer.WriteField("active", strconv.FormatBool(s.ImportScanActive))
+	_ = writer.WriteField("verified", strconv.FormatBool(s.ImportScanVerified))
+	_ = writer.WriteField("group_by", string("component_name+component_version"))
 
 	// Leave error checking to io.Copy and just log for debugging purposes, error unlikely to occur
 	filePart, createFormErr := writer.CreateFormFile("file", fmt.Sprintf("%s report.json", scanType))
