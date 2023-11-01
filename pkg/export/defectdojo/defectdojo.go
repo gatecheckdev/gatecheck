@@ -320,7 +320,7 @@ func (s Service) postScan(r io.Reader, scanType ScanType, e engagement) error {
 	if res.StatusCode != http.StatusCreated {
 		msg, _ := io.ReadAll(res.Body)
 		return fmt.Errorf("%w: POST '%s' unexpected response code %d msg: %s",
-			ErrAPI, url, res.StatusCode, msg)
+			ErrAPI, url, res.StatusCode, string(msg))
 	}
 
 	return nil
@@ -342,7 +342,7 @@ func (s Service) postJSON(url string, reqBody io.Reader) (resBody io.ReadCloser,
 
 	if res.StatusCode != http.StatusCreated {
 		msg, readErr := io.ReadAll(res.Body)
-		log.Error("non 201 response", "url", url, "msg", msg, "read_body_err", readErr)
+		log.Error("non 201 response", "url", url, "msg", string(msg), "read_body_err", readErr)
 		return nil, fmt.Errorf("%w: GET '%s' unexpected response code %d: msg: %s",
 			ErrAPI, url, res.StatusCode, string(msg))
 	}
@@ -374,9 +374,10 @@ func query[T any](client *http.Client, key string, url string, queryFunc func(T)
 
 		if res.StatusCode != http.StatusOK {
 			msg, readErr := io.ReadAll(res.Body)
-			log.Error("non 200 response", "url", url, "msg", msg, "read_body_err", readErr)
+			log.Error("non 200 response", "url", url, "msg", string(msg), "read_body_err", readErr)
+
 			return *new(T), fmt.Errorf("%w: GET '%s' unexpected response code %d msg: %s",
-				ErrAPI, next, res.StatusCode, msg)
+				ErrAPI, next, res.StatusCode, string(msg))
 		}
 
 		var response paginatedResponse[T]

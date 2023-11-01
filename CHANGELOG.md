@@ -7,17 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [UNRELEASED]
 
+### Fixed
+
+- Wrap msg in bytes with string for logging
+
 ## [0.3.0] - 2023-10-17
 
-## Deprecated
+### Deprecated
 
 - Defect Dojo export will be deprecated in the future in favor of just using the API, notice added
 
-## Added
+### Added
 
 - New Environment Variables for Defect Dojo
 
-## Changed
+### Changed
 
 - Defect Dojo exporting to include mandatory values
 - Time Zone fix with exporting
