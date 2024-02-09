@@ -9,11 +9,11 @@ import (
 )
 
 var (
-	semgrepTestReport   = "../test/semgrep-sast-report.json"
-	gitleaksTestReport  = "../test/gitleaks-report.json"
-	grypeTestReport     = "../test/grype-report.json"
-	cyclonedxTestReport = "../test/cyclonedx-grype-sbom.json"
-	epssTestCSV         = "../test/epss_scores-2023-06-01.csv"
+	semgrepTestReport   = "../../test/semgrep-sast-report.json"
+	gitleaksTestReport  = "../../test/gitleaks-report.json"
+	grypeTestReport     = "../../test/grype-report.json"
+	cyclonedxTestReport = "../../test/cyclonedx-grype-sbom.json"
+	epssTestCSV         = "../../test/epss_scores-2023-06-01.csv"
 )
 
 func Test_RootCommand(t *testing.T) {
