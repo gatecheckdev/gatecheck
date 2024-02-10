@@ -70,6 +70,10 @@ func runV1() {
 		Compiler:       runtime.Compiler,
 	}
 
+	// Colorized logging output for the CLI
+	logHandler := tint.NewHandler(os.Stderr, &tint.Options{Level: cmdV1.LogLeveler, TimeFormat: time.TimeOnly})
+	slog.SetDefault(slog.New(logHandler))
+
 	command := cmdV1.NewGatecheckCommand()
 
 	err := command.Execute()

@@ -20,24 +20,45 @@
 package cmd
 
 import (
+	"log/slog"
+
 	"github.com/gatecheckdev/gatecheck/pkg/gatecheck"
 	"github.com/spf13/cobra"
 )
 
 var ApplicationMetadata gatecheck.ApplicationMetadata
+var LogLeveler *slog.LevelVar
 
 // NewGatecheckCommand the root for all CLI commands
 func NewGatecheckCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "gatecheck",
-		Short: "Report validation tool",
+		Use:              "gatecheck",
+		Short:            "Report validation tool",
+		PersistentPreRun: runCheckLogging,
 	}
 
 	versionCmd := newBasicCommand("version", "print version information", runVersion)
 	cmd.Flags().Bool("version", false, "print only the version of the CLI without additional information")
+	cmd.PersistentFlags().BoolP("verbose", "v", false, "log level set to debug")
+	cmd.PersistentFlags().BoolP("silent", "s", false, "log level set to only warnings & errors")
 
 	cmd.AddCommand(versionCmd)
 	return cmd
+}
+
+// runCheckLogging checks for the logging flag and sets the global log level
+func runCheckLogging(cmd *cobra.Command, args []string) {
+	verboseFlag, _ := cmd.Flags().GetBool("verbose")
+	silentFlag, _ := cmd.Flags().GetBool("silent")
+
+	switch {
+	case verboseFlag:
+		LogLeveler.Set(slog.LevelDebug)
+		slog.Debug("debug logging enabled")
+	case silentFlag:
+		LogLeveler.Set(slog.LevelError)
+		slog.Debug("silent logging enabled")
+	}
 }
 
 // runVersion prints the version and/or additional information about Gatecheck
