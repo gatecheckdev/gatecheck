@@ -7,9 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [UNRELEASED]
 
+### Added
+
+- New CLI v1 behind feature flag, in development
+- More robust version information
+
 ### Fixed
 
 - Wrap msg in bytes with string for logging
+
+### Changed
+
+- Old CLI files moved to cmd/v0
 
 ## [0.3.0] - 2023-10-17
 

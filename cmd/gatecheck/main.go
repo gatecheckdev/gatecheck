@@ -4,9 +4,11 @@ package main
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
+	"runtime"
 	"strings"
 	"time"
 
@@ -16,6 +18,7 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/gatecheckdev/gatecheck/cmd/v0"
+	cmdV1 "github.com/gatecheckdev/gatecheck/cmd/v1"
 	"github.com/gatecheckdev/gatecheck/pkg/archive"
 	"github.com/gatecheckdev/gatecheck/pkg/artifacts/cyclonedx"
 	"github.com/gatecheckdev/gatecheck/pkg/artifacts/gitleaks"
@@ -25,6 +28,7 @@ import (
 	"github.com/gatecheckdev/gatecheck/pkg/epss"
 	"github.com/gatecheckdev/gatecheck/pkg/export/aws"
 	"github.com/gatecheckdev/gatecheck/pkg/export/defectdojo"
+	"github.com/gatecheckdev/gatecheck/pkg/gatecheck"
 	"github.com/gatecheckdev/gatecheck/pkg/kev"
 )
 
@@ -36,7 +40,46 @@ const exitValidationFail = 1
 // GatecheckVersion see CHANGELOG.md
 const GatecheckVersion = "v0.3.0"
 
+// all variables here are provided as build-time arguments, with clear default values
+var (
+	cliVersion     = "[Not Provided]"
+	buildDate      = "[Not Provided]"
+	gitCommit      = "[Not Provided]"
+	gitDescription = "[Not Provided]"
+)
+
 func main() {
+	ffCLIV1Enabled := os.Getenv("GATECHECK_FF_CLI_V1_ENABLED")
+
+	switch ffCLIV1Enabled {
+	case "1":
+		runV1()
+	default:
+		runV0()
+	}
+}
+
+func runV1() {
+	cmdV1.ApplicationMetadata = gatecheck.ApplicationMetadata{
+		CLIVersion:     cliVersion,
+		GitCommit:      gitCommit,
+		BuildDate:      buildDate,
+		GitDescription: gitDescription,
+		Platform:       fmt.Sprintf("%s/%s", runtime.GOOS, runtime.GOARCH),
+		GoVersion:      runtime.Version(),
+		Compiler:       runtime.Compiler,
+	}
+
+	command := cmdV1.NewGatecheckCommand()
+
+	err := command.Execute()
+	if err != nil {
+		os.Exit(1)
+	}
+	os.Exit(0)
+}
+
+func runV0() {
 	viper.SetConfigType("env")
 	viper.SetConfigName("settings")
 	viper.AddConfigPath(".")
