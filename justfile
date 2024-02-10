@@ -7,6 +7,9 @@ build:
 install: build
 	cp ./bin/gatecheck /usr/local/bin/gatecheck
 
+test:
+	go test -cover ./...
+
 lint:
 	golangci-lint run --fast
 
