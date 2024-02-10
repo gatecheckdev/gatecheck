@@ -21,7 +21,6 @@ import (
 const epssTestFilename = "../../test/epss_scores-2023-06-01.csv"
 
 func TestAPIAgent(t *testing.T) {
-
 	mockServer := MockEPSSServer(t)
 	outputBuf := new(bytes.Buffer)
 	n, err := outputBuf.ReadFrom(NewAgent(mockServer.Client(), mockServer.URL))
@@ -43,8 +42,10 @@ func TestService_GetCVEs(t *testing.T) {
 	matches := []models.Match{
 		{Vulnerability: models.Vulnerability{VulnerabilityMetadata: models.VulnerabilityMetadata{ID: "cve-1"}}},
 		{Vulnerability: models.Vulnerability{VulnerabilityMetadata: models.VulnerabilityMetadata{ID: "cve-2"}}},
-		{Vulnerability: models.Vulnerability{VulnerabilityMetadata: models.VulnerabilityMetadata{ID: "ghsa-1"}},
-			RelatedVulnerabilities: []models.VulnerabilityMetadata{{ID: "cve-1"}}},
+		{
+			Vulnerability:          models.Vulnerability{VulnerabilityMetadata: models.VulnerabilityMetadata{ID: "ghsa-1"}},
+			RelatedVulnerabilities: []models.VulnerabilityMetadata{{ID: "cve-1"}},
+		},
 	}
 	t.Run("found", func(t *testing.T) {
 		cves, err := service.GetCVEs(matches)
@@ -73,8 +74,10 @@ func TestService_GetCVEs(t *testing.T) {
 	})
 
 	t.Run("not-found-or-related-not-found", func(t *testing.T) {
-		matches := append(matches, models.Match{Vulnerability: models.Vulnerability{VulnerabilityMetadata: models.VulnerabilityMetadata{ID: "ghsa-5"}},
-			RelatedVulnerabilities: []models.VulnerabilityMetadata{{ID: "cve-5"}}})
+		matches := append(matches, models.Match{
+			Vulnerability:          models.Vulnerability{VulnerabilityMetadata: models.VulnerabilityMetadata{ID: "ghsa-5"}},
+			RelatedVulnerabilities: []models.VulnerabilityMetadata{{ID: "cve-5"}},
+		})
 		cves, err := service.GetCVEs(matches)
 		if err != nil {
 			t.Fatal(err)
@@ -93,7 +96,6 @@ func TestService_GetCVEs(t *testing.T) {
 		if !errors.Is(err, gce.ErrEncoding) {
 			t.Fatal(err)
 		}
-
 	})
 }
 
@@ -148,7 +150,6 @@ func TestService(t *testing.T) {
 					t.FailNow()
 				}
 			}
-
 		})
 	}
 }
@@ -170,7 +171,6 @@ func TestServiceFetch(t *testing.T) {
 }
 
 func MockEPSSServer(t *testing.T) *httptest.Server {
-
 	inputBuf := new(bytes.Buffer)
 	writer := gzip.NewWriter(inputBuf)
 	_, _ = io.Copy(writer, MustOpen(epssTestFilename, t))
@@ -193,7 +193,6 @@ func mockBadContentService() *httptest.Server {
 		_ = json.NewEncoder(w).Encode(map[string]string{"key": "value"})
 	}))
 	return mockServer
-
 }
 
 func MustOpen(filename string, t *testing.T) *os.File {

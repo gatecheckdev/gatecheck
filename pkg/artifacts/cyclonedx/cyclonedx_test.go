@@ -13,12 +13,13 @@ import (
 	gcv "github.com/gatecheckdev/gatecheck/pkg/validate"
 )
 
-const CyclonedxGrypeReport string = "../../../test/cyclonedx-grype-sbom.json"
-const CyclonedxTrivyReport string = "../../../test/cyclonedx-trivy-sbom.json"
-const CyclonedxSyftReport string = "../../../test/cyclonedx-syft-sbom.json"
+const (
+	CyclonedxGrypeReport string = "../../../test/cyclonedx-grype-sbom.json"
+	CyclonedxTrivyReport string = "../../../test/cyclonedx-trivy-sbom.json"
+	CyclonedxSyftReport  string = "../../../test/cyclonedx-syft-sbom.json"
+)
 
 func TestEncoding(t *testing.T) {
-
 	testTable := []struct {
 		label    string
 		filename string
@@ -108,7 +109,6 @@ func TestValidation(t *testing.T) {
 	addCyclonedxVul(report, "Low", "CVE-2023-3")
 
 	t.Run("success", func(t *testing.T) {
-
 		config := Config{Critical: -1, High: -1, Medium: -1, Low: -1, Info: -1, None: -1, Unknown: -1}
 		if err := NewValidator().Validate(*report.Vulnerabilities, config); err != nil {
 			t.Fatal(err)
@@ -116,7 +116,6 @@ func TestValidation(t *testing.T) {
 	})
 
 	t.Run("fail", func(t *testing.T) {
-
 		config := Config{Critical: 0, High: 0, Medium: -1, Low: -1, Info: -1, None: -1, Unknown: -1}
 		if err := NewValidator().Validate(*report.Vulnerabilities, config); !errors.Is(err, gcv.ErrFailedRule) {
 			t.Fatalf("want: %v got: %v", gcv.ErrFailedRule, err)
@@ -189,7 +188,6 @@ func TestCyclonedxSbomShim(t *testing.T) {
 			t.Fatal("Missing components as vulnerabilities")
 		}
 	}
-
 }
 
 func TestMissingComponentForVulnerability(t *testing.T) {

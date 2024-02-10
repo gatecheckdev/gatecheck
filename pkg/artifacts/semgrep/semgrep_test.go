@@ -66,7 +66,6 @@ func TestCheckReport(t *testing.T) {
 	if err := checkReport(&ScanReport{Results: make([]gosemgrep.CliMatch, 0), Errors: make([]gosemgrep.CliError, 0), Paths: gosemgrep.CliPaths{Scanned: []string{"./file"}}}); err != nil {
 		t.Fatalf("want: %v got: %v", nil, err)
 	}
-
 }
 
 func TestThresholdRule(t *testing.T) {

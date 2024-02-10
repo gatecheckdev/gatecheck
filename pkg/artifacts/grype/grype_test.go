@@ -51,15 +51,23 @@ func TestValidate(t *testing.T) {
 		matches []models.Match
 	}
 	testTable := []TestTable{
-		{label: "fail-validation-1", matches: matches, config: Config{Critical: 0, High: -1, Medium: -1, Low: -1, Negligible: -1, Unknown: -1},
-			wantErr: gcv.ErrFailedRule},
-		{label: "fail-validation-2", matches: matches, config: Config{Critical: 0, High: 1, Medium: 5, Low: -1, Negligible: -1, Unknown: -1},
-			wantErr: gcv.ErrFailedRule},
+		{
+			label: "fail-validation-1", matches: matches, config: Config{Critical: 0, High: -1, Medium: -1, Low: -1, Negligible: -1, Unknown: -1},
+			wantErr: gcv.ErrFailedRule,
+		},
+		{
+			label: "fail-validation-2", matches: matches, config: Config{Critical: 0, High: 1, Medium: 5, Low: -1, Negligible: -1, Unknown: -1},
+			wantErr: gcv.ErrFailedRule,
+		},
 
-		{label: "pass-validation-1", matches: matches, config: Config{Critical: -1, High: -1, Medium: -1, Low: -1, Negligible: -1, Unknown: -1},
-			wantErr: nil},
-		{label: "pass-validation-2", matches: matches, config: Config{Critical: 4, High: 2, Medium: 5, Low: -1, Negligible: -1, Unknown: -1},
-			wantErr: nil},
+		{
+			label: "pass-validation-1", matches: matches, config: Config{Critical: -1, High: -1, Medium: -1, Low: -1, Negligible: -1, Unknown: -1},
+			wantErr: nil,
+		},
+		{
+			label: "pass-validation-2", matches: matches, config: Config{Critical: 4, High: 2, Medium: 5, Low: -1, Negligible: -1, Unknown: -1},
+			wantErr: nil,
+		},
 	}
 
 	t.Run("threshold-rule", func(t *testing.T) {
@@ -75,12 +83,18 @@ func TestValidate(t *testing.T) {
 	})
 
 	testTable = []TestTable{
-		{label: "DenyList-1", matches: matches, config: Config{Critical: -1, High: -1, Medium: -1, Low: -1, Negligible: -1, Unknown: -1,
-			DenyList: []ListItem{{ID: "cve-1"}}}, wantErr: gcv.ErrFailedRule},
-		{label: "DenyList-2", matches: matches, config: Config{Critical: 4, High: 2, Medium: 5, Low: -1, Negligible: -1, Unknown: -1,
-			DenyList: []ListItem{{ID: "cve-1"}}}, wantErr: gcv.ErrFailedRule},
-		{label: "DenyList-3", matches: matches, config: Config{Critical: -1, High: -1, Medium: -1, Low: -1, Negligible: -1, Unknown: -1,
-			DenyList: []ListItem{{ID: "cve-99"}}}, wantErr: nil},
+		{label: "DenyList-1", matches: matches, config: Config{
+			Critical: -1, High: -1, Medium: -1, Low: -1, Negligible: -1, Unknown: -1,
+			DenyList: []ListItem{{ID: "cve-1"}},
+		}, wantErr: gcv.ErrFailedRule},
+		{label: "DenyList-2", matches: matches, config: Config{
+			Critical: 4, High: 2, Medium: 5, Low: -1, Negligible: -1, Unknown: -1,
+			DenyList: []ListItem{{ID: "cve-1"}},
+		}, wantErr: gcv.ErrFailedRule},
+		{label: "DenyList-3", matches: matches, config: Config{
+			Critical: -1, High: -1, Medium: -1, Low: -1, Negligible: -1, Unknown: -1,
+			DenyList: []ListItem{{ID: "cve-99"}},
+		}, wantErr: nil},
 	}
 
 	t.Run("denyList-rule", func(t *testing.T) {
@@ -125,16 +139,19 @@ func TestValidator(t *testing.T) {
 		{label: "fail-validation-1", wantErr: gcv.ErrFailedRule, config: Config{Critical: 0, High: 0, Medium: -1, Low: -1, Negligible: -1, Unknown: -1}},
 		{label: "fail-validation-2", wantErr: gcv.ErrFailedRule, config: Config{Critical: 2, High: 1, Medium: -1, Low: -1, Negligible: -1, Unknown: -1}},
 
-		{label: "pass-validation-allowlist", wantErr: nil, config: Config{Critical: -1, High: -1, Medium: -1, Low: 0, Negligible: -1, Unknown: -1,
-			AllowList: []ListItem{{ID: "cve-7"}}}},
+		{label: "pass-validation-allowlist", wantErr: nil, config: Config{
+			Critical: -1, High: -1, Medium: -1, Low: 0, Negligible: -1, Unknown: -1,
+			AllowList: []ListItem{{ID: "cve-7"}},
+		}},
 
-		{label: "fail-validation-denylist", wantErr: gcv.ErrFailedRule, config: Config{Critical: -1, High: -1, Medium: -1, Low: -1, Negligible: -1, Unknown: -1,
-			DenyList: []ListItem{{ID: "cve-1"}}}},
+		{label: "fail-validation-denylist", wantErr: gcv.ErrFailedRule, config: Config{
+			Critical: -1, High: -1, Medium: -1, Low: -1, Negligible: -1, Unknown: -1,
+			DenyList: []ListItem{{ID: "cve-1"}},
+		}},
 	}
 
 	for _, testCase := range testCase {
 		t.Run(testCase.label, func(t *testing.T) {
-
 			err := NewValidator().Validate(matches, testCase.config)
 			t.Log(err)
 			if !errors.Is(err, testCase.wantErr) {

@@ -44,11 +44,10 @@ func Example() {
 	fmt.Printf("%s %s %d", decodedPerson.FirstName, decodedPerson.LastName, decodedPerson.Age)
 
 	// Output: Tony Stark 53
-
 }
 
 func TestNewJSONWriterDecoder(t *testing.T) {
-	var newPersonDecoder = func() *JSONWriterDecoder[mockPerson] {
+	newPersonDecoder := func() *JSONWriterDecoder[mockPerson] {
 		return NewJSONWriterDecoder[mockPerson]("Mock Person", func(mp *mockPerson) error {
 			if mp.Age < 10 || mp.Age > 150 {
 				return fmt.Errorf("%w: mock check error", ErrFailedCheck)
@@ -88,11 +87,10 @@ func TestNewJSONWriterDecoder(t *testing.T) {
 			t.Log(a)
 		})
 	}
-
 }
 
 func TestNewYAMLWriterDecoder(t *testing.T) {
-	var newPersonDecoder = func() *YAMLWriterDecoder[mockPerson] {
+	newPersonDecoder := func() *YAMLWriterDecoder[mockPerson] {
 		return NewYAMLWriterDecoder[mockPerson]("Mock Person", func(mp *mockPerson) error {
 			if mp.Age < 10 || mp.Age > 150 {
 				return fmt.Errorf("%w: mock check error", ErrFailedCheck)
@@ -132,11 +130,10 @@ func TestNewYAMLWriterDecoder(t *testing.T) {
 			t.Log(a)
 		})
 	}
-
 }
 
 type mockPerson struct {
 	FirstName string `json:"firstName" yaml:"firstName"`
-	LastName  string `json:"lastName" yaml:"lastName"`
-	Age       int    `json:"age" yaml:"age"`
+	LastName  string `json:"lastName"  yaml:"lastName"`
+	Age       int    `json:"age"       yaml:"age"`
 }

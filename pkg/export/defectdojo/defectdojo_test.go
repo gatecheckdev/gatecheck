@@ -51,7 +51,7 @@ func Test_query(t *testing.T) {
 		server := httptest.NewServer(customResponseWithNext(http.StatusOK, &first, &second))
 		first.Next = server.URL + "/second"
 
-		var matchFunc = func(v TestStruct) bool {
+		matchFunc := func(v TestStruct) bool {
 			return v.A == "test test"
 		}
 
@@ -154,7 +154,6 @@ func TestService_postScan(t *testing.T) {
 }
 
 func TestService_productType(t *testing.T) {
-
 	t.Run("existing", func(t *testing.T) {
 		serverRes := paginatedResponse[productType]{Results: []productType{{Name: "A", ID: 2}}}
 
@@ -205,11 +204,9 @@ func TestService_productType(t *testing.T) {
 
 		t.Log(prodType)
 	})
-
 }
 
 func TestService_product(t *testing.T) {
-
 	t.Run("existing", func(t *testing.T) {
 		serverRes := paginatedResponse[product]{Results: []product{{Name: "A", ID: 2, ProdType: 5}}}
 
@@ -263,7 +260,6 @@ func TestService_product(t *testing.T) {
 }
 
 func TestService_engagement(t *testing.T) {
-
 	t.Run("existing", func(t *testing.T) {
 		serverRes := paginatedResponse[engagement]{Results: []engagement{{Name: "A", ID: 2, Product: 7}}}
 
@@ -407,7 +403,6 @@ func TestService_Export(t *testing.T) {
 	})
 
 	t.Run("time-out", func(t *testing.T) {
-
 		server := httptest.NewServer(timeoutHandler())
 		service := NewService(server.Client(), "", server.URL, false, false, true, false, false, "file_path")
 

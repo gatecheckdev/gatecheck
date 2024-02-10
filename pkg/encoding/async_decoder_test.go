@@ -65,7 +65,6 @@ func TestAsyncDecoder(t *testing.T) {
 	})
 
 	t.Run("generic", func(t *testing.T) {
-
 		decoder := NewAsyncDecoder(newHeroDecoder())
 		_, err := decoder.DecodeFrom(strings.NewReader("Content"))
 		if !errors.Is(err, ErrEncoding) {
@@ -75,7 +74,6 @@ func TestAsyncDecoder(t *testing.T) {
 			t.Fatalf("want: %v got: %v", "Generic", decoder.FileType())
 		}
 	})
-
 }
 
 type badReader struct{}
@@ -89,12 +87,15 @@ type badDecoder struct{}
 func (d *badDecoder) Write(_ []byte) (int, error) {
 	return 0, errors.New("Mock Read error")
 }
+
 func (d *badDecoder) Decode() (any, error) {
 	return nil, nil
 }
+
 func (d *badDecoder) DecodeFrom(_ io.Reader) (any, error) {
 	return nil, nil
 }
+
 func (d *badDecoder) FileType() string {
 	return "bad decoder"
 }

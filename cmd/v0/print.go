@@ -17,12 +17,11 @@ import (
 )
 
 func newPrintCommand(pipedFile *os.File, newAsyncDecoder func() AsyncDecoder) *cobra.Command {
-	var command = &cobra.Command{
+	command := &cobra.Command{
 		Use:     "print [FILE ...]",
 		Short:   "Pretty print a gatecheck report or security scan report",
 		Example: "gatecheck print grype-report.json semgrep-report.json",
 		RunE: func(cmd *cobra.Command, args []string) error {
-
 			if pipedFile != nil {
 				v, err := newAsyncDecoder().DecodeFrom(pipedFile)
 				slog.Debug("print piped file", "cmd", "print", "async_decode_err", err)
@@ -62,11 +61,9 @@ func printArtifact(w io.Writer, v any, newDecoder func() AsyncDecoder) {
 	}
 
 	_, _ = strings.NewReader(outputString).WriteTo(w)
-
 }
 
 func printBundleContentTable(w io.Writer, bundle *archive.Bundle, newDecoder func() AsyncDecoder) {
-
 	table := format.NewTable()
 	table.AppendRow("Type", "Label", "Digest", "Size")
 

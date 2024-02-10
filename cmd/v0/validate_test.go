@@ -44,7 +44,6 @@ func TestValidate_KEV(t *testing.T) {
 		},
 	}
 	t.Run("success-from-file", func(t *testing.T) {
-
 		reportFilename := writeTempAny(&grypeReport, t)
 		catalogFilename := writeTempAny(&catalog, t)
 		configFilename := writeTempConfig(map[string]any{"grype": grype.Config{Critical: -1, High: -1, Medium: -1, Low: -1, Unknown: -1}}, t)
@@ -181,7 +180,6 @@ func TestValidate_EPSS(t *testing.T) {
 			t.Fatalf("want: %v got: %v", gce.ErrEncoding, err)
 		}
 	})
-
 }
 
 func TestGetKEVService(t *testing.T) {
@@ -192,6 +190,7 @@ func TestGetKEVService(t *testing.T) {
 		}
 	})
 }
+
 func TestGetEPSSService(t *testing.T) {
 	t.Run("file-access", func(t *testing.T) {
 		_, err := getEPSSService(fileWithBadPermissions(t), nil)
@@ -226,7 +225,6 @@ func TestAuditFlag(t *testing.T) {
 	if err != nil {
 		t.Fatalf("want %v got %v", nil, err)
 	}
-
 }
 
 func TestValidateCmd(t *testing.T) {
@@ -275,10 +273,14 @@ func TestValidateCmd(t *testing.T) {
 	gitleaksFilename := writeTempAny(&gitleaksReport, t)
 	cyclonedxFilename := writeTempAny(&cyclonedxReport, t)
 
-	configPass := map[string]any{grype.ConfigFieldName: grypeConfigPass, semgrep.ConfigFieldName: semgrepConfigPass, gitleaks.ConfigFieldName: gitleaksConfigPass,
-		cyclonedx.ConfigFieldName: cyclondexConfigPass}
-	configFail := map[string]any{grype.ConfigFieldName: grypeConfigFail, semgrep.ConfigFieldName: semgrepConfigFail, gitleaks.ConfigFieldName: gitleaksConfigFail,
-		cyclonedx.ConfigFieldName: cyclondexConfigFail}
+	configPass := map[string]any{
+		grype.ConfigFieldName: grypeConfigPass, semgrep.ConfigFieldName: semgrepConfigPass, gitleaks.ConfigFieldName: gitleaksConfigPass,
+		cyclonedx.ConfigFieldName: cyclondexConfigPass,
+	}
+	configFail := map[string]any{
+		grype.ConfigFieldName: grypeConfigFail, semgrep.ConfigFieldName: semgrepConfigFail, gitleaks.ConfigFieldName: gitleaksConfigFail,
+		cyclonedx.ConfigFieldName: cyclondexConfigFail,
+	}
 
 	configPassFilename := writeTempConfig(configPass, t)
 	configFailFilename := writeTempConfig(configFail, t)
@@ -290,7 +292,7 @@ func TestValidateCmd(t *testing.T) {
 	_ = bundle.AddFrom(MustOpen(cyclonedxFilename, t), cyclonedxFilename, nil)
 	_ = bundle.AddFrom(strings.NewReader("ABCDEF"), "file-1.txt", nil)
 
-	var tempBundleFileFunc = func(t *testing.T) string {
+	tempBundleFileFunc := func(t *testing.T) string {
 		fPath := path.Join(t.TempDir(), archive.DefaultBundleFilename)
 		f := MustCreate(fPath, t)
 		_ = archive.NewBundleEncoder(f).Encode(bundle)
@@ -335,9 +337,7 @@ func TestValidateCmd(t *testing.T) {
 			if !errors.Is(err, testCase.wantErr) {
 				t.Fatalf("want %v got %v", testCase.wantErr, err)
 			}
-
 		})
-
 	}
 }
 

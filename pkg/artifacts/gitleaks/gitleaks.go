@@ -48,7 +48,7 @@ func (r ScanReport) String() string {
 
 // Config data model
 type Config struct {
-	SecretsAllowed bool `yaml:"secretsAllowed" json:"secretsAllowed"`
+	SecretsAllowed bool `json:"secretsAllowed" yaml:"secretsAllowed"`
 }
 
 // NewValidator implementation of the generic validator
@@ -111,5 +111,4 @@ func NoSecretsRule(findings []Finding, config Config) error {
 		return nil
 	}
 	return gcv.NewFailedRuleError("No Secrets Allowed. Found", fmt.Sprint(len(findings)))
-
 }

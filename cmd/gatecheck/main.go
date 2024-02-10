@@ -32,10 +32,12 @@ import (
 	"github.com/gatecheckdev/gatecheck/pkg/kev"
 )
 
-const exitSystemFail int = -1
-const exitOk int = 0
-const exitFileAccessFail int = 2
-const exitValidationFail = 1
+const (
+	exitSystemFail     int = -1
+	exitOk             int = 0
+	exitFileAccessFail int = 2
+	exitValidationFail     = 1
+)
 
 // GatecheckVersion see CHANGELOG.md
 const GatecheckVersion = "v0.3.0"
@@ -117,7 +119,6 @@ func runV0() {
 	viper.SetDefault("GATECHECK_DD_GROUP_BY", "")
 	viper.AutomaticEnv()
 	err := viper.ReadInConfig()
-
 	if err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
 			slog.Error("viper configuration error", "err", err)

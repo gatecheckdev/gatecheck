@@ -17,11 +17,9 @@ import (
 )
 
 func TestNewEPSSCmd(t *testing.T) {
-
 	t.Run("test-download-csv-success", func(t *testing.T) {
 		config := CLIConfig{EPSSDownloadAgent: strings.NewReader("mock epss file")}
 		output, err := Execute("epss download", config)
-
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -36,16 +34,13 @@ func TestNewEPSSCmd(t *testing.T) {
 		if err == nil {
 			t.Fatal("Expected error for bad reader")
 		}
-
 	})
 
 	t.Run("success-from-file", func(t *testing.T) {
-
 		config := CLIConfig{EPSSDownloadAgent: new(bytes.Buffer)}
 		commandString := fmt.Sprintf("epss -e %s %s", epssTestCSV, grypeTestReport)
 
 		output, err := Execute(commandString, config)
-
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -81,7 +76,6 @@ func TestNewEPSSCmd(t *testing.T) {
 	})
 
 	t.Run("success-from-api", func(t *testing.T) {
-
 		match := models.Match{Vulnerability: models.Vulnerability{VulnerabilityMetadata: models.VulnerabilityMetadata{ID: "A"}}}
 		tempGrypeScanFile := MockAppendedGrypeReport(t, match)
 
@@ -90,7 +84,6 @@ func TestNewEPSSCmd(t *testing.T) {
 		config := CLIConfig{EPSSDownloadAgent: MustOpen(epssTestCSV, t)}
 
 		output, err := Execute(commandString, config)
-
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -137,14 +130,12 @@ func TestNewEPSSCmd(t *testing.T) {
 	})
 
 	t.Run("missing-epss-in-datastore", func(t *testing.T) {
-
 		match := models.Match{Vulnerability: models.Vulnerability{VulnerabilityMetadata: models.VulnerabilityMetadata{ID: "A"}}}
 		tempGrypeScanFile := MockAppendedGrypeReport(t, match)
 
 		commandString := fmt.Sprintf("epss -e %s %s", epssTestCSV, tempGrypeScanFile)
 
 		output, err := Execute(commandString, regularConfig)
-
 		if err != nil {
 			t.Log(err)
 		}
@@ -153,7 +144,6 @@ func TestNewEPSSCmd(t *testing.T) {
 	})
 
 	t.Run("no-csv-no-service", func(t *testing.T) {
-
 		commandString := fmt.Sprintf("epss %s", grypeTestReport)
 		_, err := Execute(commandString, regularConfig)
 		t.Log(err)
@@ -161,11 +151,9 @@ func TestNewEPSSCmd(t *testing.T) {
 			t.Fatalf("want: %v got: %v", ErrorUserInput, err)
 		}
 	})
-
 }
 
 func MockGrypeReport(t *testing.T, scan grype.ScanReport) string {
-
 	tempGrypeScanFile := path.Join(t.TempDir(), "mock-grype-scan.json")
 
 	f, _ := os.Create(tempGrypeScanFile)

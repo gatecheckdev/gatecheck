@@ -35,7 +35,6 @@ func TestExport_timeout(t *testing.T) {
 }
 
 func TestExport_success(t *testing.T) {
-
 	backend := s3mem.New()
 	faker := gofakes3.New(backend)
 	mockServer := httptest.NewServer(faker.Server())
@@ -66,7 +65,7 @@ func TestExport_success(t *testing.T) {
 
 	testFilename := path.Join(t.TempDir(), "somefile.txt")
 
-	_ = os.WriteFile(testFilename, []byte("Some content"), 0664)
+	_ = os.WriteFile(testFilename, []byte("Some content"), 0o664)
 
 	f, err := os.Open(testFilename)
 	if err != nil {
@@ -77,5 +76,4 @@ func TestExport_success(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-
 }

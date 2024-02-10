@@ -21,7 +21,6 @@ func (t *Table) AppendRow(values ...string) {
 }
 
 func (t *Table) Select(columnIndex uint) {
-
 	if columnIndex > uint(len(t.data[0])-1) {
 		columnIndex = uint(len(t.data[0]) - 1)
 	}
@@ -70,7 +69,6 @@ func AlphabeticLess(a, b string) bool {
 }
 
 func NewCatagoricLess(categories []string) func(a, b string) bool {
-
 	return func(a, b string) bool {
 		aIndex, bIndex := 0, 0
 		for i, category := range categories {

@@ -26,8 +26,10 @@ var ErrAPI = errors.New("EPSS API error")
 // DefaultBaseURL for EPSS FIRST API
 const DefaultBaseURL = "https://epss.cyentia.com"
 
-const supportedModel = "v2023.03.01"
-const modelDateLayout = "2006-01-02T15:04:05-0700"
+const (
+	supportedModel  = "v2023.03.01"
+	modelDateLayout = "2006-01-02T15:04:05-0700"
+)
 
 // CVE data model
 type CVE struct {
@@ -60,7 +62,6 @@ func NewService(r io.Reader) *Service {
 
 // GrypeDenyRuleFunc returns the function used as a deny rule cross referenced with service data store
 func (s *Service) GrypeDenyRuleFunc() func([]models.Match, grype.Config) error {
-
 	grypeDenyRule := func(matches []models.Match, config grype.Config) error {
 		return gcv.DenyFunc(matches, func(match models.Match) error {
 			cve, _ := s.GetCVE(match)

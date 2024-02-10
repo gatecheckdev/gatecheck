@@ -13,12 +13,10 @@ import (
 )
 
 func newEPSSCmd(EPSSDownloadAgent io.Reader) *cobra.Command {
-
-	var downloadCmd = &cobra.Command{
+	downloadCmd := &cobra.Command{
 		Use:   "download",
 		Short: "EPSS CSV with scores for all CVEs (outputs to STDOUT)",
 		RunE: func(cmd *cobra.Command, args []string) error {
-
 			n, err := io.Copy(cmd.OutOrStdout(), EPSSDownloadAgent)
 			if err != nil {
 				return err
@@ -29,7 +27,7 @@ func newEPSSCmd(EPSSDownloadAgent io.Reader) *cobra.Command {
 		},
 	}
 
-	var EPSSCmd = &cobra.Command{
+	EPSSCmd := &cobra.Command{
 		Use:   "epss <Grype FILE>",
 		Short: "Query first.org for Exploit Prediction Scoring System (EPSS)",
 		Args:  cobra.ExactArgs(1),
@@ -53,7 +51,6 @@ func newEPSSCmd(EPSSDownloadAgent io.Reader) *cobra.Command {
 			}
 
 			r, err := grype.NewReportDecoder().DecodeFrom(fileOrEmptyBuf(args[0]))
-
 			if err != nil {
 				return fmt.Errorf("%w: decoding grype file: %v", ErrorEncoding, err)
 			}
@@ -83,7 +80,6 @@ func newEPSSCmd(EPSSDownloadAgent io.Reader) *cobra.Command {
 }
 
 func epssTable(input []epss.CVE) *format.Table {
-
 	table := format.NewTable()
 
 	table.AppendRow("CVE", "Severity", "EPSS Score", "Percentile", "Link")

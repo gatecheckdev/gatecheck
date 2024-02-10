@@ -45,9 +45,10 @@ func TestNewExport_DDCmd(t *testing.T) {
 	})
 
 	t.Run("defectdojo-full-bom", func(t *testing.T) {
-
-		config := CLIConfig{DDExportService: mockDDExportService{exportResponse: nil},
-			NewAsyncDecoderFunc: AsyncDecoderFunc, DDExportTimeout: time.Second * 3}
+		config := CLIConfig{
+			DDExportService:     mockDDExportService{exportResponse: nil},
+			NewAsyncDecoderFunc: AsyncDecoderFunc, DDExportTimeout: time.Second * 3,
+		}
 
 		commandString := fmt.Sprintf("export dd --full-bom %s", MustOpen(cyclonedxTestReport, t).Name())
 		out, err := Execute(commandString, config)
@@ -56,7 +57,6 @@ func TestNewExport_DDCmd(t *testing.T) {
 			t.Fatal(err)
 		}
 		t.Run("invalid", func(t *testing.T) {
-
 			commandString := fmt.Sprintf("export dd --full-bom %s", MustOpen(grypeTestReport, t).Name())
 			out, err := Execute(commandString, config)
 			if !errors.Is(err, ErrorUserInput) {
@@ -64,7 +64,6 @@ func TestNewExport_DDCmd(t *testing.T) {
 				t.Fatalf("want: %v got: %v", ErrorUserInput, err)
 			}
 		})
-
 	})
 
 	t.Run("defectdojo-bad-file", func(t *testing.T) {
@@ -80,7 +79,7 @@ func TestNewExport_DDCmd(t *testing.T) {
 	t.Run("defectdojo-timeout", func(t *testing.T) {
 		b := make([]byte, 1000)
 		tempFile := path.Join(t.TempDir(), "random.file")
-		if err := os.WriteFile(tempFile, b, 0664); err != nil {
+		if err := os.WriteFile(tempFile, b, 0o664); err != nil {
 			t.Fatal(err)
 		}
 
@@ -98,7 +97,7 @@ func TestNewExport_DDCmd(t *testing.T) {
 	t.Run("defectdojo-unsupported", func(t *testing.T) {
 		b := make([]byte, 1000)
 		tempFile := path.Join(t.TempDir(), "random.file")
-		if err := os.WriteFile(tempFile, b, 0664); err != nil {
+		if err := os.WriteFile(tempFile, b, 0o664); err != nil {
 			t.Fatal(err)
 		}
 
@@ -112,7 +111,6 @@ func TestNewExport_DDCmd(t *testing.T) {
 		}
 		t.Log(out)
 	})
-
 }
 
 func TestExportS3Cmd(t *testing.T) {

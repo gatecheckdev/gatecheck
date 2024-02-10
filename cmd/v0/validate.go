@@ -27,12 +27,11 @@ func newValidateCmd(newAsyncDecoder func() AsyncDecoder, KEVDownloadAgent io.Rea
 
 	var kevService *kev.Service
 	var epssService *epss.Service
-	var cmd = &cobra.Command{
+	cmd := &cobra.Command{
 		Use:   "validate [FILE]",
 		Short: "Validate reports or a bundle using thresholds set in the Gatecheck configuration file",
 		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-
 			configFilename, _ := cmd.Flags().GetString("config")
 			kevFilename, _ := cmd.Flags().GetString("kev-file")
 			epssFilename, _ := cmd.Flags().GetString("epss-file")
@@ -88,7 +87,6 @@ func newValidateCmd(newAsyncDecoder func() AsyncDecoder, KEVDownloadAgent io.Rea
 			}
 			slog.Info("successfully passed validation")
 			return nil
-
 		},
 	}
 

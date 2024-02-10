@@ -179,7 +179,6 @@ func (s Service) productType(e EngagementQuery) (productType, error) {
 	_ = json.NewEncoder(buf).Encode(productType{Name: e.ProductTypeName, Description: s.description()})
 
 	resBody, err := s.postJSON(url, buf)
-
 	if err != nil {
 		return productType{}, err
 	}
@@ -232,13 +231,12 @@ func (s Service) product(e EngagementQuery, prodType productType) (product, erro
 }
 
 func (s Service) engagement(e EngagementQuery, prod product) (engagement, error) {
-
 	url := s.url + "/api/v2/engagements/"
 
 	log := s.log.With("url", url, "product_type", e.ProductTypeName, "product", e.ProductName)
 	log.Debug("egagement request", "query", e)
 
-	var queryFunction = func(givenEngagement engagement) bool {
+	queryFunction := func(givenEngagement engagement) bool {
 		productMatches := givenEngagement.Product == prod.ID
 		engagementNameMatches := givenEngagement.Name == e.Name
 		return productMatches && engagementNameMatches
@@ -311,7 +309,6 @@ func (s Service) postScan(r io.Reader, scanType ScanType, e engagement) error {
 	req.Header.Set("Authorization", fmt.Sprintf("Token %s", s.key))
 
 	res, err := s.client.Do(req)
-
 	if err != nil {
 		log.Error("request", "err", err, "newReqErr", newReqErr)
 		return err
@@ -334,7 +331,6 @@ func (s Service) postJSON(url string, reqBody io.Reader) (resBody io.ReadCloser,
 	req.Header.Set("Authorization", fmt.Sprintf("Token %s", s.key))
 
 	res, err := s.client.Do(req)
-
 	if err != nil {
 		s.log.Error("failed request", "err", err, "url", url, "new_req_err", newReqErr)
 		return nil, err
@@ -366,7 +362,6 @@ func query[T any](client *http.Client, key string, url string, queryFunc func(T)
 		req.Header.Set("Authorization", fmt.Sprintf("Token %s", key))
 
 		res, err := client.Do(req)
-
 		if err != nil {
 			log.Error("failed query", "err", err, "new_req_err", newReqErr)
 			return *new(T), err

@@ -66,12 +66,11 @@ func Test_InfoCommand(t *testing.T) {
 	_, err := Execute("config info", CLIConfig{
 		ConfigFileUsed: "mockfile",
 		ConfigMap:      map[string]any{"gatecheck_mock_key": "mock value"},
-		ConfigPath:     "mock.path"})
-
+		ConfigPath:     "mock.path",
+	})
 	if err != nil {
 		t.FailNow()
 	}
-
 }
 
 // Helper Functions
@@ -103,7 +102,7 @@ func fileWithBadPermissions(t *testing.T) (filename string) {
 		t.Fatal(err)
 	}
 
-	if err := f.Chmod(0000); err != nil {
+	if err := f.Chmod(0o000); err != nil {
 		t.Fatal(err)
 	}
 	_ = f.Close()
@@ -114,7 +113,7 @@ func fileWithBadPermissions(t *testing.T) (filename string) {
 func fileWithBadJSON(t *testing.T) (filename string) {
 	n := path.Join(t.TempDir(), "bad-file.json")
 
-	if err := os.WriteFile(n, []byte("{{"), 0664); err != nil {
+	if err := os.WriteFile(n, []byte("{{"), 0o664); err != nil {
 		t.Fatal(err)
 	}
 

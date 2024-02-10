@@ -26,7 +26,6 @@ func NewService(bucket string, config aws.Config) Service {
 
 // Export to the target S3 bucket
 func (s Service) Export(ctx context.Context, r io.Reader, key string) error {
-
 	s3Client := s3.NewFromConfig(s.AWSConfig, func(o *s3.Options) {
 		o.UsePathStyle = true
 	})
@@ -36,7 +35,6 @@ func (s Service) Export(ctx context.Context, r io.Reader, key string) error {
 		Key:    aws.String(key),
 		Body:   r,
 	})
-
 	if err != nil {
 		return fmt.Errorf("failed to put object to AWS S3: %v", err)
 	}

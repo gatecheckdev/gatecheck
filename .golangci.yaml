@@ -1,0 +1,7 @@
+linters:
+  enable:
+    - tagalign
+    - gofumpt
+    - gosimple
+    - govet
+    - ineffassign

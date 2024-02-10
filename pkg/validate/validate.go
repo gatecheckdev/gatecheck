@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
-
 	"slices"
 
 	"gopkg.in/yaml.v3"

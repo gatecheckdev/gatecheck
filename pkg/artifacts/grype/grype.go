@@ -41,22 +41,22 @@ func (r *ScanReport) String() string {
 
 // Config data model for grype thresholds configuration
 type Config struct {
-	AllowList          []ListItem `yaml:"allowList,omitempty" json:"allowList,omitempty"`
-	DenyList           []ListItem `yaml:"denyList,omitempty" json:"denyList,omitempty"`
-	EPSSAllowThreshold float64    `yaml:"epssAllowThreshold,omitempty" json:"epssAllowThreshold,omitempty"`
-	EPSSDenyThreshold  float64    `yaml:"epssDenyThreshold,omitempty" json:"epssDenyThreshold,omitempty"`
-	Critical           int        `yaml:"critical"   json:"critical"`
-	High               int        `yaml:"high"       json:"high"`
-	Medium             int        `yaml:"medium"     json:"medium"`
-	Low                int        `yaml:"low"        json:"low"`
-	Negligible         int        `yaml:"negligible" json:"negligible"`
-	Unknown            int        `yaml:"unknown"    json:"unknown"`
+	AllowList          []ListItem `json:"allowList,omitempty"          toml:"allowList,omitempty"          yaml:"allowList,omitempty"`
+	DenyList           []ListItem `json:"denyList,omitempty"           toml:"denyList,omitempty"           yaml:"denyList,omitempty"`
+	EPSSAllowThreshold float64    `json:"epssAllowThreshold,omitempty" toml:"epssAllowThreshold,omitempty" yaml:"epssAllowThreshold,omitempty"`
+	EPSSDenyThreshold  float64    `json:"epssDenyThreshold,omitempty"  toml:"epssDenyThreshold,omitempty"  yaml:"epssDenyThreshold,omitempty"`
+	Critical           int        `json:"critical"                     toml:"critical"                     yaml:"critical"`
+	High               int        `json:"high"                         toml:"high"                         yaml:"high"`
+	Medium             int        `json:"medium"                       toml:"medium"                       yaml:"medium"`
+	Low                int        `json:"low"                          toml:"low"                          yaml:"low"`
+	Negligible         int        `json:"negligible"                   toml:"negligible"                   yaml:"negligible"`
+	Unknown            int        `json:"unknown"                      toml:"unknown"                      yaml:"unknown"`
 }
 
 // ListItem for Allow/Deny list
 type ListItem struct {
-	ID     string `yaml:"id"     json:"id"`
-	Reason string `yaml:"reason" json:"reason"`
+	ID     string `json:"id"     toml:"id"     yaml:"id"`
+	Reason string `json:"reason" toml:"reason" yaml:"reason"`
 }
 
 // NewReportDecoder ...

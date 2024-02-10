@@ -80,9 +80,9 @@ func checkReport(report *ScanReport) error {
 
 // Config data model
 type Config struct {
-	Error   int `yaml:"error" json:"error"`
-	Warning int `yaml:"warning" json:"warning"`
-	Info    int `yaml:"info" json:"info"`
+	Error   int `json:"error"   toml:"error"   yaml:"error"`
+	Warning int `json:"warning" toml:"warning" yaml:"warning"`
+	Info    int `json:"info"    toml:"info"    yaml:"info"`
 }
 
 // ThresholdRule deny if more than X vulnerability of Y severity

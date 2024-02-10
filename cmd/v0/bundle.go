@@ -13,7 +13,7 @@ import (
 )
 
 func newBundleCmd(newAsyncDecoder func() AsyncDecoder) *cobra.Command {
-	var bundleCmd = &cobra.Command{
+	bundleCmd := &cobra.Command{
 		Use:   "bundle [FILE ...]",
 		Short: "Create a compressed tarball with artifacts",
 		Args:  cobra.MinimumNArgs(1),
@@ -23,7 +23,7 @@ func newBundleCmd(newAsyncDecoder func() AsyncDecoder) *cobra.Command {
 			properties, _ := cmd.Flags().GetStringToString("properties")
 			log := slog.Default().With("cmd", "bundle", "output_filename", outputFilename, "allow_missing", allowMissingFlag, "properties", properties)
 
-			outputFile, err := os.OpenFile(outputFilename, os.O_CREATE|os.O_RDWR, 0664)
+			outputFile, err := os.OpenFile(outputFilename, os.O_CREATE|os.O_RDWR, 0o664)
 			if err != nil {
 				return fmt.Errorf("%w: bundle output file: %v", ErrorFileAccess, err)
 			}
@@ -63,7 +63,7 @@ func newBundleCmd(newAsyncDecoder func() AsyncDecoder) *cobra.Command {
 		},
 	}
 
-	var lsCmd = &cobra.Command{
+	lsCmd := &cobra.Command{
 		Use:   "ls [FILE]",
 		Args:  cobra.MaximumNArgs(1),
 		Short: "List contents in bundle",
@@ -88,5 +88,4 @@ func newBundleCmd(newAsyncDecoder func() AsyncDecoder) *cobra.Command {
 	bundleCmd.Flags().StringToStringP("properties", "p", nil, "Artifact properties in key=value format")
 	_ = bundleCmd.MarkFlagFilename("output")
 	return bundleCmd
-
 }

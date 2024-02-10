@@ -100,7 +100,6 @@ func severityIndex(s string) int {
 }
 
 func highestVulnerability(ratings []cdx.VulnerabilityRating) cdx.VulnerabilityRating {
-
 	sort.Slice(ratings, func(i, j int) bool {
 		iIndex, jIndex := severityIndex(string(ratings[i].Severity)), severityIndex(string(ratings[j].Severity))
 		return iIndex < jIndex
@@ -140,7 +139,6 @@ func (d *ReportDecoder) Decode() (any, error) {
 
 // DecodeFrom ...
 func (d *ReportDecoder) DecodeFrom(r io.Reader) (any, error) {
-
 	_, err := d.ReadFrom(r)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %v", gce.ErrIO, err)
@@ -155,22 +153,22 @@ func (d *ReportDecoder) FileType() string {
 
 // Config data model
 type Config struct {
-	AllowList []ListItem `yaml:"allowList,omitempty" json:"allowList,omitempty"`
-	DenyList  []ListItem `yaml:"denyList,omitempty" json:"denyList,omitempty"`
-	Required  bool       `yaml:"required" json:"required"`
-	Critical  int        `yaml:"critical"   json:"critical"`
-	High      int        `yaml:"high"       json:"high"`
-	Medium    int        `yaml:"medium"     json:"medium"`
-	Low       int        `yaml:"low"        json:"low"`
-	Info      int        `yaml:"info"       json:"info"`
-	None      int        `yaml:"none"       json:"none"`
-	Unknown   int        `yaml:"unknown"    json:"unknown"`
+	AllowList []ListItem `json:"allowList,omitempty" toml:"allowList,omitempty" yaml:"allowList,omitempty"`
+	DenyList  []ListItem `json:"denyList,omitempty"  toml:"denyList,omitempty"  yaml:"denyList,omitempty"`
+	Required  bool       `json:"required"            toml:"required"            yaml:"required"`
+	Critical  int        `json:"critical"            toml:"critical"            yaml:"critical"`
+	High      int        `json:"high"                toml:"high"                yaml:"high"`
+	Medium    int        `json:"medium"              toml:"medium"              yaml:"medium"`
+	Low       int        `json:"low"                 toml:"low"                 yaml:"low"`
+	Info      int        `json:"info"                toml:"info"                yaml:"info"`
+	None      int        `json:"none"                toml:"none"                yaml:"none"`
+	Unknown   int        `json:"unknown"             toml:"unknown"             yaml:"unknown"`
 }
 
 // ListItem for a specific allow/deny list record
 type ListItem struct {
-	ID     string `yaml:"id"     json:"id"`
-	Reason string `yaml:"reason" json:"reason"`
+	ID     string `json:"id"     yaml:"id"`
+	Reason string `json:"reason" yaml:"reason"`
 }
 
 // NewValidator implementation of the generic validator

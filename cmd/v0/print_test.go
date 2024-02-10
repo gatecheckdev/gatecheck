@@ -97,7 +97,7 @@ func Test_PrintCommand(t *testing.T) {
 	t.Run("unsupported-file", func(t *testing.T) {
 		b := make([]byte, 1000)
 		randomFile := path.Join(t.TempDir(), "random.file")
-		if err := os.WriteFile(randomFile, b, 0664); err != nil {
+		if err := os.WriteFile(randomFile, b, 0o664); err != nil {
 			t.Fatal(err)
 		}
 
@@ -107,7 +107,6 @@ func Test_PrintCommand(t *testing.T) {
 			t.Fatal(err)
 		}
 	})
-
 }
 
 func TestPrintBundle(t *testing.T) {

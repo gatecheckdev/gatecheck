@@ -26,8 +26,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var ApplicationMetadata gatecheck.ApplicationMetadata
-var LogLeveler *slog.LevelVar
+var (
+	ApplicationMetadata gatecheck.ApplicationMetadata
+	LogLeveler          *slog.LevelVar
+)
 
 // NewGatecheckCommand the root for all CLI commands
 func NewGatecheckCommand() *cobra.Command {

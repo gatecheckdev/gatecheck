@@ -6,6 +6,12 @@ build:
 
 install: build
 	cp ./bin/gatecheck /usr/local/bin/gatecheck
+
+lint:
+	golangci-lint run --fast
+
+fix:
+	golangci-lint run --fast
 	
 # Locally serve documentation
 # serve-docs:

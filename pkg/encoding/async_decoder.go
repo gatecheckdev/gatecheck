@@ -70,7 +70,6 @@ func (d *AsyncDecoder) Decode() (any, error) {
 		_, _ = reader.Seek(0, 0)
 		go func(decoder WriterDecoder) {
 			v, err := decoder.Decode()
-
 			if err != nil {
 				wg.Done()
 				return

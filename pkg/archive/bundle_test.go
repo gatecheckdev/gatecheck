@@ -77,7 +77,6 @@ func TestEncoding(t *testing.T) {
 	})
 
 	t.Run("failed-gzip-bad-format", func(t *testing.T) {
-
 		_, err := NewBundleDecoder().DecodeFrom(strings.NewReader("ABCDEF"))
 		t.Log(err)
 		if !errors.Is(err, gce.ErrEncoding) {
@@ -100,9 +99,8 @@ func TestEncoding(t *testing.T) {
 		}
 	})
 	t.Run("failed-tar-decoding-invalid-type", func(t *testing.T) {
-
 		contentBuf := strings.NewReader("ABCDEF")
-		hdr := &tar.Header{Name: "foo", Size: int64(contentBuf.Len()), Mode: 0666, Typeflag: tar.TypeDir}
+		hdr := &tar.Header{Name: "foo", Size: int64(contentBuf.Len()), Mode: 0o666, Typeflag: tar.TypeDir}
 
 		_, err := NewBundleDecoder().DecodeFrom(zippedTarballReader(contentBuf, hdr))
 		t.Log(err)
@@ -113,7 +111,7 @@ func TestEncoding(t *testing.T) {
 
 	t.Run("failed-tar-decoding-missing-manifest", func(t *testing.T) {
 		contentBuf := strings.NewReader("ABCDEF")
-		hdr := &tar.Header{Name: "foo", Size: int64(contentBuf.Len()), Mode: 0666, Typeflag: tar.TypeReg}
+		hdr := &tar.Header{Name: "foo", Size: int64(contentBuf.Len()), Mode: 0o666, Typeflag: tar.TypeReg}
 
 		_, err := NewBundleDecoder().DecodeFrom(zippedTarballReader(contentBuf, hdr))
 		t.Log(err)
@@ -124,7 +122,7 @@ func TestEncoding(t *testing.T) {
 
 	t.Run("failed-tar-decoding-bad-manifest", func(t *testing.T) {
 		contentBuf := strings.NewReader("{{{")
-		hdr := &tar.Header{Name: ManifestFilename, Size: int64(contentBuf.Len()), Mode: 0666, Typeflag: tar.TypeReg}
+		hdr := &tar.Header{Name: ManifestFilename, Size: int64(contentBuf.Len()), Mode: 0o666, Typeflag: tar.TypeReg}
 
 		_, err := NewBundleDecoder().DecodeFrom(zippedTarballReader(contentBuf, hdr))
 		t.Log(err)

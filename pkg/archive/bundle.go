@@ -121,7 +121,7 @@ func (b *BundleEncoder) Encode(bundle *Bundle) error {
 
 	for label, data := range bundle.content {
 		// Using bytes.Buffer so IO errors are unlikely
-		_ = tarWriter.WriteHeader(&tar.Header{Name: label, Size: int64(len(data)), Mode: int64(os.FileMode(0666))})
+		_ = tarWriter.WriteHeader(&tar.Header{Name: label, Size: int64(len(data)), Mode: int64(os.FileMode(0o666))})
 		_, _ = bytes.NewReader(data).WriteTo(tarWriter)
 	}
 	tarWriter.Close()
