@@ -2,6 +2,7 @@ package gatecheck
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 
 	"github.com/gatecheckdev/gatecheck/pkg/artifacts/cyclonedx"
@@ -65,6 +66,8 @@ func WriteDefaultConfig(w io.Writer, format string) error {
 		encoder = enc
 	case "toml":
 		encoder = toml.NewEncoder(w)
+	default:
+		return fmt.Errorf("unsupported format '%s'", format)
 	}
 
 	return encoder.Encode(defaultConfig())
