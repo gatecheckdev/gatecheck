@@ -13,7 +13,8 @@ require (
 	github.com/dustin/go-humanize v1.0.1
 	github.com/johannesboyne/gofakes3 v0.0.0-20230914150226-f005f5cc03aa
 	github.com/lmittmann/tint v1.0.2
-	github.com/spf13/cobra v1.7.0
+	github.com/pelletier/go-toml/v2 v2.1.0
+	github.com/spf13/cobra v1.8.0
 	github.com/spf13/viper v1.17.0
 	github.com/zricethezav/gitleaks/v8 v8.18.0
 	golang.org/x/exp v0.0.0-20231006140011-7918f672742d
@@ -150,7 +151,6 @@ require (
 	github.com/opencontainers/selinux v1.11.0 // indirect
 	github.com/pborman/indent v1.2.1 // indirect
 	github.com/pelletier/go-toml v1.9.5 // indirect
-	github.com/pelletier/go-toml/v2 v2.1.0 // indirect
 	github.com/pierrec/lz4/v4 v4.1.18 // indirect
 	github.com/pjbgf/sha1cd v0.3.0 // indirect
 	github.com/pkg/errors v0.9.1 // indirect

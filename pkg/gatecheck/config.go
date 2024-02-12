@@ -51,6 +51,10 @@ func defaultConfig() map[string]any {
 }
 
 func WriteDefaultConfig(w io.Writer, format string) error {
+	return EncodeConfigTo(w, defaultConfig(), format)
+}
+
+func EncodeConfigTo(w io.Writer, config map[string]any, format string) error {
 	var encoder interface {
 		Encode(any) error
 	}

@@ -28,7 +28,7 @@ import (
 
 var (
 	ApplicationMetadata gatecheck.ApplicationMetadata
-	LogLeveler          *slog.LevelVar
+	LogLeveler          *slog.LevelVar = &slog.LevelVar{}
 )
 
 // NewGatecheckCommand the root for all CLI commands
@@ -72,8 +72,9 @@ func runVersion(cmd *cobra.Command, args []string) error {
 	switch {
 	case versionFlag:
 		cmd.Println(ApplicationMetadata.CLIVersion)
+		return nil
 	default:
-		ApplicationMetadata.WriteTo(cmd.OutOrStdout())
+		_, err := ApplicationMetadata.WriteTo(cmd.OutOrStdout())
+		return err
 	}
-	return nil
 }

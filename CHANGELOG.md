@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - More robust version information
 - CLI v1 debug and silent flags for logging
 - CLI v1 config init
+- CLI v1 config info
+- CLI v1 config convert
 
 ### Fixed
 
