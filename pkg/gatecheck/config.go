@@ -74,5 +74,5 @@ func EncodeConfigTo(w io.Writer, config map[string]any, format string) error {
 		return fmt.Errorf("unsupported format '%s'", format)
 	}
 
-	return encoder.Encode(defaultConfig())
+	return encoder.Encode(config)
 }

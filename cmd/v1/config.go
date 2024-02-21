@@ -1,15 +1,12 @@
 package cmd
 
 import (
-	"encoding/json"
 	"fmt"
 	"log/slog"
 
 	"github.com/gatecheckdev/gatecheck/pkg/gatecheck"
-	"github.com/pelletier/go-toml/v2"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"gopkg.in/yaml.v3"
 )
 
 func newConfigCommand() *cobra.Command {
@@ -84,18 +81,5 @@ func runConfigConvert(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
-	switch outFormat {
-	case "json":
-		enc := json.NewEncoder(dstFile)
-		enc.SetIndent("", "  ")
-		return enc.Encode(config)
-	case "yaml", "yml":
-		enc := yaml.NewEncoder(dstFile)
-		enc.SetIndent(2)
-		return enc.Encode(config)
-	case "toml":
-		return toml.NewEncoder(dstFile).Encode(config)
-	default:
-		return fmt.Errorf("unsupported format '%s'", inputFiletype)
-	}
+	return gatecheck.EncodeConfigTo(dstFile, config, outFormat)
 }
