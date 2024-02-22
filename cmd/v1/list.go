@@ -1,9 +1,7 @@
 package cmd
 
 import (
-	"io"
 	"log/slog"
-	"os"
 
 	"github.com/gatecheckdev/gatecheck/pkg/gatecheck"
 	"github.com/spf13/cobra"
