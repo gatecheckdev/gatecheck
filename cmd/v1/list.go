@@ -37,20 +37,13 @@ func runList(cmd *cobra.Command, args []string) error {
 
 	inputType, _ := cmd.Flags().GetString("input-type")
 
-	var src io.Reader
+	src, err := fileOrStdin(filename, cmd)
+	if err != nil {
+		return err
+	}
 
-	switch {
-	case filename != "":
-		f, err := os.Open(filename)
-		if err != nil {
-			return err
-		}
-		src = f
-	case slices.Contains(supportedTypes, inputType):
+	if slices.Contains(supportedTypes, inputType) {
 		filename = "stdin:" + inputType
-		src = cmd.InOrStdin()
-	default:
-		slog.Error("")
 	}
 
 	return gatecheck.List(cmd.OutOrStdout(), src, filename)
