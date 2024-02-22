@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
+	"slices"
 	"sort"
 	"strings"
 
@@ -15,7 +16,6 @@ import (
 	gce "github.com/gatecheckdev/gatecheck/pkg/encoding"
 	"github.com/gatecheckdev/gatecheck/pkg/format"
 	gcv "github.com/gatecheckdev/gatecheck/pkg/validate"
-	"golang.org/x/exp/slices"
 )
 
 // ReportType in plain text

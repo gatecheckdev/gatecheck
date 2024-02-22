@@ -3,9 +3,10 @@ package cmd
 import (
 	"log/slog"
 
+	"slices"
+
 	"github.com/gatecheckdev/gatecheck/pkg/gatecheck"
 	"github.com/spf13/cobra"
-	"golang.org/x/exp/slices"
 )
 
 var supportedTypes = []string{"grype", "semgrep", "gitleaks", "syft", "cyclonedx", "bundle"}

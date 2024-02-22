@@ -14,13 +14,13 @@ import (
 	"io"
 	"log/slog"
 	"net/http"
+	"slices"
 	"time"
 
 	"github.com/anchore/grype/grype/presenter/models"
 	"github.com/gatecheckdev/gatecheck/pkg/artifacts/grype"
 	gce "github.com/gatecheckdev/gatecheck/pkg/encoding"
 	gcv "github.com/gatecheckdev/gatecheck/pkg/validate"
-	"golang.org/x/exp/slices"
 )
 
 // FileTypeJSON filetype plaintext
