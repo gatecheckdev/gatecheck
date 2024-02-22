@@ -169,7 +169,6 @@ func (s Service) productType(e EngagementQuery) (productType, error) {
 		return returnedProductType, nil
 	case err == errNotFound:
 		log.Debug("not found, will create")
-		break
 	case err != nil:
 		log.Error("", "err", err)
 		return productType{}, err
@@ -205,7 +204,6 @@ func (s Service) product(e EngagementQuery, prodType productType) (product, erro
 		return returnedProduct, nil
 	case err == errNotFound:
 		log.Debug("product not found, will create")
-		break
 	case err != nil:
 		log.Error("fail to get product", "err", err)
 		return product{}, err

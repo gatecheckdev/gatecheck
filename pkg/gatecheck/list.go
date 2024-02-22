@@ -5,9 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"strings"
-
 	"log/slog"
+	"strings"
 
 	"github.com/gatecheckdev/gatecheck/pkg/artifacts/cyclonedx"
 	"github.com/gatecheckdev/gatecheck/pkg/artifacts/gitleaks"

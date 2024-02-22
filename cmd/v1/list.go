@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"log/slog"
-
 	"slices"
 
 	"github.com/gatecheckdev/gatecheck/pkg/gatecheck"
