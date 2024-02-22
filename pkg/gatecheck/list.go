@@ -9,7 +9,6 @@ import (
 
 	"log/slog"
 
-	"github.com/gatecheckdev/gatecheck/pkg/archive"
 	"github.com/gatecheckdev/gatecheck/pkg/artifacts/cyclonedx"
 	"github.com/gatecheckdev/gatecheck/pkg/artifacts/gitleaks"
 	"github.com/gatecheckdev/gatecheck/pkg/artifacts/grype"

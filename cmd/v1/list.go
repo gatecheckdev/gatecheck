@@ -20,6 +20,8 @@ func newListCommand() *cobra.Command {
 		Args:  cobra.MaximumNArgs(1),
 	}
 
+	cmd.Aliases = []string{"ls", "print"}
+
 	cmd.Flags().StringP("input-type", "i", "", "the input filetype if using STDIN [grype|semgrep|gitleaks|syft]")
 
 	return cmd
