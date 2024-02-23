@@ -6,6 +6,7 @@ import (
 	"bytes"
 	"compress/gzip"
 	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -14,10 +15,11 @@ import (
 	"strings"
 	"time"
 
+	"log/slog"
+
 	"github.com/dustin/go-humanize"
 	gce "github.com/gatecheckdev/gatecheck/pkg/encoding"
 	"github.com/gatecheckdev/gatecheck/pkg/format"
-	"log/slog"
 )
 
 // FileType in plain text
@@ -80,6 +82,7 @@ func (b *Bundle) WriteFileTo(w io.Writer, fileLabel string) (int64, error) {
 // FileSize get the file size for a specific label
 func (b *Bundle) FileSize(fileLabel string) int {
 	fileBytes, ok := b.content[fileLabel]
+	slog.Debug("bundle calculate file size", "label", fileLabel, "content_in_bundle", ok)
 	if !ok {
 		return 0
 	}
@@ -103,14 +106,18 @@ func (b *Bundle) AddFrom(r io.Reader, label string, properties map[string]string
 }
 
 func (b *Bundle) Add(content []byte, label string, tags []string) {
-	digest := sha256.New().Sum(content)
+	hasher := sha256.New()
+	n, hashErr := hasher.Write(content)
+	slog.Debug("bundle add hash content", "error", hashErr, "bytes_hashed", n)
+	digest := hex.EncodeToString(hasher.Sum(nil))
 
 	b.manifest.Files[label] = fileDescriptor{
 		Added:  time.Now(),
 		Tags:   tags,
-		Digest: string(digest),
+		Digest: digest,
 	}
 
+	b.content[label] = content
 }
 
 // Delete will remove files from the bundle by label
@@ -148,7 +155,6 @@ func TarGzipBundle(dst io.Writer, bundle *Bundle) (int64, error) {
 	}
 	tarWriter.Close()
 
-	bundle.Delete(ManifestFilename)
 	gzipWriter := gzip.NewWriter(dst)
 	n, _ := tarballBuffer.WriteTo(gzipWriter)
 	gzipWriter.Close()
@@ -190,7 +196,6 @@ func UntarGzipBundle(src io.Reader) (*Bundle, error) {
 		return nil, fmt.Errorf("gatecheck manifest decoding: %w", err)
 	}
 	bundle.manifest = *manifest
-	bundle.Delete(ManifestFilename)
 
 	return bundle, nil
 }
