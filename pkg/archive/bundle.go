@@ -14,7 +14,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/dustin/go-humanize"
 	gce "github.com/gatecheckdev/gatecheck/pkg/encoding"
+	"github.com/gatecheckdev/gatecheck/pkg/format"
 )
 
 // FileType in plain text
@@ -39,6 +41,7 @@ type Manifest struct {
 type fileDescriptor struct {
 	Added      time.Time         `json:"addedAt"`
 	Properties map[string]string `json:"properties"`
+	FileType   string            `json:"fileType"`
 	Digest     string            `json:"digest"`
 }
 
@@ -99,6 +102,18 @@ func (b *Bundle) AddFrom(r io.Reader, label string, properties map[string]string
 func (b *Bundle) Delete(label string) {
 	delete(b.content, label)
 	delete(b.manifest.Files, label)
+}
+
+func (b *Bundle) Content() string {
+	table := format.NewTable()
+	table.AppendRow("Type", "Label", "Digest", "Size")
+
+	for label, descriptor := range b.Manifest().Files {
+		fileSize := humanize.Bytes(uint64(b.FileSize(label)))
+		table.AppendRow(descriptor.FileType, label, descriptor.Digest, fileSize)
+	}
+
+	return format.NewTableWriter(table).String()
 }
 
 func TarGzipBundle(dst io.Writer, bundle *Bundle) (int64, error) {
