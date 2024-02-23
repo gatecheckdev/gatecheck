@@ -39,10 +39,13 @@ type Manifest struct {
 }
 
 type fileDescriptor struct {
-	Added      time.Time         `json:"addedAt"`
+	Added time.Time `json:"addedAt"`
+	// Deprecated: use tags instead of properties
 	Properties map[string]string `json:"properties"`
-	FileType   string            `json:"fileType"`
-	Digest     string            `json:"digest"`
+	Tags       []string          `json:"tags"`
+	// Deprecated: assume file label has the file type
+	FileType string `json:"fileType"`
+	Digest   string `json:"digest"`
 }
 
 // Bundle uses tar and gzip to collect reports and files into a single file
@@ -98,6 +101,17 @@ func (b *Bundle) AddFrom(r io.Reader, label string, properties map[string]string
 	return nil
 }
 
+func (b *Bundle) Add(content []byte, label string, tags []string) {
+	digest := sha256.New().Sum(content)
+
+	b.manifest.Files[label] = fileDescriptor{
+		Added:  time.Now(),
+		Tags:   tags,
+		Digest: string(digest),
+	}
+
+}
+
 // Delete will remove files from the bundle by label
 func (b *Bundle) Delete(label string) {
 	delete(b.content, label)
@@ -106,11 +120,12 @@ func (b *Bundle) Delete(label string) {
 
 func (b *Bundle) Content() string {
 	table := format.NewTable()
-	table.AppendRow("Type", "Label", "Digest", "Size")
+	table.AppendRow("Label", "Digest", "Tags", "Size")
 
 	for label, descriptor := range b.Manifest().Files {
 		fileSize := humanize.Bytes(uint64(b.FileSize(label)))
-		table.AppendRow(descriptor.FileType, label, descriptor.Digest, fileSize)
+		tags := strings.Join(descriptor.Tags, ", ")
+		table.AppendRow(label, descriptor.Digest, tags, fileSize)
 	}
 
 	return format.NewTableWriter(table).String()

@@ -44,7 +44,7 @@ func NewGatecheckCommand() *cobra.Command {
 	cmd.PersistentFlags().BoolP("verbose", "v", false, "log level set to debug")
 	cmd.PersistentFlags().BoolP("silent", "s", false, "log level set to only warnings & errors")
 
-	cmd.AddCommand(versionCmd, newConfigCommand(), newListCommand())
+	cmd.AddCommand(versionCmd, newConfigCommand(), newListCommand(), newBundleCommand())
 	return cmd
 }
 
