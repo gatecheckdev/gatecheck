@@ -17,6 +17,7 @@ import (
 	"github.com/dustin/go-humanize"
 	gce "github.com/gatecheckdev/gatecheck/pkg/encoding"
 	"github.com/gatecheckdev/gatecheck/pkg/format"
+	"log/slog"
 )
 
 // FileType in plain text
@@ -149,15 +150,16 @@ func TarGzipBundle(dst io.Writer, bundle *Bundle) (int64, error) {
 
 	bundle.Delete(ManifestFilename)
 	gzipWriter := gzip.NewWriter(dst)
-	_, _ = tarballBuffer.WriteTo(gzipWriter)
+	n, _ := tarballBuffer.WriteTo(gzipWriter)
 	gzipWriter.Close()
 
-	return 0, nil
+	return n, nil
 }
 
 func UntarGzipBundle(src io.Reader) (*Bundle, error) {
 	gzipReader, err := gzip.NewReader(src)
 	if err != nil {
+		slog.Error("failed to create new gzip reader")
 		return nil, err
 	}
 	tarReader := tar.NewReader(gzipReader)
