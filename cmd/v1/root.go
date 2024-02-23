@@ -24,6 +24,7 @@ import (
 
 	"github.com/gatecheckdev/gatecheck/pkg/gatecheck"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 var (
@@ -43,6 +44,13 @@ func NewGatecheckCommand() *cobra.Command {
 	cmd.Flags().Bool("version", false, "print only the version of the CLI without additional information")
 	cmd.PersistentFlags().BoolP("verbose", "v", false, "log level set to debug")
 	cmd.PersistentFlags().BoolP("silent", "s", false, "log level set to only warnings & errors")
+	cmd.MarkFlagsMutuallyExclusive("verbose", "silent")
+
+	viper.BindPFlag("cli.verbose", cmd.PersistentFlags().Lookup("verbose"))
+	viper.BindPFlag("cli.silent", cmd.PersistentFlags().Lookup("silent"))
+
+	viper.BindEnv("cli.verbose", "GATECHECK_CLI_VERBOSE")
+	viper.BindEnv("cli.silent", "GATECHECK_CLI_SILENT")
 
 	cmd.AddCommand(versionCmd, newConfigCommand(), newListCommand(), newBundleCommand())
 	return cmd
@@ -50,14 +58,14 @@ func NewGatecheckCommand() *cobra.Command {
 
 // runCheckLogging checks for the logging flag and sets the global log level
 func runCheckLogging(cmd *cobra.Command, args []string) {
-	verboseFlag, _ := cmd.Flags().GetBool("verbose")
-	silentFlag, _ := cmd.Flags().GetBool("silent")
+	verbose := viper.GetBool("cli.verbose")
+	silent := viper.GetBool("cli.silent")
 
 	switch {
-	case verboseFlag:
+	case verbose:
 		LogLeveler.Set(slog.LevelDebug)
 		slog.Debug("debug logging enabled")
-	case silentFlag:
+	case silent:
 		LogLeveler.Set(slog.LevelError)
 		slog.Debug("silent logging enabled")
 	}

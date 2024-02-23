@@ -23,13 +23,17 @@ func newBundleCommand() *cobra.Command {
 	addCmd.Args = cobra.ExactArgs(2)
 	addCmd.Flags().StringSliceP("tag", "t", []string{}, "file properties for metadata")
 
-	rmCmd := newBasicCommand("rm BUNDLE_FILE TARGET_FILE", "remove a file from a bundle by label", runBundleRm)
+	rmCmd := newBasicCommand("remove BUNDLE_FILE TARGET_FILE", "remove a file from a bundle by label", runBundleRm)
+	rmCmd.Aliases = []string{"rm"}
 	rmCmd.Args = cobra.ExactArgs(2)
 
 	cmd.AddCommand(createCmd, addCmd, rmCmd)
 	return cmd
 }
 
+// runBundleCreate
+//
+// shell: gatecheck bundle create
 func runBundleCreate(cmd *cobra.Command, args []string) error {
 	bundleFilename := args[0]
 	targetFilename := args[1]
@@ -51,7 +55,8 @@ func runBundleCreate(cmd *cobra.Command, args []string) error {
 }
 
 // runBundleAdd
-// shell: gatecheck bundle add <file> -o gatecheck-bundle.tar.gz -t custom-tag-value
+//
+// shell: gatecheck bundle add
 func runBundleAdd(cmd *cobra.Command, args []string) error {
 	bundleFilename := args[0]
 	targetFilename := args[1]
@@ -74,12 +79,16 @@ func runBundleAdd(cmd *cobra.Command, args []string) error {
 }
 
 // runBundleRm
-// shell: gatecheck bundle rm <file label> -o gatecheck-bundle.tar.gz
+//
+// shell: gatecheck bundle rm
 func runBundleRm(cmd *cobra.Command, args []string) error {
-	fileLabel := args[0]
-	bundleFilename, _ := cmd.Flags().GetString("output")
-	slog.Debug("add file to bundle", "file_label", fileLabel,
-		"bundle_output_filename", bundleFilename)
+	bundleFilename := args[0]
+	label := args[1]
+	slog.Debug("remove from bundle", "bundle_filename", bundleFilename, "label", label)
+	bundleFile, err := os.OpenFile(bundleFilename, os.O_RDWR, 0644)
+	if err != nil {
+		return err
+	}
 
-	return nil
+	return gatecheck.RemoveFromBundle(bundleFile, label)
 }

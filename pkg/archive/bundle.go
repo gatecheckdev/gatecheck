@@ -120,7 +120,20 @@ func (b *Bundle) Add(content []byte, label string, tags []string) {
 	b.content[label] = content
 }
 
+// Remove a file from the bundle and manifest by label
+//
+// If the file doesn't exist, it will log a warning
+func (b *Bundle) Remove(label string) {
+	if _, ok := b.content[label]; !ok {
+		slog.Error("file does not exist", "label", label)
+	}
+	delete(b.content, label)
+	delete(b.manifest.Files, label)
+}
+
 // Delete will remove files from the bundle by label
+//
+// Deprecated: use Remove
 func (b *Bundle) Delete(label string) {
 	delete(b.content, label)
 	delete(b.manifest.Files, label)
