@@ -8,7 +8,7 @@ import (
 	"github.com/sagikazarmark/slog-shim"
 )
 
-func CreateBundle(dst io.Writer, src io.Reader, label string, tags []string) error {
+func CreateBundle(dstBundle io.Writer, src io.Reader, label string, tags []string) error {
 	slog.Debug("add to source file content to bundle", "label", label, "tags", tags)
 	srcContent, err := io.ReadAll(src)
 	if err != nil {
@@ -19,7 +19,7 @@ func CreateBundle(dst io.Writer, src io.Reader, label string, tags []string) err
 	bundle.Add(srcContent, label, tags)
 
 	slog.Debug("write bundle")
-	n, err := archive.TarGzipBundle(dst, bundle)
+	n, err := archive.TarGzipBundle(dstBundle, bundle)
 	if err != nil {
 		return err
 	}
