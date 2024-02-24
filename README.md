@@ -13,6 +13,12 @@ Gatecheck is stateless so self-hosting and provisioning servers is not required.
 
 ## Upcoming Features
 
+The CLI is currently going through a much needed refactor.
+Once all existing features have been implemented in the new CLI, the old one will be deprecated and then removed in
+a few versions.
+
+To enable to new CLI, set the variable `GATECHECK_FF_CLI_V1_ENABLED=1`.
+
 - [X] Report Aggregation
 - [X] Vulnerability Threshold Configuration
 - [X] Report Exporting
