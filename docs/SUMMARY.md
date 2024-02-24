@@ -7,4 +7,5 @@
   - [List Reports](./list-reports.md)
   - [Gatecheck Bundle](./gatecheck-bundle.md)
   - [Validation](./validation.md)
+- [Supported Reports](./supported-reports.md)
 - [Configuration](./configuration.md)
