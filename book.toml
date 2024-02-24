@@ -1,0 +1,6 @@
+[book]
+authors = ["Bacchus Jackson"]
+language = "en"
+multilingual = false
+src = "docs"
+title = "Gatecheck"
