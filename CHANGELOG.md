@@ -15,6 +15,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CLI v1 config init
 - CLI v1 config info
 - CLI v1 config convert
+- CLI v1 bundle
+- CLI v1 list
+- CLI v1 list all with epss scores
 
 ### Fixed
 

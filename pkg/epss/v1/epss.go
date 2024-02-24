@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"math"
 	"net/http"
 	"strconv"
 	"strings"
@@ -109,7 +108,7 @@ func parseCSVData(r io.Reader, data *Data) error {
 	if err := scanner.Err(); err != nil {
 		return err
 	}
-
+	data.CVEs = make(map[string]CVE)
 	slog.Debug("parse csv metadata header")
 	parts := strings.Split(scanner.Text(), ",")
 	if len(parts) != 2 {

@@ -206,7 +206,7 @@ func TestMissingComponentForVulnerability(t *testing.T) {
 
 func TestHighestSeverityRating(t *testing.T) {
 	ratings := []cdx.VulnerabilityRating{{Severity: "low"}, {Severity: "medium"}, {Severity: "critical"}, {Severity: "unknown"}, {Severity: "blah blah"}}
-	rating := highestVulnerability(ratings)
+	rating := HighestVulnerability(ratings)
 	if rating.Severity != "critical" {
 		t.Fatalf("want: %s got: %s", "critical", rating.Severity)
 	}

@@ -27,7 +27,7 @@ const ConfigFieldName = "cyclonedx"
 // ScanReport data model
 type ScanReport cdx.BOM
 
-var orderedSeverities = []string{"Critical", "High", "Medium", "Low", "Info", "None", "Unknown"}
+var OrderedSeverities = []string{"Critical", "High", "Medium", "Low", "Info", "None", "Unknown"}
 
 // String pretty formatted table
 func (r ScanReport) String() string {
@@ -55,7 +55,7 @@ func (r ScanReport) String() string {
 	severities := make(map[string]int)
 
 	for _, vul := range *r.Vulnerabilities {
-		severity := string(highestVulnerability(*vul.Ratings).Severity)
+		severity := string(HighestVulnerability(*vul.Ratings).Severity)
 		severity = strings.ToUpper(severity[:1]) + severity[1:]
 		severities[severity] = severities[severity] + 1
 
@@ -80,7 +80,7 @@ func (r ScanReport) String() string {
 		}
 		vulTable.AppendRow(severity, pkg, version, link)
 	}
-	vulTable.SetSort(0, format.NewCatagoricLess(orderedSeverities))
+	vulTable.SetSort(0, format.NewCatagoricLess(OrderedSeverities))
 	sort.Sort(vulTable)
 	if vulTable.Len() > 1 {
 		sb.WriteString("CycloneDX Vulnerabilities Report\n")
@@ -91,15 +91,15 @@ func (r ScanReport) String() string {
 }
 
 func severityIndex(s string) int {
-	for index, value := range orderedSeverities {
+	for index, value := range OrderedSeverities {
 		if strings.EqualFold(value, s) {
 			return index
 		}
 	}
-	return len(orderedSeverities)
+	return len(OrderedSeverities)
 }
 
-func highestVulnerability(ratings []cdx.VulnerabilityRating) cdx.VulnerabilityRating {
+func HighestVulnerability(ratings []cdx.VulnerabilityRating) cdx.VulnerabilityRating {
 	sort.Slice(ratings, func(i, j int) bool {
 		iIndex, jIndex := severityIndex(string(ratings[i].Severity)), severityIndex(string(ratings[j].Severity))
 		return iIndex < jIndex
@@ -198,7 +198,7 @@ func ThresholdRule(vuls []cdx.Vulnerability, config Config) error {
 	}
 
 	for _, vul := range vuls {
-		severity := strings.ToLower(string(highestVulnerability(*vul.Ratings).Severity))
+		severity := strings.ToLower(string(HighestVulnerability(*vul.Ratings).Severity))
 		severity = strings.ToUpper(severity[:1]) + severity[1:]
 		found[severity]++
 	}
