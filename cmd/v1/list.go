@@ -20,7 +20,8 @@ func newListCommand() *cobra.Command {
 
 	cmd.Aliases = []string{"ls", "print"}
 
-	cmd.Flags().StringP("input-type", "i", "", "the input filetype if using STDIN [grype|semgrep|gitleaks|syft]")
+	cmd.Flags().StringP("input-type", "i", "", "the input filetype if using STDIN [grype|semgrep|gitleaks|syft|bundle]")
+	cmd.Flags().BoolP("all", "a", false, "list will EPSS scores and KEV Catalog check")
 
 	return cmd
 }
