@@ -52,7 +52,10 @@ func NewGatecheckCommand() *cobra.Command {
 	viper.BindEnv("cli.verbose", "GATECHECK_CLI_VERBOSE")
 	viper.BindEnv("cli.silent", "GATECHECK_CLI_SILENT")
 
-	cmd.AddCommand(versionCmd, newConfigCommand(), newListCommand(), newBundleCommand())
+	// Gatecheck config
+	viper.BindEnv("config.grype.critical", "GATECHECK_CONFIG_GRYPE_CRITICAL")
+
+	cmd.AddCommand(versionCmd, newConfigCommand(), newListCommand(), newBundleCommand(), NewValidateCommand())
 	return cmd
 }
 
