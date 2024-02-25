@@ -25,7 +25,7 @@ func newListCommand() *cobra.Command {
 	cmd.Flags().StringP("input-type", "i", "", "the input filetype if using STDIN [grype|semgrep|gitleaks|syft|bundle]")
 	cmd.Flags().BoolP("all", "a", false, "list will EPSS scores and KEV Catalog check")
 
-	viper.BindEnv("epss-url", "GATECHECK_EPSS_URL")
+	viper.BindEnv("api.epss-url", "GATECHECK_EPSS_URL")
 
 	return cmd
 }
@@ -40,7 +40,7 @@ func runList(cmd *cobra.Command, args []string) error {
 
 	inputType, _ := cmd.Flags().GetString("input-type")
 	listAll, err := cmd.Flags().GetBool("all")
-	epssURL := viper.GetString("epss-url")
+	epssURL := viper.GetString("api.epss-url")
 
 	src, err := fileOrStdin(filename, cmd)
 	if err != nil {

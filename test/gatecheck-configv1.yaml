@@ -1,0 +1,31 @@
+version: v1
+metadata:
+  tags:
+    - auto generated from CLI
+grype:
+  severityLimit:
+    critical:
+      enabled: false
+      limit: 0
+    high:
+      enabled: false
+      limit: 0
+    medium:
+      enabled: false
+      limit: 0
+    low:
+      enabled: false
+      limit: 0
+  epssLimit:
+    enabled: false
+    score: 0
+  kevLimit: false
+  cveLimit:
+    enabled: false
+    cves: []
+  epssRiskAcceptance:
+    enabled: false
+    score: 0
+  cveRiskAcceptance:
+    enabled: false
+    cves: []

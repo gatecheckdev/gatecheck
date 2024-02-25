@@ -5,56 +5,124 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/gatecheckdev/gatecheck/pkg/artifacts/cyclonedx"
-	"github.com/gatecheckdev/gatecheck/pkg/artifacts/gitleaks"
-	"github.com/gatecheckdev/gatecheck/pkg/artifacts/grype"
-	"github.com/gatecheckdev/gatecheck/pkg/artifacts/semgrep"
 	"github.com/pelletier/go-toml/v2"
 	"gopkg.in/yaml.v3"
 )
 
-func defaultConfig() map[string]any {
-	return map[string]any{
-		grype.ConfigFieldName: grype.Config{
-			AllowList:          []grype.ListItem{{ID: "example allow id", Reason: "example reason"}},
-			DenyList:           []grype.ListItem{{ID: "example deny id", Reason: "example reason"}},
-			EPSSAllowThreshold: 1,
-			EPSSDenyThreshold:  1,
-			Critical:           -1,
-			High:               -1,
-			Medium:             -1,
-			Low:                -1,
-			Negligible:         -1,
-			Unknown:            -1,
+// Config is used to set limits and allowances during validation
+//
+// The report can be encoded/decoded into json, yaml, or toml
+// Metadata fields are intended for arbitrary data and shouldn't
+// conflict with rule validation
+type Config struct {
+	Version  string         `json:"version" yaml:"version" toml:"version" mapstructure:"version"`
+	Metadata configMetadata `json:"metadata" yaml:"metadata" toml:"metadata"`
+	Grype    reportWithCVEs `json:"grype" yaml:"grype" toml:"grype"`
+}
+
+type configMetadata struct {
+	Tags []string `json:"tags" yaml:"tags" toml:"tags"`
+}
+
+type reportWithCVEs struct {
+	SeverityLimit      configServerityLimit     `json:"severityLimit" yaml:"severityLimit" toml:"severityLimit"`
+	EPSSLimit          configEPSSLimit          `json:"epssLimit" yaml:"epssLimit" toml:"epssLimit"`
+	KEVLimitEnabled    bool                     `json:"kevLimit" yaml:"kevLimit" toml:"kevLimit"`
+	CVELimit           configCVELimit           `json:"cveLimit" yaml:"cveLimit" toml:"cveLimit"`
+	EPSSRiskAcceptance configEPSSRiskAcceptance `json:"epssRiskAcceptance" yaml:"epssRiskAcceptance" toml:"epssRiskAcceptance"`
+	CVERiskAcceptance  configCVERiskAcceptance  `json:"cveRiskAcceptance" yaml:"cveRiskAcceptance" toml:"cveRiskAcceptance"`
+}
+
+type configEPSSRiskAcceptance struct {
+	Enabled bool    `json:"enabled" yaml:"enabled" toml:"enabled"`
+	Score   float64 `json:"score" yaml:"score" toml:"score"`
+}
+type configCVERiskAcceptance struct {
+	Enabled bool        `json:"enabled" yaml:"enabled" toml:"enabled"`
+	CVEs    []configCVE `json:"cves" yaml:"cves" toml:"cves"`
+}
+type configServerityLimit struct {
+	Critical limit `json:"critical" yaml:"critical" toml:"critical"`
+	High     limit `json:"high" yaml:"high" toml:"high"`
+	Medium   limit `json:"medium" yaml:"medium" toml:"medium"`
+	Low      limit `json:"low" yaml:"low" toml:"low"`
+}
+
+type configEPSSLimit struct {
+	Enabled bool    `json:"enabled" yaml:"enabled" toml:"enabled"`
+	Score   float64 `json:"score" yaml:"score" toml:"score"`
+}
+
+type configCVELimit struct {
+	Enabled bool        `json:"enabled" yaml:"enabled" toml:"enabled"`
+	CVEs    []configCVE `json:"cves" yaml:"cves" toml:"cves"`
+}
+
+type configCVE struct {
+	ID       string `json:"id" yaml:"id" toml:"id"`
+	Metadata struct {
+		Tags []string `json:"tags" yaml:"tags" toml:"tags"`
+	}
+}
+
+type limit struct {
+	Enabled bool `json:"enabled" yaml:"enabled" toml:"enabled"`
+	Limit   uint `json:"limit" yaml:"limit" toml:"limit"`
+}
+
+func NewDefaultConfig() *Config {
+	return &Config{
+		Version: "v1",
+		Metadata: configMetadata{
+			Tags: []string{},
 		},
-		semgrep.ConfigFieldName: semgrep.Config{
-			Info:    -1,
-			Warning: -1,
-			Error:   -1,
-		},
-		gitleaks.ConfigFieldName: gitleaks.Config{
-			SecretsAllowed: true,
-		},
-		cyclonedx.ConfigFieldName: cyclonedx.Config{
-			AllowList: []cyclonedx.ListItem{{ID: "example allow id", Reason: "example reason"}},
-			DenyList:  []cyclonedx.ListItem{{ID: "example deny id", Reason: "example reason"}},
-			Required:  false,
-			Critical:  -1,
-			High:      -1,
-			Medium:    -1,
-			Low:       -1,
-			Info:      -1,
-			None:      -1,
-			Unknown:   -1,
+		Grype: reportWithCVEs{
+			SeverityLimit: configServerityLimit{
+				Critical: limit{
+					Enabled: false,
+					Limit:   0,
+				},
+				High: limit{
+					Enabled: false,
+					Limit:   0,
+				},
+				Medium: limit{
+					Enabled: false,
+					Limit:   0,
+				},
+				Low: limit{
+					Enabled: false,
+					Limit:   0,
+				},
+			},
+			EPSSLimit: configEPSSLimit{
+				Enabled: false,
+				Score:   0,
+			},
+			KEVLimitEnabled: false,
+			CVELimit: configCVELimit{
+				Enabled: false,
+				CVEs:    make([]configCVE, 0),
+			},
+			EPSSRiskAcceptance: configEPSSRiskAcceptance{
+				Enabled: false,
+				Score:   0,
+			},
+			CVERiskAcceptance: configCVERiskAcceptance{
+				Enabled: false,
+				CVEs:    make([]configCVE, 0),
+			},
 		},
 	}
 }
 
 func WriteDefaultConfig(w io.Writer, format string) error {
-	return EncodeConfigTo(w, defaultConfig(), format)
+	config := NewDefaultConfig()
+	config.Metadata.Tags = append(config.Metadata.Tags, "auto generated from CLI")
+	return EncodeConfigTo(w, config, format)
 }
 
-func EncodeConfigTo(w io.Writer, config map[string]any, format string) error {
+func EncodeConfigTo(w io.Writer, config *Config, format string) error {
 	var encoder interface {
 		Encode(any) error
 	}

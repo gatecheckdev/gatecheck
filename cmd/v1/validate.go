@@ -1,12 +1,7 @@
 package cmd
 
 import (
-	"log/slog"
-	"os"
-
-	"github.com/gatecheckdev/gatecheck/pkg/gatecheck"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 func NewValidateCommand() *cobra.Command {
@@ -26,21 +21,21 @@ func NewValidateCommand() *cobra.Command {
 //
 // shell: gatecheck validate
 func runValidate(cmd *cobra.Command, args []string) error {
-	configFilename, _ := cmd.Flags().GetString("config")
-	targetFilename := args[0]
+	// configFilename, _ := cmd.Flags().GetString("config")
+	// targetFilename := args[0]
 
-	slog.Debug("read in config", "filename", configFilename, "target_filename", targetFilename)
+	// slog.Debug("read in config", "filename", configFilename, "target_filename", targetFilename)
 
-	config, err := ConfigFromViperFileOrStdin(viper.GetViper(), configFilename, "", cmd)
-	if err != nil {
-		return err
-	}
+	// config, err := ConfigFromViperFileOrStdin(viper.GetViper(), configFilename, "", cmd)
+	// if err != nil {
+	// 	return err
+	// }
 
-	slog.Debug("open target file")
-	targetFile, err := os.Open(targetFilename)
-	if err != nil {
-		return err
-	}
-
-	return gatecheck.Validate(config, targetFile, targetFilename)
+	// slog.Debug("open target file")
+	// targetFile, err := os.Open(targetFilename)
+	// if err != nil {
+	// 	return err
+	// }
+	return nil
+	// return gatecheck.Validate(config, targetFile, targetFilename)
 }
