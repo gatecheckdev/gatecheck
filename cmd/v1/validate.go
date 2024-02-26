@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"log/slog"
+	"net/http"
 	"os"
 
 	"github.com/gatecheckdev/gatecheck/pkg/gatecheck"
@@ -18,6 +19,8 @@ func NewValidateCommand() *cobra.Command {
 	}
 
 	cmd.Flags().StringP("config", "f", "", "threshold configuration file")
+	_ = viper.BindEnv("api.epss-url", "GATECHECK_EPSS_URL")
+	_ = viper.BindEnv("api.kev-url", "GATECHECK_KEV_URL")
 
 	return cmd
 }
@@ -28,6 +31,8 @@ func NewValidateCommand() *cobra.Command {
 func runValidate(cmd *cobra.Command, args []string) error {
 	configFilename, _ := cmd.Flags().GetString("config")
 	targetFilename := args[0]
+	epssURL := viper.GetString("api.epss-url")
+	kevURL := viper.GetString("api.kev-url")
 
 	slog.Debug("read in config", "filename", configFilename, "target_filename", targetFilename)
 
@@ -46,5 +51,17 @@ func runValidate(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	return gatecheck.Validate(config, targetFile, targetFilename)
+	epssOptions := gatecheck.WithEPSSDataFetch(http.DefaultClient, epssURL)
+	kevOptions := gatecheck.WithKEVDataFetch(http.DefaultClient, kevURL)
+
+	switch {
+	case epssURL != "" && kevURL != "":
+		return gatecheck.Validate(config, targetFile, targetFilename, epssOptions, kevOptions)
+	case epssURL != "":
+		return gatecheck.Validate(config, targetFile, targetFilename, epssOptions)
+	case kevURL != "":
+		return gatecheck.Validate(config, targetFile, targetFilename, kevOptions)
+	default:
+		return gatecheck.Validate(config, targetFile, targetFilename)
+	}
 }

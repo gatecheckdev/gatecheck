@@ -5,8 +5,8 @@ metadata:
 grype:
   severityLimit:
     critical:
-      enabled: false
-      limit: 0
+      enabled: true
+      limit: 8
     high:
       enabled: false
       limit: 0

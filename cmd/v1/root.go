@@ -46,11 +46,13 @@ func NewGatecheckCommand() *cobra.Command {
 	cmd.PersistentFlags().BoolP("silent", "s", false, "log level set to only warnings & errors")
 	cmd.MarkFlagsMutuallyExclusive("verbose", "silent")
 
-	viper.BindPFlag("cli.verbose", cmd.PersistentFlags().Lookup("verbose"))
-	viper.BindPFlag("cli.silent", cmd.PersistentFlags().Lookup("silent"))
+	_ = viper.BindPFlag("cli.verbose", cmd.PersistentFlags().Lookup("verbose"))
+	_ = viper.BindPFlag("cli.silent", cmd.PersistentFlags().Lookup("silent"))
 
-	viper.BindEnv("cli.verbose", "GATECHECK_CLI_VERBOSE")
-	viper.BindEnv("cli.silent", "GATECHECK_CLI_SILENT")
+	_ = viper.BindEnv("cli.verbose", "GATECHECK_CLI_VERBOSE")
+	_ = viper.BindEnv("cli.silent", "GATECHECK_CLI_SILENT")
+
+	cmd.SilenceUsage = true
 
 	cmd.AddCommand(versionCmd, newConfigCommand(), newListCommand(), newBundleCommand(), NewValidateCommand())
 	return cmd

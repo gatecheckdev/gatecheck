@@ -26,6 +26,17 @@ type Options struct {
 	kevURL    string
 }
 
+func DefaultOptions() *Options {
+	epssDefault := epss.DefaultFetchOptions()
+	kevDefault := kev.DefaultFetchOptions()
+	return &Options{
+		epssClient: epssDefault.Client,
+		epssURL:    epssDefault.URL,
+		kevClient:  kevDefault.Client,
+		kevURL:     kevDefault.URL,
+	}
+}
+
 type optionFunc func(*Options)
 
 func WithEPSSDataFetch(client *http.Client, url string) optionFunc {
@@ -67,14 +78,15 @@ func Validate(config *Config, targetSrc io.Reader, targetfilename string, option
 
 		if config.Grype.KEVLimitEnabled {
 			catalog = kev.NewCatalog()
-			err := kev.FetchData(catalog, kev.FetchOptions{Client: options.kevClient, URL: options.kevURL})
+			err := kev.FetchData(catalog, kev.WithClient(options.kevClient), kev.WithURL(options.kevURL))
 			if err != nil {
 				return err
 			}
 		}
 
 		if config.Grype.EPSSLimit.Enabled {
-			err := epss.FetchData(epssData, epss.FetchOptions{Client: options.epssClient, URL: options.epssURL})
+			err := epss.FetchData(epssData, epss.WithClient(options.epssClient), epss.WithURL(options.epssURL))
+
 			if err != nil {
 				return err
 			}
@@ -148,8 +160,9 @@ func ruleGrypeLimit(config *Config, report *artifacts.GrypeReportMin) bool {
 		if matchCount > int(configLimit.Limit) {
 			slog.Error("grype severity limit exceeded", "severity", severity, "report", matchCount, "limit", configLimit.Limit)
 			validationPass = false
+			continue
 		}
-		slog.Debug("severity limit valid", "artifact", "grype", "severity", severity, "reported", matchCount)
+		slog.Info("severity limit valid", "artifact", "grype", "severity", severity, "reported", matchCount)
 	}
 
 	return validationPass

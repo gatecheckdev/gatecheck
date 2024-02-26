@@ -78,6 +78,7 @@ func runV1() {
 
 	command := cmdV1.NewGatecheckCommand()
 
+	slog.Warn("Gatecheck CLI v1 is enabled which is currently unstable")
 	err := command.Execute()
 	if err != nil {
 		os.Exit(1)

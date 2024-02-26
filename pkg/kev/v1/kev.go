@@ -9,6 +9,8 @@ import (
 	"github.com/sagikazarmark/slog-shim"
 )
 
+const DefaultBaseURL = "https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json"
+
 // Catalog data model for KEVs
 type Catalog struct {
 	Title           string          `json:"title"`
@@ -42,7 +44,33 @@ type FetchOptions struct {
 	URL    string
 }
 
-func FetchData(catalog *Catalog, options FetchOptions) error {
+type fetchOptionFunc func(*FetchOptions)
+
+func WithURL(url string) fetchOptionFunc {
+	return func(o *FetchOptions) {
+		o.URL = url
+	}
+}
+
+func WithClient(client *http.Client) fetchOptionFunc {
+	return func(o *FetchOptions) {
+		o.Client = client
+	}
+}
+
+func DefaultFetchOptions() *FetchOptions {
+	return &FetchOptions{
+		Client: http.DefaultClient,
+		URL:    DefaultBaseURL,
+	}
+}
+
+func FetchData(catalog *Catalog, optionFuncs ...fetchOptionFunc) error {
+	options := DefaultFetchOptions()
+	for _, optionFunc := range optionFuncs {
+		optionFunc(options)
+	}
+
 	logger := slog.Default().With("method", "GET", "url", options.URL)
 
 	defer func(started time.Time) {

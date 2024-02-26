@@ -68,7 +68,7 @@ func ListAll(dst io.Writer, src io.Reader, inputFilename string, client *http.Cl
 	if epssURL != "" {
 		fetchOptions.URL = epssURL
 	}
-	if err := epss.FetchData(epssData, fetchOptions); err != nil {
+	if err := epss.FetchData(epssData); err != nil {
 		return err
 	}
 
