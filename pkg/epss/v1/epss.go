@@ -73,10 +73,10 @@ func DefaultFetchOptions() FetchOptions {
 func FetchData(data *Data, options FetchOptions) error {
 	logger := slog.Default().With("method", "GET", "url", options.URL)
 	defer func(started time.Time) {
-		logger.Debug("csv fetch done", "elapsed", time.Since(started))
+		logger.Debug("epss csv fetch done", "elapsed", time.Since(started))
 	}(time.Now())
 
-	logger.Debug("request data from API")
+	logger.Debug("request epss data from api")
 	res, err := options.Client.Get(options.URL)
 	if err != nil {
 		logger.Error("epss api request failed during fetch data", "error", err)
