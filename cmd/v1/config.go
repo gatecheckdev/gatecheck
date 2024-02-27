@@ -48,16 +48,13 @@ func runConfigInfo(cmd *cobra.Command, _ []string) error {
 	slog.Debug("config info", "config_filename", configFilename)
 
 	if configFilename == "" {
-		err := LoadConfig(viper.GetViper(), gatecheck.NewDefaultConfig())
-		if err != nil {
-			return err
-		}
-		return WriteViperValues(cmd.OutOrStdout(), viper.GetViper())
+		return WriteConfigInfo(cmd.OutOrStdout(), viper.GetViper(), gatecheck.NewDefaultConfig())
 	}
 
-	_ = LoadConfigFromFile(viper.GetViper(), gatecheck.NewDefaultConfig(), configFilename)
+	config := new(gatecheck.Config)
+	_ = LoadConfigFromFile(config, configFilename)
 
-	return WriteViperValues(cmd.OutOrStdout(), viper.GetViper())
+	return WriteConfigInfo(cmd.OutOrStdout(), viper.GetViper(), config)
 }
 
 func runConfigConvert(cmd *cobra.Command, _ []string) error {
@@ -73,8 +70,8 @@ func runConfigConvert(cmd *cobra.Command, _ []string) error {
 	inputFilename, _ := cmd.Flags().GetString("input-file")
 	inputFiletype, _ := cmd.Flags().GetString("input-type")
 
-	config := gatecheck.NewDefaultConfig()
-	err = LoadConfigFromFileOrReader(viper.GetViper(), config, inputFilename, cmd.InOrStdin(), inputFiletype)
+	config := new(gatecheck.Config)
+	err = LoadConfigFromFileOrReader(config, inputFilename, cmd.InOrStdin(), inputFiletype)
 	if err != nil {
 		return err
 	}

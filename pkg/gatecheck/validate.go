@@ -150,7 +150,9 @@ func ruleGrypeLimit(config *Config, report *artifacts.GrypeReportMin) bool {
 		"low":      config.Grype.SeverityLimit.Low,
 	}
 
-	for severity, configLimit := range limits {
+	for _, severity := range []string{"critical", "high", "medium", "low"} {
+
+		configLimit := limits[severity]
 		matches := report.SelectBySeverity(severity)
 		matchCount := len(matches)
 		if !configLimit.Enabled {
@@ -162,7 +164,7 @@ func ruleGrypeLimit(config *Config, report *artifacts.GrypeReportMin) bool {
 			validationPass = false
 			continue
 		}
-		slog.Info("severity limit valid", "artifact", "grype", "severity", severity, "reported", matchCount)
+		slog.Info("severity limit valid", "artifact", "grype", "severity", severity, "reported", matchCount, "limit", configLimit.Limit)
 	}
 
 	return validationPass

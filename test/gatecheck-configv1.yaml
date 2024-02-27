@@ -5,8 +5,8 @@ metadata:
 grype:
   severityLimit:
     critical:
-      enabled: true
-      limit: 8
+      enabled: false
+      limit: 0
     high:
       enabled: false
       limit: 0
@@ -19,7 +19,7 @@ grype:
   epssLimit:
     enabled: false
     score: 0
-  kevLimit: false
+  kevLimitEnabled: true
   cveLimit:
     enabled: false
     cves: []

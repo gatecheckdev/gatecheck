@@ -1,8 +1,6 @@
 package cmd
 
 import (
-	"bytes"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -63,76 +61,60 @@ func fileOrStdin(filename string, cmd *cobra.Command) (io.Reader, error) {
 // LoadConfigFromFileOrReader will either load the config object with values after opening file or reading in from src
 //
 // Either a filename or a src and filetype must be defined or this function will error
-func LoadConfigFromFileOrReader(v *viper.Viper, config *gatecheck.Config, filename string, src io.Reader, filetype string) error {
+func LoadConfigFromFileOrReader(config *gatecheck.Config, filename string, src io.Reader, filetype string) error {
 	slog.Debug("load config from file or reader", "filename", filename, "filetype", filetype)
 	switch {
 	case filename != "":
-		return LoadConfigFromFile(v, config, filename)
+		return LoadConfigFromFile(config, filename)
 	case filetype != "":
-		return LoadConfigFromReader(v, config, src, filetype)
+		return LoadConfigFromReader(config, src, filetype)
 	default:
 		return errors.New("No filetype or filename specified, cannot load config")
 	}
 }
 
 // LoadConfigFromReader loads config object with values from src. filetype is mandatory
-func LoadConfigFromReader(v *viper.Viper, config *gatecheck.Config, src io.Reader, filetype string) error {
+func LoadConfigFromReader(config *gatecheck.Config, src io.Reader, filetype string) error {
 	slog.Debug("load config from reader", "filetype", filetype)
+	v := viper.New()
 	v.SetConfigType(filetype)
 	if err := v.ReadConfig(src); err != nil {
 		return err
 	}
-	err := LoadConfig(v, config)
 
-	return err
-}
-
-// LoadConfigFromFile loads config object with values after reading the file
-func LoadConfigFromFile(v *viper.Viper, config *gatecheck.Config, filename string) error {
-	slog.Debug("load config from file", "filename", filename)
-	v.SetConfigFile(filename)
-	if err := v.ReadInConfig(); err != nil {
-		return err
-	}
-
-	err := LoadConfig(v, config)
-
-	return err
-}
-
-// LoadConfig unmarshals the viper settings into a given config object
-func LoadConfig(v *viper.Viper, config *gatecheck.Config) error {
-	slog.Debug("load config, unmarshal config object into viper")
 	if err := v.Unmarshal(config); err != nil {
 		return err
-	}
-
-	configViper := viper.New()
-	buf := new(bytes.Buffer)
-
-	_ = json.NewEncoder(buf).Encode(config)
-	configViper.SetConfigType("json")
-	if err := configViper.ReadConfig(buf); err != nil {
-		return err
-	}
-
-	for key, value := range configViper.AllSettings() {
-		v.Set("config."+key, value)
 	}
 
 	return nil
 }
 
-// WriteViperValues as a human readable display table
-func WriteViperValues(w io.Writer, v *viper.Viper) error {
-	table := format.NewTable()
+// LoadConfigFromFile loads config object with values after reading the file
+func LoadConfigFromFile(config *gatecheck.Config, filename string) error {
+	slog.Debug("load config from file", "filename", filename)
+	v := viper.New()
+	v.SetConfigFile(filename)
+	if err := v.ReadInConfig(); err != nil {
+		return err
+	}
+	fmt.Println("viper all settings ->", v.AllSettings())
+	if err := v.UnmarshalExact(config); err != nil {
+		return err
+	}
 
+	return nil
+}
+
+// WriteConfigInfo as a human readable display table
+func WriteConfigInfo(w io.Writer, v *viper.Viper, config *gatecheck.Config) error {
+	table := format.NewTable()
 	table.AppendRow("key", "Value")
 
 	for _, key := range viper.AllKeys() {
 		table.AppendRow(key, fmt.Sprintf("%v", viper.Get(key)))
 	}
 
-	_, err := format.NewTableWriter(table).WriteTo(w)
-	return err
+	_, infoErr := format.NewTableWriter(table).WriteTo(w)
+	_, configErr := fmt.Fprintln(w, config.String())
+	return errors.Join(infoErr, configErr)
 }

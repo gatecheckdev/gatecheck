@@ -45,7 +45,6 @@ func (r CyclonedxReportMin) HighestSeverity(vulnerabilityIndex int) string {
 }
 
 func (r CyclonedxReportMin) AffectedPackages(vulnerabilityIndex int) string {
-
 	refs := []string{}
 
 	for _, affected := range r.Vulnerabilities[vulnerabilityIndex].Affects {

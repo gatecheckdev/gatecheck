@@ -1,11 +1,14 @@
 package gatecheck
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
 
+	"github.com/gatecheckdev/gatecheck/pkg/format"
 	"github.com/pelletier/go-toml/v2"
+	"github.com/spf13/viper"
 	"gopkg.in/yaml.v3"
 )
 
@@ -20,6 +23,23 @@ type Config struct {
 	Grype    reportWithCVEs `json:"grype" yaml:"grype" toml:"grype"`
 }
 
+func (c *Config) String() string {
+	buf := new(bytes.Buffer)
+	_ = json.NewEncoder(buf).Encode(c)
+
+	v := viper.New()
+	v.SetConfigType("json")
+	_ = v.ReadConfig(buf)
+	table := format.NewTable()
+	table.AppendRow("config key", "value")
+
+	for _, key := range v.AllKeys() {
+		table.AppendRow(key, fmt.Sprintf("%v", v.Get(key)))
+	}
+	fmt.Printf("%v\n", c.Grype)
+	return format.NewTableWriter(table).String()
+}
+
 type configMetadata struct {
 	Tags []string `json:"tags" yaml:"tags" toml:"tags"`
 }
@@ -27,7 +47,7 @@ type configMetadata struct {
 type reportWithCVEs struct {
 	SeverityLimit      configServerityLimit     `json:"severityLimit" yaml:"severityLimit" toml:"severityLimit"`
 	EPSSLimit          configEPSSLimit          `json:"epssLimit" yaml:"epssLimit" toml:"epssLimit"`
-	KEVLimitEnabled    bool                     `json:"kevLimit" yaml:"kevLimit" toml:"kevLimit"`
+	KEVLimitEnabled    bool                     `json:"kevLimitEnabled" yaml:"kevLimitEnabled" toml:"kevLimitEnabled"`
 	CVELimit           configCVELimit           `json:"cveLimit" yaml:"cveLimit" toml:"cveLimit"`
 	EPSSRiskAcceptance configEPSSRiskAcceptance `json:"epssRiskAcceptance" yaml:"epssRiskAcceptance" toml:"epssRiskAcceptance"`
 	CVERiskAcceptance  configCVERiskAcceptance  `json:"cveRiskAcceptance" yaml:"cveRiskAcceptance" toml:"cveRiskAcceptance"`

@@ -38,7 +38,7 @@ func runValidate(cmd *cobra.Command, args []string) error {
 
 	config := gatecheck.NewDefaultConfig()
 	if configFilename != "" {
-		err := LoadConfigFromFile(viper.GetViper(), config, configFilename)
+		err := LoadConfigFromFile(config, configFilename)
 
 		if err != nil {
 			return err

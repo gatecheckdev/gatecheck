@@ -4,7 +4,7 @@ import (
 	"io"
 
 	"github.com/gatecheckdev/gatecheck/pkg/archive"
-	"github.com/sagikazarmark/slog-shim"
+	"log/slog"
 )
 
 // CreateBundle create a new bundle with a file
