@@ -2,6 +2,7 @@ package epss
 
 import (
 	"bufio"
+	"bytes"
 	"compress/gzip"
 	"errors"
 	"fmt"
@@ -12,6 +13,8 @@ import (
 	"time"
 
 	"log/slog"
+
+	"github.com/dustin/go-humanize"
 )
 
 const dataModel = "v2023.03.01"
@@ -83,8 +86,7 @@ func DefaultFetchOptions() *FetchOptions {
 	}
 }
 
-// FetchData do a GET request and gunzip on the CSV
-func FetchData(data *Data, optionFuncs ...fetchOptionFunc) error {
+func DownloadData(w io.Writer, optionFuncs ...fetchOptionFunc) error {
 	options := DefaultFetchOptions()
 	for _, optionFunc := range optionFuncs {
 		optionFunc(options)
@@ -97,11 +99,12 @@ func FetchData(data *Data, optionFuncs ...fetchOptionFunc) error {
 
 	logger.Debug("request epss data from api")
 	res, err := options.Client.Get(options.URL)
-	if err != nil {
+
+	switch {
+	case err != nil:
 		logger.Error("epss api request failed during fetch data", "error", err)
 		return errors.New("failed to get EPSS Scores. see log for details")
-	}
-	if res.StatusCode != http.StatusOK {
+	case res.StatusCode != http.StatusOK:
 		logger.Error("epss api bad status code", "res_status", res.Status)
 		return errors.New("failed to get EPSS Scores. see log for details")
 	}
@@ -112,7 +115,27 @@ func FetchData(data *Data, optionFuncs ...fetchOptionFunc) error {
 		return errors.New("failed to parse EPSS Scores. see log for details")
 	}
 
-	return parseCSVData(gunzipReader, data)
+	n, err := io.Copy(w, gunzipReader)
+
+	if err != nil {
+		logger.Error("io copy to writer from gzip reader", "error", err)
+		return errors.New("failed to get EPSS Scores. see log for details")
+	}
+
+	size := humanize.Bytes(uint64(n))
+
+	slog.Debug("successfully downloaded and decompressed epss data", "decompressed_size", size)
+	return nil
+}
+
+// FetchData do a GET request and gunzip on the CSV
+func FetchData(data *Data, optionFuncs ...fetchOptionFunc) error {
+	buf := new(bytes.Buffer)
+	if err := DownloadData(buf, optionFuncs...); err != nil {
+		return err
+	}
+
+	return parseCSVData(buf, data)
 }
 
 // parseCSVData custom CSV parsing function

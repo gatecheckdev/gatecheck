@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"log/slog"
-	"net/http"
 	"os"
 
 	"github.com/gatecheckdev/gatecheck/pkg/gatecheck"
@@ -10,7 +9,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-func NewValidateCommand() *cobra.Command {
+func newValidateCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "validate [FILE]",
 		Short: "compare vulnerabilities to configured thresholds",
@@ -45,23 +44,17 @@ func runValidate(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	slog.Debug("open target file")
+	slog.Debug("open target file", "filename", targetFilename)
 	targetFile, err := os.Open(targetFilename)
 	if err != nil {
 		return err
 	}
 
-	epssOptions := gatecheck.WithEPSSDataFetch(http.DefaultClient, epssURL)
-	kevOptions := gatecheck.WithKEVDataFetch(http.DefaultClient, kevURL)
-
-	switch {
-	case epssURL != "" && kevURL != "":
-		return gatecheck.Validate(config, targetFile, targetFilename, epssOptions, kevOptions)
-	case epssURL != "":
-		return gatecheck.Validate(config, targetFile, targetFilename, epssOptions)
-	case kevURL != "":
-		return gatecheck.Validate(config, targetFile, targetFilename, kevOptions)
-	default:
-		return gatecheck.Validate(config, targetFile, targetFilename)
-	}
+	return gatecheck.Validate(
+		config,
+		targetFile,
+		targetFilename,
+		gatecheck.WithEPSSURL(epssURL),
+		gatecheck.WithKEVURL(kevURL),
+	)
 }

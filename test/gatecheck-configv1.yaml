@@ -18,8 +18,8 @@ grype:
       limit: 0
   epssLimit:
     enabled: false
-    score: 0
-  kevLimitEnabled: true
+    score: 0.02
+  kevLimitEnabled: false
   cveLimit:
     enabled: false
     cves: []

@@ -97,7 +97,6 @@ func LoadConfigFromFile(config *gatecheck.Config, filename string) error {
 	if err := v.ReadInConfig(); err != nil {
 		return err
 	}
-	fmt.Println("viper all settings ->", v.AllSettings())
 	if err := v.UnmarshalExact(config); err != nil {
 		return err
 	}

@@ -54,7 +54,7 @@ func NewGatecheckCommand() *cobra.Command {
 
 	cmd.SilenceUsage = true
 
-	cmd.AddCommand(versionCmd, newConfigCommand(), newListCommand(), newBundleCommand(), NewValidateCommand())
+	cmd.AddCommand(versionCmd, newConfigCommand(), newListCommand(), newBundleCommand(), newValidateCommand(), newDownloadCommand())
 	return cmd
 }
 

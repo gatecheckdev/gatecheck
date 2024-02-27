@@ -1,11 +1,14 @@
 package kev
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
+	"io"
 	"net/http"
 	"time"
 
+	"github.com/dustin/go-humanize"
 	"github.com/sagikazarmark/slog-shim"
 )
 
@@ -65,12 +68,11 @@ func DefaultFetchOptions() *FetchOptions {
 	}
 }
 
-func FetchData(catalog *Catalog, optionFuncs ...fetchOptionFunc) error {
+func DownloadData(w io.Writer, optionFuncs ...fetchOptionFunc) error {
 	options := DefaultFetchOptions()
 	for _, optionFunc := range optionFuncs {
 		optionFunc(options)
 	}
-
 	logger := slog.Default().With("method", "GET", "url", options.URL)
 
 	defer func(started time.Time) {
@@ -89,8 +91,24 @@ func FetchData(catalog *Catalog, optionFuncs ...fetchOptionFunc) error {
 		return errors.New("failed to get KEV Catalog. see log for details")
 	}
 
-	if err := json.NewDecoder(res.Body).Decode(catalog); err != nil {
-		logger.Error("kev api response decoding failure", "error", err)
+	n, err := io.Copy(w, res.Body)
+	size := humanize.Bytes(uint64(n))
+	if err != nil {
+		logger.Error("io copy to writer from res body", "error", err)
+		return errors.New("failed to get EPSS Scores. see log for details")
+	}
+	slog.Debug("successfully downloaded and decompressed epss data", "decompressed_size", size)
+	return err
+}
+
+func FetchData(catalog *Catalog, optionFuncs ...fetchOptionFunc) error {
+	buf := new(bytes.Buffer)
+	if err := DownloadData(buf, optionFuncs...); err != nil {
+		return err
+	}
+
+	if err := json.NewDecoder(buf).Decode(catalog); err != nil {
+		slog.Error("kev api response decoding failure", "error", err)
 		return errors.New("failed to get KEV Catalog. see log for details")
 
 	}

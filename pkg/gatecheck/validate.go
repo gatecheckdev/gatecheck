@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
-	"net/http"
 	"slices"
 	"strings"
 
@@ -18,44 +17,9 @@ import (
 	"github.com/gatecheckdev/gatecheck/pkg/kev/v1"
 )
 
-type Options struct {
-	epssClient *http.Client
-	epssURL    string
-
-	kevClient *http.Client
-	kevURL    string
-}
-
-func DefaultOptions() *Options {
-	epssDefault := epss.DefaultFetchOptions()
-	kevDefault := kev.DefaultFetchOptions()
-	return &Options{
-		epssClient: epssDefault.Client,
-		epssURL:    epssDefault.URL,
-		kevClient:  kevDefault.Client,
-		kevURL:     kevDefault.URL,
-	}
-}
-
-type optionFunc func(*Options)
-
-func WithEPSSDataFetch(client *http.Client, url string) optionFunc {
-	return func(o *Options) {
-		o.epssClient = client
-		o.epssURL = url
-	}
-}
-
-func WithKEVDataFetch(client *http.Client, url string) optionFunc {
-	return func(o *Options) {
-		o.kevClient = client
-		o.epssURL = url
-	}
-}
-
 // Validate against config thresholds
 func Validate(config *Config, targetSrc io.Reader, targetfilename string, optionFuncs ...optionFunc) error {
-	options := new(Options)
+	options := defaultOptions()
 	for _, f := range optionFuncs {
 		f(options)
 	}
@@ -85,6 +49,7 @@ func Validate(config *Config, targetSrc io.Reader, targetfilename string, option
 		}
 
 		if config.Grype.EPSSLimit.Enabled {
+			epssData = new(epss.Data)
 			err := epss.FetchData(epssData, epss.WithClient(options.epssClient), epss.WithURL(options.epssURL))
 
 			if err != nil {
@@ -226,6 +191,8 @@ func ruleGrypeKEVLimit(config *Config, report *artifacts.GrypeReportMin, catalog
 			return false
 		}
 	}
+	slog.Info("kev limit validated, no cves in catalog",
+		"vulnerabilities", len(report.Matches), "kev_catalog_count", len(catalog.Vulnerabilities))
 	return true
 }
 
@@ -286,14 +253,14 @@ func ruleGrypeEPSSLimit(config *Config, report *artifacts.GrypeReportMin, data *
 				"cve_id", match.Vulnerability.ID,
 				"severity", match.Vulnerability.Severity,
 				"epss_score", epssCVE.EPSS,
-				"epss_risk_acceptance_score", config.Grype.EPSSRiskAcceptance.Score,
+				"epss_limit_score", config.Grype.EPSSLimit.Score,
 			)
 		}
 	}
 	if len(badCVEs) > 0 {
 		slog.Error("more than 0 cves with epss scores over limit",
 			"over_limit_cves", len(badCVEs),
-			"epss_risk_acceptance_score", config.Grype.EPSSRiskAcceptance.Score,
+			"epss_limit_score", config.Grype.EPSSLimit.Score,
 		)
 		return false
 	}
