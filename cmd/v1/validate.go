@@ -18,8 +18,6 @@ func newValidateCommand() *cobra.Command {
 	}
 
 	cmd.Flags().StringP("config", "f", "", "threshold configuration file")
-	_ = viper.BindEnv("api.epss-url", "GATECHECK_EPSS_URL")
-	_ = viper.BindEnv("api.kev-url", "GATECHECK_KEV_URL")
 
 	return cmd
 }

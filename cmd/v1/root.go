@@ -52,6 +52,9 @@ func NewGatecheckCommand() *cobra.Command {
 	_ = viper.BindEnv("cli.verbose", "GATECHECK_CLI_VERBOSE")
 	_ = viper.BindEnv("cli.silent", "GATECHECK_CLI_SILENT")
 
+	_ = viper.BindEnv("api.epss-url", "GATECHECK_EPSS_URL")
+	_ = viper.BindEnv("api.kev-url", "GATECHECK_KEV_URL")
+
 	cmd.SilenceUsage = true
 
 	cmd.AddCommand(versionCmd, newConfigCommand(), newListCommand(), newBundleCommand(), newValidateCommand(), newDownloadCommand())

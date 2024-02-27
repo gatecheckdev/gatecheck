@@ -16,9 +16,6 @@ func newDownloadCommand() *cobra.Command {
 	epssCmd := newBasicCommand("epss", "download epss data from FIRST API as csv to STDOUT", runDownloadEPSS)
 	kevCmd := newBasicCommand("kev", "download kev catalog from CISA as json to STDOUT", runDownloadKEV)
 
-	viper.BindEnv("api.epss-url", "GATECHECK_EPSS_URL")
-	viper.BindEnv("api.kev-url", "GATECHECK_KEV_URL")
-
 	cmd.AddCommand(epssCmd, kevCmd)
 	return cmd
 }

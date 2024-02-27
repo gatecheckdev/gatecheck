@@ -25,8 +25,6 @@ func newListCommand() *cobra.Command {
 	cmd.Flags().StringP("input-type", "i", "", "the input filetype if using STDIN [grype|semgrep|gitleaks|syft|bundle]")
 	cmd.Flags().BoolP("all", "a", false, "list will EPSS scores and KEV Catalog check")
 
-	viper.BindEnv("api.epss-url", "GATECHECK_EPSS_URL")
-
 	return cmd
 }
 
