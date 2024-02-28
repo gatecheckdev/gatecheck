@@ -116,6 +116,29 @@ func NewDefaultConfig() *Config {
 		Metadata: configMetadata{
 			Tags: []string{},
 		},
+		Semgrep: configSemgrepReport{
+			SeverityLimit: configSemgrepSeverityLimit{
+				Enabled: false,
+				Error: configLimit{
+					Enabled: false,
+					Limit:   0,
+				},
+				Warning: configLimit{
+					Enabled: false,
+					Limit:   0,
+				},
+				Info: configLimit{
+					Enabled: false,
+					Limit:   0,
+				},
+			},
+			ImpactRiskAcceptance: configSemgrepImpactRiskAcceptance{
+				Enabled: false,
+				High:    false,
+				Medium:  false,
+				Low:     false,
+			},
+		},
 		Grype: reportWithCVEs{
 			SeverityLimit: configServerityLimit{
 				Critical: configLimit{

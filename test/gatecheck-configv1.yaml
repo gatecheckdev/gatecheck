@@ -18,7 +18,7 @@ grype:
       limit: 0
   epssLimit:
     enabled: false
-    score: 0.02
+    score: 0
   kevLimitEnabled: false
   cveLimit:
     enabled: false
@@ -29,3 +29,20 @@ grype:
   cveRiskAcceptance:
     enabled: false
     cves: []
+semgrep:
+  severityLimit:
+    enabled: false
+    error:
+      enabled: false
+      limit: 0
+    warning:
+      enabled: false
+      limit: 0
+    info:
+      enabled: false
+      limit: 0
+  impactRiskAcceptance:
+    enabled: false
+    high: false
+    medium: false
+    low: false
