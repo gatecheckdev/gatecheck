@@ -17,7 +17,6 @@ import (
 )
 
 func List(dst io.Writer, src io.Reader, inputFilename string) error {
-
 	switch {
 	case strings.Contains(inputFilename, "grype"):
 		slog.Debug("list", "filename", inputFilename, "filetype", "grype")
@@ -59,7 +58,6 @@ func List(dst io.Writer, src io.Reader, inputFilename string) error {
 //
 // if epssURL is "", it will use the default value
 func ListAll(dst io.Writer, src io.Reader, inputFilename string, client *http.Client, epssURL string, epssFile io.Reader) error {
-
 	epssData := new(epss.Data)
 
 	// Load EPSS data from a file or fetch the data from API
@@ -154,7 +152,6 @@ func listGrypeWithEPSS(dst io.Writer, src io.Reader, epssData *epss.Data) error 
 }
 
 func ListCyclonedx(dst io.Writer, src io.Reader) error {
-
 	report := &artifacts.CyclonedxReportMin{}
 	slog.Debug("decode cyclonedx report", "format", "json")
 	if err := json.NewDecoder(src).Decode(&report); err != nil {
@@ -162,12 +159,10 @@ func ListCyclonedx(dst io.Writer, src io.Reader) error {
 	}
 	table := format.NewTable()
 	table.AppendRow("CVE ID", "Severity", "Package", "Link")
-	severity := "-"
-	pkgs := "-"
 	link := "-"
 	for idx, vul := range report.Vulnerabilities {
-		severity = report.HighestSeverity(idx)
-		pkgs = report.AffectedPackages(idx)
+		severity := report.HighestSeverity(idx)
+		pkgs := report.AffectedPackages(idx)
 		if len(vul.Advisories) > 0 {
 			link = vul.Advisories[0].URL
 		}

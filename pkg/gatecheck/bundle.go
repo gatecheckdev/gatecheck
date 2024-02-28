@@ -2,9 +2,9 @@ package gatecheck
 
 import (
 	"io"
+	"log/slog"
 
 	"github.com/gatecheckdev/gatecheck/pkg/archive"
-	"log/slog"
 )
 
 // CreateBundle create a new bundle with a file
@@ -36,7 +36,6 @@ func CreateBundle(dstBundle io.Writer, src io.Reader, label string, tags []strin
 //
 // If the bundle doesn't exist, use CreateBundle
 func AppendToBundle(bundleRWS io.ReadWriteSeeker, src io.Reader, label string, tags []string) error {
-
 	slog.Debug("load bundle")
 	bundle, err := archive.UntarGzipBundle(bundleRWS)
 	if err != nil {

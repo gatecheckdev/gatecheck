@@ -7,19 +7,20 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"strconv"
 	"strings"
 	"time"
 
-	"log/slog"
-
 	"github.com/dustin/go-humanize"
 )
 
-const dataModel = "v2023.03.01"
-const modelDateLayout = "2006-01-02T15:04:05-0700"
-const epssUrlTemplate = "https://epss.cyentia.com/epss_scores-%d-%s-%s.csv.gz"
+const (
+	dataModel       = "v2023.03.01"
+	modelDateLayout = "2006-01-02T15:04:05-0700"
+	epssUrlTemplate = "https://epss.cyentia.com/epss_scores-%d-%s-%s.csv.gz"
+)
 
 // Data a representation of the CSV data from first API
 type Data struct {
@@ -116,7 +117,6 @@ func DownloadData(w io.Writer, optionFuncs ...fetchOptionFunc) error {
 	}
 
 	n, err := io.Copy(w, gunzipReader)
-
 	if err != nil {
 		logger.Error("io copy to writer from gzip reader", "error", err)
 		return errors.New("failed to get EPSS Scores. see log for details")

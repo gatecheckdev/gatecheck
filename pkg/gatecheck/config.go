@@ -18,10 +18,10 @@ import (
 // Metadata fields are intended for arbitrary data and shouldn't
 // conflict with rule validation
 type Config struct {
-	Version  string              `json:"version" yaml:"version" toml:"version" mapstructure:"version"`
-	Metadata configMetadata      `json:"metadata" yaml:"metadata" toml:"metadata"`
-	Grype    reportWithCVEs      `json:"grype" yaml:"grype" toml:"grype"`
-	Semgrep  configSemgrepReport `json:"semgrep" yaml:"semgrep" toml:"semgrep"`
+	Version  string              `json:"version"  mapstructure:"version" toml:"version"  yaml:"version"`
+	Metadata configMetadata      `json:"metadata" toml:"metadata"        yaml:"metadata"`
+	Grype    reportWithCVEs      `json:"grype"    toml:"grype"           yaml:"grype"`
+	Semgrep  configSemgrepReport `json:"semgrep"  toml:"semgrep"         yaml:"semgrep"`
 }
 
 func (c *Config) String() string {
@@ -42,72 +42,72 @@ func (c *Config) String() string {
 }
 
 type configSemgrepReport struct {
-	SeverityLimit        configSemgrepSeverityLimit        `json:"severityLimit" yaml:"severityLimit" toml:"severityLimit"`
-	ImpactRiskAcceptance configSemgrepImpactRiskAcceptance `json:"impactRiskAcceptance" yaml:"impactRiskAcceptance" toml:"impactRiskAcceptance"`
+	SeverityLimit        configSemgrepSeverityLimit        `json:"severityLimit"        toml:"severityLimit"        yaml:"severityLimit"`
+	ImpactRiskAcceptance configSemgrepImpactRiskAcceptance `json:"impactRiskAcceptance" toml:"impactRiskAcceptance" yaml:"impactRiskAcceptance"`
 }
 
 type configSemgrepSeverityLimit struct {
-	Enabled bool        `json:"enabled" yaml:"enabled" toml:"enabled"`
-	Error   configLimit `json:"error" yaml:"error" toml:"error"`
-	Warning configLimit `json:"warning" yaml:"warning" toml:"warning"`
-	Info    configLimit `json:"info" yaml:"info" toml:"info"`
+	Enabled bool        `json:"enabled" toml:"enabled" yaml:"enabled"`
+	Error   configLimit `json:"error"   toml:"error"   yaml:"error"`
+	Warning configLimit `json:"warning" toml:"warning" yaml:"warning"`
+	Info    configLimit `json:"info"    toml:"info"    yaml:"info"`
 }
 
 type configSemgrepImpactRiskAcceptance struct {
-	Enabled bool `json:"enabled" yaml:"enabled" toml:"enabled"`
-	High    bool `json:"high" yaml:"high" toml:"high"`
-	Medium  bool `json:"medium" yaml:"medium" toml:"medium"`
-	Low     bool `json:"low" yaml:"low" toml:"low"`
+	Enabled bool `json:"enabled" toml:"enabled" yaml:"enabled"`
+	High    bool `json:"high"    toml:"high"    yaml:"high"`
+	Medium  bool `json:"medium"  toml:"medium"  yaml:"medium"`
+	Low     bool `json:"low"     toml:"low"     yaml:"low"`
 }
 
 type configMetadata struct {
-	Tags []string `json:"tags" yaml:"tags" toml:"tags"`
+	Tags []string `json:"tags" toml:"tags" yaml:"tags"`
 }
 
 type reportWithCVEs struct {
-	SeverityLimit      configServerityLimit     `json:"severityLimit" yaml:"severityLimit" toml:"severityLimit"`
-	EPSSLimit          configEPSSLimit          `json:"epssLimit" yaml:"epssLimit" toml:"epssLimit"`
-	KEVLimitEnabled    bool                     `json:"kevLimitEnabled" yaml:"kevLimitEnabled" toml:"kevLimitEnabled"`
-	CVELimit           configCVELimit           `json:"cveLimit" yaml:"cveLimit" toml:"cveLimit"`
-	EPSSRiskAcceptance configEPSSRiskAcceptance `json:"epssRiskAcceptance" yaml:"epssRiskAcceptance" toml:"epssRiskAcceptance"`
-	CVERiskAcceptance  configCVERiskAcceptance  `json:"cveRiskAcceptance" yaml:"cveRiskAcceptance" toml:"cveRiskAcceptance"`
+	SeverityLimit      configServerityLimit     `json:"severityLimit"      toml:"severityLimit"      yaml:"severityLimit"`
+	EPSSLimit          configEPSSLimit          `json:"epssLimit"          toml:"epssLimit"          yaml:"epssLimit"`
+	KEVLimitEnabled    bool                     `json:"kevLimitEnabled"    toml:"kevLimitEnabled"    yaml:"kevLimitEnabled"`
+	CVELimit           configCVELimit           `json:"cveLimit"           toml:"cveLimit"           yaml:"cveLimit"`
+	EPSSRiskAcceptance configEPSSRiskAcceptance `json:"epssRiskAcceptance" toml:"epssRiskAcceptance" yaml:"epssRiskAcceptance"`
+	CVERiskAcceptance  configCVERiskAcceptance  `json:"cveRiskAcceptance"  toml:"cveRiskAcceptance"  yaml:"cveRiskAcceptance"`
 }
 
 type configEPSSRiskAcceptance struct {
-	Enabled bool    `json:"enabled" yaml:"enabled" toml:"enabled"`
-	Score   float64 `json:"score" yaml:"score" toml:"score"`
+	Enabled bool    `json:"enabled" toml:"enabled" yaml:"enabled"`
+	Score   float64 `json:"score"   toml:"score"   yaml:"score"`
 }
 type configCVERiskAcceptance struct {
-	Enabled bool        `json:"enabled" yaml:"enabled" toml:"enabled"`
-	CVEs    []configCVE `json:"cves" yaml:"cves" toml:"cves"`
+	Enabled bool        `json:"enabled" toml:"enabled" yaml:"enabled"`
+	CVEs    []configCVE `json:"cves"    toml:"cves"    yaml:"cves"`
 }
 type configServerityLimit struct {
-	Critical configLimit `json:"critical" yaml:"critical" toml:"critical"`
-	High     configLimit `json:"high" yaml:"high" toml:"high"`
-	Medium   configLimit `json:"medium" yaml:"medium" toml:"medium"`
-	Low      configLimit `json:"low" yaml:"low" toml:"low"`
+	Critical configLimit `json:"critical" toml:"critical" yaml:"critical"`
+	High     configLimit `json:"high"     toml:"high"     yaml:"high"`
+	Medium   configLimit `json:"medium"   toml:"medium"   yaml:"medium"`
+	Low      configLimit `json:"low"      toml:"low"      yaml:"low"`
 }
 
 type configEPSSLimit struct {
-	Enabled bool    `json:"enabled" yaml:"enabled" toml:"enabled"`
-	Score   float64 `json:"score" yaml:"score" toml:"score"`
+	Enabled bool    `json:"enabled" toml:"enabled" yaml:"enabled"`
+	Score   float64 `json:"score"   toml:"score"   yaml:"score"`
 }
 
 type configCVELimit struct {
-	Enabled bool        `json:"enabled" yaml:"enabled" toml:"enabled"`
-	CVEs    []configCVE `json:"cves" yaml:"cves" toml:"cves"`
+	Enabled bool        `json:"enabled" toml:"enabled" yaml:"enabled"`
+	CVEs    []configCVE `json:"cves"    toml:"cves"    yaml:"cves"`
 }
 
 type configCVE struct {
-	ID       string `json:"id" yaml:"id" toml:"id"`
+	ID       string `json:"id" toml:"id" yaml:"id"`
 	Metadata struct {
-		Tags []string `json:"tags" yaml:"tags" toml:"tags"`
+		Tags []string `json:"tags" toml:"tags" yaml:"tags"`
 	}
 }
 
 type configLimit struct {
-	Enabled bool `json:"enabled" yaml:"enabled" toml:"enabled"`
-	Limit   uint `json:"limit" yaml:"limit" toml:"limit"`
+	Enabled bool `json:"enabled" toml:"enabled" yaml:"enabled"`
+	Limit   uint `json:"limit"   toml:"limit"   yaml:"limit"`
 }
 
 func NewDefaultConfig() *Config {

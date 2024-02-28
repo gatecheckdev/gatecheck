@@ -71,7 +71,6 @@ func WithKEVFile(r io.Reader) optionFunc {
 type optionFunc func(*fetchOptions)
 
 func DownloadEPSS(w io.Writer, optionFuncs ...optionFunc) error {
-
 	options := defaultOptions()
 	for _, f := range optionFuncs {
 		f(options)
@@ -81,7 +80,6 @@ func DownloadEPSS(w io.Writer, optionFuncs ...optionFunc) error {
 }
 
 func DownloadKEV(w io.Writer, optionFuncs ...optionFunc) error {
-
 	options := defaultOptions()
 	for _, f := range optionFuncs {
 		f(options)

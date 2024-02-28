@@ -98,7 +98,6 @@ func ruleGrypeCVEDeny(config *Config, report *artifacts.GrypeReportMin) bool {
 		}
 	}
 	return true
-
 }
 
 func ruleGrypeCVEAllow(config *Config, report *artifacts.GrypeReportMin) {
@@ -244,7 +243,6 @@ func ruleSemgrepSeverityLimit(config *Config, report *artifacts.SemgrepReportMin
 }
 
 func ruleSemgrepImpactRiskAccept(config *Config, report *artifacts.SemgrepReportMin) {
-
 	if !config.Semgrep.ImpactRiskAcceptance.Enabled {
 		slog.Debug("impact risk acceptance not enabled", "artifact", "semgrep")
 		return
@@ -318,7 +316,6 @@ func validateGrypeReport(r io.Reader, config *Config, options *fetchOptions) err
 	default:
 		epssData = new(epss.Data)
 		err := epss.FetchData(epssData, epss.WithClient(options.epssClient), epss.WithURL(options.epssURL))
-
 		if err != nil {
 			return err
 		}
@@ -341,7 +338,6 @@ func validateSemgrepReport(r io.Reader, config *Config) error {
 // Validate Rules
 
 func validateGrypeRules(config *Config, report *artifacts.GrypeReportMin, catalog *kev.Catalog, data *epss.Data) error {
-
 	// 1. Deny List - Fail Matching
 	if !ruleGrypeCVEDeny(config, report) {
 		return errors.New("grype validation failure: CVE explicitly denied")
@@ -372,7 +368,6 @@ func validateGrypeRules(config *Config, report *artifacts.GrypeReportMin, catalo
 }
 
 func validateSemgrepRules(config *Config, report *artifacts.SemgrepReportMin) error {
-
 	// 1. Impact Allowance - remove result
 	ruleSemgrepImpactRiskAccept(config, report)
 

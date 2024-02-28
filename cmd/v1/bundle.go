@@ -41,7 +41,7 @@ func runBundleCreate(cmd *cobra.Command, args []string) error {
 
 	slog.Debug("create a new bundle", "bundle_filename", bundleFilename, "target_filename", targetFilename)
 
-	bundleFile, err := os.OpenFile(bundleFilename, os.O_CREATE|os.O_WRONLY, 0644)
+	bundleFile, err := os.OpenFile(bundleFilename, os.O_CREATE|os.O_WRONLY, 0o644)
 	if err != nil {
 		return err
 	}
@@ -64,7 +64,7 @@ func runBundleAdd(cmd *cobra.Command, args []string) error {
 
 	slog.Debug("add new bundle", "bundle_filename", bundleFilename, "target_filename", targetFilename)
 
-	bundleFile, err := os.OpenFile(bundleFilename, os.O_RDWR, 0644)
+	bundleFile, err := os.OpenFile(bundleFilename, os.O_RDWR, 0o644)
 	if err != nil {
 		return err
 	}
@@ -85,7 +85,7 @@ func runBundleRm(cmd *cobra.Command, args []string) error {
 	bundleFilename := args[0]
 	label := args[1]
 	slog.Debug("remove from bundle", "bundle_filename", bundleFilename, "label", label)
-	bundleFile, err := os.OpenFile(bundleFilename, os.O_RDWR, 0644)
+	bundleFile, err := os.OpenFile(bundleFilename, os.O_RDWR, 0o644)
 	if err != nil {
 		return err
 	}

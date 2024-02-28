@@ -11,11 +11,10 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"os"
 	"strings"
 	"time"
-
-	"log/slog"
 
 	"github.com/dustin/go-humanize"
 	gce "github.com/gatecheckdev/gatecheck/pkg/encoding"
