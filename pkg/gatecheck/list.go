@@ -239,3 +239,41 @@ func listCyclonedxWithEPSSOld(dst io.Writer, report *cyclonedx.ScanReport, epssD
 
 	return err
 }
+
+func listCyclonedxWithEPSS(dst io.Writer, src io.Reader, epssData *epss.Data) error {
+	report := &artifacts.CyclonedxReportMin{}
+	slog.Debug("decode grype report", "format", "json")
+	if err := json.NewDecoder(src).Decode(&report); err != nil {
+		return err
+	}
+
+	table := format.NewTable()
+	table.AppendRow("CVE ID", "Severity", "EPSS Score", "EPSS Prctl", "Package", "Version", "Link")
+
+	for _, item := range report.Matches {
+		cve, ok := epssData.CVEs[item.Vulnerability.ID]
+		score := "-"
+		prctl := "-"
+		if ok {
+			score = cve.EPSS
+			prctl = cve.Percentile
+		}
+		table.AppendRow(
+			item.Vulnerability.ID,
+			item.Vulnerability.Severity,
+			score,
+			prctl,
+			item.Artifact.Name,
+			item.Artifact.Version,
+			item.Vulnerability.DataSource,
+		)
+	}
+
+	table.SetSort(1, format.NewCatagoricLess([]string{"Critical", "High", "Medium", "Low", "Negligible", "Unknown"}))
+
+	sort.Sort(table)
+
+	_, err := format.NewTableWriter(table).WriteTo(dst)
+
+	return err
+}

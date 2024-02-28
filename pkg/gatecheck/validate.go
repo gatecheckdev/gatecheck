@@ -25,6 +25,10 @@ func Validate(config *Config, targetSrc io.Reader, targetfilename string, option
 		slog.Debug("validate grype report", "filename", targetfilename)
 		return validateGrypeReport(targetSrc, config, options)
 
+	case strings.Contains(targetfilename, "cyclonedx"):
+		slog.Debug("validate", "filename", targetfilename, "filetype", "cyclonedx")
+		return errors.New("Cyclonedx validation not supported yet.")
+
 	case strings.Contains(targetfilename, "semgrep"):
 		slog.Debug("validate", "filename", targetfilename, "filetype", "semgrep")
 		return errors.New("Semgrep validation not supported yet.")
@@ -36,10 +40,6 @@ func Validate(config *Config, targetSrc io.Reader, targetfilename string, option
 	case strings.Contains(targetfilename, "syft"):
 		slog.Debug("validate", "filename", targetfilename, "filetype", "syft")
 		return errors.New("Syft validation not supported yet.")
-
-	case strings.Contains(targetfilename, "cyclonedx"):
-		slog.Debug("validate", "filename", targetfilename, "filetype", "cyclonedx")
-		return errors.New("Cyclonedx validation not supported yet.")
 
 	case strings.Contains(targetfilename, "bundle"):
 		slog.Debug("validate", "filename", targetfilename, "filetype", "bundle")

@@ -11,28 +11,38 @@ import (
 //
 // It contains only the necessary fields for validation and listing
 type CyclonedxReportMin struct {
-	Components []struct {
-		BOMRef  string `json:"bom-ref"`
-		Name    string `json:"name"`
-		Version string `json:"version"`
-	} `json:"components"`
-	Vulnerabilities []struct {
-		ID         string `json:"id"`
-		Advisories []struct {
-			URL string `json:"url"`
-		} `json:"advisories"`
-		Affects []struct {
-			Ref string `json:"ref"`
-		} `json:"affects"`
-		Ratings []cyclonedxRating
-	} `json:"vulnerabilities"`
+	Components      []cyclonedxComponent     `json:"components"`
+	Vulnerabilities []cyclonedxVulnerability `json:"vulnerabilities"`
+}
+
+type cyclonedxComponent struct {
+	BOMRef  string `json:"bom-ref"`
+	Name    string `json:"name"`
+	Version string `json:"version"`
+}
+
+type cyclonedxVulnerability struct {
+	ID         string                     `json:"id"`
+	Advisories []cyclonedxAdvisory        `json:"advisories"`
+	Affects    []cyclondexAffectedPackage `json:"affects"`
+	Ratings    []cyclonedxRating          `json:"ratings"`
+}
+
+type cyclondexAffectedPackage struct {
+	Ref string `json:"ref"`
+}
+
+type cyclonedxAdvisory struct {
+	URL string `json:"url"`
 }
 
 type cyclonedxRating struct {
-	Source struct {
-		Name string `json:"name"`
-	} `json:"source"`
-	Severity string `json:"severity"`
+	Source   cyclonedxSource `json:"source"`
+	Severity string          `json:"severity"`
+}
+
+type cyclonedxSource struct {
+	Name string `json:"name"`
 }
 
 func (r CyclonedxReportMin) HighestSeverity(vulnerabilityIndex int) string {
