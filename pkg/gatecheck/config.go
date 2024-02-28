@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log/slog"
 
 	"github.com/gatecheckdev/gatecheck/pkg/format"
 	"github.com/pelletier/go-toml/v2"
@@ -18,10 +19,11 @@ import (
 // Metadata fields are intended for arbitrary data and shouldn't
 // conflict with rule validation
 type Config struct {
-	Version  string              `json:"version"  mapstructure:"version" toml:"version"  yaml:"version"`
-	Metadata configMetadata      `json:"metadata" toml:"metadata"        yaml:"metadata"`
-	Grype    reportWithCVEs      `json:"grype"    toml:"grype"           yaml:"grype"`
-	Semgrep  configSemgrepReport `json:"semgrep"  toml:"semgrep"         yaml:"semgrep"`
+	Version   string              `json:"version"   mapstructure:"version" toml:"version"   yaml:"version"`
+	Metadata  configMetadata      `json:"metadata"  toml:"metadata"        yaml:"metadata"`
+	Grype     reportWithCVEs      `json:"grype"     toml:"grype"           yaml:"grype"`
+	Cyclonedx reportWithCVEs      `json:"cyclonedx" toml:"cyclonedx"       yaml:"cyclonedx"`
+	Semgrep   configSemgrepReport `json:"semgrep"   toml:"semgrep"         yaml:"semgrep"`
 }
 
 func (c *Config) String() string {
@@ -47,7 +49,6 @@ type configSemgrepReport struct {
 }
 
 type configSemgrepSeverityLimit struct {
-	Enabled bool        `json:"enabled" toml:"enabled" yaml:"enabled"`
 	Error   configLimit `json:"error"   toml:"error"   yaml:"error"`
 	Warning configLimit `json:"warning" toml:"warning" yaml:"warning"`
 	Info    configLimit `json:"info"    toml:"info"    yaml:"info"`
@@ -112,13 +113,12 @@ type configLimit struct {
 
 func NewDefaultConfig() *Config {
 	return &Config{
-		Version: "v1",
+		Version: "1",
 		Metadata: configMetadata{
 			Tags: []string{},
 		},
 		Semgrep: configSemgrepReport{
 			SeverityLimit: configSemgrepSeverityLimit{
-				Enabled: false,
 				Error: configLimit{
 					Enabled: false,
 					Limit:   0,
@@ -176,6 +176,43 @@ func NewDefaultConfig() *Config {
 				CVEs:    make([]configCVE, 0),
 			},
 		},
+		Cyclonedx: reportWithCVEs{
+			SeverityLimit: configServerityLimit{
+				Critical: configLimit{
+					Enabled: false,
+					Limit:   0,
+				},
+				High: configLimit{
+					Enabled: false,
+					Limit:   0,
+				},
+				Medium: configLimit{
+					Enabled: false,
+					Limit:   0,
+				},
+				Low: configLimit{
+					Enabled: false,
+					Limit:   0,
+				},
+			},
+			EPSSLimit: configEPSSLimit{
+				Enabled: false,
+				Score:   0,
+			},
+			KEVLimitEnabled: false,
+			CVELimit: configCVELimit{
+				Enabled: false,
+				CVEs:    make([]configCVE, 0),
+			},
+			EPSSRiskAcceptance: configEPSSRiskAcceptance{
+				Enabled: false,
+				Score:   0,
+			},
+			CVERiskAcceptance: configCVERiskAcceptance{
+				Enabled: false,
+				CVEs:    make([]configCVE, 0),
+			},
+		},
 	}
 }
 
@@ -190,6 +227,7 @@ func EncodeConfigTo(w io.Writer, config *Config, format string) error {
 		Encode(any) error
 	}
 
+	slog.Debug("encode config file", "format", format)
 	switch format {
 	case "json":
 		enc := json.NewEncoder(w)
