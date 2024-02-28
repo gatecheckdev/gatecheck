@@ -32,7 +32,7 @@ func List(dst io.Writer, src io.Reader, inputFilename string) error {
 
 	case strings.Contains(inputFilename, "gitleaks"):
 		slog.Debug("list", "filename", inputFilename, "filetype", "gitleaks")
-		return errors.New("gitleaks not implemented yet")
+		return listGitleaks(dst, src)
 
 	case strings.Contains(inputFilename, "syft"):
 		slog.Debug("list", "filename", inputFilename, "filetype", "syft")
@@ -161,7 +161,7 @@ func ListCyclonedx(dst io.Writer, src io.Reader) error {
 	table.AppendRow("CVE ID", "Severity", "Package", "Link")
 	link := "-"
 	for idx, vul := range report.Vulnerabilities {
-		severity := report.HighestSeverity(idx)
+		severity := vul.HighestSeverity()
 		pkgs := report.AffectedPackages(idx)
 		if len(vul.Advisories) > 0 {
 			link = vul.Advisories[0].URL
@@ -201,7 +201,7 @@ func listCyclonedxWithEPSS(dst io.Writer, src io.Reader, epssData *epss.Data) er
 		}
 		table.AppendRow(
 			item.ID,
-			report.HighestSeverity(idx),
+			item.HighestSeverity(),
 			score,
 			prctl,
 			report.AffectedPackages(idx),
@@ -249,6 +249,34 @@ func ListSemgrep(dst io.Writer, src io.Reader) error {
 	table.SetSort(1, format.NewCatagoricLess([]string{"ERROR", "WARNING", "INFO"}))
 	sort.Sort(table)
 	_, err := format.NewTableWriter(table).WriteTo(dst)
+
+	return err
+}
+
+func listGitleaks(dst io.Writer, src io.Reader) error {
+	report := &artifacts.GitLeaksReportMin{}
+	if err := json.NewDecoder(src).Decode(report); err != nil {
+		return err
+	}
+
+	table := format.NewTable()
+
+	table.AppendRow("Rule ID", "File", "Commit", "Start Line")
+
+	for _, finding := range *report {
+		table.AppendRow(
+			finding.RuleID,
+			finding.FileShort(),
+			finding.CommitShort(),
+			fmt.Sprintf("%d", finding.StartLine),
+		)
+	}
+
+	_, err := format.NewTableWriter(table).WriteTo(dst)
+
+	if report.Count() == 0 {
+		fmt.Fprintln(dst, "        No Gitleaks Findings")
+	}
 
 	return err
 }
