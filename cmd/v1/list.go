@@ -1,8 +1,10 @@
 package cmd
 
 import (
+	"io"
 	"log/slog"
 	"net/http"
+	"os"
 	"slices"
 
 	"github.com/gatecheckdev/gatecheck/pkg/gatecheck"
@@ -25,6 +27,9 @@ func newListCommand() *cobra.Command {
 	cmd.Flags().StringP("input-type", "i", "", "the input filetype if using STDIN [grype|semgrep|gitleaks|syft|bundle]")
 	cmd.Flags().BoolP("all", "a", false, "list will EPSS scores and KEV Catalog check")
 
+	cmd.Flags().String("epss-file", "", "use this file for epss scores, will not query API")
+	_ = viper.BindPFlag("cli.epss-file", cmd.Flags().Lookup("epss-file"))
+
 	return cmd
 }
 
@@ -37,8 +42,9 @@ func runList(cmd *cobra.Command, args []string) error {
 	}
 
 	inputType, _ := cmd.Flags().GetString("input-type")
-	listAll, err := cmd.Flags().GetBool("all")
+	listAll, _ := cmd.Flags().GetBool("all")
 	epssURL := viper.GetString("api.epss-url")
+	epssFilename := viper.GetString("cli.epss-file")
 
 	src, err := fileOrStdin(filename, cmd)
 	if err != nil {
@@ -49,8 +55,19 @@ func runList(cmd *cobra.Command, args []string) error {
 		filename = "stdin:" + inputType
 	}
 
+	var epssFile io.Reader
+
+	if epssFilename != "" {
+		slog.Debug("open epss", "filename", epssFilename)
+		epssFile, err = os.Open(epssFilename)
+		if err != nil {
+			return err
+		}
+	}
+
+	// TODO: use options instead of parameters
 	if listAll {
-		return gatecheck.ListAll(cmd.OutOrStdout(), src, filename, http.DefaultClient, epssURL)
+		return gatecheck.ListAll(cmd.OutOrStdout(), src, filename, http.DefaultClient, epssURL, epssFile)
 	}
 	return gatecheck.List(cmd.OutOrStdout(), src, filename)
 }

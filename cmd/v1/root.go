@@ -13,8 +13,8 @@
 // run<Cmd/sub cmd name> functions are specific to cobra's runE functions
 // it handles parsing arguments, opening files, and early returning errors.
 // These commands eventually result in calls to functions in the package
-// github.com/gatecheckdev/gatecheck/lib
-//
+// github.com/gatecheckdev/gatecheck/pkg/gatecheck
+
 // The root file contains common helper functions used by other commands.
 // Major commands can be in seperate files for ease of readability.
 package cmd
@@ -51,6 +51,9 @@ func NewGatecheckCommand() *cobra.Command {
 
 	_ = viper.BindEnv("cli.verbose", "GATECHECK_CLI_VERBOSE")
 	_ = viper.BindEnv("cli.silent", "GATECHECK_CLI_SILENT")
+
+	_ = viper.BindEnv("cli.epss-file", "GATECHECK_EPSS_FILE")
+	_ = viper.BindEnv("cli.kev-file", "GATECHECK_KEV_FILE")
 
 	_ = viper.BindEnv("api.epss-url", "GATECHECK_EPSS_URL")
 	_ = viper.BindEnv("api.kev-url", "GATECHECK_KEV_URL")

@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"io"
 	"log/slog"
 	"os"
 
@@ -30,6 +31,8 @@ func runValidate(cmd *cobra.Command, args []string) error {
 	targetFilename := args[0]
 	epssURL := viper.GetString("api.epss-url")
 	kevURL := viper.GetString("api.kev-url")
+	epssFilename := viper.GetString("cli.epss-file")
+	kevFilename := viper.GetString("cli.kev-file")
 
 	slog.Debug("read in config", "filename", configFilename, "target_filename", targetFilename)
 
@@ -48,11 +51,30 @@ func runValidate(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
+	var epssFile, kevFile io.Reader
+
+	if epssFilename != "" {
+		slog.Debug("open epss file", "filename", epssFilename)
+		epssFile, err = os.Open(epssFilename)
+		if err != nil {
+			return err
+		}
+	}
+
+	if kevFilename != "" {
+		slog.Debug("open kev file", "filename", epssFilename)
+		kevFile, err = os.Open(kevFilename)
+		if err != nil {
+			return err
+		}
+	}
 	return gatecheck.Validate(
 		config,
 		targetFile,
 		targetFilename,
 		gatecheck.WithEPSSURL(epssURL),
 		gatecheck.WithKEVURL(kevURL),
+		gatecheck.WithEPSSFile(epssFile),
+		gatecheck.WithKEVFile(kevFile),
 	)
 }

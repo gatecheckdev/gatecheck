@@ -107,8 +107,12 @@ func FetchData(catalog *Catalog, optionFuncs ...fetchOptionFunc) error {
 		return err
 	}
 
-	if err := json.NewDecoder(buf).Decode(catalog); err != nil {
-		slog.Error("kev api response decoding failure", "error", err)
+	return DecodeData(buf, catalog)
+}
+
+func DecodeData(r io.Reader, catalog *Catalog) error {
+	if err := json.NewDecoder(r).Decode(catalog); err != nil {
+		slog.Error("kev decoding failure", "error", err)
 		return errors.New("failed to get KEV Catalog. see log for details")
 
 	}

@@ -60,16 +60,25 @@ func List(dst io.Writer, src io.Reader, inputFilename string) error {
 // ListAll will print a table of vulnerabilities with EPSS Score and Percentile
 //
 // if epssURL is "", it will use the default value
-func ListAll(dst io.Writer, src io.Reader, inputFilename string, client *http.Client, epssURL string) error {
+func ListAll(dst io.Writer, src io.Reader, inputFilename string, client *http.Client, epssURL string, epssFile io.Reader) error {
 
 	epssData := new(epss.Data)
-	fetchOptions := epss.DefaultFetchOptions()
-	fetchOptions.Client = client
-	if epssURL != "" {
-		fetchOptions.URL = epssURL
-	}
-	if err := epss.FetchData(epssData); err != nil {
-		return err
+
+	// Load EPSS data from a file or fetch the data from API
+	switch {
+	case epssFile != nil:
+		if err := epss.ParseEPSSDataCSV(epssFile, epssData); err != nil {
+			return errors.New("Failed to decode EPSS data file. See log for details.")
+		}
+	default:
+		fetchOptions := epss.DefaultFetchOptions()
+		fetchOptions.Client = client
+		if epssURL != "" {
+			fetchOptions.URL = epssURL
+		}
+		if err := epss.FetchData(epssData); err != nil {
+			return err
+		}
 	}
 
 	switch {

@@ -14,6 +14,9 @@ type fetchOptions struct {
 
 	kevClient *http.Client
 	kevURL    string
+
+	epssFile io.Reader
+	kevFile  io.Reader
 }
 
 func defaultOptions() *fetchOptions {
@@ -50,6 +53,18 @@ func WithKEVURL(url string) optionFunc {
 
 	return func(o *fetchOptions) {
 		o.kevURL = url
+	}
+}
+
+func WithEPSSFile(r io.Reader) optionFunc {
+	return func(o *fetchOptions) {
+		o.epssFile = r
+	}
+}
+
+func WithKEVFile(r io.Reader) optionFunc {
+	return func(o *fetchOptions) {
+		o.kevFile = r
 	}
 }
 

@@ -135,11 +135,11 @@ func FetchData(data *Data, optionFuncs ...fetchOptionFunc) error {
 		return err
 	}
 
-	return parseCSVData(buf, data)
+	return ParseEPSSDataCSV(buf, data)
 }
 
-// parseCSVData custom CSV parsing function
-func parseCSVData(r io.Reader, data *Data) error {
+// ParseEPSSDataCSV custom CSV parsing function
+func ParseEPSSDataCSV(r io.Reader, data *Data) error {
 	// Debug the total elapsed time
 	defer func(started time.Time) {
 		slog.Debug("csv parse done", "elapsed", time.Since(started))
