@@ -18,9 +18,10 @@ import (
 // Metadata fields are intended for arbitrary data and shouldn't
 // conflict with rule validation
 type Config struct {
-	Version  string         `json:"version" yaml:"version" toml:"version" mapstructure:"version"`
-	Metadata configMetadata `json:"metadata" yaml:"metadata" toml:"metadata"`
-	Grype    reportWithCVEs `json:"grype" yaml:"grype" toml:"grype"`
+	Version  string              `json:"version" yaml:"version" toml:"version" mapstructure:"version"`
+	Metadata configMetadata      `json:"metadata" yaml:"metadata" toml:"metadata"`
+	Grype    reportWithCVEs      `json:"grype" yaml:"grype" toml:"grype"`
+	Semgrep  configSemgrepReport `json:"semgrep" yaml:"semgrep" toml:"semgrep"`
 }
 
 func (c *Config) String() string {
@@ -38,6 +39,25 @@ func (c *Config) String() string {
 	}
 	fmt.Printf("%v\n", c.Grype)
 	return format.NewTableWriter(table).String()
+}
+
+type configSemgrepReport struct {
+	SeverityLimit        configSemgrepSeverityLimit        `json:"severityLimit" yaml:"severityLimit" toml:"severityLimit"`
+	ImpactRiskAcceptance configSemgrepImpactRiskAcceptance `json:"impactRiskAcceptance" yaml:"impactRiskAcceptance" toml:"impactRiskAcceptance"`
+}
+
+type configSemgrepSeverityLimit struct {
+	Enabled bool        `json:"enabled" yaml:"enabled" toml:"enabled"`
+	Error   configLimit `json:"error" yaml:"error" toml:"error"`
+	Warning configLimit `json:"warning" yaml:"warning" toml:"warning"`
+	Info    configLimit `json:"info" yaml:"info" toml:"info"`
+}
+
+type configSemgrepImpactRiskAcceptance struct {
+	Enabled bool `json:"enabled" yaml:"enabled" toml:"enabled"`
+	High    bool `json:"high" yaml:"high" toml:"high"`
+	Medium  bool `json:"medium" yaml:"medium" toml:"medium"`
+	Low     bool `json:"low" yaml:"low" toml:"low"`
 }
 
 type configMetadata struct {
@@ -62,10 +82,10 @@ type configCVERiskAcceptance struct {
 	CVEs    []configCVE `json:"cves" yaml:"cves" toml:"cves"`
 }
 type configServerityLimit struct {
-	Critical limit `json:"critical" yaml:"critical" toml:"critical"`
-	High     limit `json:"high" yaml:"high" toml:"high"`
-	Medium   limit `json:"medium" yaml:"medium" toml:"medium"`
-	Low      limit `json:"low" yaml:"low" toml:"low"`
+	Critical configLimit `json:"critical" yaml:"critical" toml:"critical"`
+	High     configLimit `json:"high" yaml:"high" toml:"high"`
+	Medium   configLimit `json:"medium" yaml:"medium" toml:"medium"`
+	Low      configLimit `json:"low" yaml:"low" toml:"low"`
 }
 
 type configEPSSLimit struct {
@@ -85,7 +105,7 @@ type configCVE struct {
 	}
 }
 
-type limit struct {
+type configLimit struct {
 	Enabled bool `json:"enabled" yaml:"enabled" toml:"enabled"`
 	Limit   uint `json:"limit" yaml:"limit" toml:"limit"`
 }
@@ -98,19 +118,19 @@ func NewDefaultConfig() *Config {
 		},
 		Grype: reportWithCVEs{
 			SeverityLimit: configServerityLimit{
-				Critical: limit{
+				Critical: configLimit{
 					Enabled: false,
 					Limit:   0,
 				},
-				High: limit{
+				High: configLimit{
 					Enabled: false,
 					Limit:   0,
 				},
-				Medium: limit{
+				Medium: configLimit{
 					Enabled: false,
 					Limit:   0,
 				},
-				Low: limit{
+				Low: configLimit{
 					Enabled: false,
 					Limit:   0,
 				},

@@ -1,6 +1,7 @@
 package gatecheck
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -14,7 +15,7 @@ import (
 )
 
 // Validate against config thresholds
-func Validate(config *Config, targetSrc io.Reader, targetfilename string, optionFuncs ...optionFunc) error {
+func Validate(config *Config, reportSrc io.Reader, targetfilename string, optionFuncs ...optionFunc) error {
 	options := defaultOptions()
 	for _, f := range optionFuncs {
 		f(options)
@@ -23,7 +24,7 @@ func Validate(config *Config, targetSrc io.Reader, targetfilename string, option
 	switch {
 	case strings.Contains(targetfilename, "grype"):
 		slog.Debug("validate grype report", "filename", targetfilename)
-		return validateGrypeReport(targetSrc, config, options)
+		return validateGrypeReport(reportSrc, config, options)
 
 	case strings.Contains(targetfilename, "cyclonedx"):
 		slog.Debug("validate", "filename", targetfilename, "filetype", "cyclonedx")
@@ -31,7 +32,7 @@ func Validate(config *Config, targetSrc io.Reader, targetfilename string, option
 
 	case strings.Contains(targetfilename, "semgrep"):
 		slog.Debug("validate", "filename", targetfilename, "filetype", "semgrep")
-		return errors.New("Semgrep validation not supported yet.")
+		return validateSemgrepReport(reportSrc, config)
 
 	case strings.Contains(targetfilename, "gitleaks"):
 		slog.Debug("validate", "filename", targetfilename, "filetype", "gitleaks")
@@ -51,10 +52,10 @@ func Validate(config *Config, targetSrc io.Reader, targetfilename string, option
 	}
 }
 
-func ruleGrypeLimit(config *Config, report *artifacts.GrypeReportMin) bool {
+func ruleGrypeSeverityLimit(config *Config, report *artifacts.GrypeReportMin) bool {
 	validationPass := true
 
-	limits := map[string]limit{
+	limits := map[string]configLimit{
 		"critical": config.Grype.SeverityLimit.Critical,
 		"high":     config.Grype.SeverityLimit.High,
 		"medium":   config.Grype.SeverityLimit.Medium,
@@ -63,19 +64,19 @@ func ruleGrypeLimit(config *Config, report *artifacts.GrypeReportMin) bool {
 
 	for _, severity := range []string{"critical", "high", "medium", "low"} {
 
-		configLimit := limits[severity]
+		configuredLimit := limits[severity]
 		matches := report.SelectBySeverity(severity)
 		matchCount := len(matches)
-		if !configLimit.Enabled {
+		if !configuredLimit.Enabled {
 			slog.Debug("severity limit not enabled", "artifact", "grype", "severity", severity, "reported", matchCount)
 			continue
 		}
-		if matchCount > int(configLimit.Limit) {
-			slog.Error("grype severity limit exceeded", "severity", severity, "report", matchCount, "limit", configLimit.Limit)
+		if matchCount > int(configuredLimit.Limit) {
+			slog.Error("grype severity limit exceeded", "severity", severity, "report", matchCount, "limit", configuredLimit.Limit)
 			validationPass = false
 			continue
 		}
-		slog.Info("severity limit valid", "artifact", "grype", "severity", severity, "reported", matchCount, "limit", configLimit.Limit)
+		slog.Info("severity limit valid", "artifact", "grype", "severity", severity, "reported", matchCount, "limit", configuredLimit.Limit)
 	}
 
 	return validationPass
@@ -213,6 +214,68 @@ func ruleGrypeEPSSLimit(config *Config, report *artifacts.GrypeReportMin, data *
 	return true
 }
 
+func ruleSemgrepSeverityLimit(config *Config, report *artifacts.SemgrepReportMin) bool {
+	validationPass := true
+
+	limits := map[string]configLimit{
+		"error":   config.Semgrep.SeverityLimit.Error,
+		"warning": config.Semgrep.SeverityLimit.Warning,
+		"info":    config.Semgrep.SeverityLimit.Info,
+	}
+
+	for _, severity := range []string{"error", "warning", "info"} {
+
+		configuredLimit := limits[severity]
+		matches := report.SelectBySeverity(severity)
+		matchCount := len(matches)
+		if !configuredLimit.Enabled {
+			slog.Debug("severity limit not enabled", "artifact", "semgrep", "severity", severity, "reported", matchCount)
+			continue
+		}
+		if matchCount > int(configuredLimit.Limit) {
+			slog.Error("severity limit exceeded", "artifact", "semgrep", "severity", severity, "report", matchCount, "limit", configuredLimit.Limit)
+			validationPass = false
+			continue
+		}
+		slog.Info("severity limit valid", "artifact", "semgrep", "severity", severity, "reported", matchCount, "limit", configuredLimit.Limit)
+	}
+
+	return validationPass
+}
+
+func ruleSemgrepImpactRiskAccept(config *Config, report *artifacts.SemgrepReportMin) {
+
+	if !config.Semgrep.ImpactRiskAcceptance.Enabled {
+		slog.Debug("impact risk acceptance not enabled", "artifact", "semgrep")
+		return
+	}
+
+	results := slices.DeleteFunc(report.Results, func(result artifacts.SemgrepResults) bool {
+		riskAccepted := false
+		switch {
+		case config.Semgrep.ImpactRiskAcceptance.High && strings.EqualFold(result.Extra.Severity, "high"):
+			riskAccepted = true
+		case config.Semgrep.ImpactRiskAcceptance.Medium && strings.EqualFold(result.Extra.Severity, "medium"):
+			riskAccepted = true
+		case config.Semgrep.ImpactRiskAcceptance.Low && strings.EqualFold(result.Extra.Severity, "low"):
+			riskAccepted = true
+		}
+
+		if riskAccepted {
+			slog.Info(
+				"risk accepted: epss score is below risk acceptance threshold",
+				"check_id", result.CheckID,
+				"severity", result.Extra.Severity,
+				"impact", result.Extra.Metadata.Impact,
+			)
+			return true
+		}
+		return false
+	})
+
+	report.Results = results
+}
+
 // Validate Reports
 
 func validateGrypeReport(r io.Reader, config *Config, options *fetchOptions) error {
@@ -222,6 +285,10 @@ func validateGrypeReport(r io.Reader, config *Config, options *fetchOptions) err
 	slog.Debug("validate grype report")
 
 	report := &artifacts.GrypeReportMin{}
+	if err := json.NewDecoder(r).Decode(report); err != nil {
+		slog.Error("decode grype report for validation", "error", err)
+		return errors.New("Cannot run Grype validation: Report decoding failed. See log for details.")
+	}
 
 	switch {
 	case !config.Grype.KEVLimitEnabled:
@@ -260,6 +327,17 @@ func validateGrypeReport(r io.Reader, config *Config, options *fetchOptions) err
 	return validateGrypeRules(config, report, catalog, epssData)
 }
 
+func validateSemgrepReport(r io.Reader, config *Config) error {
+	slog.Debug("validate semgrep report")
+	report := &artifacts.SemgrepReportMin{}
+	if err := json.NewDecoder(r).Decode(report); err != nil {
+		slog.Error("decode semgrep report for validation", "error", err)
+		return errors.New("Cannot run Semgrep report validation: Report decoding failed. See log for details.")
+	}
+
+	return validateSemgrepRules(config, report)
+}
+
 // Validate Rules
 
 func validateGrypeRules(config *Config, report *artifacts.GrypeReportMin, catalog *kev.Catalog, data *epss.Data) error {
@@ -285,9 +363,22 @@ func validateGrypeRules(config *Config, report *artifacts.GrypeReportMin, catalo
 		return errors.New("grype validation failure: EPSS limit Exceeded")
 	}
 
-	// 6. Threshold Validation
-	if !ruleGrypeLimit(config, report) {
+	// 6. Severity Count Limit
+	if !ruleGrypeSeverityLimit(config, report) {
 		return errors.New("grype validation failure: Severity Limit Exceeded")
+	}
+
+	return nil
+}
+
+func validateSemgrepRules(config *Config, report *artifacts.SemgrepReportMin) error {
+
+	// 1. Impact Allowance - remove result
+	ruleSemgrepImpactRiskAccept(config, report)
+
+	// 2. Severity Count Limit
+	if !ruleSemgrepSeverityLimit(config, report) {
+		return errors.New("semgrep validation failure: Severity Limit Exceeded")
 	}
 
 	return nil
