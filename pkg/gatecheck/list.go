@@ -248,28 +248,32 @@ func listCyclonedxWithEPSS(dst io.Writer, src io.Reader, epssData *epss.Data) er
 	}
 
 	table := format.NewTable()
-	table.AppendRow("CVE ID", "Severity", "EPSS Score", "EPSS Prctl", "Package", "Version", "Link")
+	table.AppendRow("CVE ID", "Severity", "EPSS Score", "EPSS Prctl", "affected Packages", "Link")
 
-	for _, item := range report.Matches {
-		cve, ok := epssData.CVEs[item.Vulnerability.ID]
+	for idx, item := range report.Vulnerabilities {
+		cve, ok := epssData.CVEs[item.ID]
 		score := "-"
 		prctl := "-"
 		if ok {
 			score = cve.EPSS
 			prctl = cve.Percentile
 		}
+		link := "-"
+		if len(item.Advisories) > 0 {
+			link = item.Advisories[0].URL
+		}
 		table.AppendRow(
-			item.Vulnerability.ID,
-			item.Vulnerability.Severity,
+			item.ID,
+			report.HighestSeverity(idx),
 			score,
 			prctl,
-			item.Artifact.Name,
-			item.Artifact.Version,
-			item.Vulnerability.DataSource,
+			report.AffectedPackages(idx),
+			link,
 		)
 	}
 
-	table.SetSort(1, format.NewCatagoricLess([]string{"Critical", "High", "Medium", "Low", "Negligible", "Unknown"}))
+	// TODO: check this
+	table.SetSort(1, format.NewCatagoricLess([]string{"critical", "high", "medium", "low", "info", "none", "unknown"}))
 
 	sort.Sort(table)
 
