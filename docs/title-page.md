@@ -1,6 +1,6 @@
 # Gatecheck
 
-![Gatecheck Logo](static/gatecheck-logo-splash-dark.png)
+![Gatecheck Logo](assets/gatecheck-logo-splash-dark.png)
 
 Gatecheck automates report validation in a CI/CD Pipeline by comparing security findings to a pre-determined
 thresholds.
