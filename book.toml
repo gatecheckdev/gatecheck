@@ -4,3 +4,14 @@ language = "en"
 multilingual = false
 src = "docs"
 title = "Gatecheck"
+
+[output.html]
+default-theme = "dark"
+preferred-dark-theme = "navy"
+curly-quotes = true
+mathjax-support = false
+copy-fonts = true
+no-section-label = false
+git-repository-url = "https://github.com/gatecheckdev/gatecheck"
+git-repository-icon = "fa-github"
+edit-url-template = "https://github.com/gatecheckdev/gatecheck/edit/master/guide/{path}"
