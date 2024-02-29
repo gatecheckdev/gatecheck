@@ -51,6 +51,7 @@ func NewGatecheckCommand() *cobra.Command {
 
 	_ = viper.BindEnv("cli.verbose", "GATECHECK_CLI_VERBOSE")
 	_ = viper.BindEnv("cli.silent", "GATECHECK_CLI_SILENT")
+	_ = viper.BindEnv("cli.audit", "GATECHECK_CLI_AUDIT")
 
 	_ = viper.BindEnv("cli.epss-file", "GATECHECK_EPSS_FILE")
 	_ = viper.BindEnv("cli.kev-file", "GATECHECK_KEV_FILE")

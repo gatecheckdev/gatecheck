@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"fmt"
 	"io"
 	"log/slog"
 	"os"
@@ -26,6 +27,9 @@ func newValidateCommand() *cobra.Command {
 	cmd.Flags().String("kev-file", "", "use this file for kev catalog, will not query API")
 	_ = viper.BindPFlag("cli.kev-file", cmd.Flags().Lookup("kev-file"))
 
+	cmd.Flags().Bool("audit", false, "audit mode - will run all rules but wil always exit 0 for validation failures")
+	_ = viper.BindPFlag("cli.audit", cmd.Flags().Lookup("audit"))
+
 	return cmd
 }
 
@@ -35,10 +39,14 @@ func newValidateCommand() *cobra.Command {
 func runValidate(cmd *cobra.Command, args []string) error {
 	configFilename, _ := cmd.Flags().GetString("config")
 	targetFilename := args[0]
+
 	epssURL := viper.GetString("api.epss-url")
 	kevURL := viper.GetString("api.kev-url")
+
 	epssFilename := viper.GetString("cli.epss-file")
 	kevFilename := viper.GetString("cli.kev-file")
+
+	audit := viper.GetBool("cli.audit")
 
 	slog.Debug("read in config", "filename", configFilename, "target_filename", targetFilename)
 
@@ -75,7 +83,8 @@ func runValidate(cmd *cobra.Command, args []string) error {
 			return err
 		}
 	}
-	return gatecheck.Validate(
+
+	err = gatecheck.Validate(
 		config,
 		targetFile,
 		targetFilename,
@@ -84,4 +93,12 @@ func runValidate(cmd *cobra.Command, args []string) error {
 		gatecheck.WithEPSSFile(epssFile),
 		gatecheck.WithKEVFile(kevFile),
 	)
+
+	if audit && err != nil {
+		slog.Error("validation failure in audit mode")
+		fmt.Fprintln(cmd.ErrOrStderr(), err)
+		return nil
+	}
+
+	return err
 }
