@@ -20,6 +20,12 @@ func newValidateCommand() *cobra.Command {
 
 	cmd.Flags().StringP("config", "f", "", "threshold configuration file")
 
+	cmd.Flags().String("epss-file", "", "use this file for epss scores, will not query API")
+	_ = viper.BindPFlag("cli.epss-file", cmd.Flags().Lookup("epss-file"))
+
+	cmd.Flags().String("kev-file", "", "use this file for kev catalog, will not query API")
+	_ = viper.BindPFlag("cli.kev-file", cmd.Flags().Lookup("kev-file"))
+
 	return cmd
 }
 
@@ -42,6 +48,8 @@ func runValidate(cmd *cobra.Command, args []string) error {
 		if err != nil {
 			return err
 		}
+	} else {
+		slog.Warn("no configuration file given, will use default configuration file")
 	}
 
 	slog.Debug("open target file", "filename", targetFilename)

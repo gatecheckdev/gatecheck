@@ -1,6 +1,7 @@
 package gatecheck
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -9,6 +10,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/gatecheckdev/gatecheck/pkg/archive"
 	"github.com/gatecheckdev/gatecheck/pkg/artifacts/v1"
 	"github.com/gatecheckdev/gatecheck/pkg/epss/v1"
 	"github.com/gatecheckdev/gatecheck/pkg/kev/v1"
@@ -24,11 +26,11 @@ func Validate(config *Config, reportSrc io.Reader, targetfilename string, option
 	switch {
 	case strings.Contains(targetfilename, "grype"):
 		slog.Debug("validate grype report", "filename", targetfilename)
-		return validateGrypeReport(reportSrc, config, options)
+		return validateGrypeReportWithFetch(reportSrc, config, options)
 
 	case strings.Contains(targetfilename, "cyclonedx"):
 		slog.Debug("validate", "filename", targetfilename, "filetype", "cyclonedx")
-		return validateCyclonedxReport(reportSrc, config, options)
+		return validateCyclonedxReportWithFetch(reportSrc, config, options)
 
 	case strings.Contains(targetfilename, "semgrep"):
 		slog.Debug("validate", "filename", targetfilename, "filetype", "semgrep")
@@ -44,7 +46,7 @@ func Validate(config *Config, reportSrc io.Reader, targetfilename string, option
 
 	case strings.Contains(targetfilename, "bundle"):
 		slog.Debug("validate", "filename", targetfilename, "filetype", "bundle")
-		return errors.New("Gatecheck bundle validation not yet supported.")
+		return validateBundle(reportSrc, config, options)
 
 	default:
 		slog.Error("invalid input filetype", "filename", targetfilename)
@@ -317,6 +319,11 @@ func ruleGrypeEPSSLimit(config *Config, report *artifacts.GrypeReportMin, data *
 
 	badCVEs := make([]epss.CVE, 0)
 
+	slog.Debug("run epss limit rule",
+		"artifact", "grype",
+		"vulnerabilities", len(report.Matches),
+		"epss_risk_acceptance_score", config.Grype.EPSSRiskAcceptance.Score,
+	)
 	for _, match := range report.Matches {
 		epssCVE, ok := data.CVEs[match.Vulnerability.ID]
 		if !ok {
@@ -330,12 +337,11 @@ func ruleGrypeEPSSLimit(config *Config, report *artifacts.GrypeReportMin, data *
 				"cve_id", match.Vulnerability.ID,
 				"severity", match.Vulnerability.Severity,
 				"epss_score", epssCVE.EPSS,
-				"epss_limit_score", config.Grype.EPSSLimit.Score,
 			)
 		}
 	}
 	if len(badCVEs) > 0 {
-		slog.Error("more than 0 cves with epss scores over limit",
+		slog.Error("cve(s) with epss scores over limit",
 			"over_limit_cves", len(badCVEs),
 			"epss_limit_score", config.Grype.EPSSLimit.Score,
 		)
@@ -356,6 +362,12 @@ func ruleCyclonedxEPSSLimit(config *Config, report *artifacts.CyclonedxReportMin
 
 	badCVEs := make([]epss.CVE, 0)
 
+	slog.Debug("run epss limit rule",
+		"artifact", "cyclonedx",
+		"vulnerabilities", len(report.Vulnerabilities),
+		"epss_risk_acceptance_score", config.Cyclonedx.EPSSRiskAcceptance.Score,
+	)
+
 	for _, vulnerability := range report.Vulnerabilities {
 		epssCVE, ok := data.CVEs[vulnerability.ID]
 		if !ok {
@@ -369,12 +381,11 @@ func ruleCyclonedxEPSSLimit(config *Config, report *artifacts.CyclonedxReportMin
 				"cve_id", vulnerability.ID,
 				"severity", vulnerability.HighestSeverity(),
 				"epss_score", epssCVE.EPSS,
-				"epss_limit_score", config.Cyclonedx.EPSSLimit.Score,
 			)
 		}
 	}
 	if len(badCVEs) > 0 {
-		slog.Error("more than 0 cves with epss scores over limit",
+		slog.Error("cve(s) with epss scores over limit",
 			"over_limit_cves", len(badCVEs),
 			"epss_limit_score", config.Cyclonedx.EPSSLimit.Score,
 		)
@@ -501,9 +512,7 @@ func LoadCatalogAndData(config *Config, catalog *kev.Catalog, epssData *epss.Dat
 
 // Validate Reports
 
-func validateGrypeReport(r io.Reader, config *Config, options *fetchOptions) error {
-	slog.Debug("validate grype report")
-
+func validateGrypeReportWithFetch(r io.Reader, config *Config, options *fetchOptions) error {
 	catalog := kev.NewCatalog()
 	epssData := new(epss.Data)
 
@@ -512,6 +521,11 @@ func validateGrypeReport(r io.Reader, config *Config, options *fetchOptions) err
 		return errors.New("Cannot run Grype validation: Cannot load external validation data. See log for details.")
 	}
 
+	return validateGrypeFrom(r, config, catalog, epssData)
+}
+
+func validateGrypeFrom(r io.Reader, config *Config, catalog *kev.Catalog, epssData *epss.Data) error {
+	slog.Debug("validate grype report")
 	report := &artifacts.GrypeReportMin{}
 	if err := json.NewDecoder(r).Decode(report); err != nil {
 		slog.Error("decode grype report for validation", "error", err)
@@ -521,7 +535,7 @@ func validateGrypeReport(r io.Reader, config *Config, options *fetchOptions) err
 	return validateGrypeRules(config, report, catalog, epssData)
 }
 
-func validateCyclonedxReport(r io.Reader, config *Config, options *fetchOptions) error {
+func validateCyclonedxReportWithFetch(r io.Reader, config *Config, options *fetchOptions) error {
 	slog.Debug("validate cyclonedx report")
 
 	catalog := kev.NewCatalog()
@@ -531,7 +545,10 @@ func validateCyclonedxReport(r io.Reader, config *Config, options *fetchOptions)
 		slog.Error("validate cyclonedx report: load epss data from file or api", "error", err)
 		return errors.New("Cannot run Cyclonedx validation: Cannot load external validation data. See log for details.")
 	}
+	return validateCyclonedxFrom(r, config, catalog, epssData)
+}
 
+func validateCyclonedxFrom(r io.Reader, config *Config, catalog *kev.Catalog, epssData *epss.Data) error {
 	report := &artifacts.CyclonedxReportMin{}
 	if err := json.NewDecoder(r).Decode(report); err != nil {
 		slog.Error("decode cyclonedx report for validation", "error", err)
@@ -560,6 +577,44 @@ func validateGitleaksReport(r io.Reader, config *Config) error {
 		return errors.New("Cannot run Semgrep report validation: Report decoding failed. See log for details.")
 	}
 	return validateGitleaksRules(config, report)
+}
+
+func validateBundle(r io.Reader, config *Config, options *fetchOptions) error {
+	slog.Debug("validate gatecheck bundle")
+	bundle := archive.NewBundle()
+	if err := archive.UntarGzipBundle(r, bundle); err != nil {
+		slog.Error("decode gatecheck bundle")
+		return errors.New("Cannot run Gatecheck Bundle validation: Bundle decoding failed. See log for details.")
+	}
+
+	catalog := kev.NewCatalog()
+	epssData := new(epss.Data)
+
+	if err := LoadCatalogAndData(config, catalog, epssData, options); err != nil {
+		slog.Error("validate cyclonedx report: load epss data from file or api", "error", err)
+		return errors.New("Cannot run Cyclonedx validation: Cannot load external validation data. See log for details.")
+	}
+
+	var errs error
+	for fileLabel, descriptor := range bundle.Manifest().Files {
+		slog.Info("gatecheck bundle validation", "file_label", fileLabel, "digest", descriptor.Digest)
+		switch {
+		case strings.Contains(fileLabel, "grype"):
+			err := validateGrypeFrom(bytes.NewBuffer(bundle.FileBytes(fileLabel)), config, catalog, epssData)
+			errs = errors.Join(errs, err)
+		case strings.Contains(fileLabel, "cyclonedx"):
+			err := validateCyclonedxFrom(bytes.NewBuffer(bundle.FileBytes(fileLabel)), config, catalog, epssData)
+			errs = errors.Join(errs, err)
+		case strings.Contains(fileLabel, "semgrep"):
+			err := validateSemgrepReport(bytes.NewBuffer(bundle.FileBytes(fileLabel)), config)
+			errs = errors.Join(errs, err)
+		case strings.Contains(fileLabel, "gitleaks"):
+			err := validateGitleaksReport(bytes.NewBuffer(bundle.FileBytes(fileLabel)), config)
+			errs = errors.Join(errs, err)
+		}
+	}
+
+	return errs
 }
 
 // Validate Rules

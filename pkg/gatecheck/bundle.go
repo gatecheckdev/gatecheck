@@ -37,8 +37,8 @@ func CreateBundle(dstBundle io.Writer, src io.Reader, label string, tags []strin
 // If the bundle doesn't exist, use CreateBundle
 func AppendToBundle(bundleRWS io.ReadWriteSeeker, src io.Reader, label string, tags []string) error {
 	slog.Debug("load bundle")
-	bundle, err := archive.UntarGzipBundle(bundleRWS)
-	if err != nil {
+	bundle := archive.NewBundle()
+	if err := archive.UntarGzipBundle(bundleRWS, bundle); err != nil {
 		return err
 	}
 
@@ -68,8 +68,8 @@ func AppendToBundle(bundleRWS io.ReadWriteSeeker, src io.Reader, label string, t
 // RemoveFromBundle removes a file from an existing bundle
 func RemoveFromBundle(bundleRWS io.ReadWriteSeeker, label string) error {
 	slog.Debug("load bundle")
-	bundle, err := archive.UntarGzipBundle(bundleRWS)
-	if err != nil {
+	bundle := archive.NewBundle()
+	if err := archive.UntarGzipBundle(bundleRWS, bundle); err != nil {
 		return err
 	}
 	bundle.Remove(label)

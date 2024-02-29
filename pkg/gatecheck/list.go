@@ -41,16 +41,16 @@ func List(dst io.Writer, src io.Reader, inputFilename string) error {
 
 	case strings.Contains(inputFilename, "bundle"):
 		slog.Debug("list", "filename", inputFilename, "filetype", "bundle")
-		bundle, err := archive.UntarGzipBundle(src)
-		if err != nil {
+		bundle := archive.NewBundle()
+		if err := archive.UntarGzipBundle(src, bundle); err != nil {
 			return err
 		}
-		_, err = fmt.Fprintln(dst, bundle.Content())
+		_, err := fmt.Fprintln(dst, bundle.Content())
 		return err
 
 	default:
 		slog.Error("invalid input filetype", "filename", inputFilename)
-		return errors.New("failed to list artifact content")
+		return errors.New("Failed to list artifact content. See log for details.")
 	}
 }
 

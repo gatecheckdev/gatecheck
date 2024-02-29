@@ -78,6 +78,14 @@ func (b *Bundle) WriteFileTo(w io.Writer, fileLabel string) (int64, error) {
 	return bytes.NewReader(fileBytes).WriteTo(w)
 }
 
+func (b *Bundle) FileBytes(fileLabel string) []byte {
+	fileBytes, ok := b.content[fileLabel]
+	if !ok {
+		slog.Warn("file label not found in bundle", "file_label", fileLabel)
+	}
+	return fileBytes
+}
+
 // FileSize get the file size for a specific label
 func (b *Bundle) FileSize(fileLabel string) int {
 	fileBytes, ok := b.content[fileLabel]
@@ -174,15 +182,14 @@ func TarGzipBundle(dst io.Writer, bundle *Bundle) (int64, error) {
 	return n, nil
 }
 
-func UntarGzipBundle(src io.Reader) (*Bundle, error) {
+func UntarGzipBundle(src io.Reader, bundle *Bundle) error {
 	gzipReader, err := gzip.NewReader(src)
 	if err != nil {
 		slog.Error("failed to create new gzip reader")
-		return nil, err
+		return err
 	}
 	tarReader := tar.NewReader(gzipReader)
 
-	bundle := new(Bundle)
 	bundle.content = make(map[string][]byte)
 	for {
 		header, err := tarReader.Next()
@@ -190,11 +197,11 @@ func UntarGzipBundle(src io.Reader) (*Bundle, error) {
 			break
 		}
 		if err != nil {
-			return nil, err
+			return err
 		}
 
 		if header.Typeflag != tar.TypeReg {
-			return nil, errors.New("Gatecheck Bundle only supports regular files in a flat directory structure")
+			return errors.New("Gatecheck Bundle only supports regular files in a flat directory structure")
 		}
 		fileBytes, _ := io.ReadAll(tarReader)
 		bundle.content[header.Name] = fileBytes
@@ -202,14 +209,14 @@ func UntarGzipBundle(src io.Reader) (*Bundle, error) {
 	manifest := new(Manifest)
 	manifestBytes, ok := bundle.content[ManifestFilename]
 	if !ok {
-		return nil, errors.New("Gatecheck Bundle manifest not found")
+		return errors.New("Gatecheck Bundle manifest not found")
 	}
 	if err := json.Unmarshal(manifestBytes, manifest); err != nil {
-		return nil, fmt.Errorf("gatecheck manifest decoding: %w", err)
+		return fmt.Errorf("gatecheck manifest decoding: %w", err)
 	}
 	bundle.manifest = *manifest
 
-	return bundle, nil
+	return nil
 }
 
 // BundleEncoder is used to write bundles to io.Writer
