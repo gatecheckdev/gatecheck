@@ -36,7 +36,7 @@ func Validate(config *Config, reportSrc io.Reader, targetfilename string, option
 
 	case strings.Contains(targetfilename, "gitleaks"):
 		slog.Debug("validate", "filename", targetfilename, "filetype", "gitleaks")
-		return errors.New("Gitleaks validation not supported yet.")
+		return validateGitleaksReport(reportSrc, config)
 
 	case strings.Contains(targetfilename, "syft"):
 		slog.Debug("validate", "filename", targetfilename, "filetype", "syft")
@@ -444,6 +444,19 @@ func ruleSemgrepImpactRiskAccept(config *Config, report *artifacts.SemgrepReport
 	report.Results = results
 }
 
+func ruleGitLeaksLimit(config *Config, report *artifacts.GitLeaksReportMin) bool {
+	if !config.Gitleaks.LimitEnabled {
+		slog.Debug("secrets limit not enabled", "artifact", "gitleaks")
+		return true
+	}
+	detectedSecrets := report.Count()
+	if detectedSecrets > 0 {
+		slog.Error("committed secrets violation", "artifacts", "gitleaks", "secrets_detected", detectedSecrets)
+		return false
+	}
+	return true
+}
+
 func loadCatalogFromFileOrAPI(catalog *kev.Catalog, options *fetchOptions) error {
 	if options.kevFile != nil {
 		slog.Debug("load kev catalog from file", "filename", options.kevFile)
@@ -539,6 +552,16 @@ func validateSemgrepReport(r io.Reader, config *Config) error {
 	return validateSemgrepRules(config, report)
 }
 
+func validateGitleaksReport(r io.Reader, config *Config) error {
+	slog.Debug("validate gitleaks report")
+	report := &artifacts.GitLeaksReportMin{}
+	if err := json.NewDecoder(r).Decode(report); err != nil {
+		slog.Error("decode gitleaks report for validation", "error", err)
+		return errors.New("Cannot run Semgrep report validation: Report decoding failed. See log for details.")
+	}
+	return validateGitleaksRules(config, report)
+}
+
 // Validate Rules
 
 func validateGrypeRules(config *Config, report *artifacts.GrypeReportMin, catalog *kev.Catalog, data *epss.Data) error {
@@ -610,5 +633,13 @@ func validateSemgrepRules(config *Config, report *artifacts.SemgrepReportMin) er
 		return errors.New("semgrep validation failure: Severity Limit Exceeded")
 	}
 
+	return nil
+}
+
+func validateGitleaksRules(config *Config, report *artifacts.GitLeaksReportMin) error {
+	// 1. Limit Secrets - fail
+	if !ruleGitLeaksLimit(config, report) {
+		return errors.New("gitleaks validation failure: Secrets Detected")
+	}
 	return nil
 }

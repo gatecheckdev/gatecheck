@@ -1,4 +1,4 @@
-version: v1
+version: "1"
 metadata:
   tags:
     - auto generated from CLI
@@ -29,9 +29,35 @@ grype:
   cveRiskAcceptance:
     enabled: false
     cves: []
+cyclonedx:
+  severityLimit:
+    critical:
+      enabled: false
+      limit: 0
+    high:
+      enabled: false
+      limit: 0
+    medium:
+      enabled: false
+      limit: 0
+    low:
+      enabled: false
+      limit: 0
+  epssLimit:
+    enabled: false
+    score: 0
+  kevLimitEnabled: false
+  cveLimit:
+    enabled: false
+    cves: []
+  epssRiskAcceptance:
+    enabled: false
+    score: 0
+  cveRiskAcceptance:
+    enabled: false
+    cves: []
 semgrep:
   severityLimit:
-    enabled: false
     error:
       enabled: false
       limit: 0
@@ -46,3 +72,5 @@ semgrep:
     high: false
     medium: false
     low: false
+gitleaks:
+  limitEnabled: false

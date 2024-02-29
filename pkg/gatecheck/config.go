@@ -19,11 +19,12 @@ import (
 // Metadata fields are intended for arbitrary data and shouldn't
 // conflict with rule validation
 type Config struct {
-	Version   string              `json:"version"   mapstructure:"version" toml:"version"   yaml:"version"`
-	Metadata  configMetadata      `json:"metadata"  toml:"metadata"        yaml:"metadata"`
-	Grype     reportWithCVEs      `json:"grype"     toml:"grype"           yaml:"grype"`
-	Cyclonedx reportWithCVEs      `json:"cyclonedx" toml:"cyclonedx"       yaml:"cyclonedx"`
-	Semgrep   configSemgrepReport `json:"semgrep"   toml:"semgrep"         yaml:"semgrep"`
+	Version   string               `json:"version"   toml:"version"   yaml:"version"`
+	Metadata  configMetadata       `json:"metadata"  toml:"metadata"  yaml:"metadata"`
+	Grype     reportWithCVEs       `json:"grype"     toml:"grype"     yaml:"grype"`
+	Cyclonedx reportWithCVEs       `json:"cyclonedx" toml:"cyclonedx" yaml:"cyclonedx"`
+	Semgrep   configSemgrepReport  `json:"semgrep"   toml:"semgrep"   yaml:"semgrep"`
+	Gitleaks  configGitleaksReport `json:"gitleaks"  toml:"gitleaks"  yaml:"gitleaks"`
 }
 
 func (c *Config) String() string {
@@ -41,6 +42,10 @@ func (c *Config) String() string {
 	}
 	fmt.Printf("%v\n", c.Grype)
 	return format.NewTableWriter(table).String()
+}
+
+type configGitleaksReport struct {
+	LimitEnabled bool `json:"limitEnabled" toml:"limitEnabled" yaml:"limitEnabled"`
 }
 
 type configSemgrepReport struct {
@@ -212,6 +217,9 @@ func NewDefaultConfig() *Config {
 				Enabled: false,
 				CVEs:    make([]configCVE, 0),
 			},
+		},
+		Gitleaks: configGitleaksReport{
+			LimitEnabled: false,
 		},
 	}
 }
