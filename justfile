@@ -22,5 +22,5 @@ fix:
     golangci-lint run --fast --fix
 
 # Locally serve documentation
-# serve-docs:
-# 	mdbook serve
+serve-docs:
+    mdbook serve
