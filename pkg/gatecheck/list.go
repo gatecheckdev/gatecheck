@@ -49,7 +49,7 @@ func List(dst io.Writer, src io.Reader, inputFilename string) error {
 		return err
 
 	default:
-		slog.Error("invalid input filetype", "filename", inputFilename)
+		slog.Error("unsupported file type, cannot be determined from filename", "filename", inputFilename)
 		return errors.New("Failed to list artifact content. See log for details.")
 	}
 }
@@ -87,8 +87,8 @@ func ListAll(dst io.Writer, src io.Reader, inputFilename string, client *http.Cl
 		return listCyclonedxWithEPSS(dst, src, epssData)
 
 	default:
-		slog.Error("unsupport file type", "filename", inputFilename)
-		return errors.New("failed to list artifact content")
+		slog.Error("unsupported file type, cannot be determined from filename", "filename", inputFilename)
+		return errors.New("Failed to list artifact content. See log for details.")
 	}
 }
 

@@ -49,8 +49,8 @@ func Validate(config *Config, reportSrc io.Reader, targetfilename string, option
 		return validateBundle(reportSrc, config, options)
 
 	default:
-		slog.Error("invalid input filetype", "filename", targetfilename)
-		return errors.New("failed to validate artifact content")
+		slog.Error("unsupported file type, cannot be determined from filename", "filename", targetfilename)
+		return errors.New("Failed to validate artifact. See log for details.")
 	}
 }
 
