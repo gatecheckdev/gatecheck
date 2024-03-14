@@ -19,17 +19,17 @@ type semgrepError struct {
 }
 
 type SemgrepResults struct {
-	Extra   semgrepExtra `json:"extra"`
+	Extra   SemgrepExtra `json:"extra"`
 	CheckID string       `json:"check_id"`
 }
 
-type semgrepExtra struct {
+type SemgrepExtra struct {
 	Severity string          `json:"severity"`
-	Metadata semgrepMetadata `json:"metadata"`
+	Metadata SemgrepMetadata `json:"metadata"`
 	Message  string          `json:"message"`
 }
 
-type semgrepMetadata struct {
+type SemgrepMetadata struct {
 	Category   string   `json:"category"`
 	Confidence string   `json:"confidence"`
 	CWE        []string `json:"cwe"`
@@ -69,7 +69,7 @@ func (s *SemgrepResults) ShortCheckID() string {
 	return fmt.Sprintf("%s...%s", parts[0], parts[len(parts)-1])
 }
 
-func (s *semgrepMetadata) OwaspIDs() string {
+func (s *SemgrepMetadata) OwaspIDs() string {
 	slog.Info(s.Shortlink, "type", fmt.Sprintf("%T", s.Owasp))
 	switch v := s.Owasp.(type) {
 	case string:

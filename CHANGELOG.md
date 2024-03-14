@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Wrap msg in bytes with string for logging
+- Grype & Cyclonedx validation errors
 
 ### Changed
 

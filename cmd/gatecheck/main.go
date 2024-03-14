@@ -78,7 +78,7 @@ func runV1() {
 
 	command := cmdV1.NewGatecheckCommand()
 
-	slog.Warn("Gatecheck CLI v1 is enabled which is currently unstable")
+	slog.Info("Gatecheck CLI v1 is enabled")
 	err := command.Execute()
 	if err != nil {
 		os.Exit(1)
@@ -191,6 +191,11 @@ func runV0() {
 
 	slog.SetDefault(slog.New(tint.NewHandler(command.ErrOrStderr(), &tint.Options{Level: slog.LevelWarn, TimeFormat: time.TimeOnly})))
 	command.PersistentFlags().BoolP("verbose", "v", false, "verbose output")
+
+	msg := `DEPRECATION NOTICE: A new version of the Gatecheck CLI will become the default in the next release. 
+	See https://github.com/gatecheckdev/gatecheck for details`
+
+	slog.Warn(msg)
 
 	var startTime time.Time
 	command.PersistentPreRun = func(cm *cobra.Command, _ []string) {

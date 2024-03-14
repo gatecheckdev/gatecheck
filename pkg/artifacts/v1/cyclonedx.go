@@ -11,11 +11,11 @@ import (
 //
 // It contains only the necessary fields for validation and listing
 type CyclonedxReportMin struct {
-	Components      []cyclonedxComponent     `json:"components"`
+	Components      []CyclonedxComponent     `json:"components"`
 	Vulnerabilities []CyclonedxVulnerability `json:"vulnerabilities"`
 }
 
-type cyclonedxComponent struct {
+type CyclonedxComponent struct {
 	BOMRef  string `json:"bom-ref"`
 	Name    string `json:"name"`
 	Version string `json:"version"`
@@ -23,25 +23,25 @@ type cyclonedxComponent struct {
 
 type CyclonedxVulnerability struct {
 	ID         string                     `json:"id"`
-	Advisories []cyclonedxAdvisory        `json:"advisories"`
-	Affects    []cyclondexAffectedPackage `json:"affects"`
-	Ratings    []cyclonedxRating          `json:"ratings"`
+	Advisories []CyclonedxAdvisory        `json:"advisories"`
+	Affects    []CyclondexAffectedPackage `json:"affects"`
+	Ratings    []CyclonedxRating          `json:"ratings"`
 }
 
-type cyclondexAffectedPackage struct {
+type CyclondexAffectedPackage struct {
 	Ref string `json:"ref"`
 }
 
-type cyclonedxAdvisory struct {
+type CyclonedxAdvisory struct {
 	URL string `json:"url"`
 }
 
-type cyclonedxRating struct {
-	Source   cyclonedxSource `json:"source"`
+type CyclonedxRating struct {
+	Source   CyclonedxSource `json:"source"`
 	Severity string          `json:"severity"`
 }
 
-type cyclonedxSource struct {
+type CyclonedxSource struct {
 	Name string `json:"name"`
 }
 
@@ -58,7 +58,7 @@ func (r *CyclonedxReportMin) SelectBySeverity(severity string) []CyclonedxVulner
 
 func (r *CyclonedxVulnerability) HighestSeverity() string {
 	order := map[string]int{"none": 0, "low": 1, "medium": 2, "high": 3, "critical": 4}
-	rating := slices.MaxFunc(r.Ratings, func(a, b cyclonedxRating) int {
+	rating := slices.MaxFunc(r.Ratings, func(a, b CyclonedxRating) int {
 		return cmp.Compare(order[a.Severity], order[b.Severity])
 	})
 	return rating.Severity

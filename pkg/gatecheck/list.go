@@ -99,7 +99,7 @@ func ListGrypeReport(dst io.Writer, src io.Reader) error {
 		return err
 	}
 	table := format.NewTable()
-	table.AppendRow("Severity", "Package", "Version", "Link")
+	table.AppendRow("Grype Severity", "Package", "Version", "Link")
 
 	for _, item := range report.Matches {
 		table.AppendRow(item.Vulnerability.Severity, item.Artifact.Name, item.Artifact.Version, item.Vulnerability.DataSource)
@@ -121,7 +121,7 @@ func listGrypeWithEPSS(dst io.Writer, src io.Reader, epssData *epss.Data) error 
 	}
 
 	table := format.NewTable()
-	table.AppendRow("CVE ID", "Severity", "EPSS Score", "EPSS Prctl", "Package", "Version", "Link")
+	table.AppendRow("Grype CVE ID", "Severity", "EPSS Score", "EPSS Prctl", "Package", "Version", "Link")
 
 	for _, item := range report.Matches {
 		cve, ok := epssData.CVEs[item.Vulnerability.ID]
@@ -158,7 +158,7 @@ func ListCyclonedx(dst io.Writer, src io.Reader) error {
 		return err
 	}
 	table := format.NewTable()
-	table.AppendRow("CVE ID", "Severity", "Package", "Link")
+	table.AppendRow("Cyclonedx CVE ID", "Severity", "Package", "Link")
 	link := "-"
 	for idx, vul := range report.Vulnerabilities {
 		severity := vul.HighestSeverity()
@@ -185,7 +185,7 @@ func listCyclonedxWithEPSS(dst io.Writer, src io.Reader, epssData *epss.Data) er
 	}
 
 	table := format.NewTable()
-	table.AppendRow("CVE ID", "Severity", "EPSS Score", "EPSS Prctl", "affected Packages", "Link")
+	table.AppendRow("Cyclonedx CVE ID", "Severity", "EPSS Score", "EPSS Prctl", "affected Packages", "Link")
 
 	for idx, item := range report.Vulnerabilities {
 		cve, ok := epssData.CVEs[item.ID]
@@ -234,7 +234,7 @@ func ListSemgrep(dst io.Writer, src io.Reader) error {
 	}
 
 	table := format.NewTable()
-	table.AppendRow("ID", "Owasp IDs", "Severity", "Impact", "link")
+	table.AppendRow("Semgrep Check ID", "Owasp IDs", "Severity", "Impact", "link")
 
 	for _, result := range report.Results {
 		table.AppendRow(
@@ -261,7 +261,7 @@ func listGitleaks(dst io.Writer, src io.Reader) error {
 
 	table := format.NewTable()
 
-	table.AppendRow("Rule ID", "File", "Commit", "Start Line")
+	table.AppendRow("Gitleaks Rule ID", "File", "Commit", "Start Line")
 
 	for _, finding := range *report {
 		table.AppendRow(

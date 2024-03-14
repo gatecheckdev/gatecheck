@@ -151,12 +151,16 @@ func ruleCyclonedxCVEDeny(config *Config, report *artifacts.CyclonedxReportMin) 
 }
 
 func ruleGrypeCVEAllow(config *Config, report *artifacts.GrypeReportMin) {
+	slog.Debug("cve id risk acceptance rule", "artifact", "grype",
+		"enabled", config.Grype.CVERiskAcceptance.Enabled,
+		"risk_accepted_cves", len(config.Grype.CVERiskAcceptance.CVEs),
+	)
+
 	if !config.Grype.CVERiskAcceptance.Enabled {
-		slog.Debug("cve risk acceptance not enabled", "artifact", "grype")
 		return
 	}
 	matches := slices.DeleteFunc(report.Matches, func(match artifacts.GrypeMatch) bool {
-		allowed := slices.ContainsFunc(config.Grype.CVELimit.CVEs, func(cve configCVE) bool {
+		allowed := slices.ContainsFunc(config.Grype.CVERiskAcceptance.CVEs, func(cve configCVE) bool {
 			return strings.EqualFold(cve.ID, match.Vulnerability.ID)
 		})
 		if allowed {
@@ -170,12 +174,18 @@ func ruleGrypeCVEAllow(config *Config, report *artifacts.GrypeReportMin) {
 }
 
 func ruleCyclonedxCVEAllow(config *Config, report *artifacts.CyclonedxReportMin) {
+	slog.Debug(
+		"cve id risk acceptance rule", "artifact", "cyclonedx",
+		"enabled", config.Cyclonedx.CVERiskAcceptance.Enabled,
+		"risk_accepted_cves", len(config.Cyclonedx.CVERiskAcceptance.CVEs),
+	)
+
 	if !config.Cyclonedx.CVERiskAcceptance.Enabled {
-		slog.Debug("cve risk acceptance not enabled", "artifact", "cyclonedx")
 		return
 	}
+
 	vulnerabilities := slices.DeleteFunc(report.Vulnerabilities, func(vulnerability artifacts.CyclonedxVulnerability) bool {
-		allowed := slices.ContainsFunc(config.Cyclonedx.CVELimit.CVEs, func(cve configCVE) bool {
+		allowed := slices.ContainsFunc(config.Cyclonedx.CVERiskAcceptance.CVEs, func(cve configCVE) bool {
 			return strings.EqualFold(cve.ID, vulnerability.ID)
 		})
 		if allowed {
@@ -395,6 +405,13 @@ func ruleCyclonedxEPSSLimit(config *Config, report *artifacts.CyclonedxReportMin
 }
 
 func ruleSemgrepSeverityLimit(config *Config, report *artifacts.SemgrepReportMin) bool {
+	slog.Debug(
+		"severity limit rule", "artifact", "semgrep",
+		"error_enabled", config.Semgrep.SeverityLimit.Error.Enabled,
+		"info_enabled", config.Semgrep.SeverityLimit.Info.Enabled,
+		"warning_enabled", config.Semgrep.SeverityLimit.Warning.Enabled,
+	)
+
 	validationPass := true
 
 	limits := map[string]configLimit{
@@ -424,6 +441,14 @@ func ruleSemgrepSeverityLimit(config *Config, report *artifacts.SemgrepReportMin
 }
 
 func ruleSemgrepImpactRiskAccept(config *Config, report *artifacts.SemgrepReportMin) {
+	slog.Debug(
+		"impact risk accept rule", "artifact", "semgrep",
+		"enabled", config.Semgrep.ImpactRiskAcceptance.Enabled,
+		"high", config.Semgrep.ImpactRiskAcceptance.High,
+		"medium", config.Semgrep.ImpactRiskAcceptance.Medium,
+		"low", config.Semgrep.ImpactRiskAcceptance.Low,
+	)
+
 	if !config.Semgrep.ImpactRiskAcceptance.Enabled {
 		slog.Debug("impact risk acceptance not enabled", "artifact", "semgrep")
 		return
