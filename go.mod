@@ -1,6 +1,6 @@
 module github.com/gatecheckdev/gatecheck
 
-go 1.22.0
+go 1.22.1
 
 require (
 	github.com/BacchusJackson/go-semgrep v1.9.0
@@ -14,6 +14,7 @@ require (
 	github.com/johannesboyne/gofakes3 v0.0.0-20230914150226-f005f5cc03aa
 	github.com/lmittmann/tint v1.0.2
 	github.com/pelletier/go-toml/v2 v2.1.0
+	github.com/sagikazarmark/slog-shim v0.1.0
 	github.com/spf13/cobra v1.8.0
 	github.com/spf13/viper v1.17.0
 	github.com/zricethezav/gitleaks/v8 v8.18.0
@@ -160,7 +161,6 @@ require (
 	github.com/ryszard/goskiplist v0.0.0-20150312221310-2dfbae5fcf46 // indirect
 	github.com/saferwall/pe v1.4.7 // indirect
 	github.com/sagikazarmark/locafero v0.3.0 // indirect
-	github.com/sagikazarmark/slog-shim v0.1.0 // indirect
 	github.com/saintfish/chardet v0.0.0-20230101081208-5e3ef4b5456d // indirect
 	github.com/sassoftware/go-rpmutils v0.2.0 // indirect
 	github.com/scylladb/go-set v1.0.3-0.20200225121959-cc7b2070d91e // indirect
