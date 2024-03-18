@@ -37,7 +37,7 @@ the source code.
    ```
 3. **Build the Application**: Run the following command to compile Gatecheck with appropriate load flags:
    ```
-    go build -ldflags="-X 'main.cliVersion=v0.5.0-pre' -X 'main.gitCommit=$(git rev-parse HEAD)' -X 'main.buildDate=$(date -u +%Y-%m-%dT%H:%M:%SZ)' -X 'main.gitDescription=$(git log -1 --pretty=%B)'" -o ./bin ./cmd/gatecheck
+    go build -ldflags="-X 'main.cliVersion=$(git describe --tags)' -X 'main.gitCommit=$(git rev-parse HEAD)' -X 'main.buildDate=$(date -u +%Y-%m-%dT%H:%M:%SZ)' -X 'main.gitDescription=$(git log -1 --pretty=%B)'" -o ./bin ./cmd/gatecheck
    ```
 4. **Move the Binary to a Bin Directory** (as described in Option 1, step 3).
 
@@ -66,6 +66,7 @@ INSTALL_DIR='custom/location/bin' just install
 
 After installing Gatecheck, you can begin using it by typing `gatecheck` followed by the necessary commands and 
 options in your terminal or command prompt. For a list of available commands and their descriptions, use:
+
 ```
 gatecheck --help
 ```

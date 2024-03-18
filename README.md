@@ -39,7 +39,19 @@ Generate a configuration file with the default thresholds set
 gatecheck config init > gatecheck.yaml
 ```
 
+### Summarize Reports with List
+
+```shell
+gatechec ls --help
+```
+
+List with EPSS Scores is support for Grype and Cyclondex reports
+
+![Gatecheck Version](https://static.gatecheck.dev/gatecheck-list.gif)
+
+
 ### Validation with Known Exploited Vulnerabilities (KEV) Catalog 
+
 
 ### Validation with Exploit Prediction Scoring System (EPSS) Scores
 

@@ -6,12 +6,12 @@ Set Margin 20
 Set MarginFill "#89B4FA"
 Set BorderRadius 10
 
-Output dist/gatecheck-version.gif
+Set Width 1600
 
-Type "gatecheck version"
+Output dist/gatecheck-list.gif
 
-Sleep 500ms
-
+Type "grype ubuntu:latest -o json | gatecheck ls --all -i grype | less"
+Sleep 1
 Enter
 
-Sleep 10
+Sleep 15
