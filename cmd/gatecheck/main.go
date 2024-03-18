@@ -51,13 +51,13 @@ var (
 )
 
 func main() {
-	ffCLIV1Enabled := os.Getenv("GATECHECK_FF_CLI_V1_ENABLED")
+	ffLegacyCLIEnabled := os.Getenv("GATECHECK_FF_LEGACY_CLI_ENABLED")
 
-	switch ffCLIV1Enabled {
+	switch ffLegacyCLIEnabled {
 	case "1":
-		runV1()
-	default:
 		runV0()
+	default:
+		runV1()
 	}
 }
 
@@ -192,8 +192,8 @@ func runV0() {
 	slog.SetDefault(slog.New(tint.NewHandler(command.ErrOrStderr(), &tint.Options{Level: slog.LevelWarn, TimeFormat: time.TimeOnly})))
 	command.PersistentFlags().BoolP("verbose", "v", false, "verbose output")
 
-	msg := `DEPRECATION NOTICE: A new version of the Gatecheck CLI will become the default in the next release. 
-	See https://github.com/gatecheckdev/gatecheck for details`
+	msg := `DEPRECATION NOTICE: This Legacy CLI will be removed in the next release.
+	See https://docs.gatecheck.dev for details`
 
 	slog.Warn(msg)
 
