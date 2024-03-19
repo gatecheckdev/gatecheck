@@ -1,17 +1,25 @@
 # Make sure to check the documentation at https://goreleaser.com
 # To run, tag the branch with vX.X.X and do `goreleaser release --rm`
+version: 1
+
 before:
   hooks:
     # You may remove this if you don't use go modules.
     - go mod tidy
+
 builds:
-  - main: ./cmd/gatecheck/
+  - main: ./cmd/gatecheck
     env:
       - CGO_ENABLED=0
     goos:
       - linux
       - windows
       - darwin
+    ldflags: >
+      -X 'main.cliVersion={{.Version}}'
+      -X 'main.gitCommit={{.ShortCommit}}'
+      -X 'main.buildDate={{.Date}}'
+
 archives:
   - name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
 checksum:
@@ -25,3 +33,4 @@ changelog:
     exclude:
       - '^docs:'
       - '^test:'
+

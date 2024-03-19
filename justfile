@@ -21,6 +21,12 @@ lint:
 fix:
     golangci-lint run --fast --fix
 
+release-snapshot:
+    goreleaser release --snapshot --rm-dist
+
+release:
+    goreleaser release --rm-dist
+
 # Locally serve documentation
 serve-docs:
     mdbook serve
