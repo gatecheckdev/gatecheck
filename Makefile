@@ -1,43 +1,41 @@
-BIN="./bin"
-SRC=$(shell find . -name "*.go")
+SRC := $(shell find . -type f -name '*.go')
+MAIN_PACKAGE_PATH := ./cmd/gatecheck
+BINARY_NAME := ./bin/gatecheck
 
-.PHONY: fmt test install_deps clean coverage ocov
+.PHONY: format test dependencies clean coverage open-coverage build release-snapshot release all
 
 default: all
 
-all: fmt test
-	
-build:
-	$(info ******************** Compile Binary to ./bin ********************)
-	mkdir -p bin
-	go build -o bin ./...
-	
-fmt:
-	$(info ******************** checking formatting ********************)
+all: format test build
+
+format:
+	$(info ******************** Checking formatting ********************)
 	@test -z $(shell gofmt -l $(SRC)) || (gofmt -d $(SRC); exit 1)
 
-test: install_deps
-	$(info ******************** running tests ********************)
+test: dependencies
+	$(info ******************** Running tests ********************)
 	go test -cover ./...
 
 coverage:
-	$(info ******************** running test coverage ********************)
-	go test -coverprofile cover.cov ./...
+	$(info ******************** Generating test coverage ********************)
+	go test -coverprofile=coverage.out ./...
 
-ocov: coverage
-	go tool cover -html=cover.cov
+open-coverage: coverage
+	go tool cover -html=coverage.out
 
+dependencies:
+	$(info ******************** Downloading dependencies ********************)
+	go mod download
 
-install_deps:
-	$(info ******************** downloading dependencies ********************)
-	go get -v ./...
+build:
+	$(info ******************** Compiling binary to ./bin ********************)
+	go build -ldflags="-X 'main.cliVersion=$$(git describe --tags)' -X 'main.gitCommit=$$(git rev-parse HEAD)' -X 'main.buildDate=$$(date -u +%Y-%m-%dT%H:%M:%SZ)' -X 'main.gitDescription=$$(git log -1 --pretty=%B)'" -o ${BINARY_NAME} ${MAIN_PACKAGE_PATH}
 
-# Make sure to have GITHUB_TOKEN env variable defined
-release_snapshot:
-	goreleaser release --snapshot --clean
+release-snapshot:
+	goreleaser release --snapshot --rm-dist
 
 release:
-	goreleaser release --clean
+	goreleaser release --rm-dist
 
 clean:
-	rm -rf $(BIN)
+	rm -rf ${BINARY_NAME} coverage.out

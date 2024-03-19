@@ -1,11 +1,10 @@
 package gatecheck
 
 import (
+	"log/slog"
 	"os"
 	"testing"
 	"time"
-
-	"log/slog"
 
 	"github.com/gatecheckdev/gatecheck/pkg/artifacts/v1"
 	"github.com/lmittmann/tint"
@@ -323,7 +322,6 @@ func Test_ruleCyclonedxSeverityLimit(t *testing.T) {
 }
 
 func Test_ruleSemgrepSeverityLimit(t *testing.T) {
-
 	t.Run("empty-report-empty-config", func(t *testing.T) {
 		config := new(Config)
 		report := new(artifacts.SemgrepReportMin)
@@ -406,7 +404,6 @@ func Test_ruleSemgrepSeverityLimit(t *testing.T) {
 		if want != got {
 			t.Fatalf("want: %t got: %t", want, got)
 		}
-
 	})
 
 	t.Run("impact-risk-acceptance-2", func(t *testing.T) {
@@ -436,6 +433,5 @@ func Test_ruleSemgrepSeverityLimit(t *testing.T) {
 		if want != got {
 			t.Fatalf("want: %t got: %t", want, got)
 		}
-
 	})
 }
