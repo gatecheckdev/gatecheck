@@ -50,9 +50,14 @@ List with EPSS Scores is support for Grype and Cyclondex reports
 ![Gatecheck Version](https://static.gatecheck.dev/gatecheck-list.gif)
 
 
-### Validation with Known Exploited Vulnerabilities (KEV) Catalog 
+### Validation 
 
+List with EPSS Scores is support for Grype and Cyclondex reports
 
-### Validation with Exploit Prediction Scoring System (EPSS) Scores
+![Gatecheck Validate](https://static.gatecheck.dev/gatecheck-validate.gif)
 
 ### Bundling Artifacts
+
+Bundling Artifacts produces a gzipped tarball with an associated manifest for metadata.
+
+![Gatecheck Bundle](https://static.gatecheck.dev/gatecheck-bundle.gif)
