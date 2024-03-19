@@ -18,7 +18,7 @@ The CLI is currently going through a much needed refactor.
 Once all existing features have been implemented in the new CLI, the old one will be deprecated and then removed in
 a few versions.
 
-To enable the legacy CLI, set the variable `GATECHECK_FF_LEGACY_CLI_ENABLED=1`.
+To enable the legacy CLI, set the variable `GATECHECK_FF_CLI_V1_ENABLED=1`.
 
 ## Getting Started
 
