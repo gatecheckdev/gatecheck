@@ -40,7 +40,7 @@ const (
 )
 
 // GatecheckVersion see CHANGELOG.md
-const GatecheckVersion = "v0.4.0"
+const GatecheckVersion = "v0.4.1"
 
 // all variables here are provided as build-time arguments, with clear default values
 var (
