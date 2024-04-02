@@ -80,7 +80,7 @@ func DefaultFetchOptions() *FetchOptions {
 	today := time.Now()
 	year := today.Year()
 	month := today.Format("01")
-	day := today.Format("01")
+	day := today.Format("02")
 	return &FetchOptions{
 		Client: http.DefaultClient,
 		URL:    fmt.Sprintf(epssUrlTemplate, year, month, day),

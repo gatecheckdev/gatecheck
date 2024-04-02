@@ -67,6 +67,7 @@ func runList(cmd *cobra.Command, args []string) error {
 
 	// TODO: use options instead of parameters
 	if listAll {
+		slog.Debug("listing with epss scores")
 		return gatecheck.ListAll(cmd.OutOrStdout(), src, filename, http.DefaultClient, epssURL, epssFile)
 	}
 	return gatecheck.List(cmd.OutOrStdout(), src, filename)
