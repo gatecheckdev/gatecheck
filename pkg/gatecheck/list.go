@@ -67,12 +67,7 @@ func ListAll(dst io.Writer, src io.Reader, inputFilename string, client *http.Cl
 			return errors.New("Failed to decode EPSS data file. See log for details.")
 		}
 	default:
-		fetchOptions := epss.DefaultFetchOptions()
-		fetchOptions.Client = client
-		if epssURL != "" {
-			fetchOptions.URL = epssURL
-		}
-		if err := epss.FetchData(epssData); err != nil {
+		if err := epss.FetchData(epssData, epss.WithClient(client), epss.WithURL(epssURL)); err != nil {
 			return err
 		}
 	}

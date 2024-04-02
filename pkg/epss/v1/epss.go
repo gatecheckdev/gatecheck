@@ -58,12 +58,18 @@ func (c CVE) PercentileValue() float64 {
 type fetchOptionFunc func(*FetchOptions)
 
 func WithURL(url string) fetchOptionFunc {
+	if url == "" {
+		return func(_ *FetchOptions) {}
+	}
 	return func(o *FetchOptions) {
 		o.URL = url
 	}
 }
 
 func WithClient(client *http.Client) fetchOptionFunc {
+	if client == nil {
+		return func(_ *FetchOptions) {}
+	}
 	return func(o *FetchOptions) {
 		o.Client = client
 	}
@@ -129,13 +135,13 @@ func DownloadData(w io.Writer, optionFuncs ...fetchOptionFunc) error {
 }
 
 // FetchData do a GET request and gunzip on the CSV
-func FetchData(data *Data, optionFuncs ...fetchOptionFunc) error {
+func FetchData(destData *Data, optionFuncs ...fetchOptionFunc) error {
 	buf := new(bytes.Buffer)
 	if err := DownloadData(buf, optionFuncs...); err != nil {
 		return err
 	}
 
-	return ParseEPSSDataCSV(buf, data)
+	return ParseEPSSDataCSV(buf, destData)
 }
 
 // ParseEPSSDataCSV custom CSV parsing function
