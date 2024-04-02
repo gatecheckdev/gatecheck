@@ -28,7 +28,7 @@ func newListCommand() *cobra.Command {
 	cmd.Flags().BoolP("all", "a", false, "list will EPSS scores and KEV Catalog check")
 
 	cmd.Flags().String("epss-file", "", "use this file for epss scores, will not query API")
-	_ = viper.BindPFlag("cli.epss-file", cmd.Flags().Lookup("epss-file"))
+	_ = viper.BindPFlag("cli.list.epss-file", cmd.Flags().Lookup("epss-file"))
 
 	return cmd
 }
@@ -44,7 +44,7 @@ func runList(cmd *cobra.Command, args []string) error {
 	inputType, _ := cmd.Flags().GetString("input-type")
 	listAll, _ := cmd.Flags().GetBool("all")
 	epssURL := viper.GetString("api.epss-url")
-	epssFilename := viper.GetString("cli.epss-file")
+	epssFilename := viper.GetString("cli.list.epss-file")
 
 	src, err := fileOrStdin(filename, cmd)
 	if err != nil {
@@ -59,6 +59,7 @@ func runList(cmd *cobra.Command, args []string) error {
 
 	if epssFilename != "" {
 		slog.Debug("open epss", "filename", epssFilename)
+		listAll = true
 		epssFile, err = os.Open(epssFilename)
 		if err != nil {
 			return err
