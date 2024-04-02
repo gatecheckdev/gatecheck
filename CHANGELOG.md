@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - EPSS Score URL default date go's std lib date parsing uses '02' for day
 - Viper flag collision between list and validate commands
+- EPSS URL env var use
 
 ## [0.4.0] - 2024-03-19
 
