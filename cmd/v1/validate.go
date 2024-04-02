@@ -22,13 +22,13 @@ func newValidateCommand() *cobra.Command {
 	cmd.Flags().StringP("config", "f", "", "threshold configuration file")
 
 	cmd.Flags().String("epss-file", "", "use this file for epss scores, will not query API")
-	_ = viper.BindPFlag("cli.epss-file", cmd.Flags().Lookup("epss-file"))
+	_ = viper.BindPFlag("cli.validate.epss-file", cmd.Flags().Lookup("epss-file"))
 
 	cmd.Flags().String("kev-file", "", "use this file for kev catalog, will not query API")
-	_ = viper.BindPFlag("cli.kev-file", cmd.Flags().Lookup("kev-file"))
+	_ = viper.BindPFlag("cli.validate.kev-file", cmd.Flags().Lookup("kev-file"))
 
 	cmd.Flags().Bool("audit", false, "audit mode - will run all rules but wil always exit 0 for validation failures")
-	_ = viper.BindPFlag("cli.audit", cmd.Flags().Lookup("audit"))
+	_ = viper.BindPFlag("cli.validate.audit", cmd.Flags().Lookup("audit"))
 
 	return cmd
 }
@@ -43,10 +43,10 @@ func runValidate(cmd *cobra.Command, args []string) error {
 	epssURL := viper.GetString("api.epss-url")
 	kevURL := viper.GetString("api.kev-url")
 
-	epssFilename := viper.GetString("cli.epss-file")
-	kevFilename := viper.GetString("cli.kev-file")
+	epssFilename := viper.GetString("cli.validate.epss-file")
+	kevFilename := viper.GetString("cli.validate.kev-file")
 
-	audit := viper.GetBool("cli.audit")
+	audit := viper.GetBool("cli.validate.audit")
 
 	slog.Debug("read in config", "filename", configFilename, "target_filename", targetFilename)
 
@@ -77,7 +77,7 @@ func runValidate(cmd *cobra.Command, args []string) error {
 	}
 
 	if kevFilename != "" {
-		slog.Debug("open kev file", "filename", epssFilename)
+		slog.Debug("open kev file", "filename", kevFilename)
 		kevFile, err = os.Open(kevFilename)
 		if err != nil {
 			return err
