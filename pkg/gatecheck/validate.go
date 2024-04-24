@@ -207,14 +207,20 @@ func ruleGrypeKEVLimit(config *Config, report *artifacts.GrypeReportMin, catalog
 		slog.Error("kev limit enabled but no catalog data exists")
 		return false
 	}
+	foundKevMatch := false
 	// Check if vulnerability is in the KEV Catalog
 	for _, vulnerability := range report.Matches {
 		inKEVCatalog := slices.ContainsFunc(catalog.Vulnerabilities, func(kevVul kev.Vulnerability) bool {
 			return kevVul.CveID == vulnerability.Vulnerability.ID
 		})
 		if inKEVCatalog {
-			return false
+			slog.Warn("Matched to KEV Catalog",
+				"vulnerability", vulnerability.Vulnerability.ID)
+			foundKevMatch = true
 		}
+	}
+	if foundKevMatch {
+		return false
 	}
 	slog.Info("kev limit validated, no cves in catalog",
 		"vulnerabilities", len(report.Matches), "kev_catalog_count", len(catalog.Vulnerabilities))
@@ -230,6 +236,7 @@ func ruleCyclonedxKEVLimit(config *Config, report *artifacts.CyclonedxReportMin,
 		slog.Error("kev limit enabled but no catalog data exists", "artifact", "cyclonedx")
 		return false
 	}
+	foundKevMatch := false
 	// Check if vulnerability is in the KEV Catalog
 	for _, vulnerability := range report.Vulnerabilities {
 		inKEVCatalog := slices.ContainsFunc(catalog.Vulnerabilities, func(kevVul kev.Vulnerability) bool {
@@ -237,8 +244,13 @@ func ruleCyclonedxKEVLimit(config *Config, report *artifacts.CyclonedxReportMin,
 		})
 
 		if inKEVCatalog {
-			return false
+			slog.Warn("Matched to KEV Catalog",
+				"vulnerability", vulnerability.ID)
+			foundKevMatch = true
 		}
+	}
+	if foundKevMatch {
+		return false
 	}
 	slog.Info("kev limit validated, no cves in catalog",
 		"vulnerabilities", len(report.Vulnerabilities), "kev_catalog_count", len(catalog.Vulnerabilities))
