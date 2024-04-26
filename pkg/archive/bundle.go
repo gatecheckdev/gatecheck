@@ -17,7 +17,6 @@ import (
 	"time"
 
 	"github.com/dustin/go-humanize"
-	gce "github.com/gatecheckdev/gatecheck/pkg/encoding"
 	"github.com/gatecheckdev/gatecheck/pkg/format"
 )
 
@@ -73,7 +72,7 @@ func (b *Bundle) Manifest() Manifest {
 func (b *Bundle) WriteFileTo(w io.Writer, fileLabel string) (int64, error) {
 	fileBytes, ok := b.content[fileLabel]
 	if !ok {
-		return 0, fmt.Errorf("%w: Label '%s' not found in bundle", gce.ErrIO, fileLabel)
+		return 0, fmt.Errorf("Gatecheck Bundle: Label '%s' not found in bundle", fileLabel)
 	}
 	return bytes.NewReader(fileBytes).WriteTo(w)
 }
@@ -102,7 +101,7 @@ func (b *Bundle) AddFrom(r io.Reader, label string, properties map[string]string
 	p, err := io.ReadAll(r)
 	_, _ = bytes.NewReader(p).WriteTo(hasher)
 	if err != nil {
-		return fmt.Errorf("%w: %v", gce.ErrIO, err)
+	return err
 	}
 	digest := fmt.Sprintf("%x", hasher.Sum(nil))
 
@@ -217,118 +216,4 @@ func UntarGzipBundle(src io.Reader, bundle *Bundle) error {
 	bundle.manifest = *manifest
 
 	return nil
-}
-
-// BundleEncoder is used to write bundles to io.Writer
-type BundleEncoder struct {
-	w io.Writer
-}
-
-// NewBundleEncoder ...
-//
-// Deprecated: Use TarGzipBundle function instead
-func NewBundleEncoder(w io.Writer) *BundleEncoder {
-	strings.NewReader("abc")
-	return &BundleEncoder{w: w}
-}
-
-// Encode to the internal writer
-//
-// Deprecated: Use TarGzipBundle function instead
-func (b *BundleEncoder) Encode(bundle *Bundle) error {
-	if bundle == nil {
-		return fmt.Errorf("%w: bundle is nil", gce.ErrEncoding)
-	}
-	tarballBuffer := new(bytes.Buffer)
-	tarWriter := tar.NewWriter(tarballBuffer)
-	manifestBytes, _ := json.Marshal(bundle.manifest)
-	_ = bundle.AddFrom(bytes.NewReader(manifestBytes), "gatecheck-manifest.json", nil)
-
-	for label, data := range bundle.content {
-		// Using bytes.Buffer so IO errors are unlikely
-		_ = tarWriter.WriteHeader(&tar.Header{Name: label, Size: int64(len(data)), Mode: int64(os.FileMode(0o666))})
-		_, _ = bytes.NewReader(data).WriteTo(tarWriter)
-	}
-	tarWriter.Close()
-
-	bundle.Delete(ManifestFilename)
-	gzipWriter := gzip.NewWriter(b.w)
-	_, _ = tarballBuffer.WriteTo(gzipWriter)
-	gzipWriter.Close()
-
-	return nil
-}
-
-// BundleDecoder is used to decode bundle objects from a reader
-//
-// Deprecated: Use TarGzipBundle function instead
-type BundleDecoder struct {
-	bytes.Buffer
-}
-
-// NewBundleDecoder ...
-//
-// Deprecated: Use TarGzipBundle function instead
-func NewBundleDecoder() *BundleDecoder {
-	return new(BundleDecoder)
-}
-
-// DecodeFrom a bundle object
-//
-// Deprecated: Use TarGzipBundle function instead
-func (d *BundleDecoder) DecodeFrom(r io.Reader) (any, error) {
-	_, err := d.ReadFrom(r)
-	if err != nil {
-		return nil, fmt.Errorf("%w: %v", gce.ErrIO, err)
-	}
-
-	return d.Decode()
-}
-
-// Decode will gunzip and untar the bundle into an object, follows generic decoder pattern
-//
-// Deprecated: Use TarGzipBundle function instead
-func (d *BundleDecoder) Decode() (any, error) {
-	gzipReader, err := gzip.NewReader(d)
-	if err != nil {
-		return nil, fmt.Errorf("%w: gzip decode: %v", gce.ErrEncoding, err)
-	}
-	tarReader := tar.NewReader(gzipReader)
-
-	bundle := new(Bundle)
-	bundle.content = make(map[string][]byte)
-	for {
-		header, err := tarReader.Next()
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			return nil, fmt.Errorf("%w: tar decode: %v", gce.ErrEncoding, err)
-		}
-
-		if header.Typeflag != tar.TypeReg {
-			return nil, fmt.Errorf("%w: Gatecheck Bundle only supports regular files in a flat directory structure", gce.ErrEncoding)
-		}
-		fileBytes, _ := io.ReadAll(tarReader)
-		bundle.content[header.Name] = fileBytes
-	}
-	manifest := new(Manifest)
-	manifestBytes, ok := bundle.content[ManifestFilename]
-	if !ok {
-		return nil, fmt.Errorf("%w: Gatecheck Bundle manifest not found", gce.ErrEncoding)
-	}
-	if err := json.Unmarshal(manifestBytes, manifest); err != nil {
-		return nil, fmt.Errorf("%w: gatecheck manifest decoding: %v", gce.ErrEncoding, err)
-	}
-	bundle.manifest = *manifest
-	bundle.Delete(ManifestFilename)
-
-	return bundle, nil
-}
-
-// FileType in plain text
-//
-// Deprecated: Use TarGzipBundle function instead
-func (d *BundleDecoder) FileType() string {
-	return FileType
 }

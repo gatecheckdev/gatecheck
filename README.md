@@ -12,14 +12,6 @@ Gatecheck is stateless so self-hosting and provisioning servers is not required.
 
 ![Gatecheck Version](https://static.gatecheck.dev/gatecheck-version.gif)
 
-## Upcoming Features
-
-The CLI is currently going through a much needed refactor.
-Once all existing features have been implemented in the new CLI, the old one will be deprecated and then removed in
-a few versions.
-
-To enable the legacy CLI, set the variable `GATECHECK_FF_LEGACY_CLI_ENABLED=1`.
-
 ## Getting Started
 
 The fastest way to get started with Gatecheck is to download the pre-built binaries for your target system.
@@ -50,7 +42,7 @@ List with EPSS Scores is support for Grype and Cyclondex reports
 ![Gatecheck Version](https://static.gatecheck.dev/gatecheck-list.gif)
 
 
-### Validation 
+### Validation
 
 List with EPSS Scores is support for Grype and Cyclondex reports
 
