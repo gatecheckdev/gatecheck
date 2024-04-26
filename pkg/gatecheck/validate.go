@@ -16,6 +16,12 @@ import (
 	"github.com/gatecheckdev/gatecheck/pkg/kev/v1"
 )
 
+var ErrValidationFailure = errors.New("Validation Failure")
+
+func newValidationErr(details string) error {
+	return fmt.Errorf("%w: %s", ErrValidationFailure, details)
+}
+
 // Validate against config thresholds
 func Validate(config *Config, reportSrc io.Reader, targetfilename string, optionFuncs ...optionFunc) error {
 	options := defaultOptions()
@@ -650,8 +656,10 @@ func validateBundle(r io.Reader, config *Config, options *fetchOptions) error {
 			errs = errors.Join(errs, err)
 		}
 	}
-
-	return errs
+	if errs != nil {
+		return errors.Join(newValidationErr("Gatecheck Bundle"), errs)
+	}
+	return nil
 }
 
 // Validate Rules
@@ -659,7 +667,7 @@ func validateBundle(r io.Reader, config *Config, options *fetchOptions) error {
 func validateGrypeRules(config *Config, report *artifacts.GrypeReportMin, catalog *kev.Catalog, data *epss.Data) error {
 	// 1. Deny List - Fail Matching
 	if !ruleGrypeCVEDeny(config, report) {
-		return errors.New("grype validation failure: CVE explicitly denied")
+		return newValidationErr("Grype: CVE explicitly denied")
 	}
 
 	// 2. CVE Allowance - remove from matches
@@ -667,7 +675,7 @@ func validateGrypeRules(config *Config, report *artifacts.GrypeReportMin, catalo
 
 	// 3. KEV Catalog Limit - fail matching
 	if !ruleGrypeKEVLimit(config, report, catalog) {
-		return errors.New("grype validation failure: CVE matched to KEV Catalog")
+		return newValidationErr("Grype: CVE matched to KEV Catalog")
 	}
 
 	// 4. EPSS Allowance - remove from matches
@@ -675,12 +683,12 @@ func validateGrypeRules(config *Config, report *artifacts.GrypeReportMin, catalo
 
 	// 5. EPSS Limit - Fail Exceeding TODO: Implement
 	if !ruleGrypeEPSSLimit(config, report, data) {
-		return errors.New("grype validation failure: EPSS limit Exceeded")
+		return newValidationErr("Grype: EPSS Limit Exceeded")
 	}
 
 	// 6. Severity Count Limit
 	if !ruleGrypeSeverityLimit(config, report) {
-		return errors.New("grype validation failure: Severity Limit Exceeded")
+		return newValidationErr("Grype: Severity Limit Exceeded")
 	}
 
 	return nil
@@ -689,7 +697,7 @@ func validateGrypeRules(config *Config, report *artifacts.GrypeReportMin, catalo
 func validateCyclonedxRules(config *Config, report *artifacts.CyclonedxReportMin, catalog *kev.Catalog, data *epss.Data) error {
 	// 1. Deny List - Fail Matching
 	if !ruleCyclonedxCVEDeny(config, report) {
-		return errors.New("cyclonedx validation failure: CVE explicitly denied")
+		return newValidationErr("CycloneDx: CVE explicitly denied")
 	}
 
 	// 2. CVE Allowance - remove from matches
@@ -697,7 +705,7 @@ func validateCyclonedxRules(config *Config, report *artifacts.CyclonedxReportMin
 
 	// 3. KEV Catalog Limit - fail matching
 	if !ruleCyclonedxKEVLimit(config, report, catalog) {
-		return errors.New("cyclonedx validation failure: CVE matched to KEV Catalog")
+		return newValidationErr("CycloneDx: CVE Matched to KEV Catalog")
 	}
 
 	// 4. EPSS Allowance - remove from matches
@@ -705,12 +713,12 @@ func validateCyclonedxRules(config *Config, report *artifacts.CyclonedxReportMin
 
 	// 5. EPSS Limit - Fail Exceeding
 	if !ruleCyclonedxEPSSLimit(config, report, data) {
-		return errors.New("cyclonedx validation failure: EPSS limit Exceeded")
+		return newValidationErr("CycloneDx: EPSS Limit Exceeded")
 	}
 
 	// 6. Severity Count Limit
 	if !ruleCyclonedxSeverityLimit(config, report) {
-		return errors.New("cyclondex validation failure: Severity Limit Exceeded")
+		return newValidationErr("CycloneDx: Severity Limit Exceeded")
 	}
 
 	return nil
@@ -722,7 +730,7 @@ func validateSemgrepRules(config *Config, report *artifacts.SemgrepReportMin) er
 
 	// 2. Severity Count Limit
 	if !ruleSemgrepSeverityLimit(config, report) {
-		return errors.New("semgrep validation failure: Severity Limit Exceeded")
+		return newValidationErr("Semgrep: Severity Limit Exceeded")
 	}
 
 	return nil
@@ -731,7 +739,7 @@ func validateSemgrepRules(config *Config, report *artifacts.SemgrepReportMin) er
 func validateGitleaksRules(config *Config, report *artifacts.GitLeaksReportMin) error {
 	// 1. Limit Secrets - fail
 	if !ruleGitLeaksLimit(config, report) {
-		return errors.New("gitleaks validation failure: Secrets Detected")
+		return newValidationErr("Gitleaks: Secrets Detected")
 	}
 	return nil
 }

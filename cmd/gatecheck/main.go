@@ -34,9 +34,9 @@ import (
 
 const (
 	exitSystemFail     int = -1
-	exitOk             int = 0
-	exitFileAccessFail int = 2
+	exitOk                 = 0
 	exitValidationFail     = 1
+	exitFileAccessFail     = 2
 )
 
 // GatecheckVersion see CHANGELOG.md
@@ -80,10 +80,13 @@ func runV1() {
 
 	slog.Info("Gatecheck CLI v1 is enabled")
 	err := command.Execute()
-	if err != nil {
-		os.Exit(1)
+	if errors.Is(gatecheck.ErrValidationFailure, err) {
+		os.Exit(exitValidationFail)
 	}
-	os.Exit(0)
+	if err != nil {
+		os.Exit(exitSystemFail)
+	}
+	os.Exit(exitOk)
 }
 
 func runV0() {
