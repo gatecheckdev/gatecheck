@@ -30,13 +30,13 @@ type SemgrepExtra struct {
 }
 
 type SemgrepMetadata struct {
-	Category   string   `json:"category"`
-	Confidence string   `json:"confidence"`
-	CWE        []string `json:"cwe"`
-	Impact     string   `json:"impact"`
-	Likelihood string   `json:"likelihood"`
-	Shortlink  string   `json:"shortlink"`
-	Owasp      any      `json:"owasp"`
+	Category   string `json:"category"`
+	Confidence string `json:"confidence"`
+	CWE        any    `json:"cwe"`
+	Impact     string `json:"impact"`
+	Likelihood string `json:"likelihood"`
+	Shortlink  string `json:"shortlink"`
+	Owasp      any    `json:"owasp"`
 }
 
 func (s *SemgrepReportMin) SelectBySeverity(severity string) []SemgrepResults {
