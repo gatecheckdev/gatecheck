@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0] - 2024-04-26
+
+### Fixed
+
+- Semgrep parsing error by switching to any type instead of []string
+- Slog validation errors for clarity
+
 ## [0.4.1] - 2024-04-02
 
 ### Fixed
@@ -61,6 +68,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added additional logging for defect dojo export
 
 ### Fixed
+
 - Removed lazy reader in favor of fileOrEmptyBuf for better error handling
 - Verbose flag bug where the CLI would always be log level debug instead of warn
 - Grype decoder checkReport will use descriptor Timestamp instead of name since name is not a required field
@@ -110,7 +118,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Updated dependencies
-- Bug fix, EPSS to use current UTC time 
+- Bug fix, EPSS to use current UTC time
 - Bug fix, validation command has a seperate bundle function to prevent error overwriting on recursive calls
 
 ### Added
@@ -121,10 +129,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- *Major Refactoring*
+- _Major Refactoring_
 - Bundling is now a gzipped tarball with a manifest file
 - Using "Agents" for KEV and EPSS downloading, simplify interface
-- Encoding package refactor, using generics 
+- Encoding package refactor, using generics
 - Common validation pattern between artifacts
 - Report artifacts as isolated packages instead
 - Table refactor for simplified table formatting
@@ -133,14 +141,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fully refactored the validation pattern
 
 ### Added
+
 - EPSS Allow and Deny Thresholds
 - Validation rules via functions that can be layered
 
 ### Removed
+
 - Config object in favor of using a map[string]any which makes it easier to support new reports in the future
 - Encoding package that relied decodeBytes functions
- 
-## [0.0.10] - 2023-06-07 
+
+## [0.0.10] - 2023-06-07
 
 ### Changed
 

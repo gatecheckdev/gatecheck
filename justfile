@@ -27,6 +27,11 @@ release-snapshot:
 release:
     goreleaser release --rm-dist
 
+upgrade:
+    git status --porcelain | grep -q . && echo "Repository is dirty, commit changes before upgrading." && exit 1 || exit 0
+    go get -u ./...
+    go mod tidy
+
 # Locally serve documentation
 serve-docs:
     mdbook serve

@@ -1,22 +1,22 @@
 # Release Instructions
 
 Releasing is done by maintainers with permissions to bypass the PR only rule.
-This process assumes you are working from a fork with gatecheckdev/gatecheck as `upstream`.
+By pushing a tag to the main repository, the release action is triggered which
+packages the app and releases it to the GitHub UI.
 
-1. Update CLI version in cmd/gatecheck/main.go
-2. Update CHANGELOG.md
-3. Tidy modules `go get -t -u=patch ./... && go mod tidy && make test`
-4. Release commit should be signed `git commit -S -m "release: vx.x.x`
-4. Push commit to upstream `git push -u upstream main` 
-6. Wait for unit testing action to pass 
-7. git tag `git tag -sa "release" vx.x.x`
-8. git push tag `git push -u upstream vx.x.x`
-9. Run goreleaser command with ENV Variable `GITHUB_TOKEN="<token> make release`
+1. Run `just upgrade` to update dependencies and tidy modules
+1. Run `just test` to make sure unit testing still passes after upgrading
+1. Commit the changes `git commit -am "chore: upgrade dependencies"`
+1. Update CHANGELOG.md
+1. Release commit should be signed `git commit -S -m "release: vx.x.x`
+1. Wait for unit testing action to pass `gh run watch`
+1. git tag `git tag -sa "release" vX.X.X`
+1. git push tag `git push vX.X.X`
 
 # References
 
 [Semantic Versioning](https://semver.org/)
 
-[Coventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) 
+[Coventional Commits](https://www.conventionalcommits.org/en/v1.0.0/)
 
 [goreleaser](https://goreleaser.com/)
