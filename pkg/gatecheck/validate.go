@@ -213,19 +213,21 @@ func ruleGrypeKEVLimit(config *Config, report *artifacts.GrypeReportMin, catalog
 		slog.Error("kev limit enabled but no catalog data exists")
 		return false
 	}
-	foundKevMatch := false
+	badCVEs := make([]string, 0)
 	// Check if vulnerability is in the KEV Catalog
 	for _, vulnerability := range report.Matches {
 		inKEVCatalog := slices.ContainsFunc(catalog.Vulnerabilities, func(kevVul kev.Vulnerability) bool {
 			return kevVul.CveID == vulnerability.Vulnerability.ID
 		})
 		if inKEVCatalog {
-			slog.Warn("Matched to KEV Catalog",
-				"vulnerability", vulnerability.Vulnerability.ID)
-			foundKevMatch = true
+			badCVEs = append(badCVEs, vulnerability.Vulnerability.ID)
+			slog.Warn("cve found in kev catalog",
+				"cve_id", vulnerability.Vulnerability.ID)
 		}
 	}
-	if foundKevMatch {
+	if len(badCVEs) > 0 {
+		slog.Error("cve(s) found in kev catalog",
+			"vulnerabilities", len(badCVEs), "kev_catalog_count", len(catalog.Vulnerabilities))
 		return false
 	}
 	slog.Info("kev limit validated, no cves in catalog",
@@ -242,7 +244,7 @@ func ruleCyclonedxKEVLimit(config *Config, report *artifacts.CyclonedxReportMin,
 		slog.Error("kev limit enabled but no catalog data exists", "artifact", "cyclonedx")
 		return false
 	}
-	foundKevMatch := false
+	badCVEs := make([]string, 0)
 	// Check if vulnerability is in the KEV Catalog
 	for _, vulnerability := range report.Vulnerabilities {
 		inKEVCatalog := slices.ContainsFunc(catalog.Vulnerabilities, func(kevVul kev.Vulnerability) bool {
@@ -250,12 +252,14 @@ func ruleCyclonedxKEVLimit(config *Config, report *artifacts.CyclonedxReportMin,
 		})
 
 		if inKEVCatalog {
-			slog.Warn("Matched to KEV Catalog",
-				"vulnerability", vulnerability.ID)
-			foundKevMatch = true
+			badCVEs = append(badCVEs, vulnerability.ID)
+			slog.Warn("cve found in kev catalog",
+				"cve_id", vulnerability.ID)
 		}
 	}
-	if foundKevMatch {
+	if len(badCVEs) > 0 {
+		slog.Error("cve(s) found in kev catalog",
+			"vulnerabilities", len(badCVEs), "kev_catalog_count", len(catalog.Vulnerabilities))
 		return false
 	}
 	slog.Info("kev limit validated, no cves in catalog",
