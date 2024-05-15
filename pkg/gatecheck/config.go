@@ -7,7 +7,7 @@ import (
 	"io"
 	"log/slog"
 
-	"github.com/gatecheckdev/gatecheck/pkg/format"
+	"github.com/olekukonko/tablewriter"
 	"github.com/pelletier/go-toml/v2"
 	"github.com/spf13/viper"
 	"gopkg.in/yaml.v3"
@@ -34,14 +34,15 @@ func (c *Config) String() string {
 	v := viper.New()
 	v.SetConfigType("json")
 	_ = v.ReadConfig(buf)
-	table := format.NewTable()
-	table.AppendRow("config key", "value")
+
+	contentBuf := new(bytes.Buffer)
+	table := tablewriter.NewWriter(contentBuf)
+	table.SetHeader([]string{"config key", "value"})
 
 	for _, key := range v.AllKeys() {
-		table.AppendRow(key, fmt.Sprintf("%v", v.Get(key)))
+		table.Append([]string{key, fmt.Sprintf("%v", v.Get(key))})
 	}
-	fmt.Printf("%v\n", c.Grype)
-	return format.NewTableWriter(table).String()
+	return contentBuf.String()
 }
 
 type configGitleaksReport struct {

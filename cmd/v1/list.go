@@ -30,6 +30,8 @@ func newListCommand() *cobra.Command {
 	cmd.Flags().String("epss-file", "", "use this file for epss scores, will not query API")
 	_ = viper.BindPFlag("cli.list.epss-file", cmd.Flags().Lookup("epss-file"))
 
+	cmd.Flags().Bool("markdown", false, "print the list as markdown")
+
 	return cmd
 }
 
@@ -43,8 +45,15 @@ func runList(cmd *cobra.Command, args []string) error {
 
 	inputType, _ := cmd.Flags().GetString("input-type")
 	listAll, _ := cmd.Flags().GetBool("all")
+	markdown, _ := cmd.Flags().GetBool("markdown")
+
 	epssURL := viper.GetString("api.epss-url")
 	epssFilename := viper.GetString("cli.list.epss-file")
+
+	displayFormat := "ascii"
+	if markdown {
+		displayFormat = "markdown"
+	}
 
 	src, err := fileOrStdin(filename, cmd)
 	if err != nil {
@@ -68,8 +77,21 @@ func runList(cmd *cobra.Command, args []string) error {
 
 	if listAll {
 		slog.Debug("listing with epss scores")
-		return gatecheck.ListAll(cmd.OutOrStdout(), src, filename, http.DefaultClient, epssURL, epssFile)
+		return gatecheck.ListAll(
+			cmd.OutOrStdout(),
+			src,
+			filename,
+			http.DefaultClient,
+			epssURL,
+			epssFile,
+			gatecheck.WithDisplayFormat(displayFormat),
+		)
 	}
 
-	return gatecheck.List(cmd.OutOrStdout(), src, filename)
+	return gatecheck.List(
+		cmd.OutOrStdout(),
+		src,
+		filename,
+		gatecheck.WithDisplayFormat(displayFormat),
+	)
 }

@@ -8,8 +8,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/gatecheckdev/gatecheck/pkg/format"
 	"github.com/gatecheckdev/gatecheck/pkg/gatecheck"
+	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -106,14 +106,14 @@ func LoadConfigFromFile(config *gatecheck.Config, filename string) error {
 
 // WriteConfigInfo as a human readable display table
 func WriteConfigInfo(w io.Writer, v *viper.Viper, config *gatecheck.Config) error {
-	table := format.NewTable()
-	table.AppendRow("key", "Value")
+	table := tablewriter.NewWriter(w)
+	table.SetHeader([]string{"key", "value"})
 
 	for _, key := range viper.AllKeys() {
-		table.AppendRow(key, fmt.Sprintf("%v", viper.Get(key)))
+		table.Append([]string{key, fmt.Sprintf("%v", viper.Get(key))})
 	}
 
-	_, infoErr := format.NewTableWriter(table).WriteTo(w)
+	table.Render()
 	_, configErr := fmt.Fprintln(w, config.String())
-	return errors.Join(infoErr, configErr)
+	return configErr
 }
