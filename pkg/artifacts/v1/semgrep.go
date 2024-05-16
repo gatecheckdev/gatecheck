@@ -2,7 +2,6 @@ package artifacts
 
 import (
 	"fmt"
-	"log/slog"
 	"strings"
 )
 
@@ -70,7 +69,6 @@ func (s *SemgrepResults) ShortCheckID() string {
 }
 
 func (s *SemgrepMetadata) OwaspIDs() string {
-	slog.Info(s.Shortlink, "type", fmt.Sprintf("%T", s.Owasp))
 	switch v := s.Owasp.(type) {
 	case string:
 		return v
