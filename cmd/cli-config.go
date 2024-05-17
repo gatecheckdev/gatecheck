@@ -27,9 +27,15 @@ type metaConfig struct {
 	BundleTag          configkit.MetaField
 	EPSSURL            configkit.MetaField
 	KEVURL             configkit.MetaField
+	EPSSFilename       configkit.MetaField
 	BundleTagValue     []string
 	bundleFile         *os.File
 	targetFile         *os.File
+	epssFile           *os.File
+	listSrcReader      io.Reader
+	listSrcName        string
+	listFormat         string
+	listAll            bool
 	configOutputWriter io.Writer
 	configOutputFormat string
 	gatecheckConfig    *gatecheck.Config
@@ -85,6 +91,22 @@ var RuntimeConfig = metaConfig{
 			metadataFlagUsage:       "The url for the CISA KEV API (\"\" will use CISA Official API)",
 			metadataFieldType:       "string",
 			metadataActionInputName: "kev_url",
+		},
+	},
+	EPSSFilename: configkit.MetaField{
+		FieldName:    "EPSSFilename",
+		EnvKey:       "GATECHECK_EPSS_FILENAME",
+		DefaultValue: "",
+		FlagValueP:   new(string),
+		CobraSetupFunc: func(f configkit.MetaField, cmd *cobra.Command) {
+			valueP := f.FlagValueP.(*string)
+			usage := f.Metadata[metadataFlagUsage]
+			cmd.Flags().StringVar(valueP, "epss-filename", "", usage)
+		},
+		Metadata: map[string]string{
+			metadataFlagUsage:       "the filename for a FIRST.org EPSS json file",
+			metadataFieldType:       "string",
+			metadataActionInputName: "epss_filename",
 		},
 	},
 }

@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
-	"net/http"
+	"os"
 	"sort"
 	"strings"
 
@@ -19,7 +19,10 @@ import (
 
 type listOptions struct {
 	displayFormat string
+	epssData      *epss.Data
 }
+
+type ListOptionFunc func(*listOptions)
 
 func WithDisplayFormat(displayFormat string) func(*listOptions) {
 	return func(o *listOptions) {
@@ -27,7 +30,23 @@ func WithDisplayFormat(displayFormat string) func(*listOptions) {
 	}
 }
 
-func List(dst io.Writer, src io.Reader, inputFilename string, options ...func(*listOptions)) error {
+func WithEPSS(epssFile *os.File, epssURL string) (func(*listOptions), error) {
+	data := &epss.Data{}
+	f := func(o *listOptions) {
+		o.epssData = data
+	}
+
+	if epssFile == nil {
+		err := epss.FetchData(data, epss.WithURL(epssURL))
+		return f, err
+	}
+
+	err := epss.ParseEPSSDataCSV(epssFile, data)
+
+	return f, err
+}
+
+func List(dst io.Writer, src io.Reader, inputFilename string, options ...ListOptionFunc) error {
 	var table *tablewriter.Table
 	var err error
 	o := &listOptions{}
@@ -38,11 +57,19 @@ func List(dst io.Writer, src io.Reader, inputFilename string, options ...func(*l
 	switch {
 	case strings.Contains(inputFilename, "grype"):
 		slog.Debug("list", "filename", inputFilename, "filetype", "grype")
-		table, err = ListGrypeReport(dst, src)
+		if o.epssData != nil {
+			table, err = listGrypeWithEPSS(dst, src, o.epssData)
+		} else {
+			table, err = ListGrypeReport(dst, src)
+		}
 
 	case strings.Contains(inputFilename, "cyclonedx"):
 		slog.Debug("list", "filename", inputFilename, "filetype", "cyclonedx")
-		table, err = ListCyclonedx(dst, src)
+		if o.epssData != nil {
+			table, err = listCyclonedxWithEPSS(dst, src, o.epssData)
+		} else {
+			table, err = ListCyclonedx(dst, src)
+		}
 
 	case strings.Contains(inputFilename, "semgrep"):
 		slog.Debug("list", "filename", inputFilename, "filetype", "semgrep")
@@ -57,7 +84,7 @@ func List(dst io.Writer, src io.Reader, inputFilename string, options ...func(*l
 		slog.Warn("syft decoder is not supported yet")
 		return errors.New("syft not implemented yet")
 
-	case strings.Contains(inputFilename, "bundle"):
+	case strings.Contains(inputFilename, "bundle") || strings.Contains(inputFilename, "gatecheck"):
 		slog.Debug("list", "filename", inputFilename, "filetype", "bundle")
 		bundle := archive.NewBundle()
 		if err := archive.UntarGzipBundle(src, bundle); err != nil {
@@ -68,20 +95,14 @@ func List(dst io.Writer, src io.Reader, inputFilename string, options ...func(*l
 
 	default:
 		slog.Error("unsupported file type, cannot be determined from filename", "filename", inputFilename)
-		return errors.New("Failed to list artifact content. See log for details.")
+		return errors.New("Failed to list artifact content")
 	}
 
 	if err != nil {
 		return err
 	}
 
-	renderTable(table, o.displayFormat)
-
-	return nil
-}
-
-func renderTable(table *tablewriter.Table, displayMode string) {
-	switch strings.ToLower(strings.TrimSpace(displayMode)) {
+	switch strings.ToLower(strings.TrimSpace(o.displayFormat)) {
 	case "markdown", "md":
 		table.SetBorders(tablewriter.Border{Left: true, Top: false, Right: true, Bottom: false})
 		table.SetCenterSeparator("|")
@@ -89,52 +110,6 @@ func renderTable(table *tablewriter.Table, displayMode string) {
 	}
 
 	table.Render()
-}
-
-// ListAll will print a table of vulnerabilities with EPSS Score and Percentile
-//
-// if epssURL is "", it will use the default value
-func ListAll(dst io.Writer, src io.Reader, inputFilename string, client *http.Client, epssURL string, epssFile io.Reader, options ...func(*listOptions)) error {
-	epssData := new(epss.Data)
-
-	opt := new(listOptions)
-	for _, f := range options {
-		f(opt)
-	}
-
-	// Load EPSS data from a file or fetch the data from API
-	switch {
-	case epssFile != nil:
-		if err := epss.ParseEPSSDataCSV(epssFile, epssData); err != nil {
-			return errors.New("Failed to decode EPSS data file. See log for details.")
-		}
-	default:
-		if err := epss.FetchData(epssData, epss.WithClient(client), epss.WithURL(epssURL)); err != nil {
-			return err
-		}
-	}
-
-	switch {
-	case strings.Contains(inputFilename, "grype"):
-		slog.Debug("list all grype vulnerabilities", "filename", inputFilename)
-		table, err := listGrypeWithEPSS(dst, src, epssData)
-		if err != nil {
-			return err
-		}
-		renderTable(table, opt.displayFormat)
-
-	case strings.Contains(inputFilename, "cyclonedx"):
-		slog.Debug("list all cyclonedx vulnerabilities", "filename", inputFilename)
-		table, err := listCyclonedxWithEPSS(dst, src, epssData)
-		if err != nil {
-			return err
-		}
-		renderTable(table, opt.displayFormat)
-
-	default:
-		slog.Error("unsupported file type, cannot be determined from filename", "filename", inputFilename)
-		return errors.New("Failed to list artifact content. See log for details.")
-	}
 
 	return nil
 }
