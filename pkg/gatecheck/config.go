@@ -3,9 +3,12 @@ package gatecheck
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log/slog"
+	"os"
+	"path"
 
 	"github.com/olekukonko/tablewriter"
 	"github.com/pelletier/go-toml/v2"
@@ -253,4 +256,73 @@ func EncodeConfigTo(w io.Writer, config *Config, format string) error {
 	}
 
 	return encoder.Encode(config)
+}
+
+type ConfigEncoder struct {
+	writer io.Writer
+	ext    string
+}
+
+func NewConfigEncoder(w io.Writer, ext string) *ConfigEncoder {
+	return &ConfigEncoder{
+		writer: w,
+		ext:    ext,
+	}
+}
+
+func (e *ConfigEncoder) Encode(config *Config) error {
+	var encoder interface {
+		Encode(any) error
+	}
+
+	switch e.ext {
+	case ".json":
+		encoder = json.NewEncoder(e.writer)
+	case ".toml":
+		encoder = toml.NewEncoder(e.writer)
+	case ".yaml", ".yml":
+		encoder = yaml.NewEncoder(e.writer)
+	default:
+		return errors.New("invalid file extension, only json, toml, yaml or yml supported")
+	}
+
+	return encoder.Encode(config)
+
+}
+
+type ConfigDecoder struct {
+	filename string
+}
+
+func NewConfigDecoder(filename string) *ConfigDecoder {
+	return &ConfigDecoder{
+		filename: filename,
+	}
+}
+
+func (d *ConfigDecoder) Decode(config *Config) error {
+	ext := path.Ext(d.filename)
+
+	slog.Debug("decode", "filename", d.filename, "extension", ext)
+	f, err := os.Open(d.filename)
+	if err != nil {
+		return err
+	}
+
+	var decoder interface {
+		Decode(any) error
+	}
+
+	switch ext {
+	case ".json":
+		decoder = json.NewDecoder(f)
+	case ".toml":
+		decoder = toml.NewDecoder(f)
+	case ".yaml", ".yml":
+		decoder = yaml.NewDecoder(f)
+	default:
+		return errors.New("invalid file extension, only json, toml, yaml or yml supported")
+	}
+
+	return decoder.Decode(config)
 }
