@@ -17,23 +17,21 @@ var (
 	metadataActionInputName = "action_input_name"
 )
 
-type Config struct {
-	BundleTag string
-	EPSSURL   string
-	KEVURL    string
-}
-
 type metaConfig struct {
 	BundleTag          configkit.MetaField
 	EPSSURL            configkit.MetaField
 	KEVURL             configkit.MetaField
 	EPSSFilename       configkit.MetaField
+	KEVFilename        configkit.MetaField
 	Verbose            configkit.MetaField
 	Silent             configkit.MetaField
+	ConfigFilename     configkit.MetaField
+	Audit              configkit.MetaField
 	BundleTagValue     []string
 	bundleFile         *os.File
 	targetFile         *os.File
 	epssFile           *os.File
+	kevFile            *os.File
 	listSrcReader      io.Reader
 	listSrcName        string
 	listFormat         string
@@ -106,9 +104,25 @@ var RuntimeConfig = metaConfig{
 			cmd.Flags().StringVar(valueP, "epss-filename", "", usage)
 		},
 		Metadata: map[string]string{
-			metadataFlagUsage:       "the filename for a FIRST.org EPSS json file",
+			metadataFlagUsage:       "the filename for a FIRST.org EPSS csv file",
 			metadataFieldType:       "string",
 			metadataActionInputName: "epss_filename",
+		},
+	},
+	KEVFilename: configkit.MetaField{
+		FieldName:    "KEVFilename",
+		EnvKey:       "GATECHECK_EPSS_FILENAME",
+		DefaultValue: "",
+		FlagValueP:   new(string),
+		CobraSetupFunc: func(f configkit.MetaField, cmd *cobra.Command) {
+			valueP := f.FlagValueP.(*string)
+			usage := f.Metadata[metadataFlagUsage]
+			cmd.Flags().StringVar(valueP, "kev-filename", "", usage)
+		},
+		Metadata: map[string]string{
+			metadataFlagUsage:       "the filename for a FIRST.org KEV json file",
+			metadataFieldType:       "string",
+			metadataActionInputName: "kev_filename",
 		},
 	},
 	Verbose: configkit.MetaField{
@@ -119,7 +133,7 @@ var RuntimeConfig = metaConfig{
 		CobraSetupFunc: func(f configkit.MetaField, cmd *cobra.Command) {
 			valueP := f.FlagValueP.(*bool)
 			usage := f.Metadata[metadataFlagUsage]
-			cmd.PersistentFlags().BoolVar(valueP, "verbose", false, usage)
+			cmd.PersistentFlags().BoolVarP(valueP, "verbose", "v", false, usage)
 		},
 		Metadata: map[string]string{
 			metadataFlagUsage:       "log level set to debug",
@@ -141,6 +155,38 @@ var RuntimeConfig = metaConfig{
 			metadataFlagUsage:       "log level set to only warnings & errors",
 			metadataFieldType:       "bool",
 			metadataActionInputName: "silent",
+		},
+	},
+	ConfigFilename: configkit.MetaField{
+		FieldName:    "ConfigFilename",
+		EnvKey:       "GATECHECK_CONFIG_FILENAME",
+		DefaultValue: "",
+		FlagValueP:   new(string),
+		CobraSetupFunc: func(f configkit.MetaField, cmd *cobra.Command) {
+			valueP := f.FlagValueP.(*string)
+			usage := f.Metadata[metadataFlagUsage]
+			cmd.PersistentFlags().StringVarP(valueP, "file", "f", "", usage)
+		},
+		Metadata: map[string]string{
+			metadataFlagUsage:       "a validation configuration file",
+			metadataFieldType:       "string",
+			metadataActionInputName: "config_filename",
+		},
+	},
+	Audit: configkit.MetaField{
+		FieldName:    "Audit",
+		EnvKey:       "GATECHECK_AUDIT",
+		DefaultValue: false,
+		FlagValueP:   new(bool),
+		CobraSetupFunc: func(f configkit.MetaField, cmd *cobra.Command) {
+			valueP := f.FlagValueP.(*bool)
+			usage := f.Metadata[metadataFlagUsage]
+			cmd.PersistentFlags().BoolVarP(valueP, "audit", "a", false, usage)
+		},
+		Metadata: map[string]string{
+			metadataFlagUsage:       "audit mode - will run all rules but wil always exit 0 for validation failures",
+			metadataFieldType:       "bool",
+			metadataActionInputName: "audit",
 		},
 	},
 }
