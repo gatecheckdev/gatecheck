@@ -28,6 +28,8 @@ type metaConfig struct {
 	EPSSURL            configkit.MetaField
 	KEVURL             configkit.MetaField
 	EPSSFilename       configkit.MetaField
+	Verbose            configkit.MetaField
+	Silent             configkit.MetaField
 	BundleTagValue     []string
 	bundleFile         *os.File
 	targetFile         *os.File
@@ -107,6 +109,38 @@ var RuntimeConfig = metaConfig{
 			metadataFlagUsage:       "the filename for a FIRST.org EPSS json file",
 			metadataFieldType:       "string",
 			metadataActionInputName: "epss_filename",
+		},
+	},
+	Verbose: configkit.MetaField{
+		FieldName:    "Verbose",
+		EnvKey:       "GATECHECK_VERBOSE",
+		DefaultValue: false,
+		FlagValueP:   new(bool),
+		CobraSetupFunc: func(f configkit.MetaField, cmd *cobra.Command) {
+			valueP := f.FlagValueP.(*bool)
+			usage := f.Metadata[metadataFlagUsage]
+			cmd.PersistentFlags().BoolVar(valueP, "verbose", false, usage)
+		},
+		Metadata: map[string]string{
+			metadataFlagUsage:       "log level set to debug",
+			metadataFieldType:       "bool",
+			metadataActionInputName: "verbose",
+		},
+	},
+	Silent: configkit.MetaField{
+		FieldName:    "Silent",
+		EnvKey:       "GATECHECK_SILENT",
+		DefaultValue: false,
+		FlagValueP:   new(bool),
+		CobraSetupFunc: func(f configkit.MetaField, cmd *cobra.Command) {
+			valueP := f.FlagValueP.(*bool)
+			usage := f.Metadata[metadataFlagUsage]
+			cmd.PersistentFlags().BoolVar(valueP, "silent", false, usage)
+		},
+		Metadata: map[string]string{
+			metadataFlagUsage:       "log level set to only warnings & errors",
+			metadataFieldType:       "bool",
+			metadataActionInputName: "silent",
 		},
 	},
 }

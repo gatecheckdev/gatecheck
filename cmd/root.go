@@ -32,25 +32,48 @@ var (
 	LogLeveler          *slog.LevelVar = &slog.LevelVar{}
 )
 
+var gatecheckCmd = &cobra.Command{
+	Use:   "gatecheck",
+	Short: "Report validation tool",
+	PersistentPreRun: func(cmd *cobra.Command, args []string) {
+		verbose := RuntimeConfig.Verbose.Value().(bool)
+		silent := RuntimeConfig.Silent.Value().(bool)
+
+		switch {
+		case verbose:
+			LogLeveler.Set(slog.LevelDebug)
+			slog.Debug("debug logging enabled")
+		case silent:
+			LogLeveler.Set(slog.LevelError)
+			slog.Debug("silent logging enabled")
+		}
+	},
+	RunE: func(cmd *cobra.Command, args []string) error {
+		versionFlag, _ := cmd.Flags().GetBool("version")
+		if versionFlag {
+			return versionCmd.RunE(cmd, args)
+		}
+		return nil
+	},
+}
+
+var versionCmd = &cobra.Command{
+	Use:   "version",
+	Short: "print version and build information",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		_, err := ApplicationMetadata.WriteTo(cmd.OutOrStdout())
+		return err
+	},
+}
+
 // NewGatecheckCommand the root for all CLI commands
 func NewGatecheckCommand() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:              "gatecheck",
-		Short:            "Report validation tool",
-		PersistentPreRun: runCheckLogging,
-	}
+	RuntimeConfig.Verbose.SetupCobra(gatecheckCmd)
+	RuntimeConfig.Silent.SetupCobra(gatecheckCmd)
 
-	versionCmd := newBasicCommand("version", "print version information", runVersion)
-	cmd.Flags().Bool("version", false, "print only the version of the CLI without additional information")
-	cmd.PersistentFlags().BoolP("verbose", "v", false, "log level set to debug")
-	cmd.PersistentFlags().BoolP("silent", "s", false, "log level set to only warnings & errors")
-	cmd.MarkFlagsMutuallyExclusive("verbose", "silent")
+	gatecheckCmd.MarkFlagsMutuallyExclusive("verbose", "silent")
+	gatecheckCmd.Flags().Bool("version", false, "print version and build information")
 
-	_ = viper.BindPFlag("cli.verbose", cmd.PersistentFlags().Lookup("verbose"))
-	_ = viper.BindPFlag("cli.silent", cmd.PersistentFlags().Lookup("silent"))
-
-	_ = viper.BindEnv("cli.verbose", "GATECHECK_CLI_VERBOSE")
-	_ = viper.BindEnv("cli.silent", "GATECHECK_CLI_SILENT")
 	_ = viper.BindEnv("cli.audit", "GATECHECK_CLI_AUDIT")
 
 	_ = viper.BindEnv("cli.list.epss-file", "GATECHECK_EPSS_FILE")
@@ -61,9 +84,9 @@ func NewGatecheckCommand() *cobra.Command {
 	_ = viper.BindEnv("api.epss-url", "GATECHECK_EPSS_URL")
 	_ = viper.BindEnv("api.kev-url", "GATECHECK_KEV_URL")
 
-	cmd.SilenceUsage = true
+	gatecheckCmd.SilenceUsage = true
 
-	cmd.AddCommand(
+	gatecheckCmd.AddCommand(
 		versionCmd,
 		newConfigCommand(),
 		newListCommand(),
@@ -72,36 +95,5 @@ func NewGatecheckCommand() *cobra.Command {
 		newValidateCommand(),
 		newDownloadCommand(),
 	)
-	return cmd
-}
-
-// runCheckLogging checks for the logging flag and sets the global log level
-func runCheckLogging(cmd *cobra.Command, args []string) {
-	verbose := viper.GetBool("cli.verbose")
-	silent := viper.GetBool("cli.silent")
-
-	switch {
-	case verbose:
-		LogLeveler.Set(slog.LevelDebug)
-		slog.Debug("debug logging enabled")
-	case silent:
-		LogLeveler.Set(slog.LevelError)
-		slog.Debug("silent logging enabled")
-	}
-}
-
-// runVersion prints the version and/or additional information about Gatecheck
-//
-// gatecheck version
-// gatecheck --version
-func runVersion(cmd *cobra.Command, args []string) error {
-	versionFlag, _ := cmd.Flags().GetBool("version")
-	switch {
-	case versionFlag:
-		cmd.Println(ApplicationMetadata.CLIVersion)
-		return nil
-	default:
-		_, err := ApplicationMetadata.WriteTo(cmd.OutOrStdout())
-		return err
-	}
+	return gatecheckCmd
 }
