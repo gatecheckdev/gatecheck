@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gatecheckdev/gatecheck/pkg/artifacts/v1"
+	"github.com/gatecheckdev/gatecheck/pkg/artifacts"
 	"github.com/lmittmann/tint"
 )
 

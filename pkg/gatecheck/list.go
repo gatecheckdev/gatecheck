@@ -11,8 +11,8 @@ import (
 	"strings"
 
 	"github.com/gatecheckdev/gatecheck/pkg/archive"
-	"github.com/gatecheckdev/gatecheck/pkg/artifacts/v1"
-	"github.com/gatecheckdev/gatecheck/pkg/epss/v1"
+	"github.com/gatecheckdev/gatecheck/pkg/artifacts"
+	"github.com/gatecheckdev/gatecheck/pkg/epss"
 	"github.com/gatecheckdev/gatecheck/pkg/format"
 	"github.com/olekukonko/tablewriter"
 )

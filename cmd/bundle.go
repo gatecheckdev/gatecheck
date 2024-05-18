@@ -1,11 +1,11 @@
 package cmd
 
 import (
+	"log/slog"
 	"os"
 	"path"
 
 	"github.com/gatecheckdev/gatecheck/pkg/gatecheck"
-	"github.com/sagikazarmark/slog-shim"
 	"github.com/spf13/cobra"
 )
 
