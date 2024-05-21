@@ -67,8 +67,10 @@ var configConvertCmd = &cobra.Command{
 func newConfigCommand() *cobra.Command {
 	configConvertCmd.Flags().StringP("file", "f", "gatecheck.yaml", "gatecheck validation config file")
 	configConvertCmd.Flags().StringP("output", "o", "yaml", "Format to convert into formats=[json yaml yml toml]")
+	configInitCmd.Flags().StringP("output", "o", "yaml", "Format to convert into formats=[json yaml yml toml]")
 
 	_ = configConvertCmd.MarkFlagFilename("file", "json", "yaml", "yml", "toml")
+	_ = configInitCmd.MarkFlagFilename("file", "json", "yaml", "yml", "toml")
 
 	configCmd.AddCommand(configInitCmd, configConvertCmd)
 	return configCmd
