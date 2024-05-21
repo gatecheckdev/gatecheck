@@ -18,7 +18,6 @@ var listCmd = &cobra.Command{
 	Use:     "list",
 	Short:   "print a table of the findings in a report or files in a gatecheck bundle",
 	Aliases: []string{"ls", "print"},
-	Args:    cobra.ExactArgs(1),
 	PreRunE: func(cmd *cobra.Command, args []string) error {
 		inputType, _ := cmd.Flags().GetString("input-type")
 		if inputType == "" && len(args) == 0 {
