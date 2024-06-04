@@ -6,40 +6,85 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
-	"net/http"
+	"os"
 	"sort"
 	"strings"
 
 	"github.com/gatecheckdev/gatecheck/pkg/archive"
-	"github.com/gatecheckdev/gatecheck/pkg/artifacts/v1"
-	"github.com/gatecheckdev/gatecheck/pkg/epss/v1"
+	"github.com/gatecheckdev/gatecheck/pkg/artifacts"
+	"github.com/gatecheckdev/gatecheck/pkg/epss"
 	"github.com/gatecheckdev/gatecheck/pkg/format"
+	"github.com/olekukonko/tablewriter"
 )
 
-func List(dst io.Writer, src io.Reader, inputFilename string) error {
+type listOptions struct {
+	displayFormat string
+	epssData      *epss.Data
+}
+
+type ListOptionFunc func(*listOptions)
+
+func WithDisplayFormat(displayFormat string) func(*listOptions) {
+	return func(o *listOptions) {
+		o.displayFormat = displayFormat
+	}
+}
+
+func WithEPSS(epssFile *os.File, epssURL string) (func(*listOptions), error) {
+	data := &epss.Data{}
+	f := func(o *listOptions) {
+		o.epssData = data
+	}
+
+	if epssFile == nil {
+		err := epss.FetchData(data, epss.WithURL(epssURL))
+		return f, err
+	}
+
+	err := epss.ParseEPSSDataCSV(epssFile, data)
+
+	return f, err
+}
+
+func List(dst io.Writer, src io.Reader, inputFilename string, options ...ListOptionFunc) error {
+	var table *tablewriter.Table
+	var err error
+	o := &listOptions{}
+	for _, f := range options {
+		f(o)
+	}
+
 	switch {
 	case strings.Contains(inputFilename, "grype"):
 		slog.Debug("list", "filename", inputFilename, "filetype", "grype")
-		return ListGrypeReport(dst, src)
+		if o.epssData != nil {
+			table, err = listGrypeWithEPSS(dst, src, o.epssData)
+		} else {
+			table, err = ListGrypeReport(dst, src)
+		}
 
 	case strings.Contains(inputFilename, "cyclonedx"):
 		slog.Debug("list", "filename", inputFilename, "filetype", "cyclonedx")
-		return ListCyclonedx(dst, src)
+		if o.epssData != nil {
+			table, err = listCyclonedxWithEPSS(dst, src, o.epssData)
+		} else {
+			table, err = ListCyclonedx(dst, src)
+		}
 
 	case strings.Contains(inputFilename, "semgrep"):
 		slog.Debug("list", "filename", inputFilename, "filetype", "semgrep")
-		return ListSemgrep(dst, src)
+		table, err = ListSemgrep(dst, src)
 
 	case strings.Contains(inputFilename, "gitleaks"):
 		slog.Debug("list", "filename", inputFilename, "filetype", "gitleaks")
-		return listGitleaks(dst, src)
+		table, err = listGitleaks(dst, src)
 
 	case strings.Contains(inputFilename, "syft"):
 		slog.Debug("list", "filename", inputFilename, "filetype", "syft")
 		slog.Warn("syft decoder is not supported yet")
 		return errors.New("syft not implemented yet")
 
-	case strings.Contains(inputFilename, "bundle"):
+	case strings.Contains(inputFilename, "bundle") || strings.Contains(inputFilename, "gatecheck"):
 		slog.Debug("list", "filename", inputFilename, "filetype", "bundle")
 		bundle := archive.NewBundle()
 		if err := archive.UntarGzipBundle(src, bundle); err != nil {
@@ -50,73 +95,57 @@ func List(dst io.Writer, src io.Reader, inputFilename string) error {
 
 	default:
 		slog.Error("unsupported file type, cannot be determined from filename", "filename", inputFilename)
-		return errors.New("Failed to list artifact content. See log for details.")
+		return errors.New("Failed to list artifact content")
 	}
+
+	if err != nil {
+		return err
+	}
+
+	switch strings.ToLower(strings.TrimSpace(o.displayFormat)) {
+	case "markdown", "md":
+		table.SetBorders(tablewriter.Border{Left: true, Top: false, Right: true, Bottom: false})
+		table.SetCenterSeparator("|")
+		table.SetAutoWrapText(false)
+	}
+
+	table.Render()
+
+	return nil
 }
 
-// ListAll will print a table of vulnerabilities with EPSS Score and Percentile
-//
-// if epssURL is "", it will use the default value
-func ListAll(dst io.Writer, src io.Reader, inputFilename string, client *http.Client, epssURL string, epssFile io.Reader) error {
-	epssData := new(epss.Data)
-
-	// Load EPSS data from a file or fetch the data from API
-	switch {
-	case epssFile != nil:
-		if err := epss.ParseEPSSDataCSV(epssFile, epssData); err != nil {
-			return errors.New("Failed to decode EPSS data file. See log for details.")
-		}
-	default:
-		if err := epss.FetchData(epssData, epss.WithClient(client), epss.WithURL(epssURL)); err != nil {
-			return err
-		}
-	}
-
-	switch {
-	case strings.Contains(inputFilename, "grype"):
-		slog.Debug("list all grype vulnerabilities", "filename", inputFilename)
-		return listGrypeWithEPSS(dst, src, epssData)
-
-	case strings.Contains(inputFilename, "cyclonedx"):
-		slog.Debug("list all cyclonedx vulnerabilities", "filename", inputFilename)
-		return listCyclonedxWithEPSS(dst, src, epssData)
-
-	default:
-		slog.Error("unsupported file type, cannot be determined from filename", "filename", inputFilename)
-		return errors.New("Failed to list artifact content. See log for details.")
-	}
-}
-
-func ListGrypeReport(dst io.Writer, src io.Reader) error {
+func ListGrypeReport(dst io.Writer, src io.Reader) (*tablewriter.Table, error) {
 	report := &artifacts.GrypeReportMin{}
 	slog.Debug("decode grype report", "format", "json")
 	if err := json.NewDecoder(src).Decode(&report); err != nil {
-		return err
+		return nil, err
 	}
-	table := format.NewTable()
-	table.AppendRow("Grype Severity", "Package", "Version", "Link")
+
+	catLess := format.NewCatagoricLess([]string{"Critical", "High", "Medium", "Low", "Negligible", "Unknown"})
+	matrix := format.NewSortableMatrix(make([][]string, 0), 0, catLess)
 
 	for _, item := range report.Matches {
-		table.AppendRow(item.Vulnerability.Severity, item.Artifact.Name, item.Artifact.Version, item.Vulnerability.DataSource)
+		row := []string{item.Vulnerability.Severity, item.Artifact.Name, item.Artifact.Version, item.Vulnerability.DataSource}
+		matrix.Append(row)
 	}
+	sort.Sort(matrix)
 
-	table.SetSort(0, format.NewCatagoricLess([]string{"Critical", "High", "Medium", "Low", "Negligible", "Unknown"}))
+	header := []string{"Grype Severity", "Package", "Version", "Link"}
 
-	sort.Sort(table)
+	table := matrix.Table(dst, header)
 
-	_, err := format.NewTableWriter(table).WriteTo(dst)
-	return err
+	return table, nil
 }
 
-func listGrypeWithEPSS(dst io.Writer, src io.Reader, epssData *epss.Data) error {
+func listGrypeWithEPSS(dst io.Writer, src io.Reader, epssData *epss.Data) (*tablewriter.Table, error) {
 	report := &artifacts.GrypeReportMin{}
 	slog.Debug("decode grype report", "format", "json")
 	if err := json.NewDecoder(src).Decode(&report); err != nil {
-		return err
+		return nil, err
 	}
 
-	table := format.NewTable()
-	table.AppendRow("Grype CVE ID", "Severity", "EPSS Score", "EPSS Prctl", "Package", "Version", "Link")
+	catLess := format.NewCatagoricLess([]string{"Critical", "High", "Medium", "Low", "Negligible", "Unknown"})
+	matrix := format.NewSortableMatrix(make([][]string, 0), 1, catLess)
 
 	for _, item := range report.Matches {
 		cve, ok := epssData.CVEs[item.Vulnerability.ID]
@@ -126,7 +155,8 @@ func listGrypeWithEPSS(dst io.Writer, src io.Reader, epssData *epss.Data) error 
 			score = cve.EPSS
 			prctl = cve.Percentile
 		}
-		table.AppendRow(
+
+		row := []string{
 			item.Vulnerability.ID,
 			item.Vulnerability.Severity,
 			score,
@@ -134,26 +164,37 @@ func listGrypeWithEPSS(dst io.Writer, src io.Reader, epssData *epss.Data) error 
 			item.Artifact.Name,
 			item.Artifact.Version,
 			item.Vulnerability.DataSource,
-		)
+		}
+		matrix.Append(row)
 	}
 
-	table.SetSort(1, format.NewCatagoricLess([]string{"Critical", "High", "Medium", "Low", "Negligible", "Unknown"}))
+	header := []string{
+		"Grype CVE ID",
+		"Severity",
+		"EPSS Score",
+		"EPSS Prctl",
+		"Package",
+		"Version",
+		"Link",
+	}
 
-	sort.Sort(table)
+	sort.Sort(matrix)
 
-	_, err := format.NewTableWriter(table).WriteTo(dst)
+	table := matrix.Table(dst, header)
 
-	return err
+	return table, nil
 }
 
-func ListCyclonedx(dst io.Writer, src io.Reader) error {
+func ListCyclonedx(dst io.Writer, src io.Reader) (*tablewriter.Table, error) {
 	report := &artifacts.CyclonedxReportMin{}
 	slog.Debug("decode cyclonedx report", "format", "json")
 	if err := json.NewDecoder(src).Decode(&report); err != nil {
-		return err
+		return nil, err
 	}
-	table := format.NewTable()
-	table.AppendRow("Cyclonedx CVE ID", "Severity", "Package", "Link")
+
+	catLess := format.NewCatagoricLess([]string{"critical", "high", "medium", "low", "none"})
+	matrix := format.NewSortableMatrix(make([][]string, 0), 1, catLess)
+
 	link := "-"
 	for idx, vul := range report.Vulnerabilities {
 		severity := vul.HighestSeverity()
@@ -162,25 +203,26 @@ func ListCyclonedx(dst io.Writer, src io.Reader) error {
 			link = vul.Advisories[0].URL
 		}
 		// get the affected vulnerability
-		table.AppendRow(vul.ID, severity, pkgs, link)
+		matrix.Append([]string{vul.ID, severity, pkgs, link})
 	}
 
-	table.SetSort(1, format.NewCatagoricLess([]string{"critical", "high", "medium", "low", "none"}))
-	sort.Sort(table)
+	sort.Sort(matrix)
 
-	_, err := format.NewTableWriter(table).WriteTo(dst)
-	return err
+	header := []string{"Cyclonedx CVE ID", "Severity", "Package", "Link"}
+	table := matrix.Table(dst, header)
+
+	return table, nil
 }
 
-func listCyclonedxWithEPSS(dst io.Writer, src io.Reader, epssData *epss.Data) error {
+func listCyclonedxWithEPSS(dst io.Writer, src io.Reader, epssData *epss.Data) (*tablewriter.Table, error) {
 	report := &artifacts.CyclonedxReportMin{}
 	slog.Debug("decode grype report", "format", "json")
 	if err := json.NewDecoder(src).Decode(&report); err != nil {
-		return err
+		return nil, err
 	}
 
-	table := format.NewTable()
-	table.AppendRow("Cyclonedx CVE ID", "Severity", "EPSS Score", "EPSS Prctl", "affected Packages", "Link")
+	catLess := format.NewCatagoricLess([]string{"critical", "high", "medium", "low", "info", "none", "unknown"})
+	matrix := format.NewSortableMatrix(make([][]string, 0), 1, catLess)
 
 	for idx, item := range report.Vulnerabilities {
 		cve, ok := epssData.CVEs[item.ID]
@@ -194,30 +236,30 @@ func listCyclonedxWithEPSS(dst io.Writer, src io.Reader, epssData *epss.Data) er
 		if len(item.Advisories) > 0 {
 			link = item.Advisories[0].URL
 		}
-		table.AppendRow(
+		row := []string{
 			item.ID,
 			item.HighestSeverity(),
 			score,
 			prctl,
 			report.AffectedPackages(idx),
 			link,
-		)
+		}
+		matrix.Append(row)
 	}
 
-	table.SetSort(1, format.NewCatagoricLess([]string{"critical", "high", "medium", "low", "info", "none", "unknown"}))
+	sort.Sort(matrix)
 
-	sort.Sort(table)
+	header := []string{"Cyclonedx CVE ID", "Severity", "EPSS Score", "EPSS Prctl", "affected Packages", "Link"}
+	table := matrix.Table(dst, header)
 
-	_, err := format.NewTableWriter(table).WriteTo(dst)
-
-	return err
+	return table, nil
 }
 
-func ListSemgrep(dst io.Writer, src io.Reader) error {
+func ListSemgrep(dst io.Writer, src io.Reader) (*tablewriter.Table, error) {
 	report := &artifacts.SemgrepReportMin{}
 
 	if err := json.NewDecoder(src).Decode(report); err != nil {
-		return err
+		return nil, err
 	}
 
 	for _, semgrepError := range report.Errors {
@@ -228,50 +270,52 @@ func ListSemgrep(dst io.Writer, src io.Reader) error {
 		)
 	}
 
-	table := format.NewTable()
-	table.AppendRow("Semgrep Check ID", "Owasp IDs", "Severity", "Impact", "link")
+	catLess := format.NewCatagoricLess([]string{"ERROR", "WARNING", "INFO"})
+
+	matrix := format.NewSortableMatrix(make([][]string, 0), 1, catLess)
 
 	for _, result := range report.Results {
-		table.AppendRow(
+		row := []string{
 			result.ShortCheckID(),
 			result.Extra.Metadata.OwaspIDs(),
 			result.Extra.Severity,
 			result.Extra.Metadata.Impact,
 			result.Extra.Metadata.Shortlink,
-		)
+		}
+		matrix.Append(row)
 	}
 
-	table.SetSort(1, format.NewCatagoricLess([]string{"ERROR", "WARNING", "INFO"}))
-	sort.Sort(table)
-	_, err := format.NewTableWriter(table).WriteTo(dst)
+	sort.Sort(matrix)
 
-	return err
+	header := []string{"Semgrep Check ID", "Owasp IDs", "Severity", "Impact", "link"}
+	table := matrix.Table(dst, header)
+
+	return table, nil
 }
 
-func listGitleaks(dst io.Writer, src io.Reader) error {
+func listGitleaks(dst io.Writer, src io.Reader) (*tablewriter.Table, error) {
 	report := &artifacts.GitLeaksReportMin{}
 	if err := json.NewDecoder(src).Decode(report); err != nil {
-		return err
+		return nil, err
 	}
 
-	table := format.NewTable()
+	table := tablewriter.NewWriter(dst)
 
-	table.AppendRow("Gitleaks Rule ID", "File", "Commit", "Start Line")
+	table.SetHeader([]string{"Gitleaks Rule ID", "File", "Commit", "Start Line"})
 
 	for _, finding := range *report {
-		table.AppendRow(
+		row := []string{
 			finding.RuleID,
 			finding.FileShort(),
 			finding.CommitShort(),
 			fmt.Sprintf("%d", finding.StartLine),
-		)
+		}
+		table.Append(row)
 	}
-
-	_, err := format.NewTableWriter(table).WriteTo(dst)
 
 	if report.Count() == 0 {
-		fmt.Fprintln(dst, "        No Gitleaks Findings")
+		table.SetFooter([]string{"No Gitleaks Findings"})
 	}
 
-	return err
+	return table, nil
 }

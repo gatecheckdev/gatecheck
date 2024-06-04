@@ -11,7 +11,7 @@ import (
 
 	"github.com/lmittmann/tint"
 
-	cmdV1 "github.com/gatecheckdev/gatecheck/cmd/v1"
+	"github.com/gatecheckdev/gatecheck/cmd"
 	"github.com/gatecheckdev/gatecheck/pkg/gatecheck"
 )
 
@@ -38,7 +38,7 @@ func main() {
 }
 
 func run() int {
-	cmdV1.ApplicationMetadata = gatecheck.ApplicationMetadata{
+	cmd.ApplicationMetadata = gatecheck.ApplicationMetadata{
 		CLIVersion:     cliVersion,
 		GitCommit:      gitCommit,
 		BuildDate:      buildDate,
@@ -49,10 +49,10 @@ func run() int {
 	}
 
 	// Colorized logging output for the CLI
-	logHandler := tint.NewHandler(os.Stderr, &tint.Options{Level: cmdV1.LogLeveler, TimeFormat: time.TimeOnly})
+	logHandler := tint.NewHandler(os.Stderr, &tint.Options{Level: cmd.LogLeveler, TimeFormat: time.TimeOnly})
 	slog.SetDefault(slog.New(logHandler))
 
-	command := cmdV1.NewGatecheckCommand()
+	command := cmd.NewGatecheckCommand()
 
 	err := command.Execute()
 	if errors.Is(gatecheck.ErrValidationFailure, err) {

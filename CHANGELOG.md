@@ -11,6 +11,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Missing `slog.Error` for KEV validations
 
+## [0.7.0] - 2024-05-17
+
+### Changed
+
+- Use ConfigKit with a metaconfig for all commands
+
+### Added
+
+- Gatecheck Config Encoder & Decoder
+
+## [0.6.2] - 2024-05-15
+
+### Changed
+
+- Remove debug information from semgrep decoding
+
+## [0.6.1] - 2024-05-15
+
+### Changed
+
+- Use a table writing package instead of the builtin package
+
+### Added
+
+- `gatecheck list --markdown` support for rendering markdown tables
+
 ## [0.6.0] - 2024-04-26
 
 ### Changed

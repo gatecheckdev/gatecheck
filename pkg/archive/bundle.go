@@ -13,6 +13,7 @@ import (
 	"io"
 	"log/slog"
 	"os"
+	"sort"
 	"strings"
 	"time"
 
@@ -101,7 +102,7 @@ func (b *Bundle) AddFrom(r io.Reader, label string, properties map[string]string
 	p, err := io.ReadAll(r)
 	_, _ = bytes.NewReader(p).WriteTo(hasher)
 	if err != nil {
-	return err
+		return err
 	}
 	digest := fmt.Sprintf("%x", hasher.Sum(nil))
 
@@ -146,16 +147,20 @@ func (b *Bundle) Delete(label string) {
 }
 
 func (b *Bundle) Content() string {
-	table := format.NewTable()
-	table.AppendRow("Label", "Digest", "Tags", "Size")
+	matrix := format.NewSortableMatrix(make([][]string, 0), 0, format.AlphabeticLess)
 
 	for label, descriptor := range b.Manifest().Files {
 		fileSize := humanize.Bytes(uint64(b.FileSize(label)))
 		tags := strings.Join(descriptor.Tags, ", ")
-		table.AppendRow(label, descriptor.Digest, tags, fileSize)
+		row := []string{label, descriptor.Digest, tags, fileSize}
+		matrix.Append(row)
 	}
 
-	return format.NewTableWriter(table).String()
+	sort.Sort(matrix)
+	buf := new(bytes.Buffer)
+	header := []string{"Label", "Digest", "Tags", "Size"}
+	matrix.Table(buf, header).Render()
+	return buf.String()
 }
 
 func TarGzipBundle(dst io.Writer, bundle *Bundle) (int64, error) {

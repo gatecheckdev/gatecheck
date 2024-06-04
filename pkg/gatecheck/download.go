@@ -4,8 +4,8 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/gatecheckdev/gatecheck/pkg/epss/v1"
-	"github.com/gatecheckdev/gatecheck/pkg/kev/v1"
+	"github.com/gatecheckdev/gatecheck/pkg/epss"
+	"github.com/gatecheckdev/gatecheck/pkg/kev"
 )
 
 type fetchOptions struct {
