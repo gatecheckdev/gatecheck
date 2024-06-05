@@ -19,7 +19,7 @@ import (
 const (
 	dataModel       = "v2023.03.01"
 	modelDateLayout = "2006-01-02T15:04:05-0700"
-	epssUrlTemplate = "https://epss.cyentia.com/epss_scores-%d-%s-%s.csv.gz"
+	defaultEPSSURL  = "https://epss.cyentia.com"
 )
 
 // Data a representation of the CSV data from first API
@@ -83,13 +83,9 @@ type FetchOptions struct {
 
 // DefaultFetchOptions use the default client and url for today's scores
 func DefaultFetchOptions() *FetchOptions {
-	today := time.Now()
-	year := today.Year()
-	month := today.Format("01")
-	day := today.Format("02")
 	return &FetchOptions{
 		Client: http.DefaultClient,
-		URL:    fmt.Sprintf(epssUrlTemplate, year, month, day),
+		URL:    defaultEPSSURL,
 	}
 }
 
