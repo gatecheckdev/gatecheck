@@ -134,6 +134,13 @@ func ListGrypeReport(dst io.Writer, src io.Reader) (*tablewriter.Table, error) {
 
 	table := matrix.Table(dst, header)
 
+	if len(report.Matches) == 0 {
+		footer := make([]string, len(header))
+		footer[len(header)-1] = "No Grype Vulnerabilities"
+		table.SetFooter(footer)
+		table.SetBorder(false)
+	}
+
 	return table, nil
 }
 
@@ -182,6 +189,13 @@ func listGrypeWithEPSS(dst io.Writer, src io.Reader, epssData *epss.Data) (*tabl
 
 	table := matrix.Table(dst, header)
 
+	if len(report.Matches) == 0 {
+		footer := make([]string, len(header))
+		footer[len(header)-1] = "No Grype Vulnerabilities"
+		table.SetFooter(footer)
+		table.SetBorder(false)
+	}
+
 	return table, nil
 }
 
@@ -210,6 +224,13 @@ func ListCyclonedx(dst io.Writer, src io.Reader) (*tablewriter.Table, error) {
 
 	header := []string{"Cyclonedx CVE ID", "Severity", "Package", "Link"}
 	table := matrix.Table(dst, header)
+
+	if len(report.Vulnerabilities) == 0 {
+		footer := make([]string, len(header))
+		footer[len(header)-1] = "No Cyclonedx Vulnerabilities"
+		table.SetFooter(footer)
+		table.SetBorder(false)
+	}
 
 	return table, nil
 }
@@ -252,6 +273,13 @@ func listCyclonedxWithEPSS(dst io.Writer, src io.Reader, epssData *epss.Data) (*
 	header := []string{"Cyclonedx CVE ID", "Severity", "EPSS Score", "EPSS Prctl", "affected Packages", "Link"}
 	table := matrix.Table(dst, header)
 
+	if len(report.Vulnerabilities) == 0 {
+		footer := make([]string, len(header))
+		footer[len(header)-1] = "No Cyclonedx Vulnerabilities"
+		table.SetFooter(footer)
+		table.SetBorder(false)
+	}
+
 	return table, nil
 }
 
@@ -290,20 +318,27 @@ func ListSemgrep(dst io.Writer, src io.Reader) (*tablewriter.Table, error) {
 	header := []string{"Semgrep Check ID", "Owasp IDs", "Severity", "Impact", "link"}
 	table := matrix.Table(dst, header)
 
+	if len(report.Results) == 0 {
+		footer := make([]string, len(header))
+		footer[len(header)-1] = "No Semgrep Findings"
+		table.SetFooter(footer)
+		table.SetBorder(false)
+	}
+
 	return table, nil
 }
 
 func listGitleaks(dst io.Writer, src io.Reader) (*tablewriter.Table, error) {
-	report := &artifacts.GitLeaksReportMin{}
-	if err := json.NewDecoder(src).Decode(report); err != nil {
+	report := artifacts.GitLeaksReportMin{}
+	if err := json.NewDecoder(src).Decode(&report); err != nil {
 		return nil, err
 	}
 
 	table := tablewriter.NewWriter(dst)
 
-	table.SetHeader([]string{"Gitleaks Rule ID", "File", "Commit", "Start Line"})
-
-	for _, finding := range *report {
+	header := []string{"Gitleaks Rule ID", "File", "Commit", "Start Line"}
+	table.SetHeader(header)
+	for _, finding := range report {
 		row := []string{
 			finding.RuleID,
 			finding.FileShort(),
@@ -314,7 +349,10 @@ func listGitleaks(dst io.Writer, src io.Reader) (*tablewriter.Table, error) {
 	}
 
 	if report.Count() == 0 {
-		table.SetFooter([]string{"No Gitleaks Findings"})
+		footer := make([]string, len(header))
+		footer[len(header)-1] = "No Gitleaks Findings"
+		table.SetFooter(footer)
+		table.SetBorder(false)
 	}
 
 	return table, nil
