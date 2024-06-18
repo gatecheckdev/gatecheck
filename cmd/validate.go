@@ -52,14 +52,13 @@ var validateCmd = &cobra.Command{
 		return nil
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
-
 		err := gatecheck.Validate(
 			RuntimeConfig.gatecheckConfig,
 			RuntimeConfig.targetFile,
 			args[0],
 			gatecheck.WithEPSSURL(RuntimeConfig.EPSSURL.Value().(string)),
 			gatecheck.WithKEVURL(RuntimeConfig.KEVURL.Value().(string)),
-			gatecheck.WithEPSSFile(RuntimeConfig.epssFile),
+			gatecheck.WithEPSSFile(RuntimeConfig.epssFile), // TODO: fix this
 			gatecheck.WithKEVFile(RuntimeConfig.kevFile),
 		)
 

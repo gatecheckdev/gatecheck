@@ -7,10 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [UNRELEASED]
 
+## [0.7.4] - 2024-06-18
+
 ### Fixed
 
 - Missing `slog.Error` for KEV validations
 - Use base EPSS url instead of a specific date to get the latest data
+- Use a *os.File for kev and epss validation to simplify CLI runtime logic
 
 ## [0.7.0] - 2024-05-17
 

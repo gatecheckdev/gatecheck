@@ -3,6 +3,7 @@ package gatecheck
 import (
 	"io"
 	"net/http"
+	"os"
 
 	"github.com/gatecheckdev/gatecheck/pkg/epss"
 	"github.com/gatecheckdev/gatecheck/pkg/kev"
@@ -15,8 +16,8 @@ type fetchOptions struct {
 	kevClient *http.Client
 	kevURL    string
 
-	epssFile io.Reader
-	kevFile  io.Reader
+	epssFile *os.File
+	kevFile  *os.File
 }
 
 func defaultOptions() *fetchOptions {
@@ -56,15 +57,15 @@ func WithKEVURL(url string) optionFunc {
 	}
 }
 
-func WithEPSSFile(r io.Reader) optionFunc {
+func WithEPSSFile(epssFile *os.File) optionFunc {
 	return func(o *fetchOptions) {
-		o.epssFile = r
+		o.epssFile = epssFile
 	}
 }
 
-func WithKEVFile(r io.Reader) optionFunc {
+func WithKEVFile(kevFile *os.File) optionFunc {
 	return func(o *fetchOptions) {
-		o.kevFile = r
+		o.kevFile = kevFile
 	}
 }
 
