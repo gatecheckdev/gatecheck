@@ -45,7 +45,7 @@ var RuntimeConfig = metaConfig{
 	BundleTag: configkit.MetaField{
 		FieldName:    "BundleTag",
 		EnvKey:       "GATECHECK_BUNDLE_TAG",
-		DefaultValue: "",
+		DefaultValue: []string{},
 		FlagValueP:   new([]string),
 		EnvToValueFunc: func(s string) any {
 			return strings.Split(s, ",")
