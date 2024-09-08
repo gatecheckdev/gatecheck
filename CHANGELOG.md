@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [UNRELEASED]
 
+## [0.7.6] - 2024-09-08
+
 ### Fixed
 
 - Crash when running `gatecheck bundle add` with no tags
