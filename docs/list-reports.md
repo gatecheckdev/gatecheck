@@ -22,11 +22,3 @@ gatecheck ls grype-scan-report.json
 ```
 
 ![Screenshot Example List](assets/screenshot-grype-list.png)
-
-Using the `--all` or `-a` flag will do a full listing, cross-referencing with FIRST EPSS API
-
-```shell
-grype bkimminich/juice-shop:latest -o json | gatecheck ls --all -i grype
-```
-
-![Screenshot Example List All](assets/screenshot-grype-list-all.png)

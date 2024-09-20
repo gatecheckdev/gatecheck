@@ -10,7 +10,7 @@ Set Width 1600
 
 Output dist/gatecheck-list.gif
 
-Type "grype ubuntu:latest -o json | gatecheck ls --all -i grype | less"
+Type "grype ubuntu:latest -o json | gatecheck ls -i grype | less"
 Sleep 1
 Enter
 
