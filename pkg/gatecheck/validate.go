@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/easy-up/go-coverage"
 	"io"
 	"log/slog"
 	"slices"
@@ -23,39 +24,43 @@ func newValidationErr(details string) error {
 }
 
 // Validate against config thresholds
-func Validate(config *Config, reportSrc io.Reader, targetfilename string, optionFuncs ...optionFunc) error {
+func Validate(config *Config, reportSrc io.Reader, targetFilename string, optionFuncs ...optionFunc) error {
 	options := defaultOptions()
 	for _, f := range optionFuncs {
 		f(options)
 	}
 
 	switch {
-	case strings.Contains(targetfilename, "grype"):
-		slog.Debug("validate grype report", "filename", targetfilename)
+	case strings.Contains(targetFilename, "grype"):
+		slog.Debug("validate grype report", "filename", targetFilename)
 		return validateGrypeReportWithFetch(reportSrc, config, options)
 
-	case strings.Contains(targetfilename, "cyclonedx"):
-		slog.Debug("validate", "filename", targetfilename, "filetype", "cyclonedx")
+	case strings.Contains(targetFilename, "cyclonedx"):
+		slog.Debug("validate", "filename", targetFilename, "filetype", "cyclonedx")
 		return validateCyclonedxReportWithFetch(reportSrc, config, options)
 
-	case strings.Contains(targetfilename, "semgrep"):
-		slog.Debug("validate", "filename", targetfilename, "filetype", "semgrep")
+	case strings.Contains(targetFilename, "semgrep"):
+		slog.Debug("validate", "filename", targetFilename, "filetype", "semgrep")
 		return validateSemgrepReport(reportSrc, config)
 
-	case strings.Contains(targetfilename, "gitleaks"):
-		slog.Debug("validate", "filename", targetfilename, "filetype", "gitleaks")
+	case strings.Contains(targetFilename, "gitleaks"):
+		slog.Debug("validate", "filename", targetFilename, "filetype", "gitleaks")
 		return validateGitleaksReport(reportSrc, config)
 
-	case strings.Contains(targetfilename, "syft"):
-		slog.Debug("validate", "filename", targetfilename, "filetype", "syft")
-		return errors.New("Syft validation not supported yet.")
+	case strings.Contains(targetFilename, "syft"):
+		slog.Debug("validate", "filename", targetFilename, "filetype", "syft")
+		return errors.New("syft validation not supported yet")
 
-	case strings.Contains(targetfilename, "bundle"):
-		slog.Debug("validate", "filename", targetfilename, "filetype", "bundle")
+	case strings.Contains(targetFilename, "bundle"):
+		slog.Debug("validate", "filename", targetFilename, "filetype", "bundle")
 		return validateBundle(reportSrc, config, options)
 
+	case artifacts.IsCoverageReport(targetFilename):
+		slog.Debug("validate", "filename", targetFilename, "filetype", "coverage")
+		return validateCoverage(reportSrc, targetFilename, config)
+
 	default:
-		slog.Error("unsupported file type, cannot be determined from filename", "filename", targetfilename)
+		slog.Error("unsupported file type, cannot be determined from filename", "filename", targetFilename)
 		return errors.New("Failed to validate artifact. See log for details.")
 	}
 }
@@ -626,6 +631,42 @@ func validateGitleaksReport(r io.Reader, config *Config) error {
 	return validateGitleaksRules(config, report)
 }
 
+func validateCoverage(src io.Reader, targetFilename string, config *Config) error {
+	coverageFormat, err := artifacts.GetCoverageMode(targetFilename)
+	if err != nil {
+		return err
+	}
+
+	parser := coverage.New(coverageFormat)
+	report, err := parser.ParseReader(src)
+	if err != nil {
+		return err
+	}
+
+	lineCoverage := float32(report.CoveredLines) / float32(report.TotalLines)
+	functionCoverage := float32(report.CoveredFunctions) / float32(report.TotalFunctions)
+	branchCoverage := float32(report.CoveredBranches) / float32(report.TotalBranches)
+
+	var errs error
+
+	if lineCoverage < config.Coverage.LineThreshold {
+		coverageErr := newValidationErr("Coverage: Line coverage below threshold")
+		errs = errors.Join(errs, coverageErr)
+	}
+
+	if functionCoverage < config.Coverage.FunctionThreshold {
+		coverageErr := newValidationErr("Coverage: Function coverage below threshold")
+		errs = errors.Join(errs, coverageErr)
+	}
+
+	if branchCoverage < config.Coverage.BranchThreshold {
+		coverageErr := newValidationErr("Coverage: Branch coverage below threshold")
+		errs = errors.Join(errs, coverageErr)
+	}
+
+	return errs
+}
+
 func validateBundle(r io.Reader, config *Config, options *fetchOptions) error {
 	slog.Debug("validate gatecheck bundle")
 	bundle := archive.NewBundle()
@@ -657,6 +698,9 @@ func validateBundle(r io.Reader, config *Config, options *fetchOptions) error {
 			errs = errors.Join(errs, err)
 		case strings.Contains(fileLabel, "gitleaks"):
 			err := validateGitleaksReport(bytes.NewBuffer(bundle.FileBytes(fileLabel)), config)
+			errs = errors.Join(errs, err)
+		case artifacts.IsCoverageReport(fileLabel):
+			err := validateCoverage(bytes.NewBuffer(bundle.FileBytes(fileLabel)), fileLabel, config)
 			errs = errors.Join(errs, err)
 		}
 	}

@@ -1,8 +1,6 @@
 package format
 
 import (
-	"io"
-
 	"github.com/olekukonko/tablewriter"
 )
 
@@ -28,11 +26,8 @@ func (m *SortableMatrix) Matrix() [][]string {
 	return m.data
 }
 
-func (m *SortableMatrix) Table(w io.Writer, header []string) *tablewriter.Table {
-	table := tablewriter.NewWriter(w)
-	table.SetHeader(header)
+func (m *SortableMatrix) Table(table *tablewriter.Table) {
 	table.AppendBulk(m.data)
-	return table
 }
 
 func (m *SortableMatrix) Len() int {
