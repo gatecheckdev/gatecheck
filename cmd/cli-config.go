@@ -165,7 +165,7 @@ var RuntimeConfig = metaConfig{
 		CobraSetupFunc: func(f configkit.MetaField, cmd *cobra.Command) {
 			valueP := f.FlagValueP.(*string)
 			usage := f.Metadata[metadataFlagUsage]
-			cmd.PersistentFlags().StringVarP(valueP, "file", "f", "", usage)
+			cmd.PersistentFlags().StringVarP(valueP, "config", "f", "", usage)
 		},
 		Metadata: map[string]string{
 			metadataFlagUsage:       "a validation configuration file",

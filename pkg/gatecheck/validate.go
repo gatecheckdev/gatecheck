@@ -9,6 +9,7 @@ import (
 	"io"
 	"log/slog"
 	"slices"
+	"sort"
 	"strings"
 
 	"github.com/gatecheckdev/gatecheck/pkg/archive"
@@ -65,6 +66,34 @@ func Validate(config *Config, reportSrc io.Reader, targetFilename string, option
 	}
 }
 
+func removeIgnoredSeverityCVEs(config *Config, report *artifacts.GrypeReportMin, data *epss.Data) {
+	hasLimits := map[string]bool{
+		"critical":   config.Grype.SeverityLimit.Critical.Enabled,
+		"high":       config.Grype.SeverityLimit.High.Enabled,
+		"medium":     config.Grype.SeverityLimit.Medium.Enabled,
+		"low":        config.Grype.SeverityLimit.Low.Enabled,
+		"unknown":    false,
+		"negligible": false,
+	}
+
+	for severity, hasLimit := range hasLimits {
+		if hasLimit {
+			continue
+		}
+
+		if config.Grype.EPSSLimit.Enabled {
+			report.Matches = slices.DeleteFunc(report.Matches, func(match artifacts.GrypeMatch) bool {
+				epssCVE, ok := data.CVEs[match.Vulnerability.ID]
+				return strings.ToLower(match.Vulnerability.Severity) == severity && (!ok || epssCVE.EPSSValue() < config.Grype.EPSSLimit.Score)
+			})
+		} else {
+			report.Matches = slices.DeleteFunc(report.Matches, func(match artifacts.GrypeMatch) bool {
+				return strings.ToLower(match.Vulnerability.Severity) == severity
+			})
+		}
+	}
+}
+
 func ruleGrypeSeverityLimit(config *Config, report *artifacts.GrypeReportMin) bool {
 	validationPass := true
 
@@ -86,6 +115,9 @@ func ruleGrypeSeverityLimit(config *Config, report *artifacts.GrypeReportMin) bo
 		}
 		if matchCount > int(configuredLimit.Limit) {
 			slog.Error("grype severity limit exceeded", "severity", severity, "report", matchCount, "limit", configuredLimit.Limit)
+			for _, match := range matches {
+				slog.Info("vulnerability detected", "id", match.Vulnerability.ID, "severity", match.Vulnerability.Severity)
+			}
 			validationPass = false
 			continue
 		}
@@ -359,7 +391,7 @@ func ruleGrypeEPSSLimit(config *Config, report *artifacts.GrypeReportMin, data *
 	slog.Debug("run epss limit rule",
 		"artifact", "grype",
 		"vulnerabilities", len(report.Matches),
-		"epss_risk_acceptance_score", config.Grype.EPSSRiskAcceptance.Score,
+		"epss_limit_score", config.Grype.EPSSLimit.Score,
 	)
 	for _, match := range report.Matches {
 		epssCVE, ok := data.CVEs[match.Vulnerability.ID]
@@ -402,7 +434,7 @@ func ruleCyclonedxEPSSLimit(config *Config, report *artifacts.CyclonedxReportMin
 	slog.Debug("run epss limit rule",
 		"artifact", "cyclonedx",
 		"vulnerabilities", len(report.Vulnerabilities),
-		"epss_risk_acceptance_score", config.Cyclonedx.EPSSRiskAcceptance.Score,
+		"epss_limit_score", config.Cyclonedx.EPSSLimit.Score,
 	)
 
 	for _, vulnerability := range report.Vulnerabilities {
@@ -429,6 +461,24 @@ func ruleCyclonedxEPSSLimit(config *Config, report *artifacts.CyclonedxReportMin
 		return false
 	}
 	return true
+}
+
+func removeIgnoredSemgrepIssues(config *Config, report *artifacts.SemgrepReportMin) {
+	hasLimits := map[string]bool{
+		"error":   config.Semgrep.SeverityLimit.Error.Enabled,
+		"warning": config.Semgrep.SeverityLimit.Warning.Enabled,
+		"info":    config.Semgrep.SeverityLimit.Info.Enabled,
+	}
+
+	for severity, hasLimit := range hasLimits {
+		if hasLimit {
+			continue
+		}
+
+		report.Results = slices.DeleteFunc(report.Results, func(result artifacts.SemgrepResults) bool {
+			return strings.EqualFold(result.Extra.Severity, severity)
+		})
+	}
 }
 
 func ruleSemgrepSeverityLimit(config *Config, report *artifacts.SemgrepReportMin) bool {
@@ -458,6 +508,9 @@ func ruleSemgrepSeverityLimit(config *Config, report *artifacts.SemgrepReportMin
 		}
 		if matchCount > int(configuredLimit.Limit) {
 			slog.Error("severity limit exceeded", "artifact", "semgrep", "severity", severity, "report", matchCount, "limit", configuredLimit.Limit)
+			for _, match := range matches {
+				slog.Info("Potential issue detected", "severity", match.Extra.Severity, "check_id", match.CheckID, "message", match.Extra.Message)
+			}
 			validationPass = false
 			continue
 		}
@@ -483,6 +536,7 @@ func ruleSemgrepImpactRiskAccept(config *Config, report *artifacts.SemgrepReport
 
 	results := slices.DeleteFunc(report.Results, func(result artifacts.SemgrepResults) bool {
 		riskAccepted := false
+		// TODO: make the configuration for risk acceptance less dumb (what would you accept high medium impact and not accept low impact)
 		switch {
 		case config.Semgrep.ImpactRiskAcceptance.High && strings.EqualFold(result.Extra.Metadata.Impact, "high"):
 			riskAccepted = true
@@ -494,7 +548,7 @@ func ruleSemgrepImpactRiskAccept(config *Config, report *artifacts.SemgrepReport
 
 		if riskAccepted {
 			slog.Info(
-				"risk accepted: epss score is below risk acceptance threshold",
+				"risk accepted: Semgrep issue impact is below acceptance threshold",
 				"check_id", result.CheckID,
 				"severity", result.Extra.Severity,
 				"impact", result.Extra.Metadata.Impact,
@@ -647,19 +701,29 @@ func validateCoverage(src io.Reader, targetFilename string, config *Config) erro
 	functionCoverage := float32(report.CoveredFunctions) / float32(report.TotalFunctions)
 	branchCoverage := float32(report.CoveredBranches) / float32(report.TotalBranches)
 
+	slog.Info(
+		"validate coverage",
+		"line_coverage", lineCoverage,
+		"function_coverage", functionCoverage,
+		"branch_coverage", branchCoverage,
+	)
+
 	var errs error
 
 	if lineCoverage < config.Coverage.LineThreshold {
+		slog.Error("line coverage below threshold", "line_coverage", lineCoverage, "threshold", config.Coverage.LineThreshold)
 		coverageErr := newValidationErr("Coverage: Line coverage below threshold")
 		errs = errors.Join(errs, coverageErr)
 	}
 
 	if functionCoverage < config.Coverage.FunctionThreshold {
+		slog.Error("function coverage below threshold", "function_coverage", functionCoverage, "threshold", config.Coverage.FunctionThreshold)
 		coverageErr := newValidationErr("Coverage: Function coverage below threshold")
 		errs = errors.Join(errs, coverageErr)
 	}
 
 	if branchCoverage < config.Coverage.BranchThreshold {
+		slog.Error("branch coverage below threshold", "branch_coverage", branchCoverage, "threshold", config.Coverage.BranchThreshold)
 		coverageErr := newValidationErr("Coverage: Branch coverage below threshold")
 		errs = errors.Join(errs, coverageErr)
 	}
@@ -713,10 +777,33 @@ func validateBundle(r io.Reader, config *Config, options *fetchOptions) error {
 // Validate Rules
 
 func validateGrypeRules(config *Config, report *artifacts.GrypeReportMin, catalog *kev.Catalog, data *epss.Data) error {
+	severityRank := []string{
+		"critical",
+		"high",
+		"medium",
+		"low",
+		"negligible",
+		"unknown",
+	}
+	sort.Slice(report.Matches, func(i, j int) bool {
+		if report.Matches[i].Vulnerability.Severity == report.Matches[j].Vulnerability.Severity {
+			epssi, oki := data.CVEs[report.Matches[i].Vulnerability.ID]
+			epssj, okj := data.CVEs[report.Matches[j].Vulnerability.ID]
+
+			// Sort EPPS from highest to lowest
+			return !okj || oki && epssi.EPSSValue() > epssj.EPSSValue()
+		}
+		ranki := slices.Index(severityRank, strings.ToLower(report.Matches[i].Vulnerability.Severity))
+		rankj := slices.Index(severityRank, strings.ToLower(report.Matches[j].Vulnerability.Severity))
+		return ranki < rankj
+	})
 	// 1. Deny List - Fail Matching
 	if !ruleGrypeCVEDeny(config, report) {
 		return newValidationErr("Grype: CVE explicitly denied")
 	}
+
+	// Ignore any CVEs that don't meet the vulnerability threshold or the EPPS threshold
+	removeIgnoredSeverityCVEs(config, report, data)
 
 	// 2. CVE Allowance - remove from matches
 	ruleGrypeCVEAllow(config, report)
@@ -773,6 +860,10 @@ func validateCyclonedxRules(config *Config, report *artifacts.CyclonedxReportMin
 }
 
 func validateSemgrepRules(config *Config, report *artifacts.SemgrepReportMin) error {
+	slog.Info("validating semgrep rules", "findings", len(report.Results))
+	// Ignore issues for which there is no severity limit
+	removeIgnoredSemgrepIssues(config, report)
+
 	// 1. Impact Allowance - remove result
 	ruleSemgrepImpactRiskAccept(config, report)
 
