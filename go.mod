@@ -14,6 +14,7 @@ require (
 )
 
 require (
+	github.com/easy-up/go-coverage v0.0.0-20241018034313-3de592d59a78 // indirect
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect

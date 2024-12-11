@@ -69,7 +69,7 @@ var validateCmd = &cobra.Command{
 			return nil
 		}
 
-		return nil
+		return err
 	},
 }
 

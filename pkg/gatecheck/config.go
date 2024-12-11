@@ -28,6 +28,7 @@ type Config struct {
 	Cyclonedx reportWithCVEs       `json:"cyclonedx" toml:"cyclonedx" yaml:"cyclonedx"`
 	Semgrep   configSemgrepReport  `json:"semgrep"   toml:"semgrep"   yaml:"semgrep"`
 	Gitleaks  configGitleaksReport `json:"gitleaks"  toml:"gitleaks"  yaml:"gitleaks"`
+	Coverage  configCoverageReport `json:"coverage"  toml:"coverage"  yaml:"coverage"`
 }
 
 func (c *Config) String() string {
@@ -46,6 +47,12 @@ func (c *Config) String() string {
 		table.Append([]string{key, fmt.Sprintf("%v", v.Get(key))})
 	}
 	return contentBuf.String()
+}
+
+type configCoverageReport struct {
+	LineThreshold     float32 `json:"lineThreshold"   toml:"lineThreshold"   yaml:"lineThreshold"`
+	FunctionThreshold float32 `json:"functionThreshold" toml:"functionThreshold" yaml:"functionThreshold"`
+	BranchThreshold   float32 `json:"branchThreshold"  toml:"branchThreshold"  yaml:"branchThreshold"`
 }
 
 type configGitleaksReport struct {
@@ -224,6 +231,11 @@ func NewDefaultConfig() *Config {
 		},
 		Gitleaks: configGitleaksReport{
 			LimitEnabled: false,
+		},
+		Coverage: configCoverageReport{
+			LineThreshold:     0,
+			FunctionThreshold: 0,
+			BranchThreshold:   0,
 		},
 	}
 }

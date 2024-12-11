@@ -4,10 +4,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/easy-up/go-coverage"
 	"io"
 	"log/slog"
 	"os"
 	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/gatecheckdev/gatecheck/pkg/archive"
@@ -47,7 +49,7 @@ func WithEPSS(epssFile *os.File, epssURL string) (func(*listOptions), error) {
 }
 
 func List(dst io.Writer, src io.Reader, inputFilename string, options ...ListOptionFunc) error {
-	var table *tablewriter.Table
+	table := tablewriter.NewWriter(dst)
 	var err error
 	o := &listOptions{}
 	for _, f := range options {
@@ -58,26 +60,26 @@ func List(dst io.Writer, src io.Reader, inputFilename string, options ...ListOpt
 	case strings.Contains(inputFilename, "grype"):
 		slog.Debug("list", "filename", inputFilename, "filetype", "grype")
 		if o.epssData != nil {
-			table, err = listGrypeWithEPSS(dst, src, o.epssData)
+			err = listGrypeWithEPSS(table, src, o.epssData)
 		} else {
-			table, err = ListGrypeReport(dst, src)
+			err = ListGrypeReport(table, src)
 		}
 
 	case strings.Contains(inputFilename, "cyclonedx"):
 		slog.Debug("list", "filename", inputFilename, "filetype", "cyclonedx")
 		if o.epssData != nil {
-			table, err = listCyclonedxWithEPSS(dst, src, o.epssData)
+			err = listCyclonedxWithEPSS(table, src, o.epssData)
 		} else {
-			table, err = ListCyclonedx(dst, src)
+			err = ListCyclonedx(table, src)
 		}
 
 	case strings.Contains(inputFilename, "semgrep"):
 		slog.Debug("list", "filename", inputFilename, "filetype", "semgrep")
-		table, err = ListSemgrep(dst, src)
+		err = ListSemgrep(table, src)
 
 	case strings.Contains(inputFilename, "gitleaks"):
 		slog.Debug("list", "filename", inputFilename, "filetype", "gitleaks")
-		table, err = listGitleaks(dst, src)
+		err = listGitleaks(table, src)
 
 	case strings.Contains(inputFilename, "syft"):
 		slog.Debug("list", "filename", inputFilename, "filetype", "syft")
@@ -87,15 +89,19 @@ func List(dst io.Writer, src io.Reader, inputFilename string, options ...ListOpt
 	case strings.Contains(inputFilename, "bundle") || strings.Contains(inputFilename, "gatecheck"):
 		slog.Debug("list", "filename", inputFilename, "filetype", "bundle")
 		bundle := archive.NewBundle()
-		if err := archive.UntarGzipBundle(src, bundle); err != nil {
+		if err = archive.UntarGzipBundle(src, bundle); err != nil {
 			return err
 		}
-		_, err := fmt.Fprintln(dst, bundle.Content())
+		_, err = fmt.Fprintln(dst, bundle.Content())
 		return err
 
+	case artifacts.IsCoverageReport(inputFilename):
+		slog.Debug("list", "filename", inputFilename, "filetype", "coverage")
+
+		err = listCoverage(table, inputFilename, src)
 	default:
 		slog.Error("unsupported file type, cannot be determined from filename", "filename", inputFilename)
-		return errors.New("Failed to list artifact content")
+		return errors.New("failed to list artifact content")
 	}
 
 	if err != nil {
@@ -114,11 +120,35 @@ func List(dst io.Writer, src io.Reader, inputFilename string, options ...ListOpt
 	return nil
 }
 
-func ListGrypeReport(dst io.Writer, src io.Reader) (*tablewriter.Table, error) {
+func listCoverage(table *tablewriter.Table, inputFilename string, src io.Reader) error {
+	coverageFormat, err := artifacts.GetCoverageMode(inputFilename)
+	if err != nil {
+		return err
+	}
+
+	parser := coverage.New(coverageFormat)
+	report, err := parser.ParseReader(src)
+	if err != nil {
+		return err
+	}
+
+	header := []string{"Lines Covered", "Functions Covered", "Branches Covered"}
+	table.SetHeader(header)
+	table.Append([]string{strconv.Itoa(report.CoveredLines), strconv.Itoa(report.CoveredFunctions), strconv.Itoa(report.CoveredBranches)})
+
+	lineCoverageStr := fmt.Sprintf("%0.2f%%", (float32(report.CoveredLines)/float32(report.TotalLines))*100)
+	funcCoverageStr := fmt.Sprintf("%0.2f%%", (float32(report.CoveredFunctions)/float32(report.TotalFunctions))*100)
+	branchCoverageStr := fmt.Sprintf("%0.2f%%", (float32(report.CoveredBranches)/float32(report.TotalBranches))*100)
+	table.SetFooter([]string{lineCoverageStr, funcCoverageStr, branchCoverageStr})
+
+	return nil
+}
+
+func ListGrypeReport(table *tablewriter.Table, src io.Reader) error {
 	report := &artifacts.GrypeReportMin{}
 	slog.Debug("decode grype report", "format", "json")
 	if err := json.NewDecoder(src).Decode(&report); err != nil {
-		return nil, err
+		return err
 	}
 
 	catLess := format.NewCatagoricLess([]string{"Critical", "High", "Medium", "Low", "Negligible", "Unknown"})
@@ -132,7 +162,8 @@ func ListGrypeReport(dst io.Writer, src io.Reader) (*tablewriter.Table, error) {
 
 	header := []string{"Grype Severity", "Package", "Version", "Link"}
 
-	table := matrix.Table(dst, header)
+	table.SetHeader(header)
+	matrix.Table(table)
 
 	if len(report.Matches) == 0 {
 		footer := make([]string, len(header))
@@ -141,14 +172,14 @@ func ListGrypeReport(dst io.Writer, src io.Reader) (*tablewriter.Table, error) {
 		table.SetBorder(false)
 	}
 
-	return table, nil
+	return nil
 }
 
-func listGrypeWithEPSS(dst io.Writer, src io.Reader, epssData *epss.Data) (*tablewriter.Table, error) {
+func listGrypeWithEPSS(table *tablewriter.Table, src io.Reader, epssData *epss.Data) error {
 	report := &artifacts.GrypeReportMin{}
 	slog.Debug("decode grype report", "format", "json")
 	if err := json.NewDecoder(src).Decode(&report); err != nil {
-		return nil, err
+		return err
 	}
 
 	catLess := format.NewCatagoricLess([]string{"Critical", "High", "Medium", "Low", "Negligible", "Unknown"})
@@ -187,7 +218,8 @@ func listGrypeWithEPSS(dst io.Writer, src io.Reader, epssData *epss.Data) (*tabl
 
 	sort.Sort(matrix)
 
-	table := matrix.Table(dst, header)
+	table.SetHeader(header)
+	matrix.Table(table)
 
 	if len(report.Matches) == 0 {
 		footer := make([]string, len(header))
@@ -196,14 +228,14 @@ func listGrypeWithEPSS(dst io.Writer, src io.Reader, epssData *epss.Data) (*tabl
 		table.SetBorder(false)
 	}
 
-	return table, nil
+	return nil
 }
 
-func ListCyclonedx(dst io.Writer, src io.Reader) (*tablewriter.Table, error) {
+func ListCyclonedx(table *tablewriter.Table, src io.Reader) error {
 	report := &artifacts.CyclonedxReportMin{}
 	slog.Debug("decode cyclonedx report", "format", "json")
 	if err := json.NewDecoder(src).Decode(&report); err != nil {
-		return nil, err
+		return err
 	}
 
 	catLess := format.NewCatagoricLess([]string{"critical", "high", "medium", "low", "none"})
@@ -223,7 +255,8 @@ func ListCyclonedx(dst io.Writer, src io.Reader) (*tablewriter.Table, error) {
 	sort.Sort(matrix)
 
 	header := []string{"Cyclonedx CVE ID", "Severity", "Package", "Link"}
-	table := matrix.Table(dst, header)
+	table.SetHeader(header)
+	matrix.Table(table)
 
 	if len(report.Vulnerabilities) == 0 {
 		footer := make([]string, len(header))
@@ -232,14 +265,14 @@ func ListCyclonedx(dst io.Writer, src io.Reader) (*tablewriter.Table, error) {
 		table.SetBorder(false)
 	}
 
-	return table, nil
+	return nil
 }
 
-func listCyclonedxWithEPSS(dst io.Writer, src io.Reader, epssData *epss.Data) (*tablewriter.Table, error) {
+func listCyclonedxWithEPSS(table *tablewriter.Table, src io.Reader, epssData *epss.Data) error {
 	report := &artifacts.CyclonedxReportMin{}
 	slog.Debug("decode grype report", "format", "json")
 	if err := json.NewDecoder(src).Decode(&report); err != nil {
-		return nil, err
+		return err
 	}
 
 	catLess := format.NewCatagoricLess([]string{"critical", "high", "medium", "low", "info", "none", "unknown"})
@@ -271,7 +304,8 @@ func listCyclonedxWithEPSS(dst io.Writer, src io.Reader, epssData *epss.Data) (*
 	sort.Sort(matrix)
 
 	header := []string{"Cyclonedx CVE ID", "Severity", "EPSS Score", "EPSS Prctl", "affected Packages", "Link"}
-	table := matrix.Table(dst, header)
+	table.SetHeader(header)
+	matrix.Table(table)
 
 	if len(report.Vulnerabilities) == 0 {
 		footer := make([]string, len(header))
@@ -280,14 +314,14 @@ func listCyclonedxWithEPSS(dst io.Writer, src io.Reader, epssData *epss.Data) (*
 		table.SetBorder(false)
 	}
 
-	return table, nil
+	return nil
 }
 
-func ListSemgrep(dst io.Writer, src io.Reader) (*tablewriter.Table, error) {
+func ListSemgrep(table *tablewriter.Table, src io.Reader) error {
 	report := &artifacts.SemgrepReportMin{}
 
 	if err := json.NewDecoder(src).Decode(report); err != nil {
-		return nil, err
+		return err
 	}
 
 	for _, semgrepError := range report.Errors {
@@ -316,7 +350,8 @@ func ListSemgrep(dst io.Writer, src io.Reader) (*tablewriter.Table, error) {
 	sort.Sort(matrix)
 
 	header := []string{"Semgrep Check ID", "Owasp IDs", "Severity", "Impact", "link"}
-	table := matrix.Table(dst, header)
+	table.SetHeader(header)
+	matrix.Table(table)
 
 	if len(report.Results) == 0 {
 		footer := make([]string, len(header))
@@ -325,16 +360,14 @@ func ListSemgrep(dst io.Writer, src io.Reader) (*tablewriter.Table, error) {
 		table.SetBorder(false)
 	}
 
-	return table, nil
+	return nil
 }
 
-func listGitleaks(dst io.Writer, src io.Reader) (*tablewriter.Table, error) {
+func listGitleaks(table *tablewriter.Table, src io.Reader) error {
 	report := artifacts.GitLeaksReportMin{}
 	if err := json.NewDecoder(src).Decode(&report); err != nil {
-		return nil, err
+		return err
 	}
-
-	table := tablewriter.NewWriter(dst)
 
 	header := []string{"Gitleaks Rule ID", "File", "Commit", "Start Line"}
 	table.SetHeader(header)
@@ -355,5 +388,5 @@ func listGitleaks(dst io.Writer, src io.Reader) (*tablewriter.Table, error) {
 		table.SetBorder(false)
 	}
 
-	return table, nil
+	return nil
 }

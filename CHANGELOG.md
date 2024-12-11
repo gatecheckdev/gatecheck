@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [UNRELEASED]
 
+## [0.8.0] - 2024-10-23
+
+* Fixed a bug where validation failures were not resulting in a non-zero exit code
+* Renamed the --file / -f CLI argument to --config / -f for consistency with other tools
+* improvements to validate output  
+   These "improvements" are short term hacks. There is a need for a fundamental
+   overhaul of how output is generated to improve usability
+* Implemented code coverage support.
+* Updated the docs to reflect the removal of the --all flag
+
+## [0.7.6] - 2024-09-08
+
+### Fixed
+
+- Crash when running `gatecheck bundle add` with no tags
+
 ## [0.7.5] - 2024-06-18
 
 ### Fixed

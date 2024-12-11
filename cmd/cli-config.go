@@ -45,7 +45,7 @@ var RuntimeConfig = metaConfig{
 	BundleTag: configkit.MetaField{
 		FieldName:    "BundleTag",
 		EnvKey:       "GATECHECK_BUNDLE_TAG",
-		DefaultValue: "",
+		DefaultValue: []string{},
 		FlagValueP:   new([]string),
 		EnvToValueFunc: func(s string) any {
 			return strings.Split(s, ",")
@@ -165,7 +165,7 @@ var RuntimeConfig = metaConfig{
 		CobraSetupFunc: func(f configkit.MetaField, cmd *cobra.Command) {
 			valueP := f.FlagValueP.(*string)
 			usage := f.Metadata[metadataFlagUsage]
-			cmd.PersistentFlags().StringVarP(valueP, "file", "f", "", usage)
+			cmd.PersistentFlags().StringVarP(valueP, "config", "f", "", usage)
 		},
 		Metadata: map[string]string{
 			metadataFlagUsage:       "a validation configuration file",

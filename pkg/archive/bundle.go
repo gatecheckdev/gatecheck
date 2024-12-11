@@ -10,6 +10,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/olekukonko/tablewriter"
 	"io"
 	"log/slog"
 	"os"
@@ -159,7 +160,10 @@ func (b *Bundle) Content() string {
 	sort.Sort(matrix)
 	buf := new(bytes.Buffer)
 	header := []string{"Label", "Digest", "Tags", "Size"}
-	matrix.Table(buf, header).Render()
+	table := tablewriter.NewWriter(buf)
+	table.SetHeader(header)
+	matrix.Table(table)
+	table.Render()
 	return buf.String()
 }
 

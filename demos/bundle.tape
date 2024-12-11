@@ -10,7 +10,7 @@ Set Width 1800
 
 Output dist/gatecheck-bundle.gif
 
-Type "gatecheck ls --all grype-report.json | less"
+Type "gatecheck ls grype-report.json | less"
 Sleep 1
 Enter
 Sleep 5
