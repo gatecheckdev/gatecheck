@@ -17,8 +17,8 @@ import (
 )
 
 const (
-	dataModel       = "v2023.03.01"
-	modelDateLayout = "2006-01-02T15:04:05-0700"
+	dataModel       = "v2025.03.14"
+	modelDateLayout = "2006-01-02T15:04:05Z"
 	defaultEPSSURL  = "https://epss.cyentia.com"
 )
 

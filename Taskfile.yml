@@ -1,0 +1,88 @@
+version: "3"
+
+env:
+  INSTALL_DIR: "/usr/local/bin"
+  IMAGE_TAG: "gatecheck:latest"
+
+tasks:
+  build:
+    desc: "Build the gatecheck binary"
+    vars:
+      BUILD_DATE: '{{dateInZone "2006-01-02T15:04:05Z" now "UTC"}}'
+      CLI_VERSION:
+        sh: git describe --tags || git rev-parse --short HEAD || "v0.0.0-unknown"
+      GIT_COMMIT:
+        sh: git rev-parse HEAD
+      GIT_DESCRIPTION:
+        sh: git log -1 --pretty=%B
+    cmds:
+      - mkdir -p bin
+      - go build -ldflags="-X 'main.cliVersion={{.CLI_VERSION}}' -X 'main.gitCommit={{.GIT_COMMIT}}' -X 'main.buildDate={{.BUILD_DATE}}' -X 'main.gitDescription={{.GIT_DESCRIPTION}}'" -o ./bin ./cmd/gatecheck
+    sources:
+      - cmd/*
+      - pkg/*
+      - go*
+    generates:
+      - bin/gatecheck
+
+  install:
+    desc: "Install the gatecheck binary"
+    prompt: 'Install gatecheck binary to {{joinPath .INSTALL_DIR "gatecheck"}} ...Continue?'
+    deps:
+      - build
+    cmds:
+      - cp ./bin/gatecheck {{joinPath .INSTALL_DIR "gatecheck"}}
+    sources:
+      - ./bin/gatecheck
+    generates:
+      - '{{joinPath .INSTALL_DIR "gatecheck"}}'
+
+  uninstall:
+    desc: "Uninstall the gatecheck binary"
+    prompt: 'Will remove binary {{joinPath .INSTALL_DIR "gatecheck"}}'
+    cmds:
+      - rm '{{joinPath .INSTALL_DIR "gatecheck"}}'
+
+  test:
+    desc: "Run unit tests with coverage"
+    cmds:
+      - go test -cover ./...
+
+  lint:
+    desc: "Run golangci-lint in view-only mode"
+    cmds:
+      - golangci-lint run --fast
+
+  fix:
+    desc: "Fix linting errors and format code"
+    cmds:
+      - golangci-lint run --fast --fix
+
+  release-snapshot:
+    desc: "Create a snapshot release"
+    cmds:
+      - goreleaser release --snapshot --rm-dist
+
+  release:
+    desc: "Create a release"
+    cmds:
+      - goreleaser release --rm-dist
+
+  upgrade:
+    desc: "Upgrade package dependencies"
+    preconditions:
+      - sh: git status --porcelain | grep -q .
+        msg: "Repository is dirty, commit changes before upgrading."
+    cmds:
+      - go get -u ./...
+      - go mod tidy
+
+  serve-docs:
+    desc: "Serve documentation locally"
+    cmds:
+      - mdbook serve
+
+  clean:
+    desc: "Clean up build directory"
+    cmds:
+      - rm -rf ./bin

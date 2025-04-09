@@ -3,7 +3,6 @@
 [![Go Reference](https://pkg.go.dev/badge/github.com/gatecheckdev/gatecheck.svg)](https://pkg.go.dev/github.com/gatecheckdev/gatecheck)
 [![Go Report Card](https://goreportcard.com/badge/github.com/gatecheckdev/gatecheck)](https://goreportcard.com/report/github.com/gatecheckdev/gatecheck)
 
-
 ![Gatecheck Logo](https://static.gatecheck.dev/gatecheck-logo-splash-dark.png)
 
 Gatecheck automates report validation in a CI/CD Pipeline by comparing security findings to pre-determined thresholds.

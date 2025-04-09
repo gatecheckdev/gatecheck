@@ -7,11 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [UNRELEASED]
 
+### Fixed
+
+- Updated EPSS schema to work with 3.14.2025
+
 ## [0.8.0] - 2024-10-23
 
 * Fixed a bug where validation failures were not resulting in a non-zero exit code
 * Renamed the --file / -f CLI argument to --config / -f for consistency with other tools
-* improvements to validate output  
+* improvements to validate output
    These "improvements" are short term hacks. There is a need for a fundamental
    overhaul of how output is generated to improve usability
 * Implemented code coverage support.
