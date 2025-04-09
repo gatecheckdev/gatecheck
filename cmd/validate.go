@@ -65,8 +65,8 @@ var validateCmd = &cobra.Command{
 		audit := RuntimeConfig.Audit.Value().(bool)
 		if audit && err != nil {
 			slog.Error("validation failure in audit mode")
-			fmt.Fprintln(cmd.ErrOrStderr(), err)
-			return nil
+			_, err = fmt.Fprintln(cmd.ErrOrStderr(), err)
+			return err
 		}
 
 		return err

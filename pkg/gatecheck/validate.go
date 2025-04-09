@@ -5,12 +5,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/easy-up/go-coverage"
 	"io"
 	"log/slog"
 	"slices"
 	"sort"
 	"strings"
+
+	"github.com/easy-up/go-coverage"
 
 	"github.com/gatecheckdev/gatecheck/pkg/archive"
 	"github.com/gatecheckdev/gatecheck/pkg/artifacts"
@@ -18,7 +19,7 @@ import (
 	"github.com/gatecheckdev/gatecheck/pkg/kev"
 )
 
-var ErrValidationFailure = errors.New("Validation Failure")
+var ErrValidationFailure = errors.New("validation failure")
 
 func newValidationErr(details string) error {
 	return fmt.Errorf("%w: %s", ErrValidationFailure, details)
@@ -62,7 +63,7 @@ func Validate(config *Config, reportSrc io.Reader, targetFilename string, option
 
 	default:
 		slog.Error("unsupported file type, cannot be determined from filename", "filename", targetFilename)
-		return errors.New("Failed to validate artifact. See log for details.")
+		return errors.New("failed to validate artifact, See log for details")
 	}
 }
 
@@ -624,7 +625,7 @@ func validateGrypeReportWithFetch(r io.Reader, config *Config, options *fetchOpt
 
 	if err := LoadCatalogAndData(config, catalog, epssData, options); err != nil {
 		slog.Error("validate grype report: load epss data from file or api", "error", err)
-		return errors.New("Cannot run Grype validation: Cannot load external validation data. See log for details.")
+		return errors.New("cannot run Grype validation: Cannot load external validation data, see log for details")
 	}
 
 	return validateGrypeFrom(r, config, catalog, epssData)
@@ -635,7 +636,7 @@ func validateGrypeFrom(r io.Reader, config *Config, catalog *kev.Catalog, epssDa
 	report := &artifacts.GrypeReportMin{}
 	if err := json.NewDecoder(r).Decode(report); err != nil {
 		slog.Error("decode grype report for validation", "error", err)
-		return errors.New("Cannot run Grype validation: Report decoding failed. See log for details.")
+		return errors.New("cannot run Grype validation: Report decoding failed, See log for details")
 	}
 
 	return validateGrypeRules(config, report, catalog, epssData)
@@ -649,7 +650,7 @@ func validateCyclonedxReportWithFetch(r io.Reader, config *Config, options *fetc
 
 	if err := LoadCatalogAndData(config, catalog, epssData, options); err != nil {
 		slog.Error("validate cyclonedx report: load epss data from file or api", "error", err)
-		return errors.New("Cannot run Cyclonedx validation: Cannot load external validation data. See log for details.")
+		return errors.New("cannot run Cyclonedx validation: Cannot load external validation data, See log for details")
 	}
 	return validateCyclonedxFrom(r, config, catalog, epssData)
 }
@@ -658,7 +659,7 @@ func validateCyclonedxFrom(r io.Reader, config *Config, catalog *kev.Catalog, ep
 	report := &artifacts.CyclonedxReportMin{}
 	if err := json.NewDecoder(r).Decode(report); err != nil {
 		slog.Error("decode cyclonedx report for validation", "error", err)
-		return errors.New("Cannot run Cyclonedx validation: Report decoding failed. See log for details.")
+		return errors.New("cannot run Cyclonedx validation: Report decoding failed, See log for details")
 	}
 
 	return validateCyclonedxRules(config, report, catalog, epssData)
@@ -669,7 +670,7 @@ func validateSemgrepReport(r io.Reader, config *Config) error {
 	report := &artifacts.SemgrepReportMin{}
 	if err := json.NewDecoder(r).Decode(report); err != nil {
 		slog.Error("decode semgrep report for validation", "error", err)
-		return errors.New("Cannot run Semgrep report validation: Report decoding failed. See log for details.")
+		return errors.New("cannot run Semgrep report validation: Report decoding failed, See log for details")
 	}
 
 	return validateSemgrepRules(config, report)
@@ -680,7 +681,7 @@ func validateGitleaksReport(r io.Reader, config *Config) error {
 	report := &artifacts.GitLeaksReportMin{}
 	if err := json.NewDecoder(r).Decode(report); err != nil {
 		slog.Error("decode gitleaks report for validation", "error", err)
-		return errors.New("Cannot run Semgrep report validation: Report decoding failed. See log for details.")
+		return errors.New("cannot run Semgrep report validation: Report decoding failed, See log for details")
 	}
 	return validateGitleaksRules(config, report)
 }
@@ -736,7 +737,7 @@ func validateBundle(r io.Reader, config *Config, options *fetchOptions) error {
 	bundle := archive.NewBundle()
 	if err := archive.UntarGzipBundle(r, bundle); err != nil {
 		slog.Error("decode gatecheck bundle")
-		return errors.New("Cannot run Gatecheck Bundle validation: Bundle decoding failed. See log for details.")
+		return errors.New("cannot run Gatecheck Bundle validation: Bundle decoding failed, See log for details")
 	}
 
 	catalog := kev.NewCatalog()
@@ -744,7 +745,7 @@ func validateBundle(r io.Reader, config *Config, options *fetchOptions) error {
 
 	if err := LoadCatalogAndData(config, catalog, epssData, options); err != nil {
 		slog.Error("validate cyclonedx report: load epss data from file or api", "error", err)
-		return errors.New("Cannot run Cyclonedx validation: Cannot load external validation data. See log for details.")
+		return errors.New("cannot run Cyclonedx validation: Cannot load external validation data, See log for details")
 	}
 
 	var errs error

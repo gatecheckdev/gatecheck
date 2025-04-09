@@ -1,16 +1,12 @@
 package archive
 
 import (
-	"archive/tar"
 	"bytes"
-	"compress/gzip"
 	"errors"
-	"io"
 	"os"
 	"strings"
 	"testing"
 )
-
 
 func TestBundle_WriteFileTo(t *testing.T) {
 	bundle := NewBundle()
@@ -46,24 +42,6 @@ func TestBundle_WriteFileTo(t *testing.T) {
 			t.Fatal("want: badreader error got: nil")
 		}
 	})
-}
-
-func zippedTarballReader(r io.Reader, tarHeader *tar.Header) *bytes.Buffer {
-	outputBuf := new(bytes.Buffer)
-	gw := gzip.NewWriter(outputBuf)
-	tw := tar.NewWriter(gw)
-	_ = tw.WriteHeader(tarHeader)
-
-	_, _ = io.Copy(tw, r)
-	tw.Close()
-	gw.Close()
-	return outputBuf
-}
-
-type badReader struct{}
-
-func (r *badReader) Read(_ []byte) (int, error) {
-	return 0, errors.New("mock reader error")
 }
 
 type badWriter struct{}

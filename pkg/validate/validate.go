@@ -12,7 +12,7 @@ import (
 )
 
 // ErrFailedRule return this error if an object fails a validation rule
-var ErrFailedRule = errors.New("Failed Rule")
+var ErrFailedRule = errors.New("failed validation rule")
 
 // ErrConfig return this error if the configuration file is invalid
 var ErrConfig = errors.New("cannot validate, invalid configuration")

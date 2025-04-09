@@ -21,7 +21,7 @@ var listCmd = &cobra.Command{
 	PreRunE: func(cmd *cobra.Command, args []string) error {
 		inputType, _ := cmd.Flags().GetString("input-type")
 		if inputType == "" && len(args) == 0 {
-			return errors.New("Need either input-type for STDIN or filename as argument")
+			return errors.New("need either input-type for STDIN or filename as argument")
 		}
 
 		var err error = nil
@@ -40,7 +40,7 @@ var listCmd = &cobra.Command{
 
 		RuntimeConfig.listFormat = "ascii"
 
-		if markdownFlag, _ := cmd.Flags().GetBool("markdown"); markdownFlag == true {
+		if markdownFlag, _ := cmd.Flags().GetBool("markdown"); markdownFlag {
 			RuntimeConfig.listFormat = "markdown"
 		}
 

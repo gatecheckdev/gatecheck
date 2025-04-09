@@ -17,9 +17,9 @@ import (
 
 const (
 	exitSystemFail     int = -1
-	exitOk                 = 0
-	exitValidationFail     = 1
-	exitFileAccessFail     = 2
+	exitOk             int = 0
+	exitValidationFail int = 1
+	exitFileAccessFail int = 2
 )
 
 // GatecheckVersion see CHANGELOG.md
@@ -55,7 +55,7 @@ func run() int {
 	command := cmd.NewGatecheckCommand()
 
 	err := command.Execute()
-	if errors.Is(gatecheck.ErrValidationFailure, err) {
+	if errors.Is(err, gatecheck.ErrValidationFailure) {
 		return exitValidationFail
 	}
 	if err != nil {

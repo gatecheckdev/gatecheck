@@ -2,21 +2,11 @@ package artifacts
 
 import (
 	"errors"
-	"github.com/easy-up/go-coverage"
 	"log/slog"
 	"strings"
-)
 
-func example() (coverage.Report, error) {
-	lcovParser := coverage.New(coverage.LCOV)
-	report, err := lcovParser.Parse("./path/to/lcov.info")
-	if err != nil {
-		// Handle error
-		return coverage.Report{}, err
-	}
-	// Use the parsed report
-	return report, nil
-}
+	"github.com/easy-up/go-coverage"
+)
 
 func IsCoverageReport(inputFilename string) bool {
 	return strings.Contains(inputFilename, "lcov") ||

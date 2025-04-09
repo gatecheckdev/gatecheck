@@ -51,12 +51,12 @@ tasks:
   lint:
     desc: "Run golangci-lint in view-only mode"
     cmds:
-      - golangci-lint run --fast
+      - golangci-lint run
 
   fix:
     desc: "Fix linting errors and format code"
     cmds:
-      - golangci-lint run --fast --fix
+      - golangci-lint run --fix
 
   release-snapshot:
     desc: "Create a snapshot release"

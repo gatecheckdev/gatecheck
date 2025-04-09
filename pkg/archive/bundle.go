@@ -10,13 +10,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/olekukonko/tablewriter"
 	"io"
 	"log/slog"
 	"os"
 	"sort"
 	"strings"
 	"time"
+
+	"github.com/olekukonko/tablewriter"
 
 	"github.com/dustin/go-humanize"
 	"github.com/gatecheckdev/gatecheck/pkg/format"
@@ -74,7 +75,7 @@ func (b *Bundle) Manifest() Manifest {
 func (b *Bundle) WriteFileTo(w io.Writer, fileLabel string) (int64, error) {
 	fileBytes, ok := b.content[fileLabel]
 	if !ok {
-		return 0, fmt.Errorf("Gatecheck Bundle: Label '%s' not found in bundle", fileLabel)
+		return 0, fmt.Errorf("gatecheck bundle: Label '%s' not found in bundle", fileLabel)
 	}
 	return bytes.NewReader(fileBytes).WriteTo(w)
 }
@@ -181,13 +182,18 @@ func TarGzipBundle(dst io.Writer, bundle *Bundle) (int64, error) {
 		_ = tarWriter.WriteHeader(&tar.Header{Name: label, Size: int64(len(data)), Mode: int64(os.FileMode(0o666))})
 		_, _ = bytes.NewReader(data).WriteTo(tarWriter)
 	}
-	tarWriter.Close()
+	if err := tarWriter.Close(); err != nil {
+		return 0, err
+	}
 
 	gzipWriter := gzip.NewWriter(dst)
-	n, _ := tarballBuffer.WriteTo(gzipWriter)
-	gzipWriter.Close()
+	n, err := tarballBuffer.WriteTo(gzipWriter)
+	if err != nil {
+		return n, err
+	}
+	err = gzipWriter.Close()
 
-	return n, nil
+	return n, err
 }
 
 func UntarGzipBundle(src io.Reader, bundle *Bundle) error {
@@ -209,7 +215,7 @@ func UntarGzipBundle(src io.Reader, bundle *Bundle) error {
 		}
 
 		if header.Typeflag != tar.TypeReg {
-			return errors.New("Gatecheck Bundle only supports regular files in a flat directory structure")
+			return errors.New("gatecheck bundle only supports regular files in a flat directory structure")
 		}
 		fileBytes, _ := io.ReadAll(tarReader)
 		bundle.content[header.Name] = fileBytes
@@ -217,7 +223,7 @@ func UntarGzipBundle(src io.Reader, bundle *Bundle) error {
 	manifest := new(Manifest)
 	manifestBytes, ok := bundle.content[ManifestFilename]
 	if !ok {
-		return errors.New("Gatecheck Bundle manifest not found")
+		return errors.New("gatecheck bundle manifest not found")
 	}
 	if err := json.Unmarshal(manifestBytes, manifest); err != nil {
 		return fmt.Errorf("gatecheck manifest decoding: %w", err)

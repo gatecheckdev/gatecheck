@@ -13,32 +13,32 @@ import (
 var (
 	metadataFlagUsage       = "flag_usage"
 	metadataFieldType       = "field_type"
-	metadataRequired        = "required"
 	metadataActionInputName = "action_input_name"
+	// metadataRequired        = "required"
 )
 
 type metaConfig struct {
-	BundleTag          configkit.MetaField
-	EPSSURL            configkit.MetaField
-	KEVURL             configkit.MetaField
-	EPSSFilename       configkit.MetaField
-	KEVFilename        configkit.MetaField
-	Verbose            configkit.MetaField
-	Silent             configkit.MetaField
-	ConfigFilename     configkit.MetaField
-	Audit              configkit.MetaField
-	BundleTagValue     []string
-	bundleFile         *os.File
-	targetFile         *os.File
-	epssFile           *os.File
-	kevFile            *os.File
-	listSrcReader      io.Reader
-	listSrcName        string
-	listFormat         string
-	listAll            bool
-	configOutputWriter io.Writer
-	configOutputFormat string
-	gatecheckConfig    *gatecheck.Config
+	BundleTag       configkit.MetaField
+	EPSSURL         configkit.MetaField
+	KEVURL          configkit.MetaField
+	EPSSFilename    configkit.MetaField
+	KEVFilename     configkit.MetaField
+	Verbose         configkit.MetaField
+	Silent          configkit.MetaField
+	ConfigFilename  configkit.MetaField
+	Audit           configkit.MetaField
+	BundleTagValue  []string
+	bundleFile      *os.File
+	targetFile      *os.File
+	epssFile        *os.File
+	kevFile         *os.File
+	listSrcReader   io.Reader
+	listSrcName     string
+	listFormat      string
+	gatecheckConfig *gatecheck.Config
+	// listAll            bool
+	// configOutputWriter io.Writer
+	// configOutputFormat string
 }
 
 var RuntimeConfig = metaConfig{

@@ -1,7 +1,1 @@
-linters:
-  enable:
-    - tagalign
-    - gofumpt
-    - gosimple
-    - govet
-    - ineffassign
+version: "2"
