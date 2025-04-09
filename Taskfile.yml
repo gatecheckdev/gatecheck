@@ -71,7 +71,7 @@ tasks:
   upgrade:
     desc: "Upgrade package dependencies"
     preconditions:
-      - sh: git status --porcelain | grep -q .
+      - sh: git diff --quiet && git diff --cached --quiet
         msg: "Repository is dirty, commit changes before upgrading."
     cmds:
       - go get -u ./...
