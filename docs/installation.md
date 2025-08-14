@@ -1,4 +1,4 @@
-# Installation 
+# Installation
 
 ## Prerequisites
 
@@ -35,32 +35,17 @@ the source code.
    ```
    cd gatecheck
    ```
-3. **Build the Application**: Run the following command to compile Gatecheck with appropriate load flags:
+3. **Install Task**: Ensure you have [Task](https://taskfile.dev/) installed.
+4. **Build and Install**: Run:
    ```
-    go build -ldflags="-X 'main.cliVersion=$(git describe --tags)' -X 'main.gitCommit=$(git rev-parse HEAD)' -X 'main.buildDate=$(date -u +%Y-%m-%dT%H:%M:%SZ)' -X 'main.gitDescription=$(git log -1 --pretty=%B)'" -o ./bin ./cmd/gatecheck
+   task install
    ```
-4. **Move the Binary to a Bin Directory** (as described in Option 1, step 3).
+   This will build the binary and install it to `/usr/local/bin` (configurable via INSTALL_DIR).
 
 5. **Verify Installation**: Check the application version to confirm successful installation:
    ```
-   ./gatecheck --version
+   gatecheck --version
    ```
-
-### Option 3: Use Just Recipe
-
-[Just Command Runner](https://github.com/casey/just)
-
-```shell
-git clone https://github.com/gatecheckdev/gatecheck
-cd gatecheck
-just install 
-```
-
-Will default to `/usr/local/bin` as the install directory, but this can be changed.
-
-```shell
-INSTALL_DIR='custom/location/bin' just install
-```
 
 ## Post-Installation Steps
 
@@ -79,4 +64,3 @@ For further assistance, please visit the Gatecheck GitHub issues page or contact
 
 For more information on using Gatecheck, refer to the user documentation or the GitHub repository for examples and 
 advanced usage.
-

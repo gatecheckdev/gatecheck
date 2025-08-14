@@ -1,24 +1,19 @@
 # List Reports
 
-Most scanning tools have options to display a formatted report.
-Take Grype for example:
+Gatecheck can list contents of supported reports in a human-readable format.
 
-```shell
-grype bkimminich/juice-shop:latest -o table
+Example with Grype:
+
 ```
-![Screenshot Example Grype Table](assets/screenshot-grype-table.png)
-
-The report can be printed in a formatted table instead of 6k line JSON file.
-
-JSON can be piped directly into gatecheck for supported reports.
-
-```shell
-grype bkimminich/juice-shop:latest -o json | gatecheck ls -i grype
-```
-Or from an existing report
-
-```shell
-gatecheck ls grype-scan-report.json
+grype image:tag -o json | gatecheck list --input-type grype
 ```
 
-![Screenshot Example List](assets/screenshot-grype-list.png)
+Or from file:
+
+```
+gatecheck list grype-report.json
+```
+
+Supports Grype, Cyclonedx, Semgrep, Gitleaks, etc.
+
+![Screenshot Example Grype List](assets/screenshot-grype-list.png)

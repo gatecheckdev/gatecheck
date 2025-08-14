@@ -1,140 +1,192 @@
 # Configuration
 
-## Header
+Gatecheck uses configuration files to define validation rules for security reports. These files can be in YAML, JSON, or TOML format. The configuration specifies thresholds, limits, and risk acceptances for various report types, allowing you to customize validation to your project's security requirements.
 
-```yaml
-# The configuration version, reserved for future use but not required in v1
-version: "1"
-# Option metadata for the config that doesn't impact functionality
-metadata:
-  tags:
-    - auto generated from CLI
+## Creating a Configuration File
+
+To generate a default configuration file, use the CLI:
+
 ```
+gatecheck config new config.yaml
+```
+
+This creates a file with all fields set to default values (mostly disabled with zero limits). You can then edit it to enable rules and set appropriate values.
+
+Configs support three formats:
+- YAML (.yaml or .yml)
+- JSON (.json)
+- TOML (.toml)
+
+The structure is the same across formats. Below is a detailed explanation of each section and field, based on the Gatecheck codebase.
+
+## Top-Level Fields
+
+- **version** (string): The configuration version. Currently "1". Reserved for future schema changes.
+  
+- **metadata** (object): Arbitrary metadata that doesn't affect validation.
+  - **tags** (array of strings): Custom tags for organization or notes, e.g., ["auto-generated", "prod-config"].
 
 ## Grype Configuration
 
+This section defines rules for Grype vulnerability reports.
+
+- **severityLimit** (object): Sets limits on the number of vulnerabilities per severity level. Exceeding a limit fails validation.
+  - **critical/high/medium/low** (objects):
+    - **enabled** (boolean): Whether this limit is active.
+    - **limit** (unsigned integer): Maximum allowed vulnerabilities of this severity.
+
+- **epssLimit** (object): Fails validation if any vulnerability's EPSS score exceeds this limit.
+  - **enabled** (boolean): Activate this rule.
+  - **score** (float): Maximum allowed EPSS score (0.0 to 1.0).
+
+- **kevLimitEnabled** (boolean): If true, fails validation if any vulnerability matches the Known Exploited Vulnerabilities (KEV) catalog.
+
+- **cveLimit** (object): Fails validation if any specified CVE is present.
+  - **enabled** (boolean): Activate this rule.
+  - **cves** (array of objects):
+    - **id** (string): The CVE ID (e.g., "CVE-2024-1234").
+    - **metadata** (object):
+      - **tags** (array of strings): Optional tags for the CVE.
+
+- **epssRiskAcceptance** (object): Skips validation for vulnerabilities with EPSS scores below this threshold (risk accepted).
+  - **enabled** (boolean): Activate this rule.
+  - **score** (float): Minimum EPSS score for validation; lower scores are accepted.
+
+- **cveRiskAcceptance** (object): Skips validation for specified CVEs (risk accepted).
+  - **enabled** (boolean): Activate this rule.
+  - **cves** (array of objects): Same structure as in cveLimit.
+
+**Example (YAML):**
 ```yaml
 grype:
-  # Severity Limit Rule sets a limit for how many vulnerabilities are allowed in a report
-  # each severity level can have a different limit
   severityLimit:
     critical:
-      enabled: false
+      enabled: true
       limit: 0
     high:
-      enabled: false
-      limit: 0
-    medium:
-      enabled: false
-      limit: 0
-    low:
-      enabled: false
-      limit: 0
-  # EPSS Limit Rule sets a limit for the max score allowed for each vulnerability
+      enabled: true
+      limit: 5
   epssLimit:
-    enabled: false
-    score: 0
-  # KEV Limit Rule fails validation if any vulnerability matches to the 
-  # Known Exploited Vulnerability Catalog
-  kevLimitEnabled: false
-  # CVE Limit Rule fails validation if any vulnerability ID matches
-  # to any CVE in this list
+    enabled: true
+    score: 0.5
+  kevLimitEnabled: true
   cveLimit:
-    enabled: false
-    cves: 
-      - ID: CVE-example-2024-1
-        Metadata:
-          Tags:
-            - Some example tag
-  # EPSS Risk Acceptance Rule skips validation for vulnerabilities with 
-  # EPSS score less than this score limit
+    enabled: true
+    cves:
+      - id: CVE-2023-1234
+        metadata:
+          tags: ["critical"]
   epssRiskAcceptance:
-    enabled: false
-    score: 0
-  # CVE Risk Acceptance Rule skips validation for vulnerability ID that matches
+    enabled: true
+    score: 0.1
   cveRiskAcceptance:
-    enabled: false
-    cves: 
-      - ID: CVE-example-2024-2
-        Metadata:
-          Tags:
-            - Some example tag
+    enabled: true
+    cves:
+      - id: CVE-2023-5678
 ```
+
+**Use Case:** Enforce zero critical vulnerabilities but allow up to 5 high ones, while accepting low-EPSS risks.
 
 ## Cyclonedx Configuration
 
-```yaml
-cyclonedx:
-  # Severity Limit Rule sets a limit for how many vulnerabilities are allowed in a report
-  # each severity level can have a different limit
-  severityLimit:
-    critical:
-      enabled: false
-      limit: 0
-    high:
-      enabled: false
-      limit: 0
-    medium:
-      enabled: false
-      limit: 0
-    low:
-      enabled: false
-      limit: 0
-  # EPSS Limit Rule sets a limit for the max score allowed for each vulnerability
-  epssLimit:
-    enabled: false
-    score: 0
-  # KEV Limit Rule fails validation if any vulnerability matches to the 
-  # Known Exploited Vulnerability Catalog
-  kevLimitEnabled: false
-  # CVE Limit Rule fails validation if any vulnerability ID matches
-  # to any CVE in this list
-  cveLimit:
-    enabled: false
-    cves: []
-  # EPSS Risk Acceptance Rule skips validation for vulnerabilities with 
-  # EPSS score less than this score limit
-  epssRiskAcceptance:
-    enabled: false
-    score: 0
-  # CVE Risk Acceptance Rule skips validation for vulnerability ID that matches
-  cveRiskAcceptance:
-    enabled: false
-    cves: []
-```
+Identical structure to Grype. Applies to CycloneDX SBOM reports with vulnerabilities.
+
+**Example:** Same as Grype section above, under `cyclonedx`.
 
 ## Semgrep Configuration
 
+For Semgrep SAST reports.
+
+- **severityLimit** (object): Limits on findings per severity.
+  - **error/warning/info** (objects):
+    - **enabled** (boolean)
+    - **limit** (unsigned integer)
+
+- **impactRiskAcceptance** (object): Accepts findings based on impact level.
+  - **enabled** (boolean): Activate this rule.
+  - **high/medium/low** (booleans): If true, accept findings of that impact level.
+
+**Example (YAML):**
 ```yaml
 semgrep:
-  # Severity Limits can be applied for each level
-  # if there are findings than the limit permits,
-  # It will result in validation failure
   severityLimit:
     error:
-      enabled: false
+      enabled: true
       limit: 0
     warning:
-      enabled: false
-      limit: 0
-    info:
-      enabled: false
-      limit: 0
-  # Impact Risk Acceptance premits findings based
-  # on their impact level
+      enabled: true
+      limit: 10
   impactRiskAcceptance:
-    enabled: false
+    enabled: true
     high: false
-    medium: false
-    low: false
+    medium: true
+    low: true
 ```
 
-## GitLeaks Configuration
+**Use Case:** Fail on any errors, allow up to 10 warnings, and accept all medium/low impact findings.
 
-GitLeaks secrets detection validation can be turned on or off.
-When the limit is enabled, the presence of any non-ignored finding will result in a validation failure.
+## Gitleaks Configuration
 
+For Gitleaks secret detection reports.
+
+- **limitEnabled** (boolean): If true, fails validation if any non-ignored secrets are found.
+
+**Example (YAML):**
 ```yaml
 gitleaks:
-  limitEnabled: false
+  limitEnabled: true
 ```
+
+**Use Case:** Ensure no secrets are leaked in the codebase.
+
+## Coverage Configuration
+
+For LCOV code coverage reports.
+
+- **lineThreshold** (float): Minimum required line coverage percentage (0-100).
+- **functionThreshold** (float): Minimum required function coverage percentage.
+- **branchThreshold** (float): Minimum required branch coverage percentage.
+
+**Example (YAML):**
+```yaml
+coverage:
+  lineThreshold: 80.0
+  functionThreshold: 75.0
+  branchThreshold: 70.0
+```
+
+**Use Case:** Enforce minimum test coverage levels in CI/CD pipelines.
+
+## Full Example Configuration (YAML)
+
+```yaml
+version: "1"
+metadata:
+  tags: ["project-x", "v1.0"]
+
+grype:
+  # ... (as above)
+
+cyclonedx:
+  # ... (similar to grype)
+
+semgrep:
+  # ... (as above)
+
+gitleaks:
+  limitEnabled: true
+
+coverage:
+  lineThreshold: 80.0
+  # ... (as above)
+```
+
+## Tips for Writing Configurations
+
+- Start with the default generated file and enable rules incrementally.
+- Use risk acceptance to grandfather in known issues while enforcing stricter rules for new vulnerabilities.
+- Integrate with CI/CD: Validate in pipelines to block merges/deployments if rules fail.
+- Formats are interchangeable; choose based on your ecosystem (e.g., YAML for Kubernetes-heavy projects).
+- Validation follows a specific order of precedence (see Validation docs).
+
+For more details, refer to the source code in `pkg/gatecheck/config.go`.

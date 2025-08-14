@@ -1,11 +1,16 @@
 # Usage
 
-Gatecheck is designed as a lightweight CLI utility first with configuration flexibility to work in any environment.
+Gatecheck is a lightweight CLI utility for handling security reports. It allows bundling reports, listing their contents, validating against configurations, and more.
 
-Developers can use it on the command line to summarize lengthy reports for a quick view or run an audit locally before
-pushing code to be handed off to CI/CD.
+Developers can use it to summarize reports, run local audits, cross-reference with EPSS and KEV, and bundle reports for attestation.
 
-It simplifies cross-referencing with [FIRST's Exploit Prediction Scoring System (EPSS)](https://www.first.org/epss/) 
-API to match CVEs to vulnerability scores that provide more context than just 'critical, high, medium, etc.'.
+Run `gatecheck --help` for available commands.
 
-Gatecheck also has some additional features to make bundling reports for attestation and archiving easy.
+Key commands:
+- `gatecheck bundle`: Bundle reports into a .gcb file.
+- `gatecheck config`: Generate or manage config files.
+- `gatecheck list`: List contents of reports or bundles.
+- `gatecheck validate`: Validate reports against config.
+- `gatecheck download`: Download EPSS or KEV data.
+
+See CLI Reference for details.

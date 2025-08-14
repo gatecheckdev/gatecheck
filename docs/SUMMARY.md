@@ -4,9 +4,11 @@
 
 - [Installation](./installation.md)
 - [Usage](./usage.md)
-  - [Introducing CLI v1](./cli-refactor.md)
+  - [CLI Reference](./cli-reference.md)
   - [List Reports](./list-reports.md)
   - [Gatecheck Bundle](./gatecheck-bundle.md)
   - [Validation](./validation.md)
+  - [Examples](./examples.md)
 - [Supported Reports](./supported-reports.md)
 - [Configuration](./configuration.md)
+- [Library Usage](./library-usage.md)

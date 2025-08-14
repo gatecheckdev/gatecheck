@@ -1,10 +1,26 @@
 # Validation
 
-## Rules Order of Precedence
+Gatecheck validates reports against a config file.
 
-1. **CVE Limit**: Any Matching vulnerabilities will fail validation
-2. **CVE Risk Acceptance**: Any Matching vulnerabilities will remove the CVE from subsequent rules, risk accepted
-3. **KEV Limit**: Any Matching vulnerabilities will fail validation 
-4. **EPSS Risk Acceptance**: Any matching vulnerabilities that are below the risk acceptance will be removed from subsequent rules, risk accepted
-5. **EPSS Limit**: Any matching vulnerabilities that exceed the limit will fail validation
-6. **Severity Limit**: A count of severities that exceed the limit in any severity category will fail validation
+## Command
+
+```
+gatecheck validate config.yaml report.json
+```
+
+Or with bundle:
+
+```
+gatecheck validate config.yaml bundle.gcb
+```
+
+## Rules Precedence
+
+1. CVE Limit
+2. CVE Risk Acceptance
+3. KEV Limit
+4. EPSS Risk Acceptance
+5. EPSS Limit
+6. Severity Limit
+
+See Configuration for details.
