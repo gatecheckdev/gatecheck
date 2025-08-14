@@ -1,0 +1,302 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Gatecheck - Automate Security Validation in CI/CD</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <style>
+            /* Custom Tailwind config if needed */
+            @tailwind base;
+            @tailwind components;
+            @tailwind utilities;
+        </style>
+    </head>
+    <body class="bg-gray-50 text-gray-900 font-sans antialiased">
+        <!-- Header/Navigation -->
+        <header class="bg-white shadow-sm fixed w-full z-10">
+            <div
+                class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center"
+            >
+                <div class="flex items-center">
+                    <img
+                        src="https://static.gatecheck.dev/gatecheck-logo-light.png"
+                        alt="Gatecheck Logo"
+                        class="h-10"
+                    />
+                    <span class="ml-3 text-xl font-bold">Gatecheck</span>
+                </div>
+                <nav class="space-x-6">
+                    <a
+                        href="#features"
+                        class="text-gray-600 hover:text-gray-900"
+                        >Features</a
+                    >
+                    <a
+                        href="#getting-started"
+                        class="text-gray-600 hover:text-gray-900"
+                        >Getting Started</a
+                    >
+                    <a
+                        href="https://github.com/gatecheckdev/gatecheck"
+                        target="_blank"
+                        class="text-gray-600 hover:text-gray-900"
+                        >GitHub</a
+                    >
+                    <a
+                        href="https://docs.gatecheck.dev"
+                        target="_blank"
+                        class="text-gray-600 hover:text-gray-900"
+                        >Docs</a
+                    >
+                </nav>
+            </div>
+        </header>
+
+        <!-- Hero Section -->
+        <section
+            class="pt-24 pb-20 bg-gradient-to-r from-blue-600 to-indigo-700 text-white"
+        >
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+                <img
+                    src="https://static.gatecheck.dev/gatecheck-logo-light.png"
+                    alt="Gatecheck Logo"
+                    class="mx-auto h-24 mb-6"
+                />
+                <h1 class="text-5xl font-bold mb-4">
+                    Automate Security Validation in Your CI/CD Pipeline
+                </h1>
+                <p class="text-xl mb-8 max-w-3xl mx-auto">
+                    Gatecheck compares security findings to thresholds,
+                    aggregates reports, ensures artifact integrity, and
+                    validates deployments. Stateless and serverless for easy
+                    integration.
+                </p>
+                <a
+                    href="#getting-started"
+                    class="bg-white text-indigo-700 px-6 py-3 rounded-md font-semibold hover:bg-gray-100"
+                    >Get Started</a
+                >
+            </div>
+        </section>
+
+        <!-- Features Section -->
+        <section id="features" class="py-20 bg-white">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <h2 class="text-3xl font-bold text-center mb-12">
+                    Key Features
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div
+                        onclick="document.getElementById('modal-validate').classList.remove('hidden')"
+                        class="p-6 bg-gray-50 rounded-lg shadow-md cursor-pointer hover:shadow-lg transition-shadow"
+                    >
+                        <h3 class="text-xl font-semibold mb-4">
+                            Report Validation
+                        </h3>
+                        <p class="mb-4">
+                            Automatically validate security reports against
+                            custom thresholds in your pipeline.
+                        </p>
+                        <img
+                            src="https://static.gatecheck.dev/gatecheck-validate.gif"
+                            alt="Validation Demo"
+                            class="rounded-md"
+                        />
+                    </div>
+                    <div
+                        onclick="document.getElementById('modal-list').classList.remove('hidden')"
+                        class="p-6 bg-gray-50 rounded-lg shadow-md cursor-pointer hover:shadow-lg transition-shadow"
+                    >
+                        <h3 class="text-xl font-semibold mb-4">
+                            Report Summarization
+                        </h3>
+                        <p class="mb-4">
+                            Summarize and list reports with EPSS scores for
+                            Grype and CycloneDX.
+                        </p>
+                        <img
+                            src="https://static.gatecheck.dev/gatecheck-list.gif"
+                            alt="List Demo"
+                            class="rounded-md"
+                        />
+                    </div>
+                    <div
+                        onclick="document.getElementById('modal-bundle').classList.remove('hidden')"
+                        class="p-6 bg-gray-50 rounded-lg shadow-md cursor-pointer hover:shadow-lg transition-shadow"
+                    >
+                        <h3 class="text-xl font-semibold mb-4">
+                            Artifact Bundling
+                        </h3>
+                        <p class="mb-4">
+                            Bundle artifacts into gzipped tarballs with
+                            manifests for integrity checks.
+                        </p>
+                        <img
+                            src="https://static.gatecheck.dev/gatecheck-bundle.gif"
+                            alt="Bundle Demo"
+                            class="rounded-md"
+                        />
+                    </div>
+                </div>
+                <div class="mt-12 text-center">
+                    <p class="text-lg">
+                        Stateless design means no servers to manage. Integrate
+                        seamlessly into your workflows.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Getting Started Section -->
+        <section id="getting-started" class="py-20 bg-gray-100">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <h2 class="text-3xl font-bold text-center mb-12">
+                    Getting Started
+                </h2>
+                <div class="max-w-3xl mx-auto">
+                    <p class="mb-6">
+                        Download pre-built binaries for your system:
+                    </p>
+                    <pre
+                        class="bg-gray-800 text-white p-4 rounded-md overflow-x-auto"
+                    >
+cd &lt;target install dir&gt;
+curl -L &lt;OS Specific Release&gt;.tar.gz | tar xz
+./gatecheck
+./gatecheck --help
+                </pre
+                    >
+                    <p class="my-6">Initialize configuration:</p>
+                    <pre
+                        class="bg-gray-800 text-white p-4 rounded-md overflow-x-auto"
+                    >
+gatecheck config init &gt; gatecheck.yaml
+                </pre
+                    >
+                    <p class="my-6">
+                        Explore commands with --help for details.
+                    </p>
+                    <div class="text-center">
+                        <a
+                            href="https://github.com/gatecheckdev/gatecheck/releases"
+                            target="_blank"
+                            class="bg-indigo-600 text-white px-6 py-3 rounded-md font-semibold hover:bg-indigo-500"
+                            >Download Now</a
+                        >
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Badges/Integrations Section -->
+        <section class="py-12 bg-white">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+                <h2 class="text-2xl font-bold mb-8">Trusted and Reliable</h2>
+                <div class="flex justify-center space-x-4">
+                    <img
+                        src="https://github.com/gatecheckdev/gatecheck/actions/workflows/run-test.yaml/badge.svg?branch=main"
+                        alt="CI/CD Pipeline"
+                    />
+                    <img
+                        src="https://pkg.go.dev/badge/github.com/gatecheckdev/gatecheck.svg"
+                        alt="Go Reference"
+                    />
+                    <img
+                        src="https://goreportcard.com/badge/github.com/gatecheckdev/gatecheck"
+                        alt="Go Report Card"
+                    />
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="bg-gray-800 text-white py-8">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+                <p>&copy; 2025 Gatecheck. All rights reserved.</p>
+                <div class="mt-4 space-x-4">
+                    <a
+                        href="https://github.com/gatecheckdev/gatecheck"
+                        target="_blank"
+                        class="hover:text-gray-300"
+                        >GitHub</a
+                    >
+                    <a
+                        href="https://pkg.go.dev/github.com/gatecheckdev/gatecheck"
+                        target="_blank"
+                        class="hover:text-gray-300"
+                        >Documentation</a
+                    >
+                </div>
+            </div>
+        </footer>
+
+        <!-- Modals for Popovers -->
+        <div
+            id="modal-validate"
+            onclick="this.classList.add('hidden')"
+            class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50 cursor-pointer"
+        >
+            <div
+                class="bg-white p-4 rounded-lg max-w-4xl w-full relative cursor-default"
+                onclick="event.stopPropagation()"
+            >
+                <button
+                    onclick="document.getElementById('modal-validate').classList.add('hidden')"
+                    class="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
+                >
+                    &times;
+                </button>
+                <img
+                    src="https://static.gatecheck.dev/gatecheck-validate.gif"
+                    alt="Validation Demo"
+                    class="w-full rounded-md"
+                />
+            </div>
+        </div>
+        <div
+            id="modal-list"
+            onclick="this.classList.add('hidden')"
+            class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50 cursor-pointer"
+        >
+            <div
+                class="bg-white p-4 rounded-lg max-w-4xl w-full relative cursor-default"
+                onclick="event.stopPropagation()"
+            >
+                <button
+                    onclick="document.getElementById('modal-list').classList.add('hidden')"
+                    class="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
+                >
+                    &times;
+                </button>
+                <img
+                    src="https://static.gatecheck.dev/gatecheck-list.gif"
+                    alt="List Demo"
+                    class="w-full rounded-md"
+                />
+            </div>
+        </div>
+        <div
+            id="modal-bundle"
+            onclick="this.classList.add('hidden')"
+            class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50 cursor-pointer"
+        >
+            <div
+                class="bg-white p-4 rounded-lg max-w-4xl w-full relative cursor-default"
+                onclick="event.stopPropagation()"
+            >
+                <button
+                    onclick="document.getElementById('modal-bundle').classList.add('hidden')"
+                    class="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
+                >
+                    &times;
+                </button>
+                <img
+                    src="https://static.gatecheck.dev/gatecheck-bundle.gif"
+                    alt="Bundle Demo"
+                    class="w-full rounded-md"
+                />
+            </div>
+        </div>
+    </body>
+</html>
