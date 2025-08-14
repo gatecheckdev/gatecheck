@@ -27,7 +27,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-        go: ["1.21", "1.22", "1.23"]
+        go: ["1.23"]
     name: "${{ matrix.os }} | ${{ matrix.go }}"
     runs-on: ${{ matrix.os }}
     steps:
