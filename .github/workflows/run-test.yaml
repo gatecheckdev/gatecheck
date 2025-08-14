@@ -1,44 +1,40 @@
-name: CICD
+name: Test and Lint
+
 on:
   pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
 jobs:
-  Describe:
+  lint:
     runs-on: ubuntu-latest
     steps:
-      - run: echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event."
-      - run: echo "🐧 This job is now running on a ${{ runner.os }} server hosted by GitHub!"
-      - run: echo "🔎 The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
-      - name: Check out repository code
-        uses: actions/checkout@v3
-      - run: echo "💡 The ${{ github.repository }} repository has been cloned to the runner."
-      - run: echo "🖥️ The workflow is now ready to test your code on the runner."
-      - name: List files in the repository
-        run: |
-          ls ${{ github.workspace }}
-      - run: echo "🍏 This job's status is ${{ job.status }}."
-  test-unix:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.23"
+          cache: true
+      - name: Install Task
+        uses: arduino/setup-task@v2
+      - name: Run lint
+        run: task lint
+
+  test:
     strategy:
       fail-fast: false
       matrix:
-        platform:
-          - ubuntu
-          - macOS
-        go:
-          - 21
-    name: '${{ matrix.platform }} | 1.${{ matrix.go }}.x'
-    runs-on: ${{ matrix.platform }}-latest
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        go: ["1.21", "1.22", "1.23"]
+    name: "${{ matrix.os }} | ${{ matrix.go }}"
+    runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-go@v3
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
         with:
-          go-version: 1.${{ matrix.go }}.x
+          go-version: ${{ matrix.go }}
           cache: true
-      - run: |
-          export GOBIN=$HOME/go/bin
-          case "${{ matrix.go }}" in
-            14|15) _version='';;
-            *) _version='@latest';;
-          esac
-          go install github.com/kyoh86/richgo"${_version}"
-          go install github.com/mitchellh/gox"${_version}"
-      - run: RICHGO_FORCE_COLOR=1 PATH=$HOME/go/bin/:$PATH make test
+      - name: Install Task
+        uses: arduino/setup-task@v2
+      - name: Run tests
+        run: task test
