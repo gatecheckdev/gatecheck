@@ -19,9 +19,9 @@ tasks:
       - mkdir -p bin
       - go build -ldflags="-X 'main.cliVersion={{.CLI_VERSION}}' -X 'main.gitCommit={{.GIT_COMMIT}}' -X 'main.buildDate={{.BUILD_DATE}}' -X 'main.gitDescription={{.GIT_DESCRIPTION}}'" -o ./bin ./cmd/gatecheck
     sources:
-      - cmd/*
-      - pkg/*
-      - go*
+      - cmd/**/*
+      - pkg/**/*
+      - go.*
     generates:
       - bin/gatecheck
 
@@ -51,22 +51,37 @@ tasks:
   lint:
     desc: "Run golangci-lint in view-only mode"
     cmds:
-      - golangci-lint run
+      - golangci-lint run 
 
   fix:
     desc: "Fix linting errors and format code"
     cmds:
       - golangci-lint run --fix
 
-  release-snapshot:
-    desc: "Create a snapshot release"
+  format:
+    desc: "Check code formatting"
     cmds:
-      - goreleaser release --snapshot --rm-dist
+      - |
+        if [ -n "$(gofmt -l .)" ]; then
+          gofmt -d .
+          exit 1
+        fi
 
-  release:
-    desc: "Create a release"
+  coverage:
+    desc: "Generate test coverage"
     cmds:
-      - goreleaser release --rm-dist
+      - go test -coverprofile=coverage.out ./...
+
+  open-coverage:
+    desc: "Open coverage report in browser"
+    deps: [coverage]
+    cmds:
+      - go tool cover -html=coverage.out
+
+  dependencies:
+    desc: "Download dependencies"
+    cmds:
+      - go mod download
 
   upgrade:
     desc: "Upgrade package dependencies"
@@ -82,7 +97,21 @@ tasks:
     cmds:
       - mdbook serve
 
-  clean:
-    desc: "Clean up build directory"
+  all:
+    desc: "Run format, test, and build"
+    deps: [format, test, build]
+
+  release-snapshot:
+    desc: "Create a snapshot release"
     cmds:
-      - rm -rf ./bin
+      - goreleaser release --snapshot --rm-dist
+
+  release:
+    desc: "Create a release"
+    cmds:
+      - goreleaser release --rm-dist
+
+  clean:
+    desc: "Clean up build artifacts"
+    cmds:
+      - rm -rf ./bin coverage.out
