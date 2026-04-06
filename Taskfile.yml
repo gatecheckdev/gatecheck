@@ -51,7 +51,7 @@ tasks:
   lint:
     desc: "Run golangci-lint in view-only mode"
     cmds:
-      - golangci-lint run 
+      - golangci-lint run
 
   fix:
     desc: "Fix linting errors and format code"
@@ -102,7 +102,20 @@ tasks:
     sources:
       - ./website/*.html
     cmds:
-      -  python3 -m http.server --directory ./website 8000
+      - python3 -m http.server --directory ./website 8000
+
+  upload-website:
+    desc: "Upload the static gatecheck.dev website to R2"
+    requires:
+      vars:
+        - AWS_ACCESS_KEY_ID
+        - AWS_SECRET_ACCESS_KEY
+        - AWS_ENDPOINT_URL
+    preconditions:
+      - sh: which aws
+        msg: "aws CLI is not installed."
+    cmds:
+      - aws s3 cp website/index.html s3://gatecheck-website/index.html
 
   all:
     desc: "Run format, test, and build"
