@@ -10,7 +10,7 @@ require (
 	github.com/gatecheckdev/configkit v0.0.0-20240517005856-da14389dd06a
 	github.com/lmittmann/tint v1.0.7
 	github.com/olekukonko/tablewriter v0.0.5
-	github.com/pelletier/go-toml/v2 v2.2.4
+	github.com/pelletier/go-toml/v2 v2.4.3
 	github.com/spf13/cobra v1.10.2
 	github.com/spf13/viper v1.20.1
 	gopkg.in/yaml.v3 v3.0.1
