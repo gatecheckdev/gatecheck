@@ -11,7 +11,7 @@ import (
 )
 
 func TestMain(m *testing.M) {
-	h := tint.NewHandler(os.Stderr, &tint.Options{
+	h := tint.NewTextHandler(os.Stderr, &tint.Options{
 		AddSource:  true,
 		Level:      slog.LevelDebug,
 		TimeFormat: time.TimeOnly,
