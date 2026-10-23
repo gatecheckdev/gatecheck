@@ -192,6 +192,21 @@ Writes the CISA Known Exploited Vulnerabilities catalog as JSON to standard outp
 gatecheck download kev > kev.json
 ```
 
+## gatecheck agent-guide
+
+```
+gatecheck agent-guide
+```
+
+Alias: `llm`.
+
+Prints a markdown guide for agents that run the CLI. The text is `docs/agent-guide.md`.
+
+```shell
+gatecheck agent-guide
+gatecheck llm
+```
+
 ## gatecheck completion
 
 ```
