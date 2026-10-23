@@ -22,14 +22,16 @@ import (
 // Metadata fields are intended for arbitrary data and shouldn't
 // conflict with rule validation
 type Config struct {
-	Version   string               `json:"version"   toml:"version"   yaml:"version"`
-	Metadata  configMetadata       `json:"metadata"  toml:"metadata"  yaml:"metadata"`
-	Grype     reportWithCVEs       `json:"grype"     toml:"grype"     yaml:"grype"`
-	Cyclonedx reportWithCVEs       `json:"cyclonedx" toml:"cyclonedx" yaml:"cyclonedx"`
-	Semgrep   configSemgrepReport  `json:"semgrep"   toml:"semgrep"   yaml:"semgrep"`
-	Gitleaks  configGitleaksReport `json:"gitleaks"  toml:"gitleaks"  yaml:"gitleaks"`
-	Sarif     configSarifReport    `json:"sarif"     toml:"sarif"     yaml:"sarif"`
-	Coverage  configCoverageReport `json:"coverage"  toml:"coverage"  yaml:"coverage"`
+	Version    string               `json:"version"     toml:"version"     yaml:"version"`
+	Metadata   configMetadata       `json:"metadata"    toml:"metadata"    yaml:"metadata"`
+	Grype      reportWithCVEs       `json:"grype"       toml:"grype"       yaml:"grype"`
+	Cyclonedx  reportWithCVEs       `json:"cyclonedx"   toml:"cyclonedx"   yaml:"cyclonedx"`
+	Trivy      reportWithCVEs       `json:"trivy"       toml:"trivy"       yaml:"trivy"`
+	OSVScanner reportWithCVEs       `json:"osv-scanner" toml:"osv-scanner" yaml:"osv-scanner"`
+	Semgrep    configSemgrepReport  `json:"semgrep"     toml:"semgrep"     yaml:"semgrep"`
+	Gitleaks   configGitleaksReport `json:"gitleaks"    toml:"gitleaks"    yaml:"gitleaks"`
+	Sarif      configSarifReport    `json:"sarif"       toml:"sarif"       yaml:"sarif"`
+	Coverage   configCoverageReport `json:"coverage"    toml:"coverage"    yaml:"coverage"`
 }
 
 func (c *Config) String() string {
@@ -157,6 +159,22 @@ type configLimit struct {
 	Limit   uint `json:"limit"   toml:"limit"   yaml:"limit"`
 }
 
+func defaultReportWithCVEs() reportWithCVEs {
+	return reportWithCVEs{
+		SeverityLimit: configServerityLimit{
+			Critical: configLimit{Enabled: false, Limit: 0},
+			High:     configLimit{Enabled: false, Limit: 0},
+			Medium:   configLimit{Enabled: false, Limit: 0},
+			Low:      configLimit{Enabled: false, Limit: 0},
+		},
+		EPSSLimit:          configEPSSLimit{Enabled: false, Score: 0},
+		KEVLimitEnabled:    false,
+		CVELimit:           configCVELimit{Enabled: false, CVEs: make([]configCVE, 0)},
+		EPSSRiskAcceptance: configEPSSRiskAcceptance{Enabled: false, Score: 0},
+		CVERiskAcceptance:  configCVERiskAcceptance{Enabled: false, CVEs: make([]configCVE, 0)},
+	}
+}
+
 func NewDefaultConfig() *Config {
 	return &Config{
 		Version: "1",
@@ -185,80 +203,10 @@ func NewDefaultConfig() *Config {
 				Low:     false,
 			},
 		},
-		Grype: reportWithCVEs{
-			SeverityLimit: configServerityLimit{
-				Critical: configLimit{
-					Enabled: false,
-					Limit:   0,
-				},
-				High: configLimit{
-					Enabled: false,
-					Limit:   0,
-				},
-				Medium: configLimit{
-					Enabled: false,
-					Limit:   0,
-				},
-				Low: configLimit{
-					Enabled: false,
-					Limit:   0,
-				},
-			},
-			EPSSLimit: configEPSSLimit{
-				Enabled: false,
-				Score:   0,
-			},
-			KEVLimitEnabled: false,
-			CVELimit: configCVELimit{
-				Enabled: false,
-				CVEs:    make([]configCVE, 0),
-			},
-			EPSSRiskAcceptance: configEPSSRiskAcceptance{
-				Enabled: false,
-				Score:   0,
-			},
-			CVERiskAcceptance: configCVERiskAcceptance{
-				Enabled: false,
-				CVEs:    make([]configCVE, 0),
-			},
-		},
-		Cyclonedx: reportWithCVEs{
-			SeverityLimit: configServerityLimit{
-				Critical: configLimit{
-					Enabled: false,
-					Limit:   0,
-				},
-				High: configLimit{
-					Enabled: false,
-					Limit:   0,
-				},
-				Medium: configLimit{
-					Enabled: false,
-					Limit:   0,
-				},
-				Low: configLimit{
-					Enabled: false,
-					Limit:   0,
-				},
-			},
-			EPSSLimit: configEPSSLimit{
-				Enabled: false,
-				Score:   0,
-			},
-			KEVLimitEnabled: false,
-			CVELimit: configCVELimit{
-				Enabled: false,
-				CVEs:    make([]configCVE, 0),
-			},
-			EPSSRiskAcceptance: configEPSSRiskAcceptance{
-				Enabled: false,
-				Score:   0,
-			},
-			CVERiskAcceptance: configCVERiskAcceptance{
-				Enabled: false,
-				CVEs:    make([]configCVE, 0),
-			},
-		},
+		Grype:      defaultReportWithCVEs(),
+		Cyclonedx:  defaultReportWithCVEs(),
+		Trivy:      defaultReportWithCVEs(),
+		OSVScanner: defaultReportWithCVEs(),
 		Gitleaks: configGitleaksReport{
 			LimitEnabled: false,
 		},

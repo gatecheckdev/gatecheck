@@ -53,6 +53,12 @@ func Validate(config *Config, reportSrc io.Reader, targetFilename string, option
 	case artifacts.KindGitleaks:
 		return validateGitleaksReport(reportSrc, config)
 
+	case artifacts.KindTrivy:
+		return validateTrivyReportWithFetch(reportSrc, config, options)
+
+	case artifacts.KindOSV:
+		return validateOSVReportWithFetch(reportSrc, config, options)
+
 	case artifacts.KindSyft:
 		return errors.New("syft validation not supported yet")
 
@@ -604,7 +610,7 @@ func loadDataFromFileOrAPI(epssData *epss.Data, options *fetchOptions) error {
 }
 
 func LoadCatalogAndData(config *Config, catalog *kev.Catalog, epssData *epss.Data, options *fetchOptions) error {
-	if config.Grype.KEVLimitEnabled || config.Cyclonedx.KEVLimitEnabled {
+	if config.Grype.KEVLimitEnabled || config.Cyclonedx.KEVLimitEnabled || config.Trivy.KEVLimitEnabled || config.OSVScanner.KEVLimitEnabled {
 		if err := loadCatalogFromFileOrAPI(catalog, options); err != nil {
 			return err
 		}
@@ -612,8 +618,10 @@ func LoadCatalogAndData(config *Config, catalog *kev.Catalog, epssData *epss.Dat
 
 	grypeEPSSNeeded := config.Grype.EPSSLimit.Enabled || config.Grype.EPSSRiskAcceptance.Enabled
 	cyclonedxEPSSNeeded := config.Cyclonedx.EPSSLimit.Enabled || config.Cyclonedx.EPSSRiskAcceptance.Enabled
+	trivyEPSSNeeded := config.Trivy.EPSSLimit.Enabled || config.Trivy.EPSSRiskAcceptance.Enabled
+	osvEPSSNeeded := config.OSVScanner.EPSSLimit.Enabled || config.OSVScanner.EPSSRiskAcceptance.Enabled
 
-	if grypeEPSSNeeded || cyclonedxEPSSNeeded {
+	if grypeEPSSNeeded || cyclonedxEPSSNeeded || trivyEPSSNeeded || osvEPSSNeeded {
 		if err := loadDataFromFileOrAPI(epssData, options); err != nil {
 			return err
 		}
@@ -769,6 +777,12 @@ func validateBundle(r io.Reader, config *Config, options *fetchOptions) error {
 			errs = errors.Join(errs, err)
 		case artifacts.KindGitleaks:
 			err := validateGitleaksReport(bytes.NewBuffer(content), config)
+			errs = errors.Join(errs, err)
+		case artifacts.KindTrivy:
+			err := validateTrivyFrom(bytes.NewBuffer(content), config, catalog, epssData)
+			errs = errors.Join(errs, err)
+		case artifacts.KindOSV:
+			err := validateOSVFrom(bytes.NewBuffer(content), config, catalog, epssData)
 			errs = errors.Join(errs, err)
 		case artifacts.KindSARIF:
 			err := validateSarifReport(bytes.NewBuffer(content), config)

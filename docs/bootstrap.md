@@ -8,7 +8,7 @@ gatecheck bootstrap --tools grype,syft
 gatecheck bootstrap --list
 ```
 
-Pinned versions are compiled into gatecheck. The current pins are Grype `0.121.0`, Syft `1.55.0`, Gitleaks `8.30.1`, and semgrep `1.182.1`. They live in `internal/bootstrap/versions.go`.
+Pinned versions are compiled into gatecheck. The current pins are Grype `0.121.0`, Syft `1.55.0`, Gitleaks `8.30.1`, semgrep `1.182.1`, Trivy `0.76.1`, and osv-scanner `2.7.0`. They live in `internal/bootstrap/versions.go`.
 
 ## Directory
 
@@ -25,22 +25,24 @@ A second run that already has the pinned file and its version stamp prints `<too
 `--list` prints managed installs and does not download. `--force` is ignored while listing. A binary with no stamp shows `unknown`. A missing tool shows `-`.
 
 ```
-TOOL       PINNED     INSTALLED  PATH
-grype      0.121.0    0.121.0    /home/ada/.local/share/gatecheck/bin/grype
-syft       1.55.0     -          -
-gitleaks   8.30.1     8.30.1     /home/ada/.local/share/gatecheck/bin/gitleaks
-semgrep    1.182.1    1.182.1    /home/ada/.local/share/gatecheck/bin/osemgrep
+TOOL         PINNED     INSTALLED  PATH
+grype        0.121.0    0.121.0    /home/ada/.local/share/gatecheck/bin/grype
+syft         1.55.0     -          -
+gitleaks     8.30.1     8.30.1     /home/ada/.local/share/gatecheck/bin/gitleaks
+semgrep      1.182.1    1.182.1    /home/ada/.local/share/gatecheck/bin/osemgrep
+trivy        0.76.1     0.76.1     /home/ada/.local/share/gatecheck/bin/trivy
+osv-scanner  2.7.0      2.7.0      /home/ada/.local/share/gatecheck/bin/osv-scanner
 ```
 
 ## Flags
 
-- `--tools`: comma-separated names. The default is `grype,syft,gitleaks,semgrep`. Names are lowercased. `osemgrep` means `semgrep`. An unknown name is an error: `unknown tool "trivy" (supported: grype, syft, gitleaks, semgrep)`.
+- `--tools`: comma-separated names. The default is `grype,syft,gitleaks,semgrep,trivy,osv-scanner`. Names are lowercased. `osemgrep` means `semgrep`. An unknown name is an error: `unknown tool "not-a-scanner" (supported: grype, syft, gitleaks, semgrep, trivy, osv-scanner)`.
 - `--force`: reinstall even when the pinned version is already present.
 - `--list`: print the table above.
 
 `bootstrap` takes no positional arguments.
 
-## Grype, Syft, and Gitleaks
+## Grype, Syft, Gitleaks, and Trivy
 
 Each tool is a GitHub release asset. gatecheck downloads `<name>_<version>_checksums.txt`, looks up the asset's SHA-256, downloads the archive, and checks the digest before extracting the binary. The install is a write to a temporary file in the destination directory, then a rename.
 
@@ -49,16 +51,32 @@ Each tool is a GitHub release asset. gatecheck downloads `<name>_<version>_check
 | Grype | `anchore/grype` | `grype_<version>_<os>_<arch>.tar.gz`, or `.zip` on Windows |
 | Syft | `anchore/syft` | `syft_<version>_<os>_<arch>.tar.gz`, or `.zip` on Windows |
 | Gitleaks | `gitleaks/gitleaks` | `gitleaks_<version>_<os>_<arch>.tar.gz`, or `.zip` on Windows |
+| Trivy | `aquasecurity/trivy` | `trivy_<version>_<OS>-<arch>.tar.gz`, or `.zip` on Windows |
 
 Gitleaks names `amd64` as `x64`, `386` as `x32`, and `arm` as `armv6` or `armv7`.
+
+Trivy uses its own asset names: `Linux-64bit`, `Linux-32bit`, `Linux-ARM` (armv7), `Linux-ARM64`, `Linux-PPC64LE`, `Linux-s390x`, `macOS-64bit`, `macOS-ARM64`, `windows-64bit`, and `FreeBSD-64bit`. The checksum file is `trivy_<version>_checksums.txt`. The archive contains `trivy`, or `trivy.exe` on Windows, plus `README.md`, `LICENSE`, and template files. gatecheck installs only the binary.
 
 Published assets:
 
 - Grype: macOS amd64 and arm64; Linux amd64, arm64, ppc64le, and s390x; Windows amd64.
 - Syft: macOS amd64 and arm64; Linux amd64, arm64, ppc64le, riscv64, and s390x; Windows amd64 and arm64.
 - Gitleaks: macOS x64 and arm64; Linux x64, x32, arm64, armv6, and armv7; Windows x64, x32, and arm64.
+- Trivy: macOS amd64 and arm64; Linux 386, amd64, armv7, arm64, ppc64le, and s390x; Windows amd64; FreeBSD amd64.
 
 A platform with no asset fails that tool. The message looks like `grype has no published release asset for windows/arm64`. Other requested tools still install. The command exits 255 when any requested tool failed this way, or when a download or checksum check failed.
+
+## osv-scanner
+
+osv-scanner publishes a raw binary, not an archive. gatecheck downloads `osv-scanner_SHA256SUMS` from the `google/osv-scanner` release, checks the asset's SHA-256, marks the file executable, and installs it as `osv-scanner`, or `osv-scanner.exe` on Windows.
+
+Asset names:
+
+- `osv-scanner_linux_amd64` and `osv-scanner_linux_arm64`
+- `osv-scanner_darwin_amd64` and `osv-scanner_darwin_arm64`
+- `osv-scanner_windows_amd64.exe` and `osv-scanner_windows_arm64.exe`
+
+Those six platforms are the published set. Anything else fails that tool with the same kind of message as a missing Grype asset.
 
 ## Semgrep (osemgrep)
 
@@ -91,11 +109,13 @@ gatecheck grype dir:. -o json > grype-report.json
 gatecheck syft dir:. -o cyclonedx-json > cyclonedx-syft.json
 gatecheck gitleaks detect --report-format json --report-path gitleaks-report.json
 gatecheck semgrep scan -e 'eval($X)' -l python --json t.py > semgrep-report.json
+gatecheck trivy fs --format json --output trivy-report.json .
+gatecheck osv-scanner scan source --format json . > osv-scanner-report.json
 ```
 
 Arguments, standard input, standard output, standard error, and the scanner's exit status are passed through. `gatecheck grype --help` is Grype's help. gatecheck does not parse flags after these command names.
 
-The managed binary is used when it is present. Otherwise gatecheck looks on `PATH`: `grype`, `syft`, or `gitleaks` for those commands; `semgrep` and then `osemgrep` for `gatecheck semgrep`; `osemgrep` only for `gatecheck osemgrep`. `--experimental` is inserted only when the program that will run is named `osemgrep`. A Python `semgrep` on `PATH` is left unchanged.
+The managed binary is used when it is present. Otherwise gatecheck looks on `PATH`: `grype`, `syft`, `gitleaks`, `trivy`, or `osv-scanner` for those commands; `semgrep` and then `osemgrep` for `gatecheck semgrep`; `osemgrep` only for `gatecheck osemgrep`. `--experimental` is inserted only when the program that will run is named `osemgrep`. A Python `semgrep` on `PATH` is left unchanged.
 
 When neither copy exists, the command prints one line and exits 255:
 
@@ -113,4 +133,6 @@ CycloneDX is a report format. Syft writes it with `-o cyclonedx-json`, and Grype
 
 Syft's own JSON is still rejected. `list` and `validate` return an error for that document. A filename that contains `syft` does the same when the contents are ambiguous. Syft is installed so it can write CycloneDX.
 
-Trivy is not installed by bootstrap, and `--tools trivy` is rejected. A Trivy CycloneDX JSON report is still a CycloneDX report. Trivy SARIF is a SARIF report.
+Trivy JSON (`trivy fs --format json`, `trivy image --format json`, and the other Trivy scanners' JSON output) is a report type. The contents identify it. A filename containing `trivy` is the fallback when the contents are ambiguous. A CycloneDX BOM stays CycloneDX even when the name contains `trivy`. Misconfigurations, secrets, and licenses are ignored. Trivy SARIF is a SARIF report.
+
+osv-scanner JSON (`osv-scanner scan source --format json`) is a report type. The contents identify it when `results` holds objects with a `packages` array. A filename containing `osv` is the fallback, so `osv-scanner-report.json` still works when the document is only `{"results":[]}`. Each vulnerability group is one finding. Aliases of that group are not counted again. `max_severity` is a CVSS base score. License-only packages are skipped.

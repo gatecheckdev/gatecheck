@@ -52,6 +52,8 @@ func TestEmptyReportPrintsALine(t *testing.T) {
 		{name: "gitleaks markdown", filename: "gitleaks.json", src: `[]`, markdown: true, want: "No gitleaks findings\n"},
 		{name: "sarif", filename: "report.json", src: `{"version":"2.1.0","runs":[]}`, want: "No sarif findings\n"},
 		{name: "sarif markdown", filename: "grype.json", src: `{"version":"2.1.0","runs":[]}`, markdown: true, want: "No sarif findings\n"},
+		{name: "trivy", filename: "grype.json", src: `{"SchemaVersion":2,"ArtifactType":"filesystem","Results":[]}`, want: "No trivy vulnerabilities\n"},
+		{name: "osv", filename: "notes.json", src: `{"results":[{"source":{"path":"go.mod","type":"lockfile"},"packages":[]}]}`, want: "No osv-scanner vulnerabilities\n"},
 	}
 
 	for _, tc := range cases {

@@ -67,15 +67,15 @@ gatecheck list [FILE]
 
 Aliases: `ls`, `print`.
 
-Prints a table for one report. The first filename is the one that is opened. Further filenames are ignored. Use `list-all` for more than one file. A Grype, CycloneDX, SARIF, Semgrep, or Gitleaks report with no findings prints one sentence and no table: `No grype vulnerabilities`, `No cyclonedx vulnerabilities`, `No sarif findings`, `No semgrep findings`, or `No gitleaks findings`. `--markdown` prints that same sentence.
+Prints a table for one report. The first filename is the one that is opened. Further filenames are ignored. Use `list-all` for more than one file. A Grype, CycloneDX, SARIF, Semgrep, Gitleaks, Trivy, or osv-scanner report with no findings prints one sentence and no table: `No grype vulnerabilities`, `No cyclonedx vulnerabilities`, `No sarif findings`, `No semgrep findings`, `No gitleaks findings`, `No trivy vulnerabilities`, or `No osv-scanner vulnerabilities`. `--markdown` prints that same sentence.
 
 The report type comes from the file contents. See [Supported Reports](./supported-reports.md).
 
 With no filename, the command reads standard input and `--input-type` is required.
 
-- `-i`, `--input-type`: type word used when reading standard input and the contents are ambiguous. It is matched with the same rules as a filename. `grype`, `cyclonedx`, `sarif`, `semgrep`, `gitleaks`, `syft`, `bundle`, and the coverage words all work. Clear contents win over this flag. See [Supported Reports](./supported-reports.md).
+- `-i`, `--input-type`: type word used when reading standard input and the contents are ambiguous. It is matched with the same rules as a filename. `grype`, `cyclonedx`, `sarif`, `semgrep`, `gitleaks`, `trivy`, `osv`, `syft`, `bundle`, and the coverage words all work. Clear contents win over this flag. See [Supported Reports](./supported-reports.md).
 - `--markdown`: print a markdown table.
-- `--epss`: add EPSS score and percentile columns. This changes the table for Grype and CycloneDX. Other report types still list, and the EPSS data is not shown. With no local file, gatecheck downloads the current EPSS CSV and caches it until the published date changes. Requests send a User-Agent with the gatecheck version and project URL.
+- `--epss`: add EPSS score and percentile columns. This changes the table for Grype, CycloneDX, Trivy, and osv-scanner. Other report types still list, and the EPSS data is not shown. With no local file, gatecheck downloads the current EPSS CSV and caches it until the published date changes. Requests send a User-Agent with the gatecheck version and project URL.
 - `--epss-filename`: read that CSV instead of calling the API. `GATECHECK_EPSS_FILENAME` is the same setting.
 - `--epss-url`: EPSS API URL. An empty value uses `https://epss.cyentia.com`. `GATECHECK_EPSS_URL` is the same setting.
 - `--epss-cache-dir`: cache directory for that download. `GATECHECK_EPSS_CACHE_DIR` is the same setting.
@@ -96,7 +96,7 @@ gatecheck list-all [FILE...]
 Prints each filename, then its table, or one sentence when that report has no findings. A file whose contents and name are not a supported `list-all` type is skipped with a warning. Coverage files are in that skipped set. A missing file is skipped. A list error is logged and the command continues. The command exits 0 after the last file.
 
 - `--markdown`: print markdown tables.
-- `--epss`: download EPSS data and add it for Grype and CycloneDX reports. The type comes from the file contents, then the filename. The download happens per file and is cached until the published date changes. There is no `--epss-filename` flag. `GATECHECK_EPSS_URL` overrides the API. `GATECHECK_EPSS_FILENAME` is not read by this command. Requests send a User-Agent with the gatecheck version and project URL.
+- `--epss`: download EPSS data and add it for Grype, CycloneDX, Trivy, and osv-scanner reports. The type comes from the file contents, then the filename. The download happens per file and is cached until the published date changes. There is no `--epss-filename` flag. `GATECHECK_EPSS_URL` overrides the API. `GATECHECK_EPSS_FILENAME` is not read by this command. Requests send a User-Agent with the gatecheck version and project URL.
 - `--epss-cache-dir`: cache directory for that download. `GATECHECK_EPSS_CACHE_DIR` is the same setting.
 - `--epss-no-cache`: download on every run. `GATECHECK_EPSS_CACHE=off` does the same.
 
@@ -200,9 +200,9 @@ gatecheck download kev > kev.json
 gatecheck bootstrap
 ```
 
-Downloads Grype, Syft, Gitleaks, and semgrep's experimental osemgrep CLI into the gatecheck data directory. Each GitHub asset is checked against the project's SHA-256 checksum file. The semgrep wheel is checked against the digest in the PyPI JSON. A tool already at the pinned version is skipped. See [Bootstrap](./bootstrap.md).
+Downloads Grype, Syft, Gitleaks, semgrep's experimental osemgrep CLI, Trivy, and osv-scanner into the gatecheck data directory. Each GitHub asset is checked against the project's SHA-256 checksum file. The semgrep wheel is checked against the digest in the PyPI JSON. A tool already at the pinned version is skipped. See [Bootstrap](./bootstrap.md).
 
-- `--tools`: comma-separated scanners. Default `grype,syft,gitleaks,semgrep`. `osemgrep` selects semgrep.
+- `--tools`: comma-separated scanners. Default `grype,syft,gitleaks,semgrep,trivy,osv-scanner`. `osemgrep` selects semgrep.
 - `--force`: download again when the pinned version is already installed.
 - `--list`: print pinned version, installed version, and path. This does not download.
 
@@ -213,7 +213,7 @@ gatecheck bootstrap
 gatecheck bootstrap --list
 ```
 
-## gatecheck grype, syft, gitleaks, semgrep, osemgrep
+## gatecheck grype, syft, gitleaks, semgrep, osemgrep, trivy, osv-scanner
 
 ```
 gatecheck grype [scanner arguments]
@@ -221,6 +221,8 @@ gatecheck syft [scanner arguments]
 gatecheck gitleaks [scanner arguments]
 gatecheck semgrep [scanner arguments]
 gatecheck osemgrep [scanner arguments]
+gatecheck trivy [scanner arguments]
+gatecheck osv-scanner [scanner arguments]
 ```
 
 Runs the managed binary. Arguments and streams are passed through, and the process exits with the scanner's status. Flags after the command name are not parsed by gatecheck, so `gatecheck grype --help` is Grype's help.
@@ -306,4 +308,4 @@ Prints help for a command. `gatecheck validate --help` does the same.
 | `GATECHECK_EPSS_CACHE` | `download epss`, `list`, `list-all`, `validate` | `--epss-no-cache` when the value is `off` |
 | `GATECHECK_KEV_URL` | `download kev`, `validate` | `--kev-url` on `download kev` |
 | `GATECHECK_BUNDLE_TAG` | `bundle create`, `bundle add` | `--tag`, as a comma-separated list |
-| `GATECHECK_HOME` | `bootstrap`, `grype`, `syft`, `gitleaks`, `semgrep`, `osemgrep` | data directory; binaries are in `bin` under it |
+| `GATECHECK_HOME` | `bootstrap`, `grype`, `syft`, `gitleaks`, `semgrep`, `osemgrep`, `trivy`, `osv-scanner` | data directory; binaries are in `bin` under it |

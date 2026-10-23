@@ -68,6 +68,98 @@ func TestReleaseAssets(t *testing.T) {
 	if _, err := gitleaksAsset(GitleaksVersion, Platform{GOOS: "linux", GOARCH: "arm", GOARM: "5"}); err == nil {
 		t.Fatal("gitleaks armv5 should fail")
 	}
+
+	trivyCases := []struct {
+		p    Platform
+		want string
+	}{
+		{Platform{GOOS: "linux", GOARCH: "amd64"}, "Linux-64bit.tar.gz"},
+		{Platform{GOOS: "linux", GOARCH: "386"}, "Linux-32bit.tar.gz"},
+		{Platform{GOOS: "linux", GOARCH: "arm64"}, "Linux-ARM64.tar.gz"},
+		{Platform{GOOS: "linux", GOARCH: "arm", GOARM: "7"}, "Linux-ARM.tar.gz"},
+		{Platform{GOOS: "linux", GOARCH: "arm"}, "Linux-ARM.tar.gz"},
+		{Platform{GOOS: "linux", GOARCH: "ppc64le"}, "Linux-PPC64LE.tar.gz"},
+		{Platform{GOOS: "linux", GOARCH: "s390x"}, "Linux-s390x.tar.gz"},
+		{Platform{GOOS: "darwin", GOARCH: "amd64"}, "macOS-64bit.tar.gz"},
+		{Platform{GOOS: "darwin", GOARCH: "arm64"}, "macOS-ARM64.tar.gz"},
+		{Platform{GOOS: "windows", GOARCH: "amd64"}, "windows-64bit.zip"},
+		{Platform{GOOS: "freebsd", GOARCH: "amd64"}, "FreeBSD-64bit.tar.gz"},
+	}
+	for _, tc := range trivyCases {
+		t.Run(tc.p.String(), func(t *testing.T) {
+			t.Parallel()
+			got, err := trivyAsset(TrivyVersion, tc.p)
+			if err != nil {
+				t.Fatal(err)
+			}
+			want := "trivy_" + TrivyVersion + "_" + tc.want
+			if got.Asset != want {
+				t.Fatalf("asset %s", got.Asset)
+			}
+			if got.Checksum != "trivy_"+TrivyVersion+"_checksums.txt" {
+				t.Fatalf("checksum %s", got.Checksum)
+			}
+			binary := "trivy"
+			if tc.p.GOOS == "windows" {
+				binary = "trivy.exe"
+			}
+			if got.Binary != binary || got.DestName != binary {
+				t.Fatalf("binary %+v", got)
+			}
+		})
+	}
+	if _, err := trivyAsset(TrivyVersion, Platform{GOOS: "windows", GOARCH: "arm64"}); err == nil {
+		t.Fatal("trivy windows/arm64 should fail")
+	}
+	if _, err := trivyAsset(TrivyVersion, Platform{GOOS: "linux", GOARCH: "arm", GOARM: "6"}); err == nil {
+		t.Fatal("trivy armv6 should fail")
+	}
+	if _, err := trivyAsset(TrivyVersion, Platform{GOOS: "darwin", GOARCH: "386"}); err == nil {
+		t.Fatal("trivy darwin/386 should fail")
+	}
+
+	osvCases := []struct {
+		p    Platform
+		want string
+	}{
+		{Platform{GOOS: "linux", GOARCH: "amd64"}, "osv-scanner_linux_amd64"},
+		{Platform{GOOS: "linux", GOARCH: "arm64"}, "osv-scanner_linux_arm64"},
+		{Platform{GOOS: "darwin", GOARCH: "amd64"}, "osv-scanner_darwin_amd64"},
+		{Platform{GOOS: "darwin", GOARCH: "arm64"}, "osv-scanner_darwin_arm64"},
+		{Platform{GOOS: "windows", GOARCH: "amd64"}, "osv-scanner_windows_amd64.exe"},
+		{Platform{GOOS: "windows", GOARCH: "arm64"}, "osv-scanner_windows_arm64.exe"},
+	}
+	for _, tc := range osvCases {
+		t.Run(tc.p.String(), func(t *testing.T) {
+			t.Parallel()
+			got, err := osvScannerAsset(OSVScannerVersion, tc.p)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if got.Asset != tc.want || !got.Raw {
+				t.Fatalf("asset %+v", got)
+			}
+			if got.Checksum != "osv-scanner_SHA256SUMS" {
+				t.Fatalf("checksum %s", got.Checksum)
+			}
+			dest := "osv-scanner"
+			if tc.p.GOOS == "windows" {
+				dest = "osv-scanner.exe"
+			}
+			if got.DestName != dest {
+				t.Fatalf("dest %s", got.DestName)
+			}
+		})
+	}
+	if _, err := osvScannerAsset(OSVScannerVersion, Platform{GOOS: "linux", GOARCH: "386"}); err == nil {
+		t.Fatal("osv-scanner linux/386 should fail")
+	}
+	if _, err := osvScannerAsset(OSVScannerVersion, Platform{GOOS: "darwin", GOARCH: "386"}); err == nil {
+		t.Fatal("osv-scanner darwin/386 should fail")
+	}
+	if _, err := osvScannerAsset(OSVScannerVersion, Platform{GOOS: "linux", GOARCH: "arm"}); err == nil {
+		t.Fatal("osv-scanner linux/arm should fail")
+	}
 }
 
 func TestSelectWheelRealNames(t *testing.T) {

@@ -16,6 +16,8 @@ func TestDocsMentionPins(t *testing.T) {
 		SyftVersion,
 		GitleaksVersion,
 		SemgrepVersion,
+		TrivyVersion,
+		OSVScannerVersion,
 		"GATECHECK_HOME",
 		"osemgrep",
 		"--experimental",

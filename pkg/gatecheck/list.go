@@ -101,6 +101,20 @@ func List(dst io.Writer, src io.Reader, inputFilename string, options ...ListOpt
 	case artifacts.KindGitleaks:
 		err = listGitleaks(table, src)
 
+	case artifacts.KindTrivy:
+		if o.epssData != nil {
+			err = listTrivyWithEPSS(table, src, o.epssData)
+		} else {
+			err = ListTrivyReport(table, src)
+		}
+
+	case artifacts.KindOSV:
+		if o.epssData != nil {
+			err = listOSVWithEPSS(table, src, o.epssData)
+		} else {
+			err = ListOSVReport(table, src)
+		}
+
 	case artifacts.KindSyft:
 		slog.Warn("syft decoder is not supported yet")
 		return errors.New("syft not implemented yet")

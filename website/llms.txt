@@ -8,7 +8,7 @@ Report type comes from the file contents. The filename is the fallback when the 
 
 - [Installation](https://docs.gatecheck.dev/installation.html): install a release binary or build from source
 - [Usage](https://docs.gatecheck.dev/usage.html): commands, logs, and exit status
-- [Bootstrap](https://docs.gatecheck.dev/bootstrap.html): install Grype, Syft, Gitleaks, and osemgrep, then run them
+- [Bootstrap](https://docs.gatecheck.dev/bootstrap.html): install Grype, Syft, Gitleaks, osemgrep, Trivy, and osv-scanner, then run them
 - [CLI reference](https://docs.gatecheck.dev/cli-reference.html): flags, subcommands, and environment variables
 - [Supported reports](https://docs.gatecheck.dev/supported-reports.html): how file contents and filenames select the report type
 - [Configuration](https://docs.gatecheck.dev/configuration.html): config keys and threshold units

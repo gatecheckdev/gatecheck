@@ -161,7 +161,7 @@ func newListAllCommand() *cobra.Command {
 }
 
 func newListCommand() *cobra.Command {
-	listCmd.Flags().StringP("input-type", "i", "", "stdin type word used when the report content is ambiguous [grype|cyclonedx|semgrep|gitleaks|syft|sarif|bundle|lcov]")
+	listCmd.Flags().StringP("input-type", "i", "", "stdin type word used when the report content is ambiguous [grype|cyclonedx|semgrep|gitleaks|trivy|osv|syft|sarif|bundle|lcov]")
 	listCmd.Flags().Bool("markdown", false, "print as a markdown table")
 	listCmd.Flags().Bool("epss", false, "List with EPSS data")
 	RuntimeConfig.EPSSURL.SetupCobra(listCmd)

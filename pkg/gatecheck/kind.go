@@ -35,7 +35,12 @@ func ListAllAction(content []byte, filename string) (supported bool, withEPSS bo
 	if kind == artifacts.KindUnknown || kind.IsCoverage() {
 		return false, false
 	}
-	return true, kind == artifacts.KindGrype || kind == artifacts.KindCycloneDX
+	switch kind {
+	case artifacts.KindGrype, artifacts.KindCycloneDX, artifacts.KindTrivy, artifacts.KindOSV:
+		return true, true
+	default:
+		return true, false
+	}
 }
 
 func kindFromFilename(name string, listRules bool) artifacts.ReportKind {
@@ -48,6 +53,10 @@ func kindFromFilename(name string, listRules bool) artifacts.ReportKind {
 		return artifacts.KindSemgrep
 	case strings.Contains(name, "gitleaks"):
 		return artifacts.KindGitleaks
+	case strings.Contains(name, "trivy"):
+		return artifacts.KindTrivy
+	case strings.Contains(name, "osv"):
+		return artifacts.KindOSV
 	case strings.Contains(name, "syft"):
 		return artifacts.KindSyft
 	case strings.Contains(name, "sarif"):

@@ -1,0 +1,93 @@
+{
+  "SchemaVersion": 2,
+  "ArtifactName": "alpine:3.20",
+  "ArtifactType": "container_image",
+  "Metadata": {
+    "OS": {
+      "Family": "alpine",
+      "Name": "3.20.3"
+    }
+  },
+  "Results": [
+    {
+      "Target": "alpine:3.20 (alpine 3.20.3)",
+      "Class": "os-pkgs",
+      "Type": "alpine",
+      "Vulnerabilities": [
+        {
+          "VulnerabilityID": "CVE-2024-5535",
+          "PkgID": "libcrypto3@3.3.2-r0",
+          "PkgName": "libcrypto3",
+          "InstalledVersion": "3.3.2-r0",
+          "FixedVersion": "3.3.2-r1",
+          "Status": "fixed",
+          "Severity": "HIGH",
+          "Title": "openssl: SSL_select_next_proto buffer overread",
+          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2024-5535",
+          "DataSource": {
+            "ID": "alpine",
+            "Name": "Alpine Secdb",
+            "URL": "https://secdb.alpine.org/"
+          }
+        },
+        {
+          "VulnerabilityID": "CVE-2023-0464",
+          "PkgName": "libssl3",
+          "InstalledVersion": "3.3.2-r0",
+          "FixedVersion": "3.3.2-r1",
+          "Severity": "CRITICAL",
+          "Title": "openssl: Denial of service via invalid certificate policies",
+          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2023-0464"
+        },
+        {
+          "VulnerabilityID": "CVE-2023-2650",
+          "PkgName": "libcrypto3",
+          "InstalledVersion": "3.3.2-r0",
+          "Severity": "MEDIUM",
+          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2023-2650"
+        },
+        {
+          "VulnerabilityID": "CVE-2022-2097",
+          "PkgName": "libcrypto3",
+          "InstalledVersion": "3.3.2-r0",
+          "Severity": "LOW",
+          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2022-2097"
+        }
+      ]
+    },
+    {
+      "Target": "app/package-lock.json",
+      "Class": "lang-pkgs",
+      "Type": "npm",
+      "Vulnerabilities": [
+        {
+          "VulnerabilityID": "GHSA-jfh8-c2jp-5v3q",
+          "VendorIDs": [
+            "CVE-2021-44228"
+          ],
+          "PkgName": "log4j-core",
+          "InstalledVersion": "2.14.1",
+          "FixedVersion": "2.17.1",
+          "Severity": "CRITICAL",
+          "Title": "log4j-core: Remote code execution in JNDI lookup",
+          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2021-44228"
+        }
+      ]
+    },
+    {
+      "Target": "Dockerfile",
+      "Class": "config",
+      "Type": "dockerfile",
+      "Misconfigurations": [
+        {
+          "Type": "Dockerfile Security Check",
+          "ID": "DS002",
+          "Title": "Image user should not be 'root'",
+          "Severity": "HIGH",
+          "Status": "FAIL",
+          "PrimaryURL": "https://avd.aquasec.com/misconfig/ds002"
+        }
+      ]
+    }
+  ]
+}

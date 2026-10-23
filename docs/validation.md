@@ -9,7 +9,7 @@ Pass the config with `--config` or `-f`, or with `GATECHECK_CONFIG_FILENAME`. Th
 
 The report type comes from the file contents, and from the filename when the contents are ambiguous. See [Supported Reports](./supported-reports.md).
 
-With no config, gatecheck uses the default: every rule disabled, coverage thresholds `0`. Grype, CycloneDX, SARIF, Semgrep, Gitleaks, coverage, and bundle reports pass under that default. Syft JSON still returns an error.
+With no config, gatecheck uses the default: every rule disabled, coverage thresholds `0`. Grype, CycloneDX, Trivy, osv-scanner, SARIF, Semgrep, Gitleaks, coverage, and bundle reports pass under that default. Syft JSON still returns an error. An old config with no `sarif` section leaves those limits disabled.
 
 ## Exit status
 
@@ -19,17 +19,21 @@ With no config, gatecheck uses the default: every rule disabled, coverage thresh
 
 `--audit` (`-a`) prints whatever error the check returns and exits 0. That covers a failed threshold, an unknown report, a Syft file, a decode error, and a failed EPSS or KEV fetch. Opening the report, the config, and any `--epss-filename` or `--kev-filename` happens before the check. A missing file still exits 255.
 
-## Grype and CycloneDX
+## Grype, CycloneDX, Trivy, and osv-scanner
+
+Trivy uses these same rules. It counts vulnerability entries from `Results[].Vulnerabilities`. Misconfigurations, secrets, and licenses are not scored. An id matches `VulnerabilityID` or a `VendorIDs` entry, without regard to case. EPSS and KEV look up the first id that starts with `CVE-`.
+
+osv-scanner uses these same rules. It counts one finding per vulnerability group, so aliases are not double-counted. License-only packages are skipped. `max_severity` is a CVSS base score (`9.8` is critical, `7.5` is high, `4.0` is medium, `0.1` is low). The words `CRITICAL`, `HIGH`, `MEDIUM`, `LOW`, `MODERATE`, and `UNKNOWN` are accepted, and `MODERATE` maps to medium. A CVSS vector with no numeric score is unknown unless `database_specific.severity` supplies a rating. Deny, allow, and KEV match the OSV id or any alias. EPSS and KEV look up the first id that starts with `CVE-`.
 
 Rules run in this order. A failure returns immediately, except where a rule only removes findings.
 
 1. **CVE limit.** `cveLimit`, when enabled, fails if any listed id is in the report. Ids are compared without regard to case.
-2. **Disabled Grype severities.** Grype drops findings whose severity limit is disabled. If the EPSS limit is also enabled, a finding at a disabled severity stays in the report when it has an EPSS score greater than or equal to that limit. CycloneDX leaves findings at a disabled severity in the report, so they still go through the KEV and EPSS rules.
+2. **Disabled Grype, Trivy, and osv-scanner severities.** Grype, Trivy, and osv-scanner drop findings whose severity limit is disabled. If the EPSS limit is also enabled, a finding at a disabled severity stays in the report when it has an EPSS score greater than or equal to that limit. CycloneDX leaves findings at a disabled severity in the report, so they still go through the KEV and EPSS rules.
 3. **CVE risk acceptance.** Matching ids are removed and skip the remaining rules.
 4. **KEV limit.** When `kevLimitEnabled` is true, a CVE that is in the catalog fails the report. The catalog is `--kev-filename` or, with no file, the CISA feed. `GATECHECK_KEV_URL` overrides the feed. There is no `--kev-url` flag on `validate`.
 5. **EPSS risk acceptance.** A CVE is removed when the configured `score` is greater than that CVE's EPSS score. A CVE with no EPSS row is kept. A CVE whose score is equal to the configured score is kept.
 6. **EPSS limit.** A CVE fails when its EPSS score is greater than `score`. A CVE with no EPSS row passes this rule. A score equal to the limit passes. Data comes from `--epss-filename` or `GATECHECK_EPSS_FILENAME`, or from the API. `GATECHECK_EPSS_URL` overrides the API. There is no `--epss-url` flag on `validate`.
-7. **Severity limit.** For each enabled severity, the report fails when the count is greater than `limit`. `limit: 0` allows none. Counts that are equal to the limit pass. Grype and CycloneDX severities are `critical`, `high`, `medium`, and `low`. `negligible` and `unknown` have no limit field.
+7. **Severity limit.** For each enabled severity, the report fails when the count is greater than `limit`. `limit: 0` allows none. Counts that are equal to the limit pass. Grype, CycloneDX, Trivy, and osv-scanner severities are `critical`, `high`, `medium`, and `low`. `negligible` and `unknown` have no limit field.
 
 Any CycloneDX JSON BOM uses the `cyclonedx` rules, including a BOM from Grype, Trivy, Syft, or another tool. The severity is the highest rating. A rating with a score and no severity word uses CVSS ranges. A CVSS v2 method does not produce critical. `important` counts as high, and `moderate` counts as medium. `negligible` counts as none. Empty ratings use a top-level `severity` string when the producer set one, otherwise `unknown`. `unknown`, `none`, and `info` are not counted by the critical, high, medium, or low limits. The id is the vulnerability `id`, or the `bom-ref` when `id` is empty.
 

@@ -16,6 +16,8 @@ const (
 	KindSemgrep   ReportKind = "semgrep"
 	KindGitleaks  ReportKind = "gitleaks"
 	KindSyft      ReportKind = "syft"
+	KindTrivy     ReportKind = "trivy"
+	KindOSV       ReportKind = "osv"
 	KindSARIF     ReportKind = "sarif"
 	KindBundle    ReportKind = "bundle"
 	KindLCOV      ReportKind = "lcov"
@@ -79,10 +81,13 @@ type sniff struct {
 	Descriptor struct {
 		Name string `json:"name"`
 	} `json:"descriptor"`
-	Results json.RawMessage `json:"results"`
-	Errors  json.RawMessage `json:"errors"`
-	Paths   json.RawMessage `json:"paths"`
-	Schema  struct {
+	Results       json.RawMessage `json:"results"`
+	Errors        json.RawMessage `json:"errors"`
+	Paths         json.RawMessage `json:"paths"`
+	SchemaVersion any             `json:"SchemaVersion"`
+	ArtifactType  string          `json:"ArtifactType"`
+	TrivyResults  json.RawMessage `json:"Results"`
+	Schema        struct {
 		URL string `json:"url"`
 	} `json:"schema"`
 }
@@ -109,7 +114,36 @@ func classifyObject(s sniff) ReportKind {
 	if isGrypeMatches(s.Matches) {
 		return KindGrype
 	}
+	if isTrivy(s) {
+		return KindTrivy
+	}
+	if isOSV(s) {
+		return KindOSV
+	}
 	return KindUnknown
+}
+
+func isTrivy(s sniff) bool {
+	if _, ok := s.SchemaVersion.(float64); !ok {
+		return false
+	}
+	if strings.TrimSpace(s.ArtifactType) != "" {
+		return true
+	}
+	return isJSONArray(s.TrivyResults)
+}
+
+func isOSV(s sniff) bool {
+	if !isJSONArray(s.Results) || jsonArrayEmpty(s.Results) {
+		return false
+	}
+	var rows []struct {
+		Packages json.RawMessage `json:"packages"`
+	}
+	if err := json.Unmarshal(s.Results, &rows); err != nil || len(rows) == 0 {
+		return false
+	}
+	return isJSONArray(rows[0].Packages)
 }
 
 func isSarif(s sniff) bool {

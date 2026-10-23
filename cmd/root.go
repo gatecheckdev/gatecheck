@@ -105,6 +105,8 @@ func NewGatecheckCommand() *cobra.Command {
 			newPassthroughCommand("gitleaks", "Run the managed gitleaks scanner"),
 			newPassthroughCommand("semgrep", "Run osemgrep from the managed semgrep wheel"),
 			newPassthroughCommand("osemgrep", "Run osemgrep from the managed semgrep wheel"),
+			newPassthroughCommand("trivy", "Run the managed trivy scanner"),
+			newPassthroughCommand("osv-scanner", "Run the managed osv-scanner"),
 		)
 		addCommandOnce(gatecheckCmd, updateCmd)
 	})

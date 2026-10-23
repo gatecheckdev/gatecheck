@@ -23,6 +23,15 @@ func TestKindFallsBackToFilename(t *testing.T) {
 	if got := KindForList([]byte(`[]`), "gitleaks.json"); got != artifacts.KindGitleaks {
 		t.Fatalf("got %s", got)
 	}
+	if got := KindForList([]byte(`{"SchemaVersion":2}`), "trivy-report.json"); got != artifacts.KindTrivy {
+		t.Fatalf("got %s", got)
+	}
+	if got := KindForList([]byte(`{"results":[]}`), "osv-scanner-report.json"); got != artifacts.KindOSV {
+		t.Fatalf("got %s", got)
+	}
+	if got := KindForList([]byte(`{"results":[]}`), "semgrep.json"); got != artifacts.KindSemgrep {
+		t.Fatalf("semgrep should stay ahead of osv in the filename fallback: %s", got)
+	}
 	if got := KindForList([]byte(`not a report`), "scan.json"); got != artifacts.KindUnknown {
 		t.Fatalf("got %s", got)
 	}
@@ -276,6 +285,44 @@ func gzipBytes(t *testing.T, payload []byte) []byte {
 		t.Fatal(err)
 	}
 	return buf.Bytes()
+}
+
+func TestTrivyAndOSVContentWinsOverFilename(t *testing.T) {
+	trivy := mustRead(t, "../../test/trivy-report.json")
+	got := renderList(t, "grype-report.json", trivy, nil)
+	if !strings.Contains(got, "TRIVY SEVERITY") || !strings.Contains(got, "libssl3") {
+		t.Fatalf("trivy json named grype was not listed as trivy:\n%.400s", got)
+	}
+	if strings.Contains(got, "GRYPE SEVERITY") {
+		t.Fatal("trivy json was listed as grype")
+	}
+	config := NewDefaultConfig()
+	config.Trivy.SeverityLimit.Critical.Enabled = true
+	config.Trivy.SeverityLimit.Critical.Limit = 0
+	if err := Validate(config, bytes.NewReader(trivy), "scan.json"); !errors.Is(err, ErrValidationFailure) || !strings.Contains(err.Error(), "Trivy") {
+		t.Fatalf("trivy critical limit: %v", err)
+	}
+
+	osv := mustRead(t, "../../test/osv-scanner-report.json")
+	got = renderList(t, "notes.json", osv, nil)
+	if !strings.Contains(got, "OSV SEVERITY") || !strings.Contains(got, "GO-2021-0053") {
+		t.Fatalf("osv json was not listed:\n%.400s", got)
+	}
+	config = NewDefaultConfig()
+	config.OSVScanner.SeverityLimit.High.Enabled = true
+	config.OSVScanner.SeverityLimit.High.Limit = 0
+	if err := Validate(config, bytes.NewReader(osv), "scan.json"); !errors.Is(err, ErrValidationFailure) || !strings.Contains(err.Error(), "osv-scanner") {
+		t.Fatalf("osv high limit: %v", err)
+	}
+
+	supported, epss := ListAllAction(trivy, "scan.json")
+	if !supported || !epss {
+		t.Fatalf("trivy list-all supported %v epss %v", supported, epss)
+	}
+	supported, epss = ListAllAction(osv, "scan.json")
+	if !supported || !epss {
+		t.Fatalf("osv list-all supported %v epss %v", supported, epss)
+	}
 }
 
 func TestSyftJSONStillErrors(t *testing.T) {

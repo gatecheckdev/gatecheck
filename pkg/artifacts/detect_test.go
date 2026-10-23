@@ -101,6 +101,31 @@ func TestDetect(t *testing.T) {
 			src:  string([]byte{0x1f, 0x8b, 0x08, 'S', 'F', ':', '\n', 'D', 'A', ':'}),
 			want: KindUnknown,
 		},
+		{
+			name: "trivy schema and type",
+			src:  `{"SchemaVersion":2,"ArtifactType":"filesystem","Results":[]}`,
+			want: KindTrivy,
+		},
+		{
+			name: "trivy results only",
+			src:  `{"SchemaVersion":2,"Results":[{"Target":"alpine","Class":"os-pkgs"}]}`,
+			want: KindTrivy,
+		},
+		{
+			name: "schema version alone is ambiguous",
+			src:  `{"SchemaVersion":2}`,
+			want: KindUnknown,
+		},
+		{
+			name: "osv packages",
+			src:  `{"results":[{"source":{"path":"go.mod","type":"lockfile"},"packages":[]}]}`,
+			want: KindOSV,
+		},
+		{
+			name: "empty results stay ambiguous",
+			src:  `{"results":[]}`,
+			want: KindUnknown,
+		},
 	}
 
 	for _, tc := range cases {
@@ -131,6 +156,8 @@ func TestDetectFixtures(t *testing.T) {
 		{file: "../../test/sarif-checkov.json", want: KindSARIF},
 		{file: "../../test/sarif-govulncheck.json", want: KindSARIF},
 		{file: "../../test/sarif-bandit.json", want: KindSARIF},
+		{file: "../../test/trivy-report.json", want: KindTrivy},
+		{file: "../../test/osv-scanner-report.json", want: KindOSV},
 	}
 	for _, tc := range cases {
 		t.Run(tc.file, func(t *testing.T) {

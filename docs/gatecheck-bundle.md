@@ -8,7 +8,7 @@ A bundle is a gzipped tar with a JSON manifest. It holds the report bytes, a SHA
 gatecheck bundle create gatecheck-bundle.tar.gz grype-report.json --tag ci
 ```
 
-`bundle init` is the same command. The label stored in the manifest is the base name of the target file. `validate` reads each stored file's contents to pick the type, and uses the label only when the contents are ambiguous. A CycloneDX file stored as `grype.json` is still validated as CycloneDX.
+`bundle init` is the same command. The label stored in the manifest is the base name of the target file. `validate` reads each stored file's contents to pick the type, and uses the label only when the contents are ambiguous. A CycloneDX, Trivy, or osv-scanner file is still validated as that type when the stored name would suggest something else.
 
 Repeat `--tag` for more than one tag. When the flag is omitted, `GATECHECK_BUNDLE_TAG` is read as a comma-separated list.
 
