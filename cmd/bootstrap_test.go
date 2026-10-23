@@ -39,7 +39,7 @@ func TestBootstrapCommandListAndPassthrough(t *testing.T) {
 	if err := root.Execute(); err != nil {
 		t.Fatal(err)
 	}
-	for _, version := range []string{bootstrap.GrypeVersion, bootstrap.SyftVersion, bootstrap.GitleaksVersion, bootstrap.SemgrepVersion} {
+	for _, version := range []string{bootstrap.GrypeVersion, bootstrap.SyftVersion, bootstrap.GitleaksVersion, bootstrap.SemgrepVersion, bootstrap.TrivyVersion} {
 		if !strings.Contains(out.String(), version) {
 			t.Fatalf("list missing %s\n%s", version, out.String())
 		}
@@ -61,7 +61,7 @@ func TestBootstrapCommandListAndPassthrough(t *testing.T) {
 
 	out.Reset()
 	errb.Reset()
-	root.SetArgs([]string{"bootstrap", "--tools", "trivy"})
+	root.SetArgs([]string{"bootstrap", "--tools", "not-a-scanner"})
 	if err := root.Execute(); err == nil {
 		t.Fatal("expected unknown tool")
 	}

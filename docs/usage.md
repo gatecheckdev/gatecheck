@@ -12,7 +12,7 @@ Commands:
 - `gatecheck validate` compares one report, or one bundle, to the config.
 - `gatecheck bundle create`, `bundle add`, and `bundle remove` manage a bundle.
 - `gatecheck download epss` and `gatecheck download kev` write the upstream data to standard output. EPSS files are cached until the published date changes.
-- `gatecheck bootstrap` installs Grype, Syft, Gitleaks, and semgrep's experimental osemgrep CLI. `gatecheck grype`, `syft`, `gitleaks`, `semgrep`, and `osemgrep` run those programs. See [Bootstrap](./bootstrap.md).
+- `gatecheck bootstrap` installs Grype, Syft, Gitleaks, semgrep's experimental osemgrep CLI, and Trivy. `gatecheck grype`, `syft`, `gitleaks`, `semgrep`, `osemgrep`, and `trivy` run those programs. See [Bootstrap](./bootstrap.md).
 - `gatecheck update` (aliases `self-update` and `upgrade`) replaces this binary with a GitHub release after checking the archive checksum. `gatecheck update --check` only prints the current and latest versions.
 - `gatecheck agent-guide` (alias `llm`) prints a markdown guide for coding agents.
 - `gatecheck completion` prints a shell completion script. `gatecheck help [command]` prints help for that command.

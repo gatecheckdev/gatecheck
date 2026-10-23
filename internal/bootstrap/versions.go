@@ -12,4 +12,6 @@ const (
 	// SemgrepVersion is the semgrep wheel on PyPI. The wheel's native
 	// semgrep-core binary is installed as osemgrep.
 	SemgrepVersion = "1.182.1"
+	// TrivyVersion is the aquasecurity/trivy GitHub release.
+	TrivyVersion = "0.76.1"
 )

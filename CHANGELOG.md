@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [UNRELEASED]
 
+### Added
+
+- `gatecheck bootstrap` installs pinned Trivy 0.76.1, and `gatecheck trivy` runs it.
+- Trivy JSON reports work with `list`, `validate`, and `bundle`. Severity limits and CVE allow and deny lists follow the Grype rules.
+
 ## [0.9.0] - 2026-10-23
 
 ### Added

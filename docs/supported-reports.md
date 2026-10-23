@@ -6,9 +6,10 @@
 2. `cyclonedx`: CycloneDX JSON that includes vulnerabilities.
 3. `semgrep`: Semgrep JSON.
 4. `gitleaks`: Gitleaks JSON (a list of findings).
-5. `syft`: the name is recognized. `list` and `validate` both return an error. Syft is not implemented.
-6. `bundle`: a Gatecheck bundle. `list` also accepts a name containing `gatecheck`. `validate` requires the word `bundle`. `project.gcb` matches neither rule.
-7. Coverage, when the name contains `lcov`, `clover`, `cobertura`, or `coverage`, or when it ends in `.info`.
+5. `trivy`: Trivy JSON (`--format json`). Vulnerability entries are listed and validated. Misconfigurations, secrets, and licenses in the same file are ignored.
+6. `syft`: the name is recognized. `list` and `validate` both return an error. Syft is not implemented.
+7. `bundle`: a Gatecheck bundle. `list` also accepts a name containing `gatecheck`. `validate` requires the word `bundle`. `project.gcb` matches neither rule.
+8. Coverage, when the name contains `lcov`, `clover`, `cobertura`, or `coverage`, or when it ends in `.info`.
 
 The match is case sensitive. `Grype-report.json` and `CycloneDX.json` are rejected.
 
@@ -26,7 +27,9 @@ From standard input, pass the same word to `--input-type`. The value is matched 
 grype bkimminich/juice-shop:latest -o json | gatecheck list --input-type grype
 ```
 
-`list-all` is stricter. It lists a file only when the name contains `grype`, `semgrep`, `gitleaks`, `syft`, `cyclonedx`, `bundle`, or `gatecheck`. Coverage files are skipped with a warning. There is no `--input-type` flag on `list-all`.
+`list-all` is stricter. It lists a file only when the name contains `grype`, `semgrep`, `gitleaks`, `syft`, `cyclonedx`, `bundle`, `gatecheck`, or `trivy`. Coverage files are skipped with a warning. There is no `--input-type` flag on `list-all`.
+
+`cyclonedx` is checked before `trivy`, so `cyclonedx-trivy-sbom.json` is CycloneDX.
 
 Inside a bundle, `validate` uses the stored label, which is the base name of the file you added. A label has to contain the same words. Labels that do not match are skipped. Syft labels inside a bundle are skipped.
 
@@ -38,6 +41,7 @@ What each command can do:
 | CycloneDX | yes | yes | yes |
 | Semgrep | yes | yes | yes |
 | Gitleaks | yes | yes | yes |
+| Trivy | yes | yes | yes |
 | LCOV, Clover, Cobertura | yes | yes | yes |
 | Syft | error | error | the file is stored, and validation skips that label |
 | Bundle | when the name contains `bundle` or `gatecheck` | when the name contains `bundle` | yes, as an ordinary file |
