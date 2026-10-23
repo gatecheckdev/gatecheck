@@ -44,7 +44,7 @@ gatecheck validate --config gatecheck.yaml grype-report.json
 
 `gatecheck agent-guide` (alias `llm`) prints a markdown guide for coding agents. The same text is `docs/agent-guide.md`.
 
-`gatecheck bootstrap` installs pinned Grype, Syft, Gitleaks, semgrep's experimental osemgrep CLI, and Trivy. `gatecheck grype`, `gatecheck syft`, `gatecheck gitleaks`, `gatecheck semgrep`, `gatecheck osemgrep`, and `gatecheck trivy` run them.
+`gatecheck bootstrap` installs pinned Grype, Syft, Gitleaks, semgrep's experimental osemgrep CLI, Trivy, and osv-scanner. `gatecheck grype`, `gatecheck syft`, `gatecheck gitleaks`, `gatecheck semgrep`, `gatecheck osemgrep`, `gatecheck trivy`, and `gatecheck osv-scanner` run them.
 
 ### Summarize Reports with List
 
@@ -52,7 +52,7 @@ gatecheck validate --config gatecheck.yaml grype-report.json
 gatecheck ls --help
 ```
 
-List with EPSS scores is supported for Grype and CycloneDX reports.
+List with EPSS scores is supported for Grype, CycloneDX, Trivy, and osv-scanner reports.
 
 ![Gatecheck List](https://static.gatecheck.dev/gatecheck-list.gif)
 

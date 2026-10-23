@@ -10,6 +10,8 @@ type githubAsset struct {
 	Checksum string
 	Binary   string
 	DestName string
+	// Raw means the release asset is the binary itself, not an archive.
+	Raw bool
 }
 
 func grypeAsset(version string, p Platform) (githubAsset, error) {
@@ -210,6 +212,38 @@ func trivyOSArch(p Platform) (string, string, bool) {
 		}
 	}
 	return "", "", false
+}
+
+func osvScannerAsset(version string, p Platform) (githubAsset, error) {
+	goos, arch, ok := osvOSArch(p)
+	if !ok {
+		return githubAsset{}, unsupported("osv-scanner", p)
+	}
+	asset := fmt.Sprintf("osv-scanner_%s_%s", goos, arch)
+	if p.GOOS == "windows" {
+		asset += ".exe"
+	}
+	return githubAsset{
+		Asset:    asset,
+		Checksum: "osv-scanner_SHA256SUMS",
+		Binary:   asset,
+		DestName: exeName("osv-scanner", p.GOOS),
+		Raw:      true,
+	}, nil
+}
+
+func osvOSArch(p Platform) (string, string, bool) {
+	switch p.GOOS {
+	case "darwin", "linux", "windows":
+	default:
+		return "", "", false
+	}
+	switch p.GOARCH {
+	case "amd64", "arm64":
+		return p.GOOS, p.GOARCH, true
+	default:
+		return "", "", false
+	}
 }
 
 func exeName(name, goos string) string {

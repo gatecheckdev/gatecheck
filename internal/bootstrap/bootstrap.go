@@ -125,7 +125,7 @@ func (o Options) userAgent() string {
 	return "gatecheck (+https://github.com/gatecheckdev/gatecheck)"
 }
 
-var defaultTools = []string{"grype", "syft", "gitleaks", "semgrep", "trivy"}
+var defaultTools = []string{"grype", "syft", "gitleaks", "semgrep", "trivy", "osv-scanner"}
 
 func canonicalTools(csv string) ([]string, error) {
 	if strings.TrimSpace(csv) == "" {
@@ -184,6 +184,12 @@ func installTool(ctx context.Context, opts Options, tool string) error {
 			return err
 		}
 		return installGitHub(ctx, opts, "trivy", "aquasecurity/trivy", TrivyVersion, asset)
+	case "osv-scanner":
+		asset, err := osvScannerAsset(OSVScannerVersion, opts.platform())
+		if err != nil {
+			return err
+		}
+		return installGitHub(ctx, opts, "osv-scanner", "google/osv-scanner", OSVScannerVersion, asset)
 	default:
 		return fmt.Errorf("unknown tool %q", tool)
 	}
@@ -229,13 +235,22 @@ func installGitHub(ctx context.Context, opts Options, tool, repo, version string
 		return fmt.Errorf("%s: %w", tool, err)
 	}
 
-	staged := dest + ".new"
-	defer func() { _ = os.Remove(staged) }()
-	if err := extractBinary(archivePath, asset.Binary, staged); err != nil {
-		return fmt.Errorf("%s: %w", tool, err)
-	}
-	if err := fetch.Replace(staged, dest); err != nil {
-		return fmt.Errorf("%s: %w", tool, err)
+	if asset.Raw {
+		if err := os.Chmod(archivePath, 0o755); err != nil {
+			return fmt.Errorf("%s: %w", tool, err)
+		}
+		if err := fetch.Replace(archivePath, dest); err != nil {
+			return fmt.Errorf("%s: %w", tool, err)
+		}
+	} else {
+		staged := dest + ".new"
+		defer func() { _ = os.Remove(staged) }()
+		if err := extractBinary(archivePath, asset.Binary, staged); err != nil {
+			return fmt.Errorf("%s: %w", tool, err)
+		}
+		if err := fetch.Replace(staged, dest); err != nil {
+			return fmt.Errorf("%s: %w", tool, err)
+		}
 	}
 	if err := writeVersion(binDir, tool, version); err != nil {
 		return fmt.Errorf("%s: %w", tool, err)
@@ -403,11 +418,11 @@ func osemgrepPath(binDir string, p Platform) string {
 
 func writeList(w io.Writer, home string, tools []string) error {
 	binDir := BinDir(home)
-	_, _ = fmt.Fprintf(w, "%-10s %-10s %-10s %s\n", "TOOL", "PINNED", "INSTALLED", "PATH")
+	_, _ = fmt.Fprintf(w, "%-12s %-10s %-10s %s\n", "TOOL", "PINNED", "INSTALLED", "PATH")
 	for _, tool := range tools {
 		pinned := pinnedVersion(tool)
 		installed, path := installedStatus(binDir, tool)
-		_, _ = fmt.Fprintf(w, "%-10s %-10s %-10s %s\n", tool, pinned, installed, path)
+		_, _ = fmt.Fprintf(w, "%-12s %-10s %-10s %s\n", tool, pinned, installed, path)
 	}
 	return nil
 }
@@ -424,6 +439,8 @@ func pinnedVersion(tool string) string {
 		return SemgrepVersion
 	case "trivy":
 		return TrivyVersion
+	case "osv-scanner":
+		return OSVScannerVersion
 	default:
 		return "-"
 	}

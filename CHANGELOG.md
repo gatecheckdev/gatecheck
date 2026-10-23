@@ -11,6 +11,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `gatecheck bootstrap` installs pinned Trivy 0.76.1, and `gatecheck trivy` runs it.
 - Trivy JSON reports work with `list`, `validate`, and `bundle`. Severity limits and CVE allow and deny lists follow the Grype rules.
+- `gatecheck bootstrap` installs pinned osv-scanner 2.7.0, and `gatecheck osv-scanner` runs it.
+- osv-scanner JSON reports work with `list`, `validate`, and `bundle`. Severity limits and CVE allow and deny lists follow the Grype rules.
+
+### Changed
+
+- `gatecheck bootstrap --list` widens the tool column so `osv-scanner` fits.
 
 ## [0.9.0] - 2026-10-23
 

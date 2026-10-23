@@ -491,6 +491,130 @@ func TestInstallTrivyChecksum(t *testing.T) {
 	}
 }
 
+func TestInstallOSVScannerRawBinary(t *testing.T) {
+	body := []byte("osv-scanner-binary")
+	asset, err := osvScannerAsset(OSVScannerVersion, Platform{GOOS: "linux", GOARCH: "arm64"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	sum := sha256.Sum256(body)
+	good := hex.EncodeToString(sum[:])
+	mode := "good"
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if !strings.Contains(r.URL.Path, "/google/osv-scanner/releases/download/v"+OSVScannerVersion+"/") {
+			http.Error(w, "bad url", http.StatusBadRequest)
+			return
+		}
+		switch {
+		case strings.HasSuffix(r.URL.Path, asset.Checksum):
+			digest := good
+			if mode == "bad" {
+				digest = strings.Repeat("ab", 32)
+			}
+			_, _ = fmt.Fprintf(w, "%s  %s\n", digest, asset.Asset)
+		case strings.HasSuffix(r.URL.Path, asset.Asset):
+			_, _ = w.Write(body)
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	t.Cleanup(srv.Close)
+
+	home := t.TempDir()
+	var out bytes.Buffer
+	err = Bootstrap(context.Background(), Options{
+		Home:       home,
+		ToolsCSV:   "osv-scanner",
+		Client:     srv.Client(),
+		GitHubBase: srv.URL,
+		Platform:   Platform{GOOS: "linux", GOARCH: "arm64"},
+		Stdout:     &out,
+		Stderr:     ioDiscard(),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	dest := filepath.Join(home, "bin", "osv-scanner")
+	got, err := os.ReadFile(dest)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(got) != "osv-scanner-binary" {
+		t.Fatalf("binary %q", got)
+	}
+	if runtime.GOOS != "windows" {
+		info, err := os.Stat(dest)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if info.Mode().Perm()&0o111 == 0 {
+			t.Fatalf("mode %v", info.Mode())
+		}
+	}
+	if !strings.Contains(out.String(), "installed osv-scanner "+OSVScannerVersion+" "+dest) {
+		t.Fatalf("stdout %q", out.String())
+	}
+	if _, err := os.Stat(filepath.Join(home, "bin", ".download-"+asset.Asset)); !errors.Is(err, os.ErrNotExist) {
+		t.Fatal("download temp was left behind")
+	}
+
+	winBody := []byte("from-windows")
+	winAsset, err := osvScannerAsset(OSVScannerVersion, Platform{GOOS: "windows", GOARCH: "arm64"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	winSum := sha256.Sum256(winBody)
+	winSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch {
+		case strings.HasSuffix(r.URL.Path, winAsset.Checksum):
+			_, _ = fmt.Fprintf(w, "%x  %s\n", winSum, winAsset.Asset)
+		case strings.HasSuffix(r.URL.Path, winAsset.Asset):
+			_, _ = w.Write(winBody)
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	t.Cleanup(winSrv.Close)
+	winHome := t.TempDir()
+	err = Bootstrap(context.Background(), Options{
+		Home:       winHome,
+		ToolsCSV:   "osv-scanner",
+		Client:     winSrv.Client(),
+		GitHubBase: winSrv.URL,
+		Platform:   Platform{GOOS: "windows", GOARCH: "arm64"},
+		Stdout:     ioDiscard(),
+		Stderr:     ioDiscard(),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	winGot, err := os.ReadFile(filepath.Join(winHome, "bin", "osv-scanner.exe"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(winGot) != "from-windows" {
+		t.Fatalf("windows binary %q", winGot)
+	}
+
+	mode = "bad"
+	badHome := t.TempDir()
+	err = Bootstrap(context.Background(), Options{
+		Home:       badHome,
+		ToolsCSV:   "osv-scanner",
+		Client:     srv.Client(),
+		GitHubBase: srv.URL,
+		Platform:   Platform{GOOS: "linux", GOARCH: "arm64"},
+		Stdout:     ioDiscard(),
+		Stderr:     ioDiscard(),
+	})
+	if !errors.Is(err, fetch.ErrChecksumMismatch) {
+		t.Fatalf("expected checksum mismatch, got %v", err)
+	}
+	if _, statErr := os.Stat(filepath.Join(badHome, "bin", "osv-scanner")); !errors.Is(statErr, os.ErrNotExist) {
+		t.Fatal("checksum mismatch left a binary")
+	}
+}
+
 func TestUnsupportedGrypeAndUnknownTool(t *testing.T) {
 	client := &http.Client{Transport: denyTransport{t: t}}
 	err := Bootstrap(context.Background(), Options{
@@ -516,16 +640,19 @@ func TestListInstalled(t *testing.T) {
 		t.Fatal(err)
 	}
 	text := buf.String()
-	if !strings.HasPrefix(text, "TOOL       PINNED     INSTALLED  PATH\n") {
+	if !strings.HasPrefix(text, "TOOL         PINNED     INSTALLED  PATH\n") {
 		t.Fatalf("header %q", text)
 	}
-	for _, version := range []string{GrypeVersion, SyftVersion, GitleaksVersion, SemgrepVersion, TrivyVersion} {
+	for _, version := range []string{GrypeVersion, SyftVersion, GitleaksVersion, SemgrepVersion, TrivyVersion, OSVScannerVersion} {
 		if !strings.Contains(text, version) {
 			t.Fatalf("missing %s in %s", version, text)
 		}
 	}
-	if strings.Count(text, "\n") != 6 {
+	if strings.Count(text, "\n") != 7 {
 		t.Fatalf("lines %q", text)
+	}
+	if !strings.Contains(text, "osv-scanner  "+OSVScannerVersion) {
+		t.Fatalf("osv-scanner row %q", text)
 	}
 }
 

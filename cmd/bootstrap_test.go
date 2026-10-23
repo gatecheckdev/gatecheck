@@ -39,7 +39,7 @@ func TestBootstrapCommandListAndPassthrough(t *testing.T) {
 	if err := root.Execute(); err != nil {
 		t.Fatal(err)
 	}
-	for _, version := range []string{bootstrap.GrypeVersion, bootstrap.SyftVersion, bootstrap.GitleaksVersion, bootstrap.SemgrepVersion, bootstrap.TrivyVersion} {
+	for _, version := range []string{bootstrap.GrypeVersion, bootstrap.SyftVersion, bootstrap.GitleaksVersion, bootstrap.SemgrepVersion, bootstrap.TrivyVersion, bootstrap.OSVScannerVersion} {
 		if !strings.Contains(out.String(), version) {
 			t.Fatalf("list missing %s\n%s", version, out.String())
 		}
