@@ -57,11 +57,19 @@ func run() int {
 	command := cmd.NewGatecheckCommand()
 
 	err := command.Execute()
+	return status(err)
+}
+
+func status(err error) int {
+	if err == nil {
+		return exitOk
+	}
+	var coder interface{ ExitCode() int }
+	if errors.As(err, &coder) {
+		return coder.ExitCode()
+	}
 	if errors.Is(err, gatecheck.ErrValidationFailure) {
 		return exitValidationFail
 	}
-	if err != nil {
-		return exitSystemFail
-	}
-	return exitOk
+	return exitSystemFail
 }
