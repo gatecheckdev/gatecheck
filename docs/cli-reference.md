@@ -67,7 +67,7 @@ gatecheck list [FILE]
 
 Aliases: `ls`, `print`.
 
-Prints a table for one report. The first filename is the one that is opened. Further filenames are ignored. Use `list-all` for more than one file.
+Prints a table for one report. The first filename is the one that is opened. Further filenames are ignored. Use `list-all` for more than one file. A Grype, CycloneDX, Semgrep, or Gitleaks report with no findings prints one sentence and no table: `No grype vulnerabilities`, `No cyclonedx vulnerabilities`, `No semgrep findings`, or `No gitleaks findings`. `--markdown` prints that same sentence.
 
 With no filename, the command reads standard input and `--input-type` is required.
 
@@ -91,7 +91,7 @@ grype bkimminich/juice-shop:latest -o json | gatecheck ls --input-type grype
 gatecheck list-all [FILE...]
 ```
 
-Prints each filename, then its table. A file whose name is not a supported `list-all` type is skipped with a warning. A missing file is skipped. A list error is logged and the command continues. The command exits 0 after the last file.
+Prints each filename, then its table, or one sentence when that report has no findings. A file whose name is not a supported `list-all` type is skipped with a warning. A missing file is skipped. A list error is logged and the command continues. The command exits 0 after the last file.
 
 - `--markdown`: print markdown tables.
 - `--epss`: download EPSS data and add it for filenames that contain `grype` or `cyclonedx`. The download happens per file and is cached until the published date changes. There is no `--epss-filename` flag. `GATECHECK_EPSS_URL` overrides the API. `GATECHECK_EPSS_FILENAME` is not read by this command. Requests send a User-Agent with the gatecheck version and project URL.
@@ -242,6 +242,36 @@ Prints a markdown guide for agents that run the CLI. The text is `docs/agent-gui
 ```shell
 gatecheck agent-guide
 gatecheck llm
+```
+
+## gatecheck update
+
+```
+gatecheck update
+```
+
+Aliases: `self-update`, `upgrade`.
+
+Replaces the running gatecheck binary with a release from <https://github.com/gatecheckdev/gatecheck/releases>. The running version is `main.cliVersion`, which goreleaser sets with ldflags. The default is the latest release.
+
+Release archives are named `gatecheck_<version>_<os>_<arch>.tar.gz` for darwin, linux, and windows. The version in the name has no leading `v`. Windows archives are `tar.gz`, the same as the other operating systems. gatecheck downloads `checksums.txt` and checks the SHA256 before it replaces the binary. A missing or different checksum stops the update.
+
+The new file is written next to the resolved executable (`os.Executable`, then `filepath.EvalSymlinks`) and renamed into place. On Windows the running executable is renamed aside first, because a running `.exe` cannot be overwritten. If that directory is not writable, the command stops and tells you to re-run with sudo or to reinstall into a directory you can write.
+
+A build whose version is unset, `dev`, `[Not Provided]`, or otherwise not a release version does not update unless `--version` is set.
+
+- `--check`: print the current version and the latest release, then exit 0. The archive is not downloaded.
+- `--version vX.Y.Z`: install that release instead of the latest. With `--check`, print that release as the target and do not download.
+- `-y`, `--yes`: do not ask for confirmation.
+
+When stdin is a terminal and `--yes` is not set, gatecheck asks before replacing the binary. When stdin is not a terminal, the update runs only with `--yes`.
+
+`GITHUB_TOKEN`, when set, is sent on the GitHub requests. The client uses the default transport, so the proxy environment variables apply. Requests use the same gatecheck User-Agent as EPSS downloads. No other command contacts GitHub for updates.
+
+```shell
+gatecheck update --check
+gatecheck update
+gatecheck update --version v0.8.1 --yes
 ```
 
 ## gatecheck completion

@@ -40,7 +40,9 @@ Columns:
 - Coverage: lines, functions, and branches covered, with a percent in the footer. The percent is only for display. The config file uses a ratio. See [Configuration](./configuration.md).
 - Bundle: label, SHA-256 digest, tags, size.
 
-`list` opens the first filename only. `list-all` walks every filename, prints the name, then the table, and skips files it does not support. Coverage files are in that skipped set. `--epss` on `list-all` always uses the API (`GATECHECK_EPSS_URL` to override it).
+A Grype, CycloneDX, Semgrep, or Gitleaks report with no findings prints one sentence and no table. The lines are `No grype vulnerabilities`, `No cyclonedx vulnerabilities`, `No semgrep findings`, and `No gitleaks findings`. `--markdown` prints that same line.
+
+`list` opens the first filename only. `list-all` walks every filename, prints the name, then the table or that sentence, and skips files it does not support. Coverage files are in that skipped set. `--epss` on `list-all` always uses the API (`GATECHECK_EPSS_URL` to override it).
 
 ```shell
 gatecheck list-all grype-scan-report.json semgrep-report.json

@@ -23,6 +23,13 @@ curl -L <OS Specific Release>.tar.gz | tar xz
 
 The Gatecheck CLI supports `--help` for every command.
 
+Update a release binary in place. `--check` only prints the current and latest versions.
+
+```shell
+gatecheck update --check
+gatecheck update
+```
+
 Generate a configuration file with the default thresholds. Every rule starts disabled, and coverage thresholds start at `0`.
 
 ```shell

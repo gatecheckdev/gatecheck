@@ -106,6 +106,7 @@ func NewGatecheckCommand() *cobra.Command {
 			newPassthroughCommand("semgrep", "Run osemgrep from the managed semgrep wheel"),
 			newPassthroughCommand("osemgrep", "Run osemgrep from the managed semgrep wheel"),
 		)
+		addCommandOnce(gatecheckCmd, updateCmd)
 	})
 	return gatecheckCmd
 }

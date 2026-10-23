@@ -1,8 +1,7 @@
 // Package fetch downloads files and checks SHA-256 digests.
 //
-// gatecheck bootstrap uses it. A self-update command can call the same helpers
-// instead of copying them: Get, DownloadToFile, CheckSHA256, ParseChecksums,
-// and AtomicWrite.
+// gatecheck bootstrap uses it for GitHub release assets and PyPI wheels.
+// gatecheck update downloads its own release through pkg/update.
 package fetch
 
 import (

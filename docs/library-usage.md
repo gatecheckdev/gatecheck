@@ -10,7 +10,7 @@ import "github.com/gatecheckdev/gatecheck/pkg/gatecheck"
 - `NewConfigDecoder` reads `.yaml`, `.yml`, `.json`, or `.toml`. The extension selects the format.
 - `NewConfigEncoder` writes a config. Pass `.yaml`, `.yml`, `.json`, or `.toml`, including the dot.
 - `Validate` takes the config, a reader, and the filename. The filename selects the report type with the same words as the CLI.
-- `List` writes a table. `WithDisplayFormat("markdown")` matches `--markdown`. `WithEPSS` matches `--epss` and takes an open CSV file or a URL.
+- `List` writes a table. A Grype, CycloneDX, Semgrep, or Gitleaks report with no findings writes one sentence instead, such as `No gitleaks findings`. `WithDisplayFormat("markdown")` matches `--markdown` and writes that same sentence when the report is empty. `WithEPSS` matches `--epss` and takes an open CSV file or a URL.
 - `CreateBundle`, `AppendToBundle`, and `RemoveFromBundle` are `bundle create`, `bundle add`, and `bundle remove`.
 - `DownloadEPSS` and `DownloadKEV` write the API payloads. `WithEPSSURL`, `WithKEVURL`, `WithEPSSFile`, and `WithKEVFile` override the defaults.
 

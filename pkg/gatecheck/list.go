@@ -19,6 +19,12 @@ import (
 	"github.com/olekukonko/tablewriter"
 )
 
+// emptyReport means the report listed successfully and has no findings.
+// List prints the text and does not render a table.
+type emptyReport string
+
+func (e emptyReport) Error() string { return string(e) }
+
 type listOptions struct {
 	displayFormat string
 	epssData      *epss.Data
@@ -113,6 +119,11 @@ func List(dst io.Writer, src io.Reader, inputFilename string, options ...ListOpt
 	}
 
 	if err != nil {
+		var empty emptyReport
+		if errors.As(err, &empty) {
+			_, err = fmt.Fprintln(dst, string(empty))
+			return err
+		}
 		return err
 	}
 
@@ -172,16 +183,13 @@ func ListGrypeReport(table *tablewriter.Table, src io.Reader) error {
 
 	header := []string{"Grype Severity", "Package", "Version", "Link"}
 
+	if len(report.Matches) == 0 {
+		return emptyReport("No grype vulnerabilities")
+	}
+
 	table.Header(header)
 	if err := matrix.Table(table); err != nil {
 		return err
-	}
-
-	if len(report.Matches) == 0 {
-		footer := make([]string, len(header))
-		footer[len(header)-1] = "NO GRYPE VULNERABILITIES"
-		table.Footer(footer)
-		format.SetBorderless(table)
 	}
 
 	return nil
@@ -228,18 +236,15 @@ func listGrypeWithEPSS(table *tablewriter.Table, src io.Reader, epssData *epss.D
 		"Link",
 	}
 
+	if len(report.Matches) == 0 {
+		return emptyReport("No grype vulnerabilities")
+	}
+
 	sort.Sort(matrix)
 
 	table.Header(header)
 	if err := matrix.Table(table); err != nil {
 		return err
-	}
-
-	if len(report.Matches) == 0 {
-		footer := make([]string, len(header))
-		footer[len(header)-1] = "NO GRYPE VULNERABILITIES"
-		table.Footer(footer)
-		format.SetBorderless(table)
 	}
 
 	return nil
@@ -266,19 +271,16 @@ func ListCyclonedx(table *tablewriter.Table, src io.Reader) error {
 		matrix.Append([]string{vul.ID, severity, pkgs, link})
 	}
 
+	if len(report.Vulnerabilities) == 0 {
+		return emptyReport("No cyclonedx vulnerabilities")
+	}
+
 	sort.Sort(matrix)
 
 	header := []string{"Cyclonedx CVE ID", "Severity", "Package", "Link"}
 	table.Header(header)
 	if err := matrix.Table(table); err != nil {
 		return err
-	}
-
-	if len(report.Vulnerabilities) == 0 {
-		footer := make([]string, len(header))
-		footer[len(header)-1] = "NO CYCLONEDX VULNERABILITIES"
-		table.Footer(footer)
-		format.SetBorderless(table)
 	}
 
 	return nil
@@ -317,19 +319,16 @@ func listCyclonedxWithEPSS(table *tablewriter.Table, src io.Reader, epssData *ep
 		matrix.Append(row)
 	}
 
+	if len(report.Vulnerabilities) == 0 {
+		return emptyReport("No cyclonedx vulnerabilities")
+	}
+
 	sort.Sort(matrix)
 
 	header := []string{"Cyclonedx CVE ID", "Severity", "EPSS Score", "EPSS Prctl", "affected Packages", "Link"}
 	table.Header(header)
 	if err := matrix.Table(table); err != nil {
 		return err
-	}
-
-	if len(report.Vulnerabilities) == 0 {
-		footer := make([]string, len(header))
-		footer[len(header)-1] = "NO CYCLONEDX VULNERABILITIES"
-		table.Footer(footer)
-		format.SetBorderless(table)
 	}
 
 	return nil
@@ -365,19 +364,16 @@ func ListSemgrep(table *tablewriter.Table, src io.Reader) error {
 		matrix.Append(row)
 	}
 
+	if len(report.Results) == 0 {
+		return emptyReport("No semgrep findings")
+	}
+
 	sort.Sort(matrix)
 
 	header := []string{"Semgrep Check ID", "Owasp IDs", "Severity", "Impact", "link"}
 	table.Header(header)
 	if err := matrix.Table(table); err != nil {
 		return err
-	}
-
-	if len(report.Results) == 0 {
-		footer := make([]string, len(header))
-		footer[len(header)-1] = "NO SEMGREP FINDINGS"
-		table.Footer(footer)
-		format.SetBorderless(table)
 	}
 
 	return nil
@@ -387,6 +383,10 @@ func listGitleaks(table *tablewriter.Table, src io.Reader) error {
 	report := artifacts.GitLeaksReportMin{}
 	if err := json.NewDecoder(src).Decode(&report); err != nil {
 		return err
+	}
+
+	if report.Count() == 0 {
+		return emptyReport("No gitleaks findings")
 	}
 
 	header := []string{"Gitleaks Rule ID", "File", "Commit", "Start Line"}
@@ -401,13 +401,6 @@ func listGitleaks(table *tablewriter.Table, src io.Reader) error {
 		if err := table.Append(row); err != nil {
 			return err
 		}
-	}
-
-	if report.Count() == 0 {
-		footer := make([]string, len(header))
-		footer[len(header)-1] = "NO GITLEAKS FINDINGS"
-		table.Footer(footer)
-		format.SetBorderless(table)
 	}
 
 	return nil
