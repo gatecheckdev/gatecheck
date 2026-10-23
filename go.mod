@@ -5,7 +5,7 @@ go 1.26.0
 toolchain go1.26.10
 
 require (
-	github.com/dustin/go-humanize v1.0.1
+	github.com/dustin/go-humanize v1.1.0
 	github.com/easy-up/go-coverage v0.0.0-20241018034313-3de592d59a78
 	github.com/gatecheckdev/configkit v0.0.0-20240517005856-da14389dd06a
 	github.com/lmittmann/tint v1.0.7
