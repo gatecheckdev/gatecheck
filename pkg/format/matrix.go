@@ -26,8 +26,8 @@ func (m *SortableMatrix) Matrix() [][]string {
 	return m.data
 }
 
-func (m *SortableMatrix) Table(table *tablewriter.Table) {
-	table.AppendBulk(m.data)
+func (m *SortableMatrix) Table(table *tablewriter.Table) error {
+	return table.Bulk(m.data)
 }
 
 func (m *SortableMatrix) Len() int {

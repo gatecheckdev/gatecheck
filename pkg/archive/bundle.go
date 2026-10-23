@@ -17,8 +17,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/olekukonko/tablewriter"
-
 	"github.com/dustin/go-humanize"
 	"github.com/gatecheckdev/gatecheck/pkg/format"
 )
@@ -161,10 +159,15 @@ func (b *Bundle) Content() string {
 	sort.Sort(matrix)
 	buf := new(bytes.Buffer)
 	header := []string{"Label", "Digest", "Tags", "Size"}
-	table := tablewriter.NewWriter(buf)
-	table.SetHeader(header)
-	matrix.Table(table)
-	table.Render()
+	table := format.NewTable(buf)
+	table.Header(header)
+	if err := matrix.Table(table); err != nil {
+		slog.Error("append bundle rows", "error", err)
+		return buf.String()
+	}
+	if err := table.Render(); err != nil {
+		slog.Error("render bundle table", "error", err)
+	}
 	return buf.String()
 }
 
