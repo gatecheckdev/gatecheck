@@ -5,7 +5,7 @@
 Before installing Gatecheck, make sure your system meets the following requirements:
 
 - **Operating System**: Windows, macOS, or Linux.
-- **Go**: Version 1.23 or newer (only required if you plan to build the application from source).
+- **Go**: Version 1.26.0 or newer (only required if you plan to build the application from source).
 
 ## Installation Options
 
