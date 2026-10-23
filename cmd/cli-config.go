@@ -22,6 +22,8 @@ type metaConfig struct {
 	EPSSURL         configkit.MetaField
 	KEVURL          configkit.MetaField
 	EPSSFilename    configkit.MetaField
+	EPSSCacheDir    configkit.MetaField
+	EPSSNoCache     configkit.MetaField
 	KEVFilename     configkit.MetaField
 	Verbose         configkit.MetaField
 	Silent          configkit.MetaField
@@ -109,6 +111,37 @@ var RuntimeConfig = metaConfig{
 			metadataActionInputName: "epss_filename",
 		},
 	},
+	EPSSCacheDir: configkit.MetaField{
+		FieldName:    "EPSSCacheDir",
+		EnvKey:       "GATECHECK_EPSS_CACHE_DIR",
+		DefaultValue: "",
+		FlagValueP:   new(string),
+		CobraSetupFunc: func(f configkit.MetaField, cmd *cobra.Command) {
+			valueP := f.FlagValueP.(*string)
+			usage := f.Metadata[metadataFlagUsage]
+			cmd.Flags().StringVar(valueP, "epss-cache-dir", "", usage)
+		},
+		Metadata: map[string]string{
+			metadataFlagUsage:       "cache directory for EPSS downloads (default: user cache dir, env GATECHECK_EPSS_CACHE_DIR)",
+			metadataFieldType:       "string",
+			metadataActionInputName: "epss_cache_dir",
+		},
+	},
+	EPSSNoCache: configkit.MetaField{
+		FieldName:    "EPSSNoCache",
+		DefaultValue: false,
+		FlagValueP:   new(bool),
+		CobraSetupFunc: func(f configkit.MetaField, cmd *cobra.Command) {
+			valueP := f.FlagValueP.(*bool)
+			usage := f.Metadata[metadataFlagUsage]
+			cmd.Flags().BoolVar(valueP, "epss-no-cache", false, usage)
+		},
+		Metadata: map[string]string{
+			metadataFlagUsage:       "download EPSS on every run instead of using the local cache (env GATECHECK_EPSS_CACHE=off)",
+			metadataFieldType:       "bool",
+			metadataActionInputName: "epss_no_cache",
+		},
+	},
 	KEVFilename: configkit.MetaField{
 		FieldName:    "KEVFilename",
 		EnvKey:       "GATECHECK_EPSS_FILENAME",
@@ -189,4 +222,15 @@ var RuntimeConfig = metaConfig{
 			metadataActionInputName: "audit",
 		},
 	},
+}
+
+func epssCacheOptions() []gatecheck.Option {
+	var opts []gatecheck.Option
+	if p, ok := RuntimeConfig.EPSSNoCache.FlagValueP.(*bool); ok && p != nil && *p {
+		opts = append(opts, gatecheck.WithEPSSCache(false))
+	}
+	if p, ok := RuntimeConfig.EPSSCacheDir.FlagValueP.(*string); ok && p != nil && strings.TrimSpace(*p) != "" {
+		opts = append(opts, gatecheck.WithEPSSCacheDir(*p))
+	}
+	return opts
 }

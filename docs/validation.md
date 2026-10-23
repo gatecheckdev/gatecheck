@@ -24,3 +24,5 @@ gatecheck validate config.yaml bundle.gcb
 6. Severity Limit
 
 See Configuration for details.
+
+When a rule needs EPSS scores and `--epss-filename` is not set, gatecheck downloads the current EPSS file and caches it until the published date changes.

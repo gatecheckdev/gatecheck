@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Require Go 1.26, the oldest release still supported upstream. CI tests Go 1.26 and 1.27.
 - Add Dependabot for weekly Go module and GitHub Actions updates.
+- Cache the current EPSS file and send a gatecheck User-Agent on download
 
 ## [0.8.1] - 2025-04-09
 
