@@ -97,6 +97,11 @@ tasks:
     cmds:
       - mdbook serve
 
+  serve-website:
+    desc: "Serve the frontend website"
+    cmds:
+      - python3 -m http.server --directory ./website 8000
+
   all:
     desc: "Run format, test, and build"
     deps: [format, test, build]
