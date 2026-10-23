@@ -15,7 +15,8 @@ var downloadEPSSCmd = &cobra.Command{
 	Short: "download epss data from FIRST API as csv to STDOUT",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		url := RuntimeConfig.EPSSURL.Value().(string)
-		return gatecheck.DownloadEPSS(cmd.OutOrStdout(), gatecheck.WithEPSSURL(url))
+		opts := append([]gatecheck.Option{gatecheck.WithEPSSURL(url)}, epssCacheOptions()...)
+		return gatecheck.DownloadEPSS(cmd.OutOrStdout(), opts...)
 	},
 }
 
@@ -30,6 +31,8 @@ var downloadKEVCmd = &cobra.Command{
 
 func newDownloadCommand() *cobra.Command {
 	RuntimeConfig.EPSSURL.SetupCobra(downloadEPSSCmd)
+	RuntimeConfig.EPSSCacheDir.SetupCobra(downloadEPSSCmd)
+	RuntimeConfig.EPSSNoCache.SetupCobra(downloadEPSSCmd)
 	RuntimeConfig.KEVURL.SetupCobra(downloadKEVCmd)
 	downloadCmd.AddCommand(downloadEPSSCmd, downloadKEVCmd)
 	return downloadCmd

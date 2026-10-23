@@ -32,14 +32,22 @@ func WithDisplayFormat(displayFormat string) func(*listOptions) {
 	}
 }
 
-func WithEPSS(epssFile *os.File, epssURL string) (func(*listOptions), error) {
+func WithEPSS(epssFile *os.File, epssURL string, optionFuncs ...optionFunc) (func(*listOptions), error) {
 	data := &epss.Data{}
 	f := func(o *listOptions) {
 		o.epssData = data
 	}
 
+	options := defaultOptions()
+	for _, optionFunc := range optionFuncs {
+		optionFunc(options)
+	}
+	if epssURL != "" {
+		options.epssURL = epssURL
+	}
+
 	if epssFile == nil {
-		err := epss.FetchData(data, epss.WithURL(epssURL))
+		err := epss.FetchData(data, options.epssDownloadOptions()...)
 		return f, err
 	}
 

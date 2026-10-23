@@ -12,6 +12,7 @@ import (
 	"github.com/lmittmann/tint"
 
 	"github.com/gatecheckdev/gatecheck/cmd"
+	"github.com/gatecheckdev/gatecheck/pkg/epss"
 	"github.com/gatecheckdev/gatecheck/pkg/gatecheck"
 )
 
@@ -47,6 +48,7 @@ func run() int {
 		GoVersion:      runtime.Version(),
 		Compiler:       runtime.Compiler,
 	}
+	epss.SetVersion(cliVersion)
 
 	// Colorized logging output for the CLI
 	logHandler := tint.NewHandler(os.Stderr, &tint.Options{Level: cmd.LogLeveler, TimeFormat: time.TimeOnly})
