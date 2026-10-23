@@ -1,0 +1,31 @@
+# gatecheck
+
+> Gatecheck compares a scanner report to thresholds in a config file and exits non-zero when a limit is crossed. One binary. Stateless.
+
+Report type comes from a lowercase word in the filename. Coverage thresholds are ratios: 0.8 is 80 percent. Pass the config with `gatecheck validate --config`. Print the agent guide with `gatecheck agent-guide`.
+
+## Docs
+
+- [Installation](https://docs.gatecheck.dev/installation.html): install a release binary or build from source
+- [Usage](https://docs.gatecheck.dev/usage.html): commands, logs, and exit status
+- [CLI reference](https://docs.gatecheck.dev/cli-reference.html): flags, subcommands, and environment variables
+- [Supported reports](https://docs.gatecheck.dev/supported-reports.html): filename rules that select the report type
+- [Configuration](https://docs.gatecheck.dev/configuration.html): config keys and threshold units
+- [Validation](https://docs.gatecheck.dev/validation.html): rule order and exit codes
+- [List reports](https://docs.gatecheck.dev/list-reports.html): tables, standard input, and EPSS columns
+- [Bundles](https://docs.gatecheck.dev/gatecheck-bundle.html): create, add, and remove
+- [Examples](https://docs.gatecheck.dev/examples.html): config, bundle, audit, and standard input
+- [Library](https://docs.gatecheck.dev/library-usage.html): Go package next to the CLI
+
+## Repository
+
+- [README](https://github.com/gatecheckdev/gatecheck/blob/main/README.md): overview and first commands
+- [Releases](https://github.com/gatecheckdev/gatecheck/releases): prebuilt binaries
+- [Changelog](https://github.com/gatecheckdev/gatecheck/blob/main/CHANGELOG.md): version history
+- [Agent guide](https://raw.githubusercontent.com/gatecheckdev/gatecheck/main/docs/agent-guide.md): markdown printed by `gatecheck agent-guide`
+- [Full agent guide](https://gatecheck.dev/llms-full.txt): the same guide served from this site
+
+## Optional
+
+- [Homepage](https://gatecheck.dev/): project site
+- [Title page](https://docs.gatecheck.dev/): documentation home

@@ -57,7 +57,7 @@ func WithEPSS(epssFile *os.File, epssURL string, optionFuncs ...optionFunc) (fun
 }
 
 func List(dst io.Writer, src io.Reader, inputFilename string, options ...ListOptionFunc) error {
-	table := tablewriter.NewWriter(dst)
+	table := format.NewTable(dst)
 	var err error
 	o := &listOptions{}
 	for _, f := range options {
@@ -118,12 +118,12 @@ func List(dst io.Writer, src io.Reader, inputFilename string, options ...ListOpt
 
 	switch strings.ToLower(strings.TrimSpace(o.displayFormat)) {
 	case "markdown", "md":
-		table.SetBorders(tablewriter.Border{Left: true, Top: false, Right: true, Bottom: false})
-		table.SetCenterSeparator("|")
-		table.SetAutoWrapText(false)
+		format.SetMarkdown(table)
 	}
 
-	table.Render()
+	if err := table.Render(); err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -141,13 +141,15 @@ func listCoverage(table *tablewriter.Table, inputFilename string, src io.Reader)
 	}
 
 	header := []string{"Lines Covered", "Functions Covered", "Branches Covered"}
-	table.SetHeader(header)
-	table.Append([]string{strconv.Itoa(report.CoveredLines), strconv.Itoa(report.CoveredFunctions), strconv.Itoa(report.CoveredBranches)})
+	table.Header(header)
+	if err := table.Append([]string{strconv.Itoa(report.CoveredLines), strconv.Itoa(report.CoveredFunctions), strconv.Itoa(report.CoveredBranches)}); err != nil {
+		return err
+	}
 
 	lineCoverageStr := fmt.Sprintf("%0.2f%%", (float32(report.CoveredLines)/float32(report.TotalLines))*100)
 	funcCoverageStr := fmt.Sprintf("%0.2f%%", (float32(report.CoveredFunctions)/float32(report.TotalFunctions))*100)
 	branchCoverageStr := fmt.Sprintf("%0.2f%%", (float32(report.CoveredBranches)/float32(report.TotalBranches))*100)
-	table.SetFooter([]string{lineCoverageStr, funcCoverageStr, branchCoverageStr})
+	table.Footer([]string{lineCoverageStr, funcCoverageStr, branchCoverageStr})
 
 	return nil
 }
@@ -170,14 +172,16 @@ func ListGrypeReport(table *tablewriter.Table, src io.Reader) error {
 
 	header := []string{"Grype Severity", "Package", "Version", "Link"}
 
-	table.SetHeader(header)
-	matrix.Table(table)
+	table.Header(header)
+	if err := matrix.Table(table); err != nil {
+		return err
+	}
 
 	if len(report.Matches) == 0 {
 		footer := make([]string, len(header))
-		footer[len(header)-1] = "No Grype Vulnerabilities"
-		table.SetFooter(footer)
-		table.SetBorder(false)
+		footer[len(header)-1] = "NO GRYPE VULNERABILITIES"
+		table.Footer(footer)
+		format.SetBorderless(table)
 	}
 
 	return nil
@@ -226,14 +230,16 @@ func listGrypeWithEPSS(table *tablewriter.Table, src io.Reader, epssData *epss.D
 
 	sort.Sort(matrix)
 
-	table.SetHeader(header)
-	matrix.Table(table)
+	table.Header(header)
+	if err := matrix.Table(table); err != nil {
+		return err
+	}
 
 	if len(report.Matches) == 0 {
 		footer := make([]string, len(header))
-		footer[len(header)-1] = "No Grype Vulnerabilities"
-		table.SetFooter(footer)
-		table.SetBorder(false)
+		footer[len(header)-1] = "NO GRYPE VULNERABILITIES"
+		table.Footer(footer)
+		format.SetBorderless(table)
 	}
 
 	return nil
@@ -263,14 +269,16 @@ func ListCyclonedx(table *tablewriter.Table, src io.Reader) error {
 	sort.Sort(matrix)
 
 	header := []string{"Cyclonedx CVE ID", "Severity", "Package", "Link"}
-	table.SetHeader(header)
-	matrix.Table(table)
+	table.Header(header)
+	if err := matrix.Table(table); err != nil {
+		return err
+	}
 
 	if len(report.Vulnerabilities) == 0 {
 		footer := make([]string, len(header))
-		footer[len(header)-1] = "No Cyclonedx Vulnerabilities"
-		table.SetFooter(footer)
-		table.SetBorder(false)
+		footer[len(header)-1] = "NO CYCLONEDX VULNERABILITIES"
+		table.Footer(footer)
+		format.SetBorderless(table)
 	}
 
 	return nil
@@ -312,14 +320,16 @@ func listCyclonedxWithEPSS(table *tablewriter.Table, src io.Reader, epssData *ep
 	sort.Sort(matrix)
 
 	header := []string{"Cyclonedx CVE ID", "Severity", "EPSS Score", "EPSS Prctl", "affected Packages", "Link"}
-	table.SetHeader(header)
-	matrix.Table(table)
+	table.Header(header)
+	if err := matrix.Table(table); err != nil {
+		return err
+	}
 
 	if len(report.Vulnerabilities) == 0 {
 		footer := make([]string, len(header))
-		footer[len(header)-1] = "No Cyclonedx Vulnerabilities"
-		table.SetFooter(footer)
-		table.SetBorder(false)
+		footer[len(header)-1] = "NO CYCLONEDX VULNERABILITIES"
+		table.Footer(footer)
+		format.SetBorderless(table)
 	}
 
 	return nil
@@ -358,14 +368,16 @@ func ListSemgrep(table *tablewriter.Table, src io.Reader) error {
 	sort.Sort(matrix)
 
 	header := []string{"Semgrep Check ID", "Owasp IDs", "Severity", "Impact", "link"}
-	table.SetHeader(header)
-	matrix.Table(table)
+	table.Header(header)
+	if err := matrix.Table(table); err != nil {
+		return err
+	}
 
 	if len(report.Results) == 0 {
 		footer := make([]string, len(header))
-		footer[len(header)-1] = "No Semgrep Findings"
-		table.SetFooter(footer)
-		table.SetBorder(false)
+		footer[len(header)-1] = "NO SEMGREP FINDINGS"
+		table.Footer(footer)
+		format.SetBorderless(table)
 	}
 
 	return nil
@@ -378,7 +390,7 @@ func listGitleaks(table *tablewriter.Table, src io.Reader) error {
 	}
 
 	header := []string{"Gitleaks Rule ID", "File", "Commit", "Start Line"}
-	table.SetHeader(header)
+	table.Header(header)
 	for _, finding := range report {
 		row := []string{
 			finding.RuleID,
@@ -386,14 +398,16 @@ func listGitleaks(table *tablewriter.Table, src io.Reader) error {
 			finding.CommitShort(),
 			fmt.Sprintf("%d", finding.StartLine),
 		}
-		table.Append(row)
+		if err := table.Append(row); err != nil {
+			return err
+		}
 	}
 
 	if report.Count() == 0 {
 		footer := make([]string, len(header))
-		footer[len(header)-1] = "No Gitleaks Findings"
-		table.SetFooter(footer)
-		table.SetBorder(false)
+		footer[len(header)-1] = "NO GITLEAKS FINDINGS"
+		table.Footer(footer)
+		format.SetBorderless(table)
 	}
 
 	return nil

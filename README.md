@@ -35,6 +35,8 @@ Validate a report. The config is a flag. The report type comes from the filename
 gatecheck validate --config gatecheck.yaml grype-report.json
 ```
 
+`gatecheck agent-guide` (alias `llm`) prints a markdown guide for coding agents. The same text is `docs/agent-guide.md`.
+
 ### Summarize Reports with List
 
 ```shell

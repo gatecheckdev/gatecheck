@@ -98,6 +98,7 @@ func NewGatecheckCommand() *cobra.Command {
 			newBundleCommand(),
 			newValidateCommand(),
 			newDownloadCommand(),
+			newAgentGuideCommand(),
 			newBootstrapCommand(),
 			newPassthroughCommand("grype", "Run the managed grype scanner"),
 			newPassthroughCommand("syft", "Run the managed syft scanner"),

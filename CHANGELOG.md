@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [UNRELEASED]
 
+### Added
+
+- `gatecheck agent-guide` (alias `llm`) prints a markdown guide for coding agents. The text is `docs/agent-guide.md`.
+
 ### Changed
 
 - Require Go 1.26, the oldest release still supported upstream. CI tests Go 1.26 and 1.27.
