@@ -1,8 +1,8 @@
 module github.com/gatecheckdev/gatecheck
 
-go 1.23.0
+go 1.26.0
 
-toolchain go1.23.3
+toolchain go1.26.10
 
 require (
 	github.com/dustin/go-humanize v1.0.1

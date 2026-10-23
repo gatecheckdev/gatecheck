@@ -109,12 +109,12 @@ tasks:
   release-snapshot:
     desc: "Create a snapshot release"
     cmds:
-      - goreleaser release --snapshot --rm-dist
+      - goreleaser release --snapshot --clean
 
   release:
     desc: "Create a release"
     cmds:
-      - goreleaser release --rm-dist
+      - goreleaser release --clean
 
   clean:
     desc: "Clean up build artifacts"
