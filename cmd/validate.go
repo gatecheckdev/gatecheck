@@ -52,14 +52,18 @@ var validateCmd = &cobra.Command{
 		return nil
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		err := gatecheck.Validate(
-			RuntimeConfig.gatecheckConfig,
-			RuntimeConfig.targetFile,
-			args[0],
+		opts := []gatecheck.Option{
 			gatecheck.WithEPSSURL(RuntimeConfig.EPSSURL.Value().(string)),
 			gatecheck.WithKEVURL(RuntimeConfig.KEVURL.Value().(string)),
 			gatecheck.WithEPSSFile(RuntimeConfig.epssFile), // TODO: fix this
 			gatecheck.WithKEVFile(RuntimeConfig.kevFile),
+		}
+		opts = append(opts, epssCacheOptions()...)
+		err := gatecheck.Validate(
+			RuntimeConfig.gatecheckConfig,
+			RuntimeConfig.targetFile,
+			args[0],
+			opts...,
 		)
 
 		audit := RuntimeConfig.Audit.Value().(bool)
@@ -77,6 +81,8 @@ func newValidateCommand() *cobra.Command {
 
 	RuntimeConfig.ConfigFilename.SetupCobra(validateCmd)
 	RuntimeConfig.EPSSFilename.SetupCobra(validateCmd)
+	RuntimeConfig.EPSSCacheDir.SetupCobra(validateCmd)
+	RuntimeConfig.EPSSNoCache.SetupCobra(validateCmd)
 	RuntimeConfig.KEVFilename.SetupCobra(validateCmd)
 	RuntimeConfig.Audit.SetupCobra(validateCmd)
 

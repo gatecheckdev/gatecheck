@@ -33,6 +33,8 @@ Rules run in this order. A failure returns immediately, except where a rule only
 
 EPSS scores in the config are ratios from 0 to 1.
 
+When a rule needs EPSS scores and `--epss-filename` is not set, gatecheck downloads the current EPSS file and caches it until the published date changes. Requests send a User-Agent with the gatecheck version and project URL.
+
 ## Semgrep
 
 1. Findings whose severity limit is disabled are dropped.

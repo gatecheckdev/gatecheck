@@ -73,9 +73,11 @@ With no filename, the command reads standard input and `--input-type` is require
 
 - `-i`, `--input-type`: type word used when reading standard input. It is matched with the same rules as a filename. `grype`, `cyclonedx`, `semgrep`, `gitleaks`, `syft`, `bundle`, and the coverage words all work. See [Supported Reports](./supported-reports.md).
 - `--markdown`: print a markdown table.
-- `--epss`: add EPSS score and percentile columns. This changes the table for Grype and CycloneDX. Other report types still list, and the EPSS data is not shown. With no local file, gatecheck downloads the EPSS CSV.
+- `--epss`: add EPSS score and percentile columns. This changes the table for Grype and CycloneDX. Other report types still list, and the EPSS data is not shown. With no local file, gatecheck downloads the current EPSS CSV and caches it until the published date changes. Requests send a User-Agent with the gatecheck version and project URL.
 - `--epss-filename`: read that CSV instead of calling the API. `GATECHECK_EPSS_FILENAME` is the same setting.
 - `--epss-url`: EPSS API URL. An empty value uses `https://epss.cyentia.com`. `GATECHECK_EPSS_URL` is the same setting.
+- `--epss-cache-dir`: cache directory for that download. `GATECHECK_EPSS_CACHE_DIR` is the same setting.
+- `--epss-no-cache`: download on every run. `GATECHECK_EPSS_CACHE=off` does the same.
 
 ```shell
 gatecheck list grype-report.json
@@ -92,7 +94,9 @@ gatecheck list-all [FILE...]
 Prints each filename, then its table. A file whose name is not a supported `list-all` type is skipped with a warning. A missing file is skipped. A list error is logged and the command continues. The command exits 0 after the last file.
 
 - `--markdown`: print markdown tables.
-- `--epss`: download EPSS data and add it for filenames that contain `grype` or `cyclonedx`. The download happens per file. There is no `--epss-filename` flag. `GATECHECK_EPSS_URL` overrides the API. `GATECHECK_EPSS_FILENAME` is not read by this command.
+- `--epss`: download EPSS data and add it for filenames that contain `grype` or `cyclonedx`. The download happens per file and is cached until the published date changes. There is no `--epss-filename` flag. `GATECHECK_EPSS_URL` overrides the API. `GATECHECK_EPSS_FILENAME` is not read by this command. Requests send a User-Agent with the gatecheck version and project URL.
+- `--epss-cache-dir`: cache directory for that download. `GATECHECK_EPSS_CACHE_DIR` is the same setting.
+- `--epss-no-cache`: download on every run. `GATECHECK_EPSS_CACHE=off` does the same.
 
 ## gatecheck validate
 
@@ -104,12 +108,16 @@ gatecheck validate [FILE]
 
 - `-f`, `--config`: config file. `GATECHECK_CONFIG_FILENAME` is the same setting. With neither, the built-in default config is used (every rule disabled, coverage thresholds `0`).
 - `--epss-filename`: EPSS CSV to use when an EPSS rule is enabled. `GATECHECK_EPSS_FILENAME` is the same setting.
+- `--epss-cache-dir`: cache directory used when that CSV is downloaded. `GATECHECK_EPSS_CACHE_DIR` is the same setting.
+- `--epss-no-cache`: download on every run. `GATECHECK_EPSS_CACHE=off` does the same.
 - `--kev-filename`: CISA KEV JSON to use when a KEV rule is enabled.
 - `-a`, `--audit`: print the error from the check and exit 0. A missing report, a missing config, or a bad flag still exits 255.
 
 `validate` has no `--epss-url` or `--kev-url` flag. `GATECHECK_EPSS_URL` and `GATECHECK_KEV_URL` still override those APIs when the matching file flag is empty. The defaults are the same URLs `download` uses.
 
-EPSS data is loaded only when an EPSS limit or EPSS risk acceptance rule is enabled. KEV data is loaded only when `kevLimitEnabled` is true for Grype or CycloneDX.
+EPSS data is loaded only when an EPSS limit or EPSS risk acceptance rule is enabled. When `--epss-filename` is not set, gatecheck downloads the current EPSS file and caches it until the published date changes. Requests send a User-Agent with the gatecheck version and project URL.
+
+KEV data is loaded only when `kevLimitEnabled` is true for Grype or CycloneDX.
 
 ```shell
 gatecheck validate --config gatecheck.yaml grype-report.json
@@ -160,7 +168,11 @@ gatecheck download epss
 
 Writes the FIRST.org EPSS CSV to standard output.
 
+EPSS scores are cached in the user cache directory, under `gatecheck/epss`. gatecheck checks the redirect to the dated filename and downloads the CSV only when that file is not already cached. Requests send a User-Agent with the gatecheck version and project URL.
+
 - `--epss-url`: API URL. An empty value uses `https://epss.cyentia.com`. `GATECHECK_EPSS_URL` is the same setting.
+- `--epss-cache-dir`: cache directory. `GATECHECK_EPSS_CACHE_DIR` is the same setting.
+- `--epss-no-cache`: download on every run. `GATECHECK_EPSS_CACHE=off` does the same.
 
 ```shell
 gatecheck download epss > epss.csv
@@ -206,5 +218,7 @@ Prints help for a command. `gatecheck validate --help` does the same.
 | `GATECHECK_CONFIG_FILENAME` | `validate` | `--config` |
 | `GATECHECK_EPSS_FILENAME` | `list`, `validate` | `--epss-filename` |
 | `GATECHECK_EPSS_URL` | `download epss`, `list`, `list-all`, `validate` | `--epss-url` on `download epss` and `list` |
+| `GATECHECK_EPSS_CACHE_DIR` | `download epss`, `list`, `list-all`, `validate` | `--epss-cache-dir` |
+| `GATECHECK_EPSS_CACHE` | `download epss`, `list`, `list-all`, `validate` | `--epss-no-cache` when the value is `off` |
 | `GATECHECK_KEV_URL` | `download kev`, `validate` | `--kev-url` on `download kev` |
 | `GATECHECK_BUNDLE_TAG` | `bundle create`, `bundle add` | `--tag`, as a comma-separated list |

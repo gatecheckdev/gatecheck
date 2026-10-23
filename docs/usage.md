@@ -11,7 +11,7 @@ Commands:
 - `gatecheck list` (aliases `ls` and `print`) prints one report. `gatecheck list-all` prints several.
 - `gatecheck validate` compares one report, or one bundle, to the config.
 - `gatecheck bundle create`, `bundle add`, and `bundle remove` manage a bundle.
-- `gatecheck download epss` and `gatecheck download kev` write the upstream data to standard output.
+- `gatecheck download epss` and `gatecheck download kev` write the upstream data to standard output. EPSS files are cached until the published date changes.
 - `gatecheck completion` prints a shell completion script. `gatecheck help [command]` prints help for that command.
 
 `list` and `validate` decide the report type from the filename. The words are lowercase. See [Supported Reports](./supported-reports.md).
