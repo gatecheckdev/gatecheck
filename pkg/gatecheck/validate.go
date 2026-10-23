@@ -594,7 +594,7 @@ func loadDataFromFileOrAPI(epssData *epss.Data, options *fetchOptions) error {
 	}
 
 	slog.Debug("load epss data from API")
-	err := epss.FetchData(epssData, epss.WithClient(options.epssClient), epss.WithURL(options.epssURL))
+	err := epss.FetchData(epssData, options.epssDownloadOptions()...)
 
 	return err
 }

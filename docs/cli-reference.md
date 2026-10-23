@@ -104,6 +104,15 @@ gatecheck download <type> <output-file>
 gatecheck download epss epss_scores.csv
 ```
 
+EPSS scores are cached in the user cache directory. gatecheck checks the redirect to the dated filename and downloads the CSV only when that file is not already cached. Requests send a User-Agent with the gatecheck version and project URL.
+
+**Options:**
+- `--epss-url`: override the EPSS URL (`GATECHECK_EPSS_URL`)
+- `--epss-cache-dir`: cache directory (`GATECHECK_EPSS_CACHE_DIR`)
+- `--epss-no-cache`: download on every run (`GATECHECK_EPSS_CACHE=off`)
+
+`list` and `validate` still accept `--epss-filename` (`GATECHECK_EPSS_FILENAME`) to read a local CSV instead of downloading.
+
 **Use Case:** Fetch latest vulnerability scoring data for offline use in validation or analysis.
 
 ## gatecheck list

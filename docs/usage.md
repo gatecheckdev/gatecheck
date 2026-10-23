@@ -11,6 +11,6 @@ Key commands:
 - `gatecheck config`: Generate or manage config files.
 - `gatecheck list`: List contents of reports or bundles.
 - `gatecheck validate`: Validate reports against config.
-- `gatecheck download`: Download EPSS or KEV data.
+- `gatecheck download`: Download EPSS or KEV data. EPSS files are cached until the published date changes.
 
 See CLI Reference for details.

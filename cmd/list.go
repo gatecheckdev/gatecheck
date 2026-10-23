@@ -80,7 +80,7 @@ var listCmd = &cobra.Command{
 
 		// if file is nil, API will be used
 		// if epssURL is empty, default API will be used
-		epssOpt, err := gatecheck.WithEPSS(epssFile, epssURL)
+		epssOpt, err := gatecheck.WithEPSS(epssFile, epssURL, epssCacheOptions()...)
 		if err != nil {
 			return err
 		}
@@ -122,7 +122,7 @@ var listAllCmd = &cobra.Command{
 			opts = append(opts, displayOpt)
 
 			if epss && slices.ContainsFunc([]string{"grype", "cyclonedx"}, supportedFunc) {
-				epssOpt, err := gatecheck.WithEPSS(epssFile, epssURL)
+				epssOpt, err := gatecheck.WithEPSS(epssFile, epssURL, epssCacheOptions()...)
 				if err != nil {
 					slog.Error("epss fetch failure, skip", "filename", filename, "error", err)
 					continue
@@ -151,6 +151,8 @@ var listAllCmd = &cobra.Command{
 func newListAllCommand() *cobra.Command {
 	listAllCmd.Flags().Bool("markdown", false, "print as a markdown table")
 	listAllCmd.Flags().Bool("epss", false, "List with EPSS data")
+	RuntimeConfig.EPSSCacheDir.SetupCobra(listAllCmd)
+	RuntimeConfig.EPSSNoCache.SetupCobra(listAllCmd)
 	return listAllCmd
 }
 
@@ -160,5 +162,7 @@ func newListCommand() *cobra.Command {
 	listCmd.Flags().Bool("epss", false, "List with EPSS data")
 	RuntimeConfig.EPSSURL.SetupCobra(listCmd)
 	RuntimeConfig.EPSSFilename.SetupCobra(listCmd)
+	RuntimeConfig.EPSSCacheDir.SetupCobra(listCmd)
+	RuntimeConfig.EPSSNoCache.SetupCobra(listCmd)
 	return listCmd
 }

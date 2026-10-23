@@ -3,7 +3,6 @@ package epss
 import (
 	"bufio"
 	"bytes"
-	"compress/gzip"
 	"errors"
 	"fmt"
 	"io"
@@ -12,14 +11,13 @@ import (
 	"strconv"
 	"strings"
 	"time"
-
-	"github.com/dustin/go-humanize"
 )
 
 const (
 	dataModel       = "v2025.03.14"
 	modelDateLayout = "2006-01-02T15:04:05Z"
-	defaultEPSSURL  = "https://epss.cyentia.com"
+	// defaultEPSSURL redirects to the latest epss_scores-YYYY-MM-DD.csv.gz.
+	defaultEPSSURL = "https://epss.cyentia.com"
 )
 
 // Data a representation of the CSV data from first API
@@ -55,9 +53,10 @@ func (c CVE) PercentileValue() float64 {
 	return value
 }
 
-type fetchOptionFunc func(*FetchOptions)
+// Option configures an EPSS download.
+type Option func(*FetchOptions)
 
-func WithURL(url string) fetchOptionFunc {
+func WithURL(url string) Option {
 	if url == "" {
 		return func(_ *FetchOptions) {}
 	}
@@ -66,7 +65,7 @@ func WithURL(url string) fetchOptionFunc {
 	}
 }
 
-func WithClient(client *http.Client) fetchOptionFunc {
+func WithClient(client *http.Client) Option {
 	if client == nil {
 		return func(_ *FetchOptions) {}
 	}
@@ -75,10 +74,35 @@ func WithClient(client *http.Client) fetchOptionFunc {
 	}
 }
 
+// WithCache turns the local daily EPSS cache on or off.
+// The default is on, in the user cache directory.
+func WithCache(enabled bool) Option {
+	return func(o *FetchOptions) {
+		o.cacheSet = true
+		o.cacheOn = enabled
+	}
+}
+
+// WithCacheDir stores cached EPSS files in dir.
+func WithCacheDir(dir string) Option {
+	return func(o *FetchOptions) {
+		if strings.TrimSpace(dir) == "" {
+			return
+		}
+		o.cacheDir = dir
+		o.cacheDirSet = true
+	}
+}
+
 // FetchOptions optional settings for the request
 type FetchOptions struct {
 	Client *http.Client
 	URL    string
+
+	cacheDir    string
+	cacheDirSet bool
+	cacheSet    bool
+	cacheOn     bool
 }
 
 // DefaultFetchOptions use the default client and url for today's scores
@@ -89,10 +113,18 @@ func DefaultFetchOptions() *FetchOptions {
 	}
 }
 
-func DownloadData(w io.Writer, optionFuncs ...fetchOptionFunc) error {
+// DownloadData fetches the gzipped EPSS CSV and writes the decompressed CSV to w.
+// While the upstream dated filename is unchanged, later calls reuse a local copy.
+func DownloadData(w io.Writer, optionFuncs ...Option) error {
 	options := DefaultFetchOptions()
 	for _, optionFunc := range optionFuncs {
 		optionFunc(options)
+	}
+	if options.Client == nil {
+		options.Client = http.DefaultClient
+	}
+	if options.URL == "" {
+		options.URL = defaultEPSSURL
 	}
 
 	logger := slog.Default().With("method", "GET", "url", options.URL)
@@ -100,38 +132,20 @@ func DownloadData(w io.Writer, optionFuncs ...fetchOptionFunc) error {
 		logger.Debug("epss csv fetch done", "elapsed", time.Since(started))
 	}(time.Now())
 
-	logger.Debug("request epss data from api")
-	res, err := options.Client.Get(options.URL)
-
-	switch {
-	case err != nil:
-		logger.Error("epss api request failed during fetch data", "error", err)
-		return errors.New("failed to get EPSS Scores. see log for details")
-	case res.StatusCode != http.StatusOK:
-		logger.Error("epss api bad status code", "res_status", res.Status)
-		return errors.New("failed to get EPSS Scores. see log for details")
-	}
-
-	gunzipReader, err := gzip.NewReader(res.Body)
+	plain, err := loadEPSS(options, logger)
 	if err != nil {
-		logger.Error("gzip reader", "error", err)
-		return errors.New("failed to parse EPSS Scores. see log for details")
+		writeEPSSError(logger, err)
+		return publicEPSSError(err)
 	}
-
-	n, err := io.Copy(w, gunzipReader)
-	if err != nil {
+	if _, err := w.Write(plain); err != nil {
 		logger.Error("io copy to writer from gzip reader", "error", err)
 		return errors.New("failed to get EPSS Scores. see log for details")
 	}
-
-	size := humanize.Bytes(uint64(n))
-
-	slog.Debug("successfully downloaded and decompressed epss data", "decompressed_size", size)
 	return nil
 }
 
 // FetchData do a GET request and gunzip on the CSV
-func FetchData(destData *Data, optionFuncs ...fetchOptionFunc) error {
+func FetchData(destData *Data, optionFuncs ...Option) error {
 	buf := new(bytes.Buffer)
 	if err := DownloadData(buf, optionFuncs...); err != nil {
 		return err

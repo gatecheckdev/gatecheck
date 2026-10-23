@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [UNRELEASED]
 
+### Changed
+
+- Cache the current EPSS file and send a gatecheck User-Agent on download
+
 ## [0.8.1] - 2025-04-09
 
 ### Fixed
