@@ -8,7 +8,7 @@ require (
 	github.com/dustin/go-humanize v1.1.0
 	github.com/easy-up/go-coverage v0.0.0-20241018034313-3de592d59a78
 	github.com/gatecheckdev/configkit v0.0.0-20240517005856-da14389dd06a
-	github.com/lmittmann/tint v1.0.7
+	github.com/lmittmann/tint v1.2.1
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/pelletier/go-toml/v2 v2.4.3
 	github.com/spf13/cobra v1.10.2

@@ -51,7 +51,7 @@ func run() int {
 	epss.SetVersion(cliVersion)
 
 	// Colorized logging output for the CLI
-	logHandler := tint.NewHandler(os.Stderr, &tint.Options{Level: cmd.LogLeveler, TimeFormat: time.TimeOnly})
+	logHandler := tint.NewTextHandler(os.Stderr, &tint.Options{Level: cmd.LogLeveler, TimeFormat: time.TimeOnly})
 	slog.SetDefault(slog.New(logHandler))
 
 	command := cmd.NewGatecheckCommand()
