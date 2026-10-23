@@ -274,7 +274,8 @@ code {
   flex: 1 1 auto;
   min-width: 0;
   overflow-x: auto;
-  white-space: nowrap;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
   font-family: var(--mono);
   font-size: 14px;
   color: var(--text);
@@ -384,7 +385,8 @@ code {
 }
 
 .readout-head span {
-  white-space: nowrap;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 
 .bars {
@@ -471,7 +473,8 @@ code {
   line-height: 1.75;
   color: var(--text-muted);
   overflow-x: auto;
-  white-space: pre;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 
 .err {
@@ -630,7 +633,8 @@ code {
   padding: 14px 16px;
   color: var(--text-muted);
   overflow-x: auto;
-  white-space: nowrap;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 
 .yaml {
@@ -763,6 +767,8 @@ code {
   line-height: 1.8;
   color: var(--text-muted);
   overflow-x: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 
 .bundle-pre {
@@ -1015,6 +1021,14 @@ code {
 
   .github-link {
     margin-left: 0;
+  }
+
+  .install-row {
+    align-items: flex-start;
+  }
+
+  .readout-head {
+    overflow-x: visible;
   }
 }
 

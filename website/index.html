@@ -423,6 +423,37 @@ Error: validation failure: Grype: Severity Limit Exceeded</pre>
           document.querySelector('[data-tab="' + tab + '"]').focus();
         });
 
+        function writeFallback(text) {
+          return new Promise(function (resolve, reject) {
+            var area = document.createElement("textarea");
+            area.value = text;
+            area.setAttribute("readonly", "");
+            area.style.position = "fixed";
+            area.style.opacity = "0";
+            document.body.appendChild(area);
+            area.focus();
+            area.select();
+            var ok = false;
+            try {
+              ok = document.execCommand("copy");
+            } catch (err) {
+              ok = false;
+            }
+            document.body.removeChild(area);
+            if (ok) resolve();
+            else reject(err);
+          });
+        }
+
+        function writeClipboard(text) {
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            return navigator.clipboard.writeText(text).catch(function () {
+              return writeFallback(text);
+            });
+          }
+          return writeFallback(text);
+        }
+
         document.getElementById("copy-install").addEventListener("click", function () {
           var text = cmds[tab];
           function show(label) {
@@ -434,18 +465,14 @@ Error: validation failure: Grype: Severity Limit Exceeded</pre>
               render();
             }, 1600);
           }
-          if (navigator.clipboard && navigator.clipboard.writeText) {
-            navigator.clipboard.writeText(text).then(
-              function () {
-                show("Copied");
-              },
-              function () {
-                show("Copy failed");
-              }
-            );
-          } else {
-            show("Copy failed");
-          }
+          writeClipboard(text).then(
+            function () {
+              show("Copied");
+            },
+            function () {
+              show("Copy failed");
+            }
+          );
         });
 
         var stars = document.getElementById("star-count");
