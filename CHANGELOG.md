@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [UNRELEASED]
 
+## [0.9.0] - 2026-10-23
+
 ### Added
 
 - `gatecheck agent-guide` (alias `llm`) prints a markdown guide for coding agents. The text is `docs/agent-guide.md`.
