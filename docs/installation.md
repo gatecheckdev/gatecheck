@@ -64,7 +64,7 @@ gatecheck --help
 
 ## Install scanners
 
-After gatecheck itself is installed, `gatecheck bootstrap` downloads pinned releases of Grype, Syft, Gitleaks, and Trivy, and installs semgrep's experimental native CLI as `osemgrep`. The files live under the gatecheck data directory (`GATECHECK_HOME`, or the platform default described in [Bootstrap](./bootstrap.md)).
+After gatecheck itself is installed, `gatecheck bootstrap` downloads pinned releases of Grype, Syft, Gitleaks, Trivy, and osv-scanner, and installs semgrep's experimental native CLI as `osemgrep`. The files live under the gatecheck data directory (`GATECHECK_HOME`, or the platform default described in [Bootstrap](./bootstrap.md)).
 
 ```
 gatecheck bootstrap

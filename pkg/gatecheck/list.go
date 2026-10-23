@@ -103,6 +103,14 @@ func List(dst io.Writer, src io.Reader, inputFilename string, options ...ListOpt
 			err = ListTrivyReport(table, src)
 		}
 
+	case strings.Contains(inputFilename, "osv"):
+		slog.Debug("list", "filename", inputFilename, "filetype", "osv-scanner")
+		if o.epssData != nil {
+			err = listOSVWithEPSS(table, src, o.epssData)
+		} else {
+			err = ListOSVReport(table, src)
+		}
+
 	case strings.Contains(inputFilename, "syft"):
 		slog.Debug("list", "filename", inputFilename, "filetype", "syft")
 		slog.Warn("syft decoder is not supported yet")

@@ -67,13 +67,13 @@ gatecheck list [FILE]
 
 Aliases: `ls`, `print`.
 
-Prints a table for one report. The first filename is the one that is opened. Further filenames are ignored. Use `list-all` for more than one file. A Grype, CycloneDX, Semgrep, Gitleaks, or Trivy report with no findings prints one sentence and no table: `No grype vulnerabilities`, `No cyclonedx vulnerabilities`, `No semgrep findings`, `No gitleaks findings`, or `No trivy vulnerabilities`. `--markdown` prints that same sentence.
+Prints a table for one report. The first filename is the one that is opened. Further filenames are ignored. Use `list-all` for more than one file. A Grype, CycloneDX, Semgrep, Gitleaks, Trivy, or osv-scanner report with no findings prints one sentence and no table: `No grype vulnerabilities`, `No cyclonedx vulnerabilities`, `No semgrep findings`, `No gitleaks findings`, `No trivy vulnerabilities`, or `No osv-scanner vulnerabilities`. `--markdown` prints that same sentence.
 
 With no filename, the command reads standard input and `--input-type` is required.
 
-- `-i`, `--input-type`: type word used when reading standard input. It is matched with the same rules as a filename. `grype`, `cyclonedx`, `semgrep`, `gitleaks`, `syft`, `bundle`, `trivy`, and the coverage words all work. See [Supported Reports](./supported-reports.md).
+- `-i`, `--input-type`: type word used when reading standard input. It is matched with the same rules as a filename. `grype`, `cyclonedx`, `semgrep`, `gitleaks`, `syft`, `bundle`, `trivy`, `osv`, and the coverage words all work. See [Supported Reports](./supported-reports.md).
 - `--markdown`: print a markdown table.
-- `--epss`: add EPSS score and percentile columns. This changes the table for Grype and CycloneDX. Other report types still list, and the EPSS data is not shown. With no local file, gatecheck downloads the current EPSS CSV and caches it until the published date changes. Requests send a User-Agent with the gatecheck version and project URL.
+- `--epss`: add EPSS score and percentile columns. This changes the table for Grype, CycloneDX, Trivy, and osv-scanner. Other report types still list, and the EPSS data is not shown. With no local file, gatecheck downloads the current EPSS CSV and caches it until the published date changes. Requests send a User-Agent with the gatecheck version and project URL.
 - `--epss-filename`: read that CSV instead of calling the API. `GATECHECK_EPSS_FILENAME` is the same setting.
 - `--epss-url`: EPSS API URL. An empty value uses `https://epss.cyentia.com`. `GATECHECK_EPSS_URL` is the same setting.
 - `--epss-cache-dir`: cache directory for that download. `GATECHECK_EPSS_CACHE_DIR` is the same setting.
@@ -94,7 +94,7 @@ gatecheck list-all [FILE...]
 Prints each filename, then its table, or one sentence when that report has no findings. A file whose name is not a supported `list-all` type is skipped with a warning. A missing file is skipped. A list error is logged and the command continues. The command exits 0 after the last file.
 
 - `--markdown`: print markdown tables.
-- `--epss`: download EPSS data and add it for filenames that contain `grype`, `cyclonedx`, or `trivy`. The download happens per file and is cached until the published date changes. There is no `--epss-filename` flag. `GATECHECK_EPSS_URL` overrides the API. `GATECHECK_EPSS_FILENAME` is not read by this command. Requests send a User-Agent with the gatecheck version and project URL.
+- `--epss`: download EPSS data and add it for filenames that contain `grype`, `cyclonedx`, `trivy`, or `osv`. The download happens per file and is cached until the published date changes. There is no `--epss-filename` flag. `GATECHECK_EPSS_URL` overrides the API. `GATECHECK_EPSS_FILENAME` is not read by this command. Requests send a User-Agent with the gatecheck version and project URL.
 - `--epss-cache-dir`: cache directory for that download. `GATECHECK_EPSS_CACHE_DIR` is the same setting.
 - `--epss-no-cache`: download on every run. `GATECHECK_EPSS_CACHE=off` does the same.
 
@@ -198,9 +198,9 @@ gatecheck download kev > kev.json
 gatecheck bootstrap
 ```
 
-Downloads Grype, Syft, Gitleaks, semgrep's experimental osemgrep CLI, and Trivy into the gatecheck data directory. Each GitHub asset is checked against the project's SHA-256 checksum file. The semgrep wheel is checked against the digest in the PyPI JSON. A tool already at the pinned version is skipped. See [Bootstrap](./bootstrap.md).
+Downloads Grype, Syft, Gitleaks, semgrep's experimental osemgrep CLI, Trivy, and osv-scanner into the gatecheck data directory. Each GitHub asset is checked against the project's SHA-256 checksum file. The semgrep wheel is checked against the digest in the PyPI JSON. A tool already at the pinned version is skipped. See [Bootstrap](./bootstrap.md).
 
-- `--tools`: comma-separated scanners. Default `grype,syft,gitleaks,semgrep,trivy`. `osemgrep` selects semgrep.
+- `--tools`: comma-separated scanners. Default `grype,syft,gitleaks,semgrep,trivy,osv-scanner`. `osemgrep` selects semgrep.
 - `--force`: download again when the pinned version is already installed.
 - `--list`: print pinned version, installed version, and path. This does not download.
 
@@ -211,7 +211,7 @@ gatecheck bootstrap
 gatecheck bootstrap --list
 ```
 
-## gatecheck grype, syft, gitleaks, semgrep, osemgrep, trivy
+## gatecheck grype, syft, gitleaks, semgrep, osemgrep, trivy, osv-scanner
 
 ```
 gatecheck grype [scanner arguments]
@@ -220,6 +220,7 @@ gatecheck gitleaks [scanner arguments]
 gatecheck semgrep [scanner arguments]
 gatecheck osemgrep [scanner arguments]
 gatecheck trivy [scanner arguments]
+gatecheck osv-scanner [scanner arguments]
 ```
 
 Runs the managed binary. Arguments and streams are passed through, and the process exits with the scanner's status. Flags after the command name are not parsed by gatecheck, so `gatecheck grype --help` is Grype's help.
@@ -305,4 +306,4 @@ Prints help for a command. `gatecheck validate --help` does the same.
 | `GATECHECK_EPSS_CACHE` | `download epss`, `list`, `list-all`, `validate` | `--epss-no-cache` when the value is `off` |
 | `GATECHECK_KEV_URL` | `download kev`, `validate` | `--kev-url` on `download kev` |
 | `GATECHECK_BUNDLE_TAG` | `bundle create`, `bundle add` | `--tag`, as a comma-separated list |
-| `GATECHECK_HOME` | `bootstrap`, `grype`, `syft`, `gitleaks`, `semgrep`, `osemgrep`, `trivy` | data directory; binaries are in `bin` under it |
+| `GATECHECK_HOME` | `bootstrap`, `grype`, `syft`, `gitleaks`, `semgrep`, `osemgrep`, `trivy`, `osv-scanner` | data directory; binaries are in `bin` under it |

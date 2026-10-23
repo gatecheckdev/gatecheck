@@ -7,11 +7,12 @@
 3. `semgrep`: Semgrep JSON.
 4. `gitleaks`: Gitleaks JSON (a list of findings).
 5. `trivy`: Trivy JSON (`--format json`). Vulnerability entries are listed and validated. Misconfigurations, secrets, and licenses in the same file are ignored.
-6. `syft`: the name is recognized. `list` and `validate` both return an error. Syft is not implemented.
-7. `bundle`: a Gatecheck bundle. `list` also accepts a name containing `gatecheck`. `validate` requires the word `bundle`. `project.gcb` matches neither rule.
-8. Coverage, when the name contains `lcov`, `clover`, `cobertura`, or `coverage`, or when it ends in `.info`.
+6. `osv`: osv-scanner JSON (`osv-scanner scan source --format json`). One finding per vulnerability group. Aliases of that group are not counted again. License-only packages are skipped.
+7. `syft`: the name is recognized. `list` and `validate` both return an error. Syft is not implemented.
+8. `bundle`: a Gatecheck bundle. `list` also accepts a name containing `gatecheck`. `validate` requires the word `bundle`. `project.gcb` matches neither rule.
+9. Coverage, when the name contains `lcov`, `clover`, `cobertura`, or `coverage`, or when it ends in `.info`.
 
-The match is case sensitive. `Grype-report.json` and `CycloneDX.json` are rejected.
+The match is case sensitive. `Grype-report.json`, `CycloneDX.json`, and `OSV-scanner.json` are rejected.
 
 Coverage file format, checked in this order:
 
@@ -27,7 +28,7 @@ From standard input, pass the same word to `--input-type`. The value is matched 
 grype bkimminich/juice-shop:latest -o json | gatecheck list --input-type grype
 ```
 
-`list-all` is stricter. It lists a file only when the name contains `grype`, `semgrep`, `gitleaks`, `syft`, `cyclonedx`, `bundle`, `gatecheck`, or `trivy`. Coverage files are skipped with a warning. There is no `--input-type` flag on `list-all`.
+`list-all` is stricter. It lists a file only when the name contains `grype`, `semgrep`, `gitleaks`, `syft`, `cyclonedx`, `bundle`, `gatecheck`, `trivy`, or `osv`. Coverage files are skipped with a warning. There is no `--input-type` flag on `list-all`.
 
 `cyclonedx` is checked before `trivy`, so `cyclonedx-trivy-sbom.json` is CycloneDX.
 
@@ -42,6 +43,7 @@ What each command can do:
 | Semgrep | yes | yes | yes |
 | Gitleaks | yes | yes | yes |
 | Trivy | yes | yes | yes |
+| osv-scanner | yes | yes | yes |
 | LCOV, Clover, Cobertura | yes | yes | yes |
 | Syft | error | error | the file is stored, and validation skips that label |
 | Bundle | when the name contains `bundle` or `gatecheck` | when the name contains `bundle` | yes, as an ordinary file |

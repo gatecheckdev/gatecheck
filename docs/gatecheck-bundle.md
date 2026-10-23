@@ -8,7 +8,7 @@ A bundle is a gzipped tar with a JSON manifest. It holds the report bytes, a SHA
 gatecheck bundle create gatecheck-bundle.tar.gz grype-report.json --tag ci
 ```
 
-`bundle init` is the same command. The label stored in the manifest is the base name of the target file. That label is what `validate` uses later to pick the report type, so the file needs a word such as `grype`, `semgrep`, or `trivy` in its name.
+`bundle init` is the same command. The label stored in the manifest is the base name of the target file. That label is what `validate` uses later to pick the report type, so the file needs a word such as `grype`, `semgrep`, `trivy`, or `osv` in its name.
 
 Repeat `--tag` for more than one tag. When the flag is omitted, `GATECHECK_BUNDLE_TAG` is read as a comma-separated list.
 
