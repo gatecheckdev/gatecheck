@@ -1,16 +1,29 @@
 # Usage
 
-Gatecheck is a lightweight CLI utility for handling security reports. It allows bundling reports, listing their contents, validating against configurations, and more.
+Gatecheck is a lightweight CLI for security reports. It summarizes a report, checks it against a config, downloads EPSS and KEV data, and packs reports into one bundle.
 
-Developers can use it to summarize reports, run local audits, cross-reference with EPSS and KEV, and bundle reports for attestation.
+Running `gatecheck` with no arguments prints nothing and exits 0. `gatecheck --help` lists the commands. `gatecheck config`, `gatecheck bundle`, and `gatecheck download` print the help for their subcommands.
 
-Run `gatecheck --help` for available commands.
+Commands:
 
-Key commands:
-- `gatecheck bundle`: Bundle reports into a .gcb file.
-- `gatecheck config`: Generate or manage config files.
-- `gatecheck list`: List contents of reports or bundles.
-- `gatecheck validate`: Validate reports against config.
-- `gatecheck download`: Download EPSS or KEV data. EPSS files are cached until the published date changes.
+- `gatecheck version` prints the build information. `gatecheck --version` does the same. The `--version` flag is only on the root command.
+- `gatecheck config init` prints a default config. `gatecheck config convert` rewrites one into another format.
+- `gatecheck list` (aliases `ls` and `print`) prints one report. `gatecheck list-all` prints several.
+- `gatecheck validate` compares one report, or one bundle, to the config.
+- `gatecheck bundle create`, `bundle add`, and `bundle remove` manage a bundle.
+- `gatecheck download epss` and `gatecheck download kev` write the upstream data to standard output. EPSS files are cached until the published date changes.
+- `gatecheck completion` prints a shell completion script. `gatecheck help [command]` prints help for that command.
 
-See CLI Reference for details.
+`list` and `validate` decide the report type from the filename. The words are lowercase. See [Supported Reports](./supported-reports.md).
+
+Logs go to standard error. Tables, downloaded data, and `config init` go to standard output.
+
+Exit status:
+
+- `0` when the command succeeds. With `validate --audit`, an error returned by the check also exits 0.
+- `1` when a report misses a configured threshold and `--audit` is off.
+- `255` for a missing file, a rejected command line, or a check error when `--audit` is off.
+
+[Validation](./validation.md) lists which `validate` failures are which status.
+
+`--verbose` (`-v`) prints debug logs. `--silent` hides debug, info, and warning logs, and errors are still printed. The two flags cannot be used together. They are available on every command.

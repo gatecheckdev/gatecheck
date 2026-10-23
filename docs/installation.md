@@ -9,20 +9,20 @@ Before installing Gatecheck, make sure your system meets the following requireme
 
 ## Installation Options
 
-Gatecheck can be installed either by downloading the pre-compiled binary for your operating system or by compiling 
-the source code. 
+Gatecheck can be installed either by downloading the pre-compiled binary for your operating system or by compiling
+the source code.
 
 ### Option 1: Installing from Binary
 
-1. **Download the Binary**: Visit the Gatecheck GitHub releases page at 
+1. **Download the Binary**: Visit the Gatecheck GitHub releases page at
      `https://github.com/gatecheckdev/gatecheck/releases` and download the latest version for your operating system.
 2. **Unpack the Binary** (if necessary): For Windows and Linux, you may need to unpack the `.zip` or `.tar.gz` file.
 3. **Move the Binary to a Bin Directory**:
    - **Windows**: Move `gatecheck.exe` to a directory within your PATH, such as `C:\Windows`.
-   - **macOS/Linux**: Move `gatecheck` to a location in your PATH, such as `/usr/local/bin`. 
+   - **macOS/Linux**: Move `gatecheck` to a location in your PATH, such as `/usr/local/bin`.
       You can use the command `mv gatecheck /usr/local/bin` in the terminal.
 
-4. **Verify Installation**: Open a terminal or command prompt and type `gatecheck --version` to ensure the application
+4. **Verify Installation**: Open a terminal or command prompt and type `gatecheck version` or `gatecheck --version` to ensure the application
     is installed correctly.
 
 ### Option 2: Building from Source
@@ -38,18 +38,24 @@ the source code.
 3. **Install Task**: Ensure you have [Task](https://taskfile.dev/) installed.
 4. **Build and Install**: Run:
    ```
+   task build
    task install
    ```
-   This will build the binary and install it to `/usr/local/bin` (configurable via INSTALL_DIR).
+   `task build` writes `./bin/gatecheck`. `task install` copies that binary to `INSTALL_DIR`, which defaults to `/usr/local/bin`, and asks before it copies.
+
+   To build without Task:
+   ```
+   go build -ldflags="-X 'main.cliVersion=$(git describe --tags)' -X 'main.gitCommit=$(git rev-parse HEAD)' -X 'main.buildDate=$(date -u +%Y-%m-%dT%H:%M:%SZ)' -X 'main.gitDescription=$(git log -1 --pretty=%B)'" -o ./bin/gatecheck ./cmd/gatecheck
+   ```
 
 5. **Verify Installation**: Check the application version to confirm successful installation:
    ```
-   gatecheck --version
+   gatecheck version
    ```
 
 ## Post-Installation Steps
 
-After installing Gatecheck, you can begin using it by typing `gatecheck` followed by the necessary commands and 
+After installing Gatecheck, you can begin using it by typing `gatecheck` followed by the necessary commands and
 options in your terminal or command prompt. For a list of available commands and their descriptions, use:
 
 ```
@@ -58,9 +64,9 @@ gatecheck --help
 
 ## Troubleshooting
 
-If you encounter any issues during the installation process, ensure that you have the correct permissions to 
-install software on your system and that your Go environment is properly configured. 
+If you encounter any issues during the installation process, ensure that you have the correct permissions to
+install software on your system and that your Go environment is properly configured.
 For further assistance, please visit the Gatecheck GitHub issues page or contact support.
 
-For more information on using Gatecheck, refer to the user documentation or the GitHub repository for examples and 
+For more information on using Gatecheck, refer to the user documentation or the GitHub repository for examples and
 advanced usage.

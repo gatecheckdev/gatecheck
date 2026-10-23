@@ -18,37 +18,47 @@ The fastest way to get started with Gatecheck is to download the pre-built binar
 ```shell
 cd <target install dir>
 curl -L <OS Specific Release>.tar.gz | tar xz
-./gatecheck
 ./gatecheck --help
 ```
 
-The Gatecheck CLI supports ```--help``` for every command for more detail usage.
+The Gatecheck CLI supports `--help` for every command.
 
-Generate a configuration file with the default thresholds set
+Generate a configuration file with the default thresholds. Every rule starts disabled, and coverage thresholds start at `0`.
 
 ```shell
 gatecheck config init > gatecheck.yaml
 ```
 
+Validate a report. The config is a flag. The report type comes from the filename, so a Grype report needs `grype` in the name.
+
+```shell
+gatecheck validate --config gatecheck.yaml grype-report.json
+```
+
 ### Summarize Reports with List
 
 ```shell
-gatechec ls --help
+gatecheck ls --help
 ```
 
-List with EPSS Scores is support for Grype and Cyclondex reports
+List with EPSS scores is supported for Grype and CycloneDX reports.
 
-![Gatecheck Version](https://static.gatecheck.dev/gatecheck-list.gif)
-
+![Gatecheck List](https://static.gatecheck.dev/gatecheck-list.gif)
 
 ### Validation
 
-List with EPSS Scores is support for Grype and Cyclondex reports
+```shell
+gatecheck validate --help
+```
 
 ![Gatecheck Validate](https://static.gatecheck.dev/gatecheck-validate.gif)
 
 ### Bundling Artifacts
 
-Bundling Artifacts produces a gzipped tarball with an associated manifest for metadata.
+Bundling artifacts produces a gzipped tarball and a manifest. The bundle filename needs to contain `bundle` so `list` and `validate` treat it as a bundle.
+
+```shell
+gatecheck bundle create gatecheck-bundle.tar.gz grype-report.json
+```
 
 ![Gatecheck Bundle](https://static.gatecheck.dev/gatecheck-bundle.gif)

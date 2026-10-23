@@ -1,63 +1,176 @@
 # Configuration
 
-Gatecheck uses configuration files to define validation rules for security reports. These files can be in YAML, JSON, or TOML format. The configuration specifies thresholds, limits, and risk acceptances for various report types, allowing you to customize validation to your project's security requirements.
+`validate` reads YAML, JSON, or TOML. The extension selects the format: `.yaml`, `.yml`, `.json`, or `.toml`.
 
-## Creating a Configuration File
-
-To generate a default configuration file, use the CLI:
-
-```
-gatecheck config new config.yaml
+```shell
+gatecheck config init > gatecheck.yaml
 ```
 
-This creates a file with all fields set to default values (mostly disabled with zero limits). You can then edit it to enable rules and set appropriate values.
+`config init` writes to standard output. `-o` / `--output` accepts `json`, `.json`, `toml`, `.toml`, `yaml`, `yml`, `.yaml`, and `.yml`. The default is `yaml`.
 
-Configs support three formats:
-- YAML (.yaml or .yml)
-- JSON (.json)
-- TOML (.toml)
+```shell
+gatecheck config convert --file gatecheck.yaml --output json
+```
 
-The structure is the same across formats. Below is a detailed explanation of each section and field, based on the Gatecheck codebase.
+`config convert` reads `--file` / `-f` (default `gatecheck.yaml`) and writes the other format to standard output.
 
-## Top-Level Fields
+A partial file is fine. Omitted fields keep the default. Keys the decoder does not know are ignored.
 
-- **version** (string): The configuration version. Currently "1". Reserved for future schema changes.
-  
-- **metadata** (object): Arbitrary metadata that doesn't affect validation.
-  - **tags** (array of strings): Custom tags for organization or notes, e.g., ["auto-generated", "prod-config"].
+`GATECHECK_CONFIG_FILENAME` is the same setting as `validate --config`.
 
-## Grype Configuration
+Field names below are the ones `config init` emits. In YAML they are case sensitive. Use the lowercase names.
 
-This section defines rules for Grype vulnerability reports.
+## Default file
 
-- **severityLimit** (object): Sets limits on the number of vulnerabilities per severity level. Exceeding a limit fails validation.
-  - **critical/high/medium/low** (objects):
-    - **enabled** (boolean): Whether this limit is active.
-    - **limit** (unsigned integer): Maximum allowed vulnerabilities of this severity.
+This is what `gatecheck config init` prints.
 
-- **epssLimit** (object): Fails validation if any vulnerability's EPSS score exceeds this limit.
-  - **enabled** (boolean): Activate this rule.
-  - **score** (float): Maximum allowed EPSS score (0.0 to 1.0).
-
-- **kevLimitEnabled** (boolean): If true, fails validation if any vulnerability matches the Known Exploited Vulnerabilities (KEV) catalog.
-
-- **cveLimit** (object): Fails validation if any specified CVE is present.
-  - **enabled** (boolean): Activate this rule.
-  - **cves** (array of objects):
-    - **id** (string): The CVE ID (e.g., "CVE-2024-1234").
-    - **metadata** (object):
-      - **tags** (array of strings): Optional tags for the CVE.
-
-- **epssRiskAcceptance** (object): Skips validation for vulnerabilities with EPSS scores below this threshold (risk accepted).
-  - **enabled** (boolean): Activate this rule.
-  - **score** (float): Minimum EPSS score for validation; lower scores are accepted.
-
-- **cveRiskAcceptance** (object): Skips validation for specified CVEs (risk accepted).
-  - **enabled** (boolean): Activate this rule.
-  - **cves** (array of objects): Same structure as in cveLimit.
-
-**Example (YAML):**
 ```yaml
+version: "1"
+metadata:
+    tags: []
+grype:
+    severityLimit:
+        critical:
+            enabled: false
+            limit: 0
+        high:
+            enabled: false
+            limit: 0
+        medium:
+            enabled: false
+            limit: 0
+        low:
+            enabled: false
+            limit: 0
+    epssLimit:
+        enabled: false
+        score: 0
+    kevLimitEnabled: false
+    cveLimit:
+        enabled: false
+        cves: []
+    epssRiskAcceptance:
+        enabled: false
+        score: 0
+    cveRiskAcceptance:
+        enabled: false
+        cves: []
+cyclonedx:
+    severityLimit:
+        critical:
+            enabled: false
+            limit: 0
+        high:
+            enabled: false
+            limit: 0
+        medium:
+            enabled: false
+            limit: 0
+        low:
+            enabled: false
+            limit: 0
+    epssLimit:
+        enabled: false
+        score: 0
+    kevLimitEnabled: false
+    cveLimit:
+        enabled: false
+        cves: []
+    epssRiskAcceptance:
+        enabled: false
+        score: 0
+    cveRiskAcceptance:
+        enabled: false
+        cves: []
+semgrep:
+    severityLimit:
+        error:
+            enabled: false
+            limit: 0
+        warning:
+            enabled: false
+            limit: 0
+        info:
+            enabled: false
+            limit: 0
+    impactRiskAcceptance:
+        enabled: false
+        high: false
+        medium: false
+        low: false
+gitleaks:
+    limitEnabled: false
+coverage:
+    lineThreshold: 0
+    functionThreshold: 0
+    branchThreshold: 0
+```
+
+## version and metadata
+
+`version` is the string `"1"`. `metadata.tags` is a list of strings. Neither one changes validation.
+
+## Grype and CycloneDX
+
+`grype` and `cyclonedx` use the same fields.
+
+`severityLimit` has `critical`, `high`, `medium`, and `low`. Each has `enabled` and `limit`. `limit` is a count. The report fails when the number of findings at that severity is greater than `limit`. `enabled: true` and `limit: 0` allows none. `enabled: false` skips that severity.
+
+`epssLimit.score` and `epssRiskAcceptance.score` are EPSS ratios from 0 to 1, the same scale as the FIRST CSV. The limit fails when a CVE's score is greater than `score`. Risk acceptance removes a CVE when `score` is greater than that CVE's score. See [Validation](./validation.md) for the order and the equal-score cases.
+
+`kevLimitEnabled` fails the report when any remaining CVE is in the CISA catalog.
+
+`cveLimit` and `cveRiskAcceptance` each have `enabled` and `cves`. A CVE entry is `id` plus an optional `metadata.tags` list. `id` is compared without regard to case.
+
+```yaml
+grype:
+  cveLimit:
+    enabled: true
+    cves:
+      - id: CVE-2024-0001
+        metadata:
+          tags:
+            - denied
+  cveRiskAcceptance:
+    enabled: true
+    cves:
+      - id: CVE-2023-5678
+        metadata:
+          tags:
+            - accepted
+```
+
+## Semgrep
+
+`severityLimit` has `error`, `warning`, and `info`. Each has `enabled` and `limit`, with the same meaning as the Grype counts.
+
+`impactRiskAcceptance` has `enabled`, `high`, `medium`, and `low`. When `enabled` is true, a finding is removed when its impact matches a level whose value is true. `high`, `medium`, and `low` are separate switches.
+
+## Gitleaks
+
+`limitEnabled: true` fails validation when the report contains any finding. `false` skips the check. There is no count.
+
+## Coverage
+
+`lineThreshold`, `functionThreshold`, and `branchThreshold` are ratios from 0 to 1:
+
+- line coverage is covered lines divided by total lines
+- function coverage is covered functions divided by total functions
+- branch coverage is covered branches divided by total branches
+
+The report fails when its ratio is less than the threshold. `0.8` is 80 percent. `80.0` fails a report whose real line coverage is 0.8, because 0.8 is less than 80.
+
+There is no `enabled` flag. The default `0` allows any coverage, because a ratio is never less than 0.
+
+`gatecheck list` prints these numbers as percents in the table footer. The config still wants the ratio.
+
+## A tighter file
+
+```yaml
+version: "1"
+metadata:
+  tags:
+    - ci
 grype:
   severityLimit:
     critical:
@@ -70,44 +183,6 @@ grype:
     enabled: true
     score: 0.5
   kevLimitEnabled: true
-  cveLimit:
-    enabled: true
-    cves:
-      - id: CVE-2023-1234
-        metadata:
-          tags: ["critical"]
-  epssRiskAcceptance:
-    enabled: true
-    score: 0.1
-  cveRiskAcceptance:
-    enabled: true
-    cves:
-      - id: CVE-2023-5678
-```
-
-**Use Case:** Enforce zero critical vulnerabilities but allow up to 5 high ones, while accepting low-EPSS risks.
-
-## Cyclonedx Configuration
-
-Identical structure to Grype. Applies to CycloneDX SBOM reports with vulnerabilities.
-
-**Example:** Same as Grype section above, under `cyclonedx`.
-
-## Semgrep Configuration
-
-For Semgrep SAST reports.
-
-- **severityLimit** (object): Limits on findings per severity.
-  - **error/warning/info** (objects):
-    - **enabled** (boolean)
-    - **limit** (unsigned integer)
-
-- **impactRiskAcceptance** (object): Accepts findings based on impact level.
-  - **enabled** (boolean): Activate this rule.
-  - **high/medium/low** (booleans): If true, accept findings of that impact level.
-
-**Example (YAML):**
-```yaml
 semgrep:
   severityLimit:
     error:
@@ -121,72 +196,12 @@ semgrep:
     high: false
     medium: true
     low: true
-```
-
-**Use Case:** Fail on any errors, allow up to 10 warnings, and accept all medium/low impact findings.
-
-## Gitleaks Configuration
-
-For Gitleaks secret detection reports.
-
-- **limitEnabled** (boolean): If true, fails validation if any non-ignored secrets are found.
-
-**Example (YAML):**
-```yaml
 gitleaks:
   limitEnabled: true
-```
-
-**Use Case:** Ensure no secrets are leaked in the codebase.
-
-## Coverage Configuration
-
-For LCOV code coverage reports.
-
-- **lineThreshold** (float): Minimum required line coverage percentage (0-100).
-- **functionThreshold** (float): Minimum required function coverage percentage.
-- **branchThreshold** (float): Minimum required branch coverage percentage.
-
-**Example (YAML):**
-```yaml
 coverage:
-  lineThreshold: 80.0
-  functionThreshold: 75.0
-  branchThreshold: 70.0
+  lineThreshold: 0.8
+  functionThreshold: 0.75
+  branchThreshold: 0.7
 ```
 
-**Use Case:** Enforce minimum test coverage levels in CI/CD pipelines.
-
-## Full Example Configuration (YAML)
-
-```yaml
-version: "1"
-metadata:
-  tags: ["project-x", "v1.0"]
-
-grype:
-  # ... (as above)
-
-cyclonedx:
-  # ... (similar to grype)
-
-semgrep:
-  # ... (as above)
-
-gitleaks:
-  limitEnabled: true
-
-coverage:
-  lineThreshold: 80.0
-  # ... (as above)
-```
-
-## Tips for Writing Configurations
-
-- Start with the default generated file and enable rules incrementally.
-- Use risk acceptance to grandfather in known issues while enforcing stricter rules for new vulnerabilities.
-- Integrate with CI/CD: Validate in pipelines to block merges/deployments if rules fail.
-- Formats are interchangeable; choose based on your ecosystem (e.g., YAML for Kubernetes-heavy projects).
-- Validation follows a specific order of precedence (see Validation docs).
-
-For more details, refer to the source code in `pkg/gatecheck/config.go`.
+Fields left out of this file keep the defaults from `config init`.
