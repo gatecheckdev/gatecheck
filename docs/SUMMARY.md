@@ -4,6 +4,7 @@
 
 - [Installation](./installation.md)
 - [Usage](./usage.md)
+  - [Bootstrap](./bootstrap.md)
   - [CLI Reference](./cli-reference.md)
   - [List Reports](./list-reports.md)
   - [Gatecheck Bundle](./gatecheck-bundle.md)

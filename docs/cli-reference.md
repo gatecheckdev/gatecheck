@@ -192,6 +192,43 @@ Writes the CISA Known Exploited Vulnerabilities catalog as JSON to standard outp
 gatecheck download kev > kev.json
 ```
 
+## gatecheck bootstrap
+
+```
+gatecheck bootstrap
+```
+
+Downloads Grype, Syft, Gitleaks, and semgrep's experimental osemgrep CLI into the gatecheck data directory. Each GitHub asset is checked against the project's SHA-256 checksum file. The semgrep wheel is checked against the digest in the PyPI JSON. A tool already at the pinned version is skipped. See [Bootstrap](./bootstrap.md).
+
+- `--tools`: comma-separated scanners. Default `grype,syft,gitleaks,semgrep`. `osemgrep` selects semgrep.
+- `--force`: download again when the pinned version is already installed.
+- `--list`: print pinned version, installed version, and path. This does not download.
+
+`GATECHECK_HOME` is the data directory. Binaries are in its `bin` subdirectory.
+
+```shell
+gatecheck bootstrap
+gatecheck bootstrap --list
+```
+
+## gatecheck grype, syft, gitleaks, semgrep, osemgrep
+
+```
+gatecheck grype [scanner arguments]
+gatecheck syft [scanner arguments]
+gatecheck gitleaks [scanner arguments]
+gatecheck semgrep [scanner arguments]
+gatecheck osemgrep [scanner arguments]
+```
+
+Runs the managed binary. Arguments and streams are passed through, and the process exits with the scanner's status. Flags after the command name are not parsed by gatecheck, so `gatecheck grype --help` is Grype's help.
+
+The managed copy is preferred. If it is absent, the same tool name on `PATH` is used. `gatecheck semgrep` also accepts `osemgrep` on `PATH`. `gatecheck osemgrep` looks only for `osemgrep`.
+
+`semgrep` and `osemgrep` run the osemgrep binary from the semgrep wheel. For `scan`, `--experimental` is added when you omitted it and the program that will run is named `osemgrep`. Other osemgrep commands need you to pass `--experimental`. `gatecheck semgrep --experimental --version` prints the osemgrep version.
+
+If no binary is found, the command prints `gatecheck: <name> is not installed; run `gatecheck bootstrap`` and exits 255.
+
 ## gatecheck agent-guide
 
 ```
@@ -237,3 +274,4 @@ Prints help for a command. `gatecheck validate --help` does the same.
 | `GATECHECK_EPSS_CACHE` | `download epss`, `list`, `list-all`, `validate` | `--epss-no-cache` when the value is `off` |
 | `GATECHECK_KEV_URL` | `download kev`, `validate` | `--kev-url` on `download kev` |
 | `GATECHECK_BUNDLE_TAG` | `bundle create`, `bundle add` | `--tag`, as a comma-separated list |
+| `GATECHECK_HOME` | `bootstrap`, `grype`, `syft`, `gitleaks`, `semgrep`, `osemgrep` | data directory; binaries are in `bin` under it |

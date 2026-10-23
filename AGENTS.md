@@ -15,6 +15,7 @@ This file is for agents changing the gatecheck repository. To use the gatecheck 
 ## Layout
 
 - `cmd/`: Cobra commands. `cmd/gatecheck` is `main`. `new<Name>Command` wires flags. Command behavior that is not flag parsing lives in `pkg/gatecheck`.
+- `internal/fetch`: download and SHA-256 checks. `internal/bootstrap`: scanner install and passthrough. Pinned versions are the constants in `internal/bootstrap/versions.go`.
 - `pkg/`: report decoding, validation, bundles, EPSS, and KEV.
 - `docs/`: mdBook source for docs.gatecheck.dev. `docs/agent-guide.md` is the agent guide embedded by `docs/embed.go`.
 - `website/`: static files for gatecheck.dev.
@@ -25,5 +26,5 @@ This file is for agents changing the gatecheck repository. To use the gatecheck 
 - Check `gatecheck <command> --help` before describing a flag. `docs/cli-reference.md` matches the CLI on main.
 - Report type detection is a lowercase substring of the filename. See `docs/supported-reports.md`.
 - Coverage thresholds and EPSS scores are ratios from 0 to 1.
-- Exit codes from `cmd/gatecheck`: 0 success, 1 threshold failure (`gatecheck.ErrValidationFailure`), 255 any other error (`os.Exit(-1)`).
+- Exit codes from `cmd/gatecheck`: 0 success, 1 threshold failure (`gatecheck.ErrValidationFailure`), 255 any other error (`os.Exit(-1)`). `grype`, `syft`, `gitleaks`, `semgrep`, and `osemgrep` return the scanner's status. A missing scanner still exits 255.
 - Do not add copyright notices.

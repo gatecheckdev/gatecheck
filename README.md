@@ -37,6 +37,8 @@ gatecheck validate --config gatecheck.yaml grype-report.json
 
 `gatecheck agent-guide` (alias `llm`) prints a markdown guide for coding agents. The same text is `docs/agent-guide.md`.
 
+`gatecheck bootstrap` installs pinned Grype, Syft, Gitleaks, and semgrep's experimental osemgrep CLI. `gatecheck grype`, `gatecheck syft`, `gatecheck gitleaks`, `gatecheck semgrep`, and `gatecheck osemgrep` run them.
+
 ### Summarize Reports with List
 
 ```shell

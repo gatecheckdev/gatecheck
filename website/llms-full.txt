@@ -1,6 +1,6 @@
 # gatecheck
 
-Gatecheck reads a scanner report, compares it to thresholds in a config file, and exits non-zero when a threshold fails. It also prints a table of a report, packs reports into one bundle, and downloads EPSS and KEV data. It does not run Grype, Semgrep, Gitleaks, or coverage tools.
+Gatecheck reads a scanner report, compares it to thresholds in a config file, and exits non-zero when a threshold fails. It also prints a table of a report, packs reports into one bundle, and downloads EPSS and KEV data. `gatecheck bootstrap` installs Grype, Syft, Gitleaks, and semgrep's experimental osemgrep CLI, and the matching subcommands run them. Coverage reports still come from the language toolchain.
 
 `gatecheck` with no arguments prints nothing and exits 0. `gatecheck --help` lists commands. `gatecheck agent-guide` (alias `llm`) prints this file.
 
@@ -14,10 +14,34 @@ Logs go to stderr. Tables, `config init`, downloads, and this guide go to stdout
 - `validate` compares one report, or one bundle, to a config.
 - `bundle create` (alias `init`), `bundle add`, and `bundle remove` (alias `rm`) manage a bundle.
 - `download epss` and `download kev` write upstream data to stdout.
+- `bootstrap` installs Grype, Syft, Gitleaks, and osemgrep. `grype`, `syft`, `gitleaks`, `semgrep`, and `osemgrep` run those binaries.
 - `completion bash|fish|powershell|zsh` prints a shell completion script.
 - `help [command]` prints the same text as `<command> --help`.
 
-Global flags, on every command: `-v` / `--verbose` (debug logs) and `--silent` (errors only). They cannot be set together. `-h` / `--help` is also global.
+Global flags, on every command: `-v` / `--verbose` (debug logs) and `--silent` (errors only). They cannot be set together. `-h` / `--help` is also global. The scanner commands pass every argument through, including `--help`, so `gatecheck grype --help` is Grype's help.
+
+## Scanners
+
+`gatecheck bootstrap` downloads pinned releases into the gatecheck data directory and checks each file's SHA-256. Grype, Syft, and Gitleaks come from their GitHub release assets and checksum files. Semgrep publishes no GitHub release assets. Bootstrap downloads the PyPI wheel for this platform, checks the digest in the PyPI JSON, and installs the wheel's native `semgrep-core` binary as `osemgrep`. That binary is semgrep's experimental native CLI. On Linux the wheel's `libs` directory is installed beside it. On Windows the file is `osemgrep.exe`.
+
+The directory is `$GATECHECK_HOME/bin` when `GATECHECK_HOME` is set. Otherwise it is `$XDG_DATA_HOME/gatecheck/bin`, or `~/.local/share/gatecheck/bin` on Linux, `~/Library/Application Support/gatecheck/bin` on macOS, and `%LOCALAPPDATA%\gatecheck\bin` on Windows.
+
+A tool already at the pinned version is left in place. `--force` downloads it again. `--tools grype,syft` limits the set. `osemgrep` in `--tools` means semgrep. `--list` prints pinned versions, installed versions, and paths, and does not download.
+
+```shell
+gatecheck bootstrap
+gatecheck bootstrap --list
+gatecheck grype dir:latest -o json > grype-report.json
+gatecheck semgrep scan --json --config auto .
+```
+
+`gatecheck semgrep scan` and `gatecheck osemgrep scan` insert `--experimental` after `scan` when that flag is absent. Other osemgrep commands need `--experimental` from the caller. `gatecheck semgrep --experimental --version` prints the osemgrep version. When the program that runs is the Python `semgrep` on `PATH`, the flag is left alone. `gatecheck osemgrep` looks for the managed binary, then `osemgrep` on `PATH`.
+
+The managed binary wins when it is present. `gatecheck grype`, `gatecheck syft`, and `gatecheck gitleaks` otherwise run that name on `PATH`. `gatecheck semgrep` tries `semgrep` and then `osemgrep` on `PATH`. If none exist, the command prints `gatecheck: <name> is not installed; run `gatecheck bootstrap`` and exits 255. A scanner's own exit status is returned as-is.
+
+A platform with no Grype, Syft, or Gitleaks asset fails that tool and the command exits 255. A platform with no semgrep wheel prints a skip message on stderr and continues. Current pins are Grype `0.121.0`, Syft `1.55.0`, Gitleaks `8.30.1`, and semgrep `1.182.1`, in `internal/bootstrap/versions.go`.
+
+Syft is installed so it can write CycloneDX (`syft -o cyclonedx-json`). A filename containing `syft` is still recognized by `list` and `validate` and then returns an error. CycloneDX is a report format, and coverage tools are left to the language toolchain.
 
 ## Report type
 
@@ -157,6 +181,7 @@ A non-empty flag wins. An empty flag falls through to the environment variable, 
 | `GATECHECK_EPSS_CACHE` | `download epss`, `list`, `list-all`, `validate` | `--epss-no-cache` when the value is `off` |
 | `GATECHECK_KEV_URL` | `download kev`, `validate` | `--kev-url` on `download kev` |
 | `GATECHECK_BUNDLE_TAG` | `bundle create`, `bundle add` | `--tag`, as a comma-separated list |
+| `GATECHECK_HOME` | `bootstrap`, `grype`, `syft`, `gitleaks`, `semgrep`, `osemgrep` | data directory; binaries are in `bin` under it |
 
 `GATECHECK_EPSS_CACHE` also disables the cache for `0`, `false`, `no`, `disabled`, `disable`, and `none`.
 
@@ -178,5 +203,6 @@ Create the config with `gatecheck config init > gatecheck.yaml` and set real thr
 - `validate` takes the report as its positional argument. The config is `--config` / `-f`. `gatecheck validate gatecheck.yaml grype-report.json` tries to open the config as a report. `config convert` uses `--file` / `-f`, which is a different flag.
 - `list` on a pipe needs `--input-type`. `validate` needs a filesystem path.
 - `list` ignores every filename after the first. Use `list-all` for several files. `list-all` skips coverage files such as `lcov.info`. List those with `gatecheck list lcov.info`.
-- A Syft filename is recognized and then returns an error.
+- A Syft filename is recognized and then returns an error. Use CycloneDX output from Syft when you want `validate` to score it.
+- `gatecheck semgrep --version` reaches osemgrep without `--experimental`, and osemgrep then tries to run `pysemgrep`. Pass the flag: `gatecheck semgrep --experimental --version`.
 - `--audit` still exits 255 when the report, the config, or a named EPSS or KEV file cannot be opened.

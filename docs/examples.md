@@ -36,6 +36,18 @@ gatecheck validate --audit --config gatecheck.yaml grype-report.json
 
 A threshold failure is printed and the process exits 0. A missing report still exits 255.
 
+## Bootstrap a scanner
+
+```shell
+gatecheck bootstrap --tools grype,semgrep
+gatecheck grype dir:. -o json > grype-report.json
+gatecheck semgrep scan -e 'eval($X)' -l python --json t.py > semgrep-report.json
+gatecheck validate --config gatecheck.yaml grype-report.json
+gatecheck validate --config gatecheck.yaml semgrep-report.json
+```
+
+`gatecheck semgrep scan` adds `--experimental` when you omit it. That flag selects semgrep's experimental native CLI, osemgrep, which writes the same Semgrep JSON `list` and `validate` already accept. `gatecheck semgrep --experimental --version` prints the osemgrep version.
+
 ## Standard input
 
 ```shell

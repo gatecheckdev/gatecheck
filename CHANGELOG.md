@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - `gatecheck agent-guide` (alias `llm`) prints a markdown guide for coding agents. The text is `docs/agent-guide.md`.
+- `gatecheck bootstrap` installs pinned Grype, Syft, Gitleaks, and semgrep's experimental osemgrep CLI. `gatecheck grype`, `syft`, `gitleaks`, `semgrep`, and `osemgrep` run the managed binaries.
 
 ### Changed
 
