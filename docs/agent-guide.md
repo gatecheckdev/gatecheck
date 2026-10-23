@@ -114,9 +114,9 @@ grype image:tag -o json | gatecheck ls --input-type grype
 gatecheck list-all grype-report.json semgrep-report.json
 ```
 
-`list` opens the first filename only. Further filenames are ignored. `--markdown` prints a markdown table. `--epss` adds EPSS score and percentile columns for Grype and CycloneDX. Other report types still list, and those columns are omitted. `--epss-url` empty uses `https://epss.cyentia.com`. `--epss-filename` reads that CSV instead of calling the API.
+`list` opens the first filename only. Further filenames are ignored. `--markdown` prints a markdown table. A Grype, CycloneDX, Semgrep, or Gitleaks report with no findings prints one sentence and no table, with or without `--markdown`: `No grype vulnerabilities`, `No cyclonedx vulnerabilities`, `No semgrep findings`, or `No gitleaks findings`. `--epss` adds EPSS score and percentile columns for Grype and CycloneDX. Other report types still list, and those columns are omitted. `--epss-url` empty uses `https://epss.cyentia.com`. `--epss-filename` reads that CSV instead of calling the API.
 
-`list-all` prints each filename, then its table. A file whose name is not a supported `list-all` type is skipped with a warning. A missing file is skipped. A list error is logged and the command continues. The command exits 0. `--epss` adds EPSS data only for filenames that contain `grype` or `cyclonedx`. There is no `--epss-filename` flag, and `GATECHECK_EPSS_FILENAME` is not read. `GATECHECK_EPSS_URL` overrides the API. `--epss-cache-dir` and `--epss-no-cache` are accepted.
+`list-all` prints each filename, then its table, or that sentence when the report has no findings. A file whose name is not a supported `list-all` type is skipped with a warning. A missing file is skipped. A list error is logged and the command continues. The command exits 0. `--epss` adds EPSS data only for filenames that contain `grype` or `cyclonedx`. There is no `--epss-filename` flag, and `GATECHECK_EPSS_FILENAME` is not read. `GATECHECK_EPSS_URL` overrides the API. `--epss-cache-dir` and `--epss-no-cache` are accepted.
 
 ## bundle
 
