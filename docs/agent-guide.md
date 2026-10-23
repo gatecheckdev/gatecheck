@@ -14,6 +14,7 @@ Logs go to stderr. Tables, `config init`, downloads, and this guide go to stdout
 - `validate` compares one report, or one bundle, to a config.
 - `bundle create` (alias `init`), `bundle add`, and `bundle remove` (alias `rm`) manage a bundle.
 - `download epss` and `download kev` write upstream data to stdout.
+- `update` (aliases `self-update`, `upgrade`) replaces this binary with a GitHub release after checking `checksums.txt`. `update --check` only prints the current and latest versions.
 - `completion bash|fish|powershell|zsh` prints a shell completion script.
 - `help [command]` prints the same text as `<command> --help`.
 

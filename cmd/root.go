@@ -96,5 +96,6 @@ func NewGatecheckCommand() *cobra.Command {
 		newDownloadCommand(),
 		newAgentGuideCommand(),
 	)
+	addCommandOnce(gatecheckCmd, updateCmd)
 	return gatecheckCmd
 }

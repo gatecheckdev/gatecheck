@@ -54,10 +54,15 @@ func cleanVersion(version string) string {
 	return version
 }
 
-func userAgent() string {
+// UserAgent returns the User-Agent header value used for gatecheck HTTP requests.
+func UserAgent() string {
 	version, _ := productVersion.Load().(string)
 	if version == "" {
 		version = "unknown"
 	}
 	return fmt.Sprintf("gatecheck/%s (+%s)", version, projectURL)
+}
+
+func userAgent() string {
+	return UserAgent()
 }
