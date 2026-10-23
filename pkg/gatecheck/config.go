@@ -10,7 +10,7 @@ import (
 	"os"
 	"path"
 
-	"github.com/olekukonko/tablewriter"
+	"github.com/gatecheckdev/gatecheck/pkg/format"
 	"github.com/pelletier/go-toml/v2"
 	"github.com/spf13/viper"
 	"gopkg.in/yaml.v3"
@@ -40,11 +40,17 @@ func (c *Config) String() string {
 	_ = v.ReadConfig(buf)
 
 	contentBuf := new(bytes.Buffer)
-	table := tablewriter.NewWriter(contentBuf)
-	table.SetHeader([]string{"config key", "value"})
+	table := format.NewTable(contentBuf)
+	table.Header([]string{"config key", "value"})
 
 	for _, key := range v.AllKeys() {
-		table.Append([]string{key, fmt.Sprintf("%v", v.Get(key))})
+		if err := table.Append([]string{key, fmt.Sprintf("%v", v.Get(key))}); err != nil {
+			slog.Error("append config row", "error", err)
+			return contentBuf.String()
+		}
+	}
+	if err := table.Render(); err != nil {
+		slog.Error("render config table", "error", err)
 	}
 	return contentBuf.String()
 }
