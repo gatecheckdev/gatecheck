@@ -29,6 +29,8 @@ type CyclonedxVulnerability struct {
 	Advisories []CyclonedxAdvisory        `json:"advisories"`
 	Affects    []CyclondexAffectedPackage `json:"affects"`
 	Ratings    []CyclonedxRating          `json:"ratings"`
+	Source     CyclonedxSource            `json:"source"`
+	References []CyclonedxReference       `json:"references"`
 }
 
 // Identity is the vulnerability id, or the bom-ref when the producer left id empty.
@@ -37,6 +39,30 @@ func (v CyclonedxVulnerability) Identity() string {
 		return v.ID
 	}
 	return v.BOMRef
+}
+
+// Link is the first advisory URL, then the source URL, then the first reference source URL.
+// It returns "-" when the vulnerability has none.
+func (v CyclonedxVulnerability) Link() string {
+	for _, advisory := range v.Advisories {
+		if strings.TrimSpace(advisory.URL) != "" {
+			return advisory.URL
+		}
+	}
+	if strings.TrimSpace(v.Source.URL) != "" {
+		return v.Source.URL
+	}
+	for _, ref := range v.References {
+		if strings.TrimSpace(ref.Source.URL) != "" {
+			return ref.Source.URL
+		}
+	}
+	return "-"
+}
+
+type CyclonedxReference struct {
+	ID     string          `json:"id"`
+	Source CyclonedxSource `json:"source"`
 }
 
 type CyclondexAffectedPackage struct {
@@ -90,6 +116,7 @@ func (s *cyclonedxScore) UnmarshalJSON(data []byte) error {
 
 type CyclonedxSource struct {
 	Name string `json:"name"`
+	URL  string `json:"url"`
 }
 
 func (r *CyclonedxReportMin) SelectBySeverity(severity string) []CyclonedxVulnerability {
