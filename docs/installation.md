@@ -62,6 +62,15 @@ options in your terminal or command prompt. For a list of available commands and
 gatecheck --help
 ```
 
+## Install scanners
+
+After gatecheck itself is installed, `gatecheck bootstrap` downloads pinned releases of Grype, Syft, and Gitleaks, and installs semgrep's experimental native CLI as `osemgrep`. The files live under the gatecheck data directory (`GATECHECK_HOME`, or the platform default described in [Bootstrap](./bootstrap.md)).
+
+```
+gatecheck bootstrap
+gatecheck grype --help
+```
+
 ## Troubleshooting
 
 If you encounter any issues during the installation process, ensure that you have the correct permissions to

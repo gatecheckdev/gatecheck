@@ -12,6 +12,7 @@ Commands:
 - `gatecheck validate` compares one report, or one bundle, to the config.
 - `gatecheck bundle create`, `bundle add`, and `bundle remove` manage a bundle.
 - `gatecheck download epss` and `gatecheck download kev` write the upstream data to standard output. EPSS files are cached until the published date changes.
+- `gatecheck bootstrap` installs Grype, Syft, Gitleaks, and semgrep's experimental osemgrep CLI. `gatecheck grype`, `syft`, `gitleaks`, `semgrep`, and `osemgrep` run those programs. See [Bootstrap](./bootstrap.md).
 - `gatecheck update` (aliases `self-update` and `upgrade`) replaces this binary with a GitHub release after checking the archive checksum. `gatecheck update --check` only prints the current and latest versions.
 - `gatecheck agent-guide` (alias `llm`) prints a markdown guide for coding agents.
 - `gatecheck completion` prints a shell completion script. `gatecheck help [command]` prints help for that command.
@@ -25,6 +26,7 @@ Exit status:
 - `0` when the command succeeds. With `validate --audit`, an error returned by the check also exits 0.
 - `1` when a report misses a configured threshold and `--audit` is off.
 - `255` for a missing file, a rejected command line, or a check error when `--audit` is off.
+- The scanner commands return that program's own status. A scanner that is neither installed nor on `PATH` exits 255.
 
 [Validation](./validation.md) lists which `validate` failures are which status.
 

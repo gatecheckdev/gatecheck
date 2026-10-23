@@ -21,6 +21,7 @@ package cmd
 
 import (
 	"log/slog"
+	"sync"
 
 	"github.com/gatecheckdev/gatecheck/pkg/gatecheck"
 	"github.com/spf13/cobra"
@@ -66,36 +67,46 @@ var versionCmd = &cobra.Command{
 	},
 }
 
+var setupOnce sync.Once
+
 // NewGatecheckCommand the root for all CLI commands
 func NewGatecheckCommand() *cobra.Command {
-	RuntimeConfig.Verbose.SetupCobra(gatecheckCmd)
-	RuntimeConfig.Silent.SetupCobra(gatecheckCmd)
+	setupOnce.Do(func() {
+		RuntimeConfig.Verbose.SetupCobra(gatecheckCmd)
+		RuntimeConfig.Silent.SetupCobra(gatecheckCmd)
 
-	gatecheckCmd.MarkFlagsMutuallyExclusive("verbose", "silent")
-	gatecheckCmd.Flags().Bool("version", false, "print version and build information")
+		gatecheckCmd.MarkFlagsMutuallyExclusive("verbose", "silent")
+		gatecheckCmd.Flags().Bool("version", false, "print version and build information")
 
-	_ = viper.BindEnv("cli.audit", "GATECHECK_CLI_AUDIT")
+		_ = viper.BindEnv("cli.audit", "GATECHECK_CLI_AUDIT")
 
-	_ = viper.BindEnv("cli.list.epss-file", "GATECHECK_EPSS_FILE")
-	_ = viper.BindEnv("cli.validate.epss-file", "GATECHECK_EPSS_FILE")
+		_ = viper.BindEnv("cli.list.epss-file", "GATECHECK_EPSS_FILE")
+		_ = viper.BindEnv("cli.validate.epss-file", "GATECHECK_EPSS_FILE")
 
-	_ = viper.BindEnv("cli.validate.kev-file", "GATECHECK_KEV_FILE")
+		_ = viper.BindEnv("cli.validate.kev-file", "GATECHECK_KEV_FILE")
 
-	_ = viper.BindEnv("api.epss-url", "GATECHECK_EPSS_URL")
-	_ = viper.BindEnv("api.kev-url", "GATECHECK_KEV_URL")
+		_ = viper.BindEnv("api.epss-url", "GATECHECK_EPSS_URL")
+		_ = viper.BindEnv("api.kev-url", "GATECHECK_KEV_URL")
 
-	gatecheckCmd.SilenceUsage = true
+		gatecheckCmd.SilenceUsage = true
 
-	gatecheckCmd.AddCommand(
-		versionCmd,
-		newConfigCommand(),
-		newListCommand(),
-		newListAllCommand(),
-		newBundleCommand(),
-		newValidateCommand(),
-		newDownloadCommand(),
-		newAgentGuideCommand(),
-	)
-	addCommandOnce(gatecheckCmd, updateCmd)
+		gatecheckCmd.AddCommand(
+			versionCmd,
+			newConfigCommand(),
+			newListCommand(),
+			newListAllCommand(),
+			newBundleCommand(),
+			newValidateCommand(),
+			newDownloadCommand(),
+			newAgentGuideCommand(),
+			newBootstrapCommand(),
+			newPassthroughCommand("grype", "Run the managed grype scanner"),
+			newPassthroughCommand("syft", "Run the managed syft scanner"),
+			newPassthroughCommand("gitleaks", "Run the managed gitleaks scanner"),
+			newPassthroughCommand("semgrep", "Run osemgrep from the managed semgrep wheel"),
+			newPassthroughCommand("osemgrep", "Run osemgrep from the managed semgrep wheel"),
+		)
+		addCommandOnce(gatecheckCmd, updateCmd)
+	})
 	return gatecheckCmd
 }
