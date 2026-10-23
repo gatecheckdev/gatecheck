@@ -52,10 +52,10 @@ func TestTrivyListAndValidate(t *testing.T) {
 		}
 	})
 
-	t.Run("case sensitive filename", func(t *testing.T) {
-		err := List(&bytes.Buffer{}, bytes.NewReader(report), "Trivy-report.json")
-		if err == nil {
-			t.Fatal("expected an unsupported filename")
+	t.Run("content wins over filename case", func(t *testing.T) {
+		got := renderList(t, "Trivy-report.json", report, nil)
+		if !strings.Contains(got, "TRIVY SEVERITY") {
+			t.Fatalf("contents should win over filename case\n%s", got)
 		}
 	})
 

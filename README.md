@@ -36,7 +36,7 @@ Generate a configuration file with the default thresholds. Every rule starts dis
 gatecheck config init > gatecheck.yaml
 ```
 
-Validate a report. The config is a flag. The report type comes from the filename, so a Grype report needs `grype` in the name.
+Validate a report. The config is a flag. The report type comes from the file contents. The filename is used when the contents are ambiguous, so a Grype report can still be named `grype-report.json`.
 
 ```shell
 gatecheck validate --config gatecheck.yaml grype-report.json
@@ -66,7 +66,7 @@ gatecheck validate --help
 
 ### Bundling Artifacts
 
-Bundling artifacts produces a gzipped tarball and a manifest. The bundle filename needs to contain `bundle` so `list` and `validate` treat it as a bundle.
+Bundling artifacts produces a gzipped tarball and a manifest. `list` and `validate` recognize a bundle from that manifest. A name that contains `bundle` still works when the contents are ambiguous.
 
 ```shell
 gatecheck bundle create gatecheck-bundle.tar.gz grype-report.json

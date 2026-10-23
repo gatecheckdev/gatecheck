@@ -129,10 +129,10 @@ The name in that line is the command you typed.
 
 Coverage files (LCOV, Clover, Cobertura) come from the language toolchain. Bootstrap does not install those tools.
 
-CycloneDX is a report format. Syft writes it with `-o cyclonedx-json`, and Grype can write a CycloneDX vulnerability report. Those are the files `list` and `validate` score. There is no separate CycloneDX scanner.
+CycloneDX is a report format. Syft writes it with `-o cyclonedx-json`, and Grype can write a CycloneDX vulnerability report. Those are the files `list` and `validate` score. Any other tool's CycloneDX JSON BOM is scored the same way. There is no separate CycloneDX scanner.
 
-Syft's own JSON is still rejected. A filename containing `syft` is recognized, and `list` and `validate` then return an error. Syft is installed so it can write CycloneDX.
+Syft's own JSON is still rejected. `list` and `validate` return an error for that document. A filename that contains `syft` does the same when the contents are ambiguous. Syft is installed so it can write CycloneDX.
 
-Trivy JSON (`trivy fs --format json`, `trivy image --format json`, and the other Trivy scanners' JSON output) is a report type. A filename containing `trivy` is scored. `cyclonedx` is checked first, so `cyclonedx-trivy-sbom.json` stays CycloneDX.
+Trivy JSON (`trivy fs --format json`, `trivy image --format json`, and the other Trivy scanners' JSON output) is a report type. The contents identify it. A filename containing `trivy` is the fallback when the contents are ambiguous. A CycloneDX BOM stays CycloneDX even when the name contains `trivy`. Misconfigurations, secrets, and licenses are ignored. Trivy SARIF is a SARIF report.
 
-osv-scanner JSON (`osv-scanner scan source --format json`) is a report type. A filename containing `osv` is scored, so `osv-scanner-report.json` works. Each vulnerability group is one finding. Aliases of that group are not counted again. `max_severity` is a CVSS base score. License-only packages are skipped.
+osv-scanner JSON (`osv-scanner scan source --format json`) is a report type. The contents identify it when `results` holds objects with a `packages` array. A filename containing `osv` is the fallback, so `osv-scanner-report.json` still works when the document is only `{"results":[]}`. Each vulnerability group is one finding. Aliases of that group are not counted again. `max_severity` is a CVSS base score. License-only packages are skipped.

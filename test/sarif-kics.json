@@ -1,0 +1,150 @@
+{
+  "$schema": "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json",
+  "version": "2.1.0",
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "KICS",
+          "version": "1.7.12",
+          "rules": [
+            {
+              "id": "611ab018",
+              "name": "S3 Bucket Without Versioning",
+              "defaultConfiguration": {
+                "level": "error"
+              },
+              "properties": {
+                "security-severity": "9.1"
+              }
+            },
+            {
+              "id": "4a8c5d22",
+              "name": "S3 Bucket Logging Disabled",
+              "defaultConfiguration": {
+                "level": "warning"
+              },
+              "properties": {
+                "security-severity": "5.3"
+              }
+            },
+            {
+              "id": "note-rule",
+              "defaultConfiguration": {
+                "level": "note"
+              }
+            }
+          ]
+        }
+      },
+      "results": [
+        {
+          "ruleId": "611ab018",
+          "ruleIndex": 0,
+          "level": "error",
+          "kind": "fail",
+          "message": {
+            "text": "S3 bucket does not have versioning enabled"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "main.tf"
+                },
+                "region": {
+                  "startLine": 12
+                }
+              }
+            }
+          ],
+          "properties": {
+            "security-severity": "9.1"
+          }
+        },
+        {
+          "ruleId": "4a8c5d22",
+          "level": "warning",
+          "message": {
+            "text": "S3 bucket logging is disabled"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "main.tf"
+                },
+                "region": {
+                  "startLine": 30
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "note-rule",
+          "level": "note",
+          "message": {
+            "text": "Consider a description"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "main.tf"
+                },
+                "region": {
+                  "startLine": 2
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "611ab018",
+          "level": "error",
+          "kind": "pass",
+          "message": {
+            "text": "Passed and should be ignored"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "ok.tf"
+                },
+                "region": {
+                  "startLine": 1
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "611ab018",
+          "level": "error",
+          "suppressions": [
+            {
+              "kind": "inSource"
+            }
+          ],
+          "message": {
+            "text": "Suppressed and should be ignored"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "skip.tf"
+                },
+                "region": {
+                  "startLine": 4
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

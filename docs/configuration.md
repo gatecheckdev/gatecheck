@@ -154,6 +154,26 @@ semgrep:
         low: false
 gitleaks:
     limitEnabled: false
+sarif:
+    severityLimit:
+        critical:
+            enabled: false
+            limit: 0
+        high:
+            enabled: false
+            limit: 0
+        medium:
+            enabled: false
+            limit: 0
+        low:
+            enabled: false
+            limit: 0
+    ruleLimit:
+        enabled: false
+        rules: []
+    ruleRiskAcceptance:
+        enabled: false
+        rules: []
 coverage:
     lineThreshold: 0
     functionThreshold: 0
@@ -205,6 +225,49 @@ grype:
 ## Gitleaks
 
 `limitEnabled: true` fails validation when the report contains any finding. `false` skips the check. There is no count.
+
+## SARIF
+
+`sarif` is for any SARIF 2.1.0 report. Semgrep's own JSON still uses `semgrep`. `semgrep --sarif` uses `sarif`.
+
+`severityLimit` has `critical`, `high`, `medium`, and `low`. Each has `enabled` and `limit`, with the same count rule as Grype.
+
+The severity comes from the SARIF property `security-severity` when a result or its rule has one. The value is a number from 0 to 10, or a numeric string. The ranges are the ones GitHub code scanning uses:
+
+- 9.0 and above: critical
+- 7.0 to 8.9: high
+- 4.0 to 6.9: medium
+- above 0 and below 4.0: low
+- 0: none, and the severity limit does not count it
+
+A result property wins over the same property on the rule. When neither is set, gatecheck uses the SARIF level. A missing result level uses the rule's `defaultConfiguration.level`, then `warning`.
+
+- `error`: high
+- `warning`: medium
+- `note`: low
+- `none`: the result is ignored
+
+`ruleLimit` is the deny list. `ruleRiskAcceptance` is the allow list. Each has `enabled` and `rules`. A rule entry is `id` plus an optional `metadata.tags` list. `id` is compared without regard to case.
+
+```yaml
+sarif:
+  ruleLimit:
+    enabled: true
+    rules:
+      - id: CKV_AWS_21
+        metadata:
+          tags:
+            - denied
+  ruleRiskAcceptance:
+    enabled: true
+    rules:
+      - id: B101
+        metadata:
+          tags:
+            - accepted
+```
+
+See [Validation](./validation.md) for which results are counted and the order of the rules.
 
 ## Coverage
 

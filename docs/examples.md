@@ -18,7 +18,7 @@ gatecheck list --epss --epss-filename epss.csv grype-report.json
 
 ## Bundle
 
-The bundle name contains `bundle`. Each report name contains its type, and that base name becomes the label inside the bundle.
+The bundle name contains `bundle`. Each report's contents identify its type. The base name becomes the label inside the bundle and is used only when the contents are ambiguous.
 
 ```shell
 gatecheck bundle create gatecheck-bundle.tar.gz grype-report.json --tag ci

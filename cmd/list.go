@@ -1,18 +1,16 @@
 package cmd
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
+	"io"
 	"log/slog"
 	"os"
-	"slices"
-	"strings"
 
 	"github.com/gatecheckdev/gatecheck/pkg/gatecheck"
 	"github.com/spf13/cobra"
 )
-
-var supportedTypes = []string{"grype", "semgrep", "gitleaks", "syft", "cyclonedx", "bundle", "gatecheck", "trivy", "osv"}
 
 var listCmd = &cobra.Command{
 	Use:     "list",
@@ -97,17 +95,29 @@ var listAllCmd = &cobra.Command{
 		slog.Debug("run list all", "epss", fmt.Sprintf("%v", epss), "markdown", fmt.Sprintf("%v", markdown))
 
 		for _, filename := range args {
-			supportedFunc := func(s string) bool {
-				return strings.Contains(filename, s)
-			}
 			cmd.Printf("%s\n", filename)
-			if !slices.ContainsFunc(supportedTypes, supportedFunc) {
-				slog.Warn("file not supported, skip", "filename", filename)
+
+			src, err := os.Open(filename)
+			if err != nil {
+				if errors.Is(err, os.ErrNotExist) {
+					slog.Error("file not found, skip", "filename", filename)
+					continue
+				}
+				slog.Error("cannot open file, skip", "filename", filename, "error", err)
+				continue
+			}
+			content, err := io.ReadAll(src)
+			if closeErr := src.Close(); closeErr != nil {
+				slog.Debug("close file", "filename", filename, "error", closeErr)
+			}
+			if err != nil {
+				slog.Error("cannot read file, skip", "filename", filename, "error", err)
 				continue
 			}
 
-			if _, err := os.Stat(filename); errors.Is(err, os.ErrNotExist) {
-				slog.Error("file not found, skip", "filename", filename)
+			supported, withEPSS := gatecheck.ListAllAction(content, filename)
+			if !supported {
+				slog.Warn("file not supported, skip", "filename", filename)
 				continue
 			}
 
@@ -121,7 +131,7 @@ var listAllCmd = &cobra.Command{
 			}
 			opts = append(opts, displayOpt)
 
-			if epss && slices.ContainsFunc([]string{"grype", "cyclonedx", "trivy", "osv"}, supportedFunc) {
+			if epss && withEPSS {
 				epssOpt, err := gatecheck.WithEPSS(epssFile, epssURL, epssCacheOptions()...)
 				if err != nil {
 					slog.Error("epss fetch failure, skip", "filename", filename, "error", err)
@@ -131,13 +141,7 @@ var listAllCmd = &cobra.Command{
 			}
 
 			dst := cmd.OutOrStdout()
-			src, err := os.Open(filename)
-			if err != nil {
-				slog.Error("cannot open file, skip", "filename", filename, "error", err)
-				continue
-			}
-
-			err = gatecheck.List(dst, src, filename, opts...)
+			err = gatecheck.List(dst, bytes.NewReader(content), filename, opts...)
 			if err != nil {
 				slog.Error("cannot list report, skip", "filename", filename, "error", err)
 				continue
@@ -157,7 +161,7 @@ func newListAllCommand() *cobra.Command {
 }
 
 func newListCommand() *cobra.Command {
-	listCmd.Flags().StringP("input-type", "i", "", "the input filetype if using STDIN [grype|semgrep|gitleaks|syft|bundle|trivy|osv]")
+	listCmd.Flags().StringP("input-type", "i", "", "stdin type word used when the report content is ambiguous [grype|cyclonedx|semgrep|gitleaks|trivy|osv|syft|sarif|bundle|lcov]")
 	listCmd.Flags().Bool("markdown", false, "print as a markdown table")
 	listCmd.Flags().Bool("epss", false, "List with EPSS data")
 	RuntimeConfig.EPSSURL.SetupCobra(listCmd)

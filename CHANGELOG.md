@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `list` and `validate` read SARIF 2.1.0 from any tool, including KICS, Checkov, Bandit, govulncheck, and `semgrep --sarif`. Severity limits use `security-severity` when it is set, and the SARIF level otherwise. `sarif.ruleLimit` denies rule ids and `sarif.ruleRiskAcceptance` allows them. A SARIF report with no findings prints `No sarif findings`.
 - `gatecheck bootstrap` installs pinned Trivy 0.76.1, and `gatecheck trivy` runs it.
 - Trivy JSON reports work with `list`, `validate`, and `bundle`. Severity limits and CVE allow and deny lists follow the Grype rules.
 - `gatecheck bootstrap` installs pinned osv-scanner 2.7.0, and `gatecheck osv-scanner` runs it.
@@ -16,7 +17,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Report type comes from the file contents. The filename is used only when the contents are ambiguous.
+- Any CycloneDX JSON BOM with vulnerabilities is listed and validated with the `cyclonedx` rules, whichever tool wrote it. A missing severity word falls back to the CVSS score.
 - `gatecheck bootstrap --list` widens the tool column so `osv-scanner` fits.
+
+### Fixed
+
+- A CycloneDX file with `grype` in the name was read as Grype, so its vulnerabilities were ignored. Fixes #80.
 
 ## [0.9.0] - 2026-10-23
 

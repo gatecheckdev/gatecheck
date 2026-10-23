@@ -17,7 +17,7 @@ Commands:
 - `gatecheck agent-guide` (alias `llm`) prints a markdown guide for coding agents.
 - `gatecheck completion` prints a shell completion script. `gatecheck help [command]` prints help for that command.
 
-`list` and `validate` decide the report type from the filename. The words are lowercase. See [Supported Reports](./supported-reports.md).
+`list` and `validate` decide the report type from the file contents. The filename is the fallback when the contents are ambiguous. See [Supported Reports](./supported-reports.md).
 
 Logs go to standard error. Tables, downloaded data, and `config init` go to standard output.
 
