@@ -45,7 +45,7 @@ func Run(ctx context.Context, tool string, args []string, home string, stdin io.
 
 	bin, err := resolveBinary(tool, home)
 	if err != nil {
-		fmt.Fprintf(stderr, "gatecheck: %s is not installed; run `gatecheck bootstrap`\n", tool)
+		_, _ = fmt.Fprintf(stderr, "gatecheck: %s is not installed; run `gatecheck bootstrap`\n", tool)
 		return ErrNotInstalled
 	}
 

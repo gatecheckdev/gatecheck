@@ -78,13 +78,6 @@ func detectLibc() string {
 	return "glibc"
 }
 
-func (p Platform) exe(name string) string {
-	if p.GOOS == "windows" && !strings.HasSuffix(strings.ToLower(name), ".exe") {
-		return name + ".exe"
-	}
-	return name
-}
-
 func unsupported(tool string, p Platform) error {
 	return fmt.Errorf("%s has no published release asset for %s", tool, p)
 }

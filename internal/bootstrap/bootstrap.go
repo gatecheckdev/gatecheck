@@ -63,7 +63,7 @@ func Bootstrap(ctx context.Context, opts Options) error {
 		}
 		var skip *Skip
 		if errors.As(err, &skip) {
-			fmt.Fprintln(opts.stderr(), skip.Error())
+			_, _ = fmt.Fprintln(opts.stderr(), skip.Error())
 			continue
 		}
 		errs = append(errs, err)
@@ -186,7 +186,7 @@ func installGitHub(ctx context.Context, opts Options, tool, repo, version string
 	binDir := BinDir(opts.Home)
 	dest := filepath.Join(binDir, asset.DestName)
 	if !opts.Force && alreadyInstalled(binDir, tool, version, dest) {
-		fmt.Fprintf(opts.stdout(), "%s %s already installed\n", tool, version)
+		_, _ = fmt.Fprintf(opts.stdout(), "%s %s already installed\n", tool, version)
 		return nil
 	}
 	if err := os.MkdirAll(binDir, 0o755); err != nil {
@@ -233,7 +233,7 @@ func installGitHub(ctx context.Context, opts Options, tool, repo, version string
 	if err := writeVersion(binDir, tool, version); err != nil {
 		return fmt.Errorf("%s: %w", tool, err)
 	}
-	fmt.Fprintf(opts.stdout(), "installed %s %s %s\n", tool, version, dest)
+	_, _ = fmt.Fprintf(opts.stdout(), "installed %s %s %s\n", tool, version, dest)
 	return nil
 }
 
@@ -246,7 +246,7 @@ func installSemgrep(ctx context.Context, opts Options) error {
 	binDir := BinDir(opts.Home)
 	dest := osemgrepPath(binDir, p)
 	if !opts.Force && alreadyInstalled(binDir, "osemgrep", SemgrepVersion, dest) {
-		fmt.Fprintf(opts.stdout(), "semgrep %s already installed\n", SemgrepVersion)
+		_, _ = fmt.Fprintf(opts.stdout(), "semgrep %s already installed\n", SemgrepVersion)
 		return nil
 	}
 	if wheelMatch(p) == nil {
@@ -306,7 +306,7 @@ func installSemgrep(ctx context.Context, opts Options) error {
 	if err := writeVersion(binDir, "osemgrep", SemgrepVersion); err != nil {
 		return fmt.Errorf("semgrep: %w", err)
 	}
-	fmt.Fprintf(opts.stdout(), "installed semgrep %s %s\n", SemgrepVersion, dest)
+	_, _ = fmt.Fprintf(opts.stdout(), "installed semgrep %s %s\n", SemgrepVersion, dest)
 	return nil
 }
 
@@ -396,11 +396,11 @@ func osemgrepPath(binDir string, p Platform) string {
 
 func writeList(w io.Writer, home string, tools []string) error {
 	binDir := BinDir(home)
-	fmt.Fprintf(w, "%-10s %-10s %-10s %s\n", "TOOL", "PINNED", "INSTALLED", "PATH")
+	_, _ = fmt.Fprintf(w, "%-10s %-10s %-10s %s\n", "TOOL", "PINNED", "INSTALLED", "PATH")
 	for _, tool := range tools {
 		pinned := pinnedVersion(tool)
 		installed, path := installedStatus(binDir, tool)
-		fmt.Fprintf(w, "%-10s %-10s %-10s %s\n", tool, pinned, installed, path)
+		_, _ = fmt.Fprintf(w, "%-10s %-10s %-10s %s\n", tool, pinned, installed, path)
 	}
 	return nil
 }

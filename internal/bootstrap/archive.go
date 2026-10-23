@@ -49,7 +49,7 @@ func extractTarBinary(archivePath, wantBase, dest string) error {
 		if err != nil {
 			return err
 		}
-		if hdr.Typeflag != tar.TypeReg && hdr.Typeflag != tar.TypeRegA {
+		if hdr.Typeflag != tar.TypeReg {
 			continue
 		}
 		if path.Base(hdr.Name) != wantBase || strings.Contains(hdr.Name, "..") {

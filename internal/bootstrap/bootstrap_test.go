@@ -50,10 +50,10 @@ func TestInstallGrypeChecksumAndIdempotent(t *testing.T) {
 			}
 			if mode == "missing" {
 				digest = good
-				fmt.Fprintf(w, "%s  other.tar.gz\n", digest)
+				_, _ = fmt.Fprintf(w, "%s  other.tar.gz\n", digest)
 				return
 			}
-			fmt.Fprintf(w, "%s  %s\n", digest, asset.Asset)
+			_, _ = fmt.Fprintf(w, "%s  %s\n", digest, asset.Asset)
 		case strings.HasSuffix(r.URL.Path, asset.Asset):
 			_, _ = w.Write(archiveBody)
 		default:
@@ -148,7 +148,7 @@ func TestInstallZipBinary(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch {
 		case strings.HasSuffix(r.URL.Path, asset.Checksum):
-			fmt.Fprintf(w, "%x  %s\n", sum, asset.Asset)
+			_, _ = fmt.Fprintf(w, "%x  %s\n", sum, asset.Asset)
 		case strings.HasSuffix(r.URL.Path, asset.Asset):
 			_, _ = w.Write(body)
 		default:

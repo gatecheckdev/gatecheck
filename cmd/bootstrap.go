@@ -59,7 +59,7 @@ func newPassthroughCommand(name, short string) *cobra.Command {
 				return err
 			}
 			if err != nil {
-				fmt.Fprintln(cmd.ErrOrStderr(), "gatecheck:", err)
+				_, _ = fmt.Fprintln(cmd.ErrOrStderr(), "gatecheck:", err)
 			}
 			return err
 		},
