@@ -67,7 +67,7 @@ gatecheck list [FILE]
 
 Aliases: `ls`, `print`.
 
-Prints a table for one report. The first filename is the one that is opened. Further filenames are ignored. Use `list-all` for more than one file.
+Prints a table for one report. The first filename is the one that is opened. Further filenames are ignored. Use `list-all` for more than one file. A Grype, CycloneDX, Semgrep, or Gitleaks report with no findings prints one sentence and no table: `No grype vulnerabilities`, `No cyclonedx vulnerabilities`, `No semgrep findings`, or `No gitleaks findings`. `--markdown` prints that same sentence.
 
 With no filename, the command reads standard input and `--input-type` is required.
 
@@ -91,7 +91,7 @@ grype bkimminich/juice-shop:latest -o json | gatecheck ls --input-type grype
 gatecheck list-all [FILE...]
 ```
 
-Prints each filename, then its table. A file whose name is not a supported `list-all` type is skipped with a warning. A missing file is skipped. A list error is logged and the command continues. The command exits 0 after the last file.
+Prints each filename, then its table, or one sentence when that report has no findings. A file whose name is not a supported `list-all` type is skipped with a warning. A missing file is skipped. A list error is logged and the command continues. The command exits 0 after the last file.
 
 - `--markdown`: print markdown tables.
 - `--epss`: download EPSS data and add it for filenames that contain `grype` or `cyclonedx`. The download happens per file and is cached until the published date changes. There is no `--epss-filename` flag. `GATECHECK_EPSS_URL` overrides the API. `GATECHECK_EPSS_FILENAME` is not read by this command. Requests send a User-Agent with the gatecheck version and project URL.

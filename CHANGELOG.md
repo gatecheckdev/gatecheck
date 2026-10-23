@@ -13,9 +13,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- `list` prints one sentence when a report has no findings, instead of an empty table. The lines are `No grype vulnerabilities`, `No cyclonedx vulnerabilities`, `No semgrep findings`, and `No gitleaks findings`. `--markdown` prints the same line.
 - Require Go 1.26, the oldest release still supported upstream. CI tests Go 1.26 and 1.27.
 - Add Dependabot for weekly Go module and GitHub Actions updates.
 - Cache the current EPSS file and send a gatecheck User-Agent on download
+
+### Fixed
+
+- Table headers are uppercased without splitting words, so Semgrep prints `OWASP IDS`. Footer values such as `50.00%` stay intact.
 
 ## [0.8.1] - 2025-04-09
 

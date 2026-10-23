@@ -1,0 +1,153 @@
++---------------------------------------------------+--------------------------------+----------+--------+---------------------+
+|                 SEMGREP CHECK ID                  |           OWASP IDS            | SEVERITY | IMPACT |        LINK         |
++---------------------------------------------------+--------------------------------+----------+--------+---------------------+
+| javascript...path-join-resolve-traversal          | A05:2017 - Broken Access       | WARNING  | MEDIUM | https://sg.run/OPqk |
+|                                                   | Control, A01:2021 - Broken     |          |        |                     |
+|                                                   | Access Control                 |          |        |                     |
+| javascript...express-sequelize-injection          | A01:2017 - Injection, A03:2021 | ERROR    | HIGH   | https://sg.run/gjoe |
+|                                                   | - Injection                    |          |        |                     |
+| javascript...tainted-sql-string                   | A01:2017 - Injection, A03:2021 | ERROR    | MEDIUM | https://sg.run/66ZL |
+|                                                   | - Injection                    |          |        |                     |
+| javascript...express-sequelize-injection          | A01:2017 - Injection, A03:2021 | ERROR    | HIGH   | https://sg.run/gjoe |
+|                                                   | - Injection                    |          |        |                     |
+| javascript...tainted-sql-string                   | A01:2017 - Injection, A03:2021 | ERROR    | MEDIUM | https://sg.run/66ZL |
+|                                                   | - Injection                    |          |        |                     |
+| javascript...detect-replaceall-sanitization       | A07:2017 - Cross-Site          | INFO     | LOW    | https://sg.run/AzoB |
+|                                                   | Scripting (XSS), A03:2021 -    |          |        |                     |
+|                                                   | Injection                      |          |        |                     |
+| javascript...detect-replaceall-sanitization       | A07:2017 - Cross-Site          | INFO     | LOW    | https://sg.run/AzoB |
+|                                                   | Scripting (XSS), A03:2021 -    |          |        |                     |
+|                                                   | Injection                      |          |        |                     |
+| javascript...express-sequelize-injection          | A01:2017 - Injection, A03:2021 | ERROR    | HIGH   | https://sg.run/gjoe |
+|                                                   | - Injection                    |          |        |                     |
+| javascript...tainted-sql-string                   | A01:2017 - Injection, A03:2021 | ERROR    | MEDIUM | https://sg.run/66ZL |
+|                                                   | - Injection                    |          |        |                     |
+| javascript...express-sequelize-injection          | A01:2017 - Injection, A03:2021 | ERROR    | HIGH   | https://sg.run/gjoe |
+|                                                   | - Injection                    |          |        |                     |
+| javascript...tainted-sql-string                   | A01:2017 - Injection, A03:2021 | ERROR    | MEDIUM | https://sg.run/66ZL |
+|                                                   | - Injection                    |          |        |                     |
+| generic...detected-generic-secret                 | A07:2021 - Identification and  | ERROR    | MEDIUM | https://sg.run/l2o5 |
+|                                                   | Authentication Failures        |          |        |                     |
+| yaml...no-new-privileges                          | A05:2021 - Security            | WARNING  | HIGH   | https://sg.run/0n8q |
+|                                                   | Misconfiguration, A06:2017 -   |          |        |                     |
+|                                                   | Security Misconfiguration      |          |        |                     |
+| yaml...writable-filesystem-service                | A05:2021 - Security            | WARNING  | HIGH   | https://sg.run/e4JE |
+|                                                   | Misconfiguration, A06:2017 -   |          |        |                     |
+|                                                   | Security Misconfiguration      |          |        |                     |
+| javascript...prototype-pollution-loop             | A08:2021 - Software and Data   | WARNING  | LOW    | https://sg.run/w1DB |
+|                                                   | Integrity Failures             |          |        |                     |
+| javascript...insecure-document-method             | A07:2017 - Cross-Site          | ERROR    | LOW    | https://sg.run/LwA9 |
+|                                                   | Scripting (XSS), A03:2021 -    |          |        |                     |
+|                                                   | Injection                      |          |        |                     |
+| html...missing-integrity                          | A08:2021 - Software and Data   | WARNING  | LOW    | https://sg.run/krXA |
+|                                                   | Integrity Failures             |          |        |                     |
+| html...missing-integrity                          | A08:2021 - Software and Data   | WARNING  | LOW    | https://sg.run/krXA |
+|                                                   | Integrity Failures             |          |        |                     |
+| html...missing-integrity                          | A08:2021 - Software and Data   | WARNING  | LOW    | https://sg.run/krXA |
+|                                                   | Integrity Failures             |          |        |                     |
+| javascript...path-join-resolve-traversal          | A05:2017 - Broken Access       | WARNING  | MEDIUM | https://sg.run/OPqk |
+|                                                   | Control, A01:2021 - Broken     |          |        |                     |
+|                                                   | Access Control                 |          |        |                     |
+| javascript...path-join-resolve-traversal          | A05:2017 - Broken Access       | WARNING  | MEDIUM | https://sg.run/OPqk |
+|                                                   | Control, A01:2021 - Broken     |          |        |                     |
+|                                                   | Access Control                 |          |        |                     |
+| javascript...detect-non-literal-regexp            | A05:2021 - Security            | WARNING  | MEDIUM | https://sg.run/gr65 |
+|                                                   | Misconfiguration, A06:2017 -   |          |        |                     |
+|                                                   | Security Misconfiguration      |          |        |                     |
+| javascript...detect-non-literal-regexp            | A05:2021 - Security            | WARNING  | MEDIUM | https://sg.run/gr65 |
+|                                                   | Misconfiguration, A06:2017 -   |          |        |                     |
+|                                                   | Security Misconfiguration      |          |        |                     |
+| javascript...hardcoded-hmac-key                   | A07:2021 - Identification and  | WARNING  | LOW    | https://sg.run/K9bn |
+|                                                   | Authentication Failures        |          |        |                     |
+| javascript...hardcoded-jwt-secret                 | A07:2021 - Identification and  | WARNING  | MEDIUM | https://sg.run/4xN9 |
+|                                                   | Authentication Failures        |          |        |                     |
+| javascript...hardcoded-hmac-key                   | A07:2021 - Identification and  | WARNING  | LOW    | https://sg.run/K9bn |
+|                                                   | Authentication Failures        |          |        |                     |
+| javascript...path-join-resolve-traversal          | A05:2017 - Broken Access       | WARNING  | MEDIUM | https://sg.run/OPqk |
+|                                                   | Control, A01:2021 - Broken     |          |        |                     |
+|                                                   | Access Control                 |          |        |                     |
+| javascript...path-join-resolve-traversal          | A05:2017 - Broken Access       | WARNING  | MEDIUM | https://sg.run/OPqk |
+|                                                   | Control, A01:2021 - Broken     |          |        |                     |
+|                                                   | Access Control                 |          |        |                     |
+| javascript...express-detect-notevil-usage         | A06:2021 - Vulnerable and      | WARNING  | HIGH   | https://sg.run/W70E |
+|                                                   | Outdated Components            |          |        |                     |
+| javascript...eval-detected                        | A03:2021 - Injection           | WARNING  | MEDIUM | https://sg.run/7ope |
+| javascript...express-path-join-resolve-traversal  | A05:2017 - Broken Access       | WARNING  | MEDIUM | https://sg.run/weRn |
+|                                                   | Control, A01:2021 - Broken     |          |        |                     |
+|                                                   | Access Control                 |          |        |                     |
+| javascript...path-join-resolve-traversal          | A05:2017 - Broken Access       | WARNING  | MEDIUM | https://sg.run/OPqk |
+|                                                   | Control, A01:2021 - Broken     |          |        |                     |
+|                                                   | Access Control                 |          |        |                     |
+| javascript...express-res-sendfile                 | A04:2021 - Insecure Design     | WARNING  | MEDIUM | https://sg.run/7DJk |
+| javascript...path-join-resolve-traversal          | A05:2017 - Broken Access       | WARNING  | MEDIUM | https://sg.run/OPqk |
+|                                                   | Control, A01:2021 - Broken     |          |        |                     |
+|                                                   | Access Control                 |          |        |                     |
+| javascript...path-join-resolve-traversal          | A05:2017 - Broken Access       | WARNING  | MEDIUM | https://sg.run/OPqk |
+|                                                   | Control, A01:2021 - Broken     |          |        |                     |
+|                                                   | Access Control                 |          |        |                     |
+| javascript...path-join-resolve-traversal          | A05:2017 - Broken Access       | WARNING  | MEDIUM | https://sg.run/OPqk |
+|                                                   | Control, A01:2021 - Broken     |          |        |                     |
+|                                                   | Access Control                 |          |        |                     |
+| javascript...express-libxml-vm-noent              | A04:2017 - XML External        | WARNING  | HIGH   | https://sg.run/n8Ag |
+|                                                   | Entities (XXE), A05:2021 -     |          |        |                     |
+|                                                   | Security Misconfiguration      |          |        |                     |
+| javascript...express-res-sendfile                 | A04:2021 - Insecure Design     | WARNING  | MEDIUM | https://sg.run/7DJk |
+| javascript...express-path-join-resolve-traversal  | A05:2017 - Broken Access       | WARNING  | MEDIUM | https://sg.run/weRn |
+|                                                   | Control, A01:2021 - Broken     |          |        |                     |
+|                                                   | Access Control                 |          |        |                     |
+| javascript...path-join-resolve-traversal          | A05:2017 - Broken Access       | WARNING  | MEDIUM | https://sg.run/OPqk |
+|                                                   | Control, A01:2021 - Broken     |          |        |                     |
+|                                                   | Access Control                 |          |        |                     |
+| javascript...express-res-sendfile                 | A04:2021 - Insecure Design     | WARNING  | MEDIUM | https://sg.run/7DJk |
+| javascript...express-path-join-resolve-traversal  | A05:2017 - Broken Access       | WARNING  | MEDIUM | https://sg.run/weRn |
+|                                                   | Control, A01:2021 - Broken     |          |        |                     |
+|                                                   | Access Control                 |          |        |                     |
+| javascript...path-join-resolve-traversal          | A05:2017 - Broken Access       | WARNING  | MEDIUM | https://sg.run/OPqk |
+|                                                   | Control, A01:2021 - Broken     |          |        |                     |
+|                                                   | Access Control                 |          |        |                     |
+| javascript...express-sequelize-injection          | A01:2017 - Injection, A03:2021 | ERROR    | HIGH   | https://sg.run/gjoe |
+|                                                   | - Injection                    |          |        |                     |
+| javascript...tainted-sql-string                   | A01:2017 - Injection, A03:2021 | ERROR    | MEDIUM | https://sg.run/66ZL |
+|                                                   | - Injection                    |          |        |                     |
+| javascript...path-join-resolve-traversal          | A05:2017 - Broken Access       | WARNING  | MEDIUM | https://sg.run/OPqk |
+|                                                   | Control, A01:2021 - Broken     |          |        |                     |
+|                                                   | Access Control                 |          |        |                     |
+| javascript...express-ssrf                         | A10:2021 - Server-Side Request | WARNING  | HIGH   | https://sg.run/0PNw |
+|                                                   | Forgery (SSRF)                 |          |        |                     |
+| javascript...express-res-sendfile                 | A04:2021 - Insecure Design     | WARNING  | MEDIUM | https://sg.run/7DJk |
+| javascript...express-path-join-resolve-traversal  | A05:2017 - Broken Access       | WARNING  | MEDIUM | https://sg.run/weRn |
+|                                                   | Control, A01:2021 - Broken     |          |        |                     |
+|                                                   | Access Control                 |          |        |                     |
+| javascript...path-join-resolve-traversal          | A05:2017 - Broken Access       | WARNING  | MEDIUM | https://sg.run/OPqk |
+|                                                   | Control, A01:2021 - Broken     |          |        |                     |
+|                                                   | Access Control                 |          |        |                     |
+| javascript...express-open-redirect                | A01:2021 - Broken Access       | WARNING  | MEDIUM | https://sg.run/EpoP |
+|                                                   | Control                        |          |        |                     |
+| javascript...express-sequelize-injection          | A01:2017 - Injection, A03:2021 | ERROR    | HIGH   | https://sg.run/gjoe |
+|                                                   | - Injection                    |          |        |                     |
+| javascript...tainted-sql-string                   | A01:2017 - Injection, A03:2021 | ERROR    | MEDIUM | https://sg.run/66ZL |
+|                                                   | - Injection                    |          |        |                     |
+| javascript...eval-detected                        | A03:2021 - Injection           | WARNING  | MEDIUM | https://sg.run/7ope |
+| javascript...express-insecure-template-usage      | A03:2021 - Injection, A01:2017 | WARNING  | MEDIUM | https://sg.run/b49v |
+|                                                   | - Injection                    |          |        |                     |
+| javascript...unknown-value-with-script-tag        | A07:2017 - Cross-Site          | WARNING  | LOW    | https://sg.run/1Zy1 |
+|                                                   | Scripting (XSS), A03:2021 -    |          |        |                     |
+|                                                   | Injection                      |          |        |                     |
+| javascript...unknown-value-with-script-tag        | A07:2017 - Cross-Site          | WARNING  | LOW    | https://sg.run/1Zy1 |
+|                                                   | Scripting (XSS), A03:2021 -    |          |        |                     |
+|                                                   | Injection                      |          |        |                     |
+| javascript...express-check-csurf-middleware-usage | A01:2021 - Broken Access       | INFO     | HIGH   | https://sg.run/BxzR |
+|                                                   | Control                        |          |        |                     |
+| javascript...express-check-directory-listing      | A06:2017 - Security            | WARNING  | MEDIUM | https://sg.run/DX2G |
+|                                                   | Misconfiguration, A01:2021 -   |          |        |                     |
+|                                                   | Broken Access Control          |          |        |                     |
+| javascript...express-check-directory-listing      | A06:2017 - Security            | WARNING  | MEDIUM | https://sg.run/DX2G |
+|                                                   | Misconfiguration, A01:2021 -   |          |        |                     |
+|                                                   | Broken Access Control          |          |        |                     |
+| javascript...express-check-directory-listing      | A06:2017 - Security            | WARNING  | MEDIUM | https://sg.run/DX2G |
+|                                                   | Misconfiguration, A01:2021 -   |          |        |                     |
+|                                                   | Broken Access Control          |          |        |                     |
+| javascript...template-explicit-unescape           | A07:2017 - Cross-Site          | WARNING  | MEDIUM | https://sg.run/3xbe |
+|                                                   | Scripting (XSS), A03:2021 -    |          |        |                     |
+|                                                   | Injection                      |          |        |                     |
++---------------------------------------------------+--------------------------------+----------+--------+---------------------+
