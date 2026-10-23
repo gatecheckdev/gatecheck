@@ -75,7 +75,7 @@
       <section class="hero wrap" id="top">
         <div class="hero-copy">
           <a class="release-badge" href="https://github.com/gatecheckdev/gatecheck/releases">
-            <span class="release-version">v0.8.1</span>
+            <span class="release-version">v0.9.0</span>
             Latest release · Apache-2.0
           </a>
           <h1>Fail the build when scan results cross <span class="accent">your</span> limits.</h1>
@@ -107,8 +107,8 @@
             </div>
             <p class="install-note" data-note="go">Needs Go 1.26 or newer.</p>
             <p class="install-note" data-note="bin" hidden>
-              Downloads the macOS arm64 archive for v0.8.1. Linux, macOS, and Windows archives are on the
-              <a href="https://github.com/gatecheckdev/gatecheck/releases/tag/v0.8.1">releases page</a>.
+              Downloads the macOS arm64 archive for v0.9.0. Linux, macOS, and Windows archives are on the
+              <a href="https://github.com/gatecheckdev/gatecheck/releases/tag/v0.9.0">releases page</a>.
             </p>
           </div>
 
@@ -345,7 +345,7 @@ Error: validation failure: Grype: Severity Limit Exceeded</pre>
           <p>Start with <code class="bright">gatecheck config init &gt; gatecheck.yaml</code> and turn on one limit.</p>
           <div class="actions">
             <a class="btn btn-primary" href="https://docs.gatecheck.dev">Get started</a>
-            <a class="btn btn-secondary" href="https://github.com/gatecheckdev/gatecheck/releases">Download v0.8.1</a>
+            <a class="btn btn-secondary" href="https://github.com/gatecheckdev/gatecheck/releases">Download v0.9.0</a>
           </div>
         </div>
       </section>
@@ -380,7 +380,7 @@ Error: validation failure: Grype: Severity Limit Exceeded</pre>
       (function () {
         var cmds = {
           go: "go install github.com/gatecheckdev/gatecheck/cmd/gatecheck@latest",
-          bin: 'gh release download v0.8.1 --repo gatecheckdev/gatecheck --pattern "*darwin_arm64*"'
+          bin: 'gh release download v0.9.0 --repo gatecheckdev/gatecheck --pattern "*darwin_arm64*"'
         };
         var tab = "go";
         var copied = false;
