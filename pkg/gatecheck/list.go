@@ -1,10 +1,10 @@
 package gatecheck
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/easy-up/go-coverage"
 	"io"
 	"log/slog"
 	"os"
@@ -12,11 +12,13 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/easy-up/go-coverage"
+	"github.com/olekukonko/tablewriter"
+
 	"github.com/gatecheckdev/gatecheck/pkg/archive"
 	"github.com/gatecheckdev/gatecheck/pkg/artifacts"
 	"github.com/gatecheckdev/gatecheck/pkg/epss"
 	"github.com/gatecheckdev/gatecheck/pkg/format"
-	"github.com/olekukonko/tablewriter"
 )
 
 // emptyReport means the report listed successfully and has no findings.
@@ -70,38 +72,43 @@ func List(dst io.Writer, src io.Reader, inputFilename string, options ...ListOpt
 		f(o)
 	}
 
-	switch {
-	case strings.Contains(inputFilename, "grype"):
-		slog.Debug("list", "filename", inputFilename, "filetype", "grype")
+	content, err := readReport(src)
+	if err != nil {
+		return err
+	}
+	kind := resolveKind(content, inputFilename, true)
+	src = bytes.NewReader(content)
+	slog.Debug("list", "filename", inputFilename, "filetype", kind)
+
+	switch kind {
+	case artifacts.KindGrype:
 		if o.epssData != nil {
 			err = listGrypeWithEPSS(table, src, o.epssData)
 		} else {
 			err = ListGrypeReport(table, src)
 		}
 
-	case strings.Contains(inputFilename, "cyclonedx"):
-		slog.Debug("list", "filename", inputFilename, "filetype", "cyclonedx")
+	case artifacts.KindCycloneDX:
 		if o.epssData != nil {
 			err = listCyclonedxWithEPSS(table, src, o.epssData)
 		} else {
 			err = ListCyclonedx(table, src)
 		}
 
-	case strings.Contains(inputFilename, "semgrep"):
-		slog.Debug("list", "filename", inputFilename, "filetype", "semgrep")
+	case artifacts.KindSemgrep:
 		err = ListSemgrep(table, src)
 
-	case strings.Contains(inputFilename, "gitleaks"):
-		slog.Debug("list", "filename", inputFilename, "filetype", "gitleaks")
+	case artifacts.KindGitleaks:
 		err = listGitleaks(table, src)
 
-	case strings.Contains(inputFilename, "syft"):
-		slog.Debug("list", "filename", inputFilename, "filetype", "syft")
+	case artifacts.KindSyft:
 		slog.Warn("syft decoder is not supported yet")
 		return errors.New("syft not implemented yet")
 
-	case strings.Contains(inputFilename, "bundle") || strings.Contains(inputFilename, "gatecheck"):
-		slog.Debug("list", "filename", inputFilename, "filetype", "bundle")
+	case artifacts.KindSARIF:
+		err = ListSarif(table, src)
+
+	case artifacts.KindBundle:
 		bundle := archive.NewBundle()
 		if err = archive.UntarGzipBundle(src, bundle); err != nil {
 			return err
@@ -109,12 +116,10 @@ func List(dst io.Writer, src io.Reader, inputFilename string, options ...ListOpt
 		_, err = fmt.Fprintln(dst, bundle.Content())
 		return err
 
-	case artifacts.IsCoverageReport(inputFilename):
-		slog.Debug("list", "filename", inputFilename, "filetype", "coverage")
-
-		err = listCoverage(table, inputFilename, src)
+	case artifacts.KindLCOV, artifacts.KindClover, artifacts.KindCobertura, artifacts.KindCoverage:
+		err = listCoverage(table, kind, inputFilename, src)
 	default:
-		slog.Error("unsupported file type, cannot be determined from filename", "filename", inputFilename)
+		slog.Error("unsupported file type, cannot be determined from content or filename", "filename", inputFilename)
 		return errors.New("failed to list artifact content")
 	}
 
@@ -139,8 +144,8 @@ func List(dst io.Writer, src io.Reader, inputFilename string, options ...ListOpt
 	return nil
 }
 
-func listCoverage(table *tablewriter.Table, inputFilename string, src io.Reader) error {
-	coverageFormat, err := artifacts.GetCoverageMode(inputFilename)
+func listCoverage(table *tablewriter.Table, kind artifacts.ReportKind, inputFilename string, src io.Reader) error {
+	coverageFormat, err := coverageMode(kind, inputFilename)
 	if err != nil {
 		return err
 	}
@@ -257,7 +262,7 @@ func ListCyclonedx(table *tablewriter.Table, src io.Reader) error {
 		return err
 	}
 
-	catLess := format.NewCatagoricLess([]string{"critical", "high", "medium", "low", "none"})
+	catLess := format.NewCatagoricLess([]string{"critical", "high", "medium", "low", "info", "none", "unknown"})
 	matrix := format.NewSortableMatrix(make([][]string, 0), 1, catLess)
 
 	link := "-"
@@ -268,7 +273,7 @@ func ListCyclonedx(table *tablewriter.Table, src io.Reader) error {
 			link = vul.Advisories[0].URL
 		}
 		// get the affected vulnerability
-		matrix.Append([]string{vul.ID, severity, pkgs, link})
+		matrix.Append([]string{vul.Identity(), severity, pkgs, link})
 	}
 
 	if len(report.Vulnerabilities) == 0 {
@@ -297,7 +302,7 @@ func listCyclonedxWithEPSS(table *tablewriter.Table, src io.Reader, epssData *ep
 	matrix := format.NewSortableMatrix(make([][]string, 0), 1, catLess)
 
 	for idx, item := range report.Vulnerabilities {
-		cve, ok := epssData.CVEs[item.ID]
+		cve, ok := epssData.CVEs[item.Identity()]
 		score := "-"
 		prctl := "-"
 		if ok {
@@ -309,7 +314,7 @@ func listCyclonedxWithEPSS(table *tablewriter.Table, src io.Reader, epssData *ep
 			link = item.Advisories[0].URL
 		}
 		row := []string{
-			item.ID,
+			item.Identity(),
 			item.HighestSeverity(),
 			score,
 			prctl,
@@ -377,6 +382,38 @@ func ListSemgrep(table *tablewriter.Table, src io.Reader) error {
 	}
 
 	return nil
+}
+
+func ListSarif(table *tablewriter.Table, src io.Reader) error {
+	report := &artifacts.SarifReport{}
+	if err := json.NewDecoder(src).Decode(report); err != nil {
+		return err
+	}
+	findings, err := report.Findings()
+	if err != nil {
+		return err
+	}
+	if len(findings) == 0 {
+		return emptyReport("No sarif findings")
+	}
+
+	catLess := format.NewCatagoricLess([]string{"critical", "high", "medium", "low", "none", "unknown"})
+	matrix := format.NewSortableMatrix(make([][]string, 0), 1, catLess)
+	for _, finding := range findings {
+		ruleID := finding.RuleID
+		if ruleID == "" {
+			ruleID = "-"
+		}
+		tool := finding.Tool
+		if tool == "" {
+			tool = "-"
+		}
+		matrix.Append([]string{ruleID, finding.Severity, finding.Location(), tool})
+	}
+	sort.Sort(matrix)
+
+	table.Header([]string{"SARIF Rule ID", "Severity", "Location", "Tool"})
+	return matrix.Table(table)
 }
 
 func listGitleaks(table *tablewriter.Table, src io.Reader) error {

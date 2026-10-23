@@ -2,7 +2,7 @@
 
 > Gatecheck compares a scanner report to thresholds in a config file and exits non-zero when a limit is crossed. One binary. Stateless.
 
-Report type comes from a lowercase word in the filename. Coverage thresholds are ratios: 0.8 is 80 percent. Pass the config with `gatecheck validate --config`. Print the agent guide with `gatecheck agent-guide`.
+Report type comes from the file contents. The filename is the fallback when the contents are ambiguous. Coverage thresholds are ratios: 0.8 is 80 percent. Pass the config with `gatecheck validate --config`. Print the agent guide with `gatecheck agent-guide`.
 
 ## Docs
 
@@ -10,7 +10,7 @@ Report type comes from a lowercase word in the filename. Coverage thresholds are
 - [Usage](https://docs.gatecheck.dev/usage.html): commands, logs, and exit status
 - [Bootstrap](https://docs.gatecheck.dev/bootstrap.html): install Grype, Syft, Gitleaks, and osemgrep, then run them
 - [CLI reference](https://docs.gatecheck.dev/cli-reference.html): flags, subcommands, and environment variables
-- [Supported reports](https://docs.gatecheck.dev/supported-reports.html): filename rules that select the report type
+- [Supported reports](https://docs.gatecheck.dev/supported-reports.html): how file contents and filenames select the report type
 - [Configuration](https://docs.gatecheck.dev/configuration.html): config keys and threshold units
 - [Validation](https://docs.gatecheck.dev/validation.html): rule order and exit codes
 - [List reports](https://docs.gatecheck.dev/list-reports.html): tables, standard input, and EPSS columns

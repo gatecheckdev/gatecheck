@@ -109,8 +109,8 @@ The name in that line is the command you typed.
 
 Coverage files (LCOV, Clover, Cobertura) come from the language toolchain. Bootstrap does not install those tools.
 
-CycloneDX is a report format. Syft writes it with `-o cyclonedx-json`, and Grype can write a CycloneDX vulnerability report. Those are the files `list` and `validate` score. There is no separate CycloneDX scanner.
+CycloneDX is a report format. Syft writes it with `-o cyclonedx-json`, and Grype can write a CycloneDX vulnerability report. Those are the files `list` and `validate` score. Any other tool's CycloneDX JSON BOM is scored the same way. There is no separate CycloneDX scanner.
 
-Syft's own JSON is still rejected. A filename containing `syft` is recognized, and `list` and `validate` then return an error. Syft is installed so it can write CycloneDX.
+Syft's own JSON is still rejected. `list` and `validate` return an error for that document. A filename that contains `syft` does the same when the contents are ambiguous. Syft is installed so it can write CycloneDX.
 
-Trivy is not a gatecheck report type, and `--tools trivy` is rejected.
+Trivy is not installed by bootstrap, and `--tools trivy` is rejected. A Trivy CycloneDX JSON report is still a CycloneDX report. Trivy SARIF is a SARIF report.

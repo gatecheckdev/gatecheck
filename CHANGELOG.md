@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [UNRELEASED]
 
+### Added
+
+- `list` and `validate` read SARIF 2.1.0 from any tool, including KICS, Checkov, Bandit, govulncheck, and `semgrep --sarif`. Severity limits use `security-severity` when it is set, and the SARIF level otherwise. `sarif.ruleLimit` denies rule ids and `sarif.ruleRiskAcceptance` allows them. A SARIF report with no findings prints `No sarif findings`.
+
+### Changed
+
+- Report type comes from the file contents. The filename is used only when the contents are ambiguous.
+- Any CycloneDX JSON BOM with vulnerabilities is listed and validated with the `cyclonedx` rules, whichever tool wrote it. A missing severity word falls back to the CVSS score.
+
+### Fixed
+
+- A CycloneDX file with `grype` in the name was read as Grype, so its vulnerabilities were ignored. Fixes #80.
+
 ## [0.9.0] - 2026-10-23
 
 ### Added

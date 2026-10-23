@@ -42,29 +42,47 @@ The managed binary wins when it is present. `gatecheck grype`, `gatecheck syft`,
 
 A platform with no Grype, Syft, or Gitleaks asset fails that tool and the command exits 255. A platform with no semgrep wheel prints a skip message on stderr and continues. Current pins are Grype `0.121.0`, Syft `1.55.0`, Gitleaks `8.30.1`, and semgrep `1.182.1`, in `internal/bootstrap/versions.go`.
 
-Syft is installed so it can write CycloneDX (`syft -o cyclonedx-json`). A filename containing `syft` is still recognized by `list` and `validate` and then returns an error. CycloneDX is a report format, and coverage tools are left to the language toolchain.
+Syft is installed so it can write CycloneDX (`syft -o cyclonedx-json`). That BOM is listed and validated as CycloneDX. Native Syft JSON is recognized from `descriptor.name` or the schema URL, and `list` and `validate` then return an error. A filename containing `syft` does the same when the contents are ambiguous. CycloneDX is a report format, and coverage tools are left to the language toolchain.
 
 ## Report type
 
-`list` and `validate` pick a type by the first matching lowercase word in the filename:
+`list` and `validate` pick a type from the file contents. The filename is used only when the contents do not identify a type.
+
+Content rules, in this order:
+
+1. A gzipped tar that contains `gatecheck-manifest.json` is a Gatecheck bundle.
+2. `bomFormat` of `CycloneDX` is CycloneDX JSON. This wins when the name contains `grype` or `syft`, and it wins when the tool that wrote the BOM was Grype, Syft, Trivy, or another tool. CycloneDX XML is not read.
+3. SARIF 2.1.0. The top-level `version` is the string `2.1.0` and `runs` is an array. A `$schema` that mentions SARIF is enough when `runs` is missing or null. Another version returns an error when the name says `sarif`.
+4. Grype JSON. `descriptor.name` is `grype`, or `matches` is a non-empty array of objects with `vulnerability` and `artifact`.
+5. Syft JSON. `descriptor.name` is `syft`, or `schema.url` points at the Syft schema. `list` and `validate` then return an error. Syft JSON is not implemented. A Syft CycloneDX BOM is CycloneDX, not Syft.
+6. Semgrep JSON. `results` is an array of objects with `check_id`, or `results` and `errors` are both arrays. Semgrep's SARIF output is SARIF, not this type.
+7. Gitleaks JSON. A non-empty array of objects with `RuleID` and one of `File`, `Commit`, or `Fingerprint`.
+8. LCOV text. A line starts with `SF:` and the file also has `DA:`, `LF:`, or `end_of_record`.
+9. Clover XML. An XML document with `clover=` or a `<clover` element.
+10. Cobertura XML. An XML document with `line-rate=`.
+
+When none of those match, the filename is checked. The match is a lowercase substring, and the first match wins:
 
 1. `grype`: Anchore Grype JSON.
 2. `cyclonedx`: CycloneDX JSON that includes vulnerabilities.
 3. `semgrep`: Semgrep JSON.
 4. `gitleaks`: Gitleaks JSON, a list of findings.
-5. `syft`: the name is recognized. `list` and `validate` then return an error. Syft is not implemented.
-6. `bundle`: a Gatecheck bundle. `list` also accepts a name containing `gatecheck`. `validate` requires the word `bundle`. `project.gcb` matches neither rule.
-7. Coverage, when the name contains `lcov`, `clover`, `cobertura`, or `coverage`, or ends in `.info`.
+5. `syft`: the name is recognized. `list` and `validate` then return an error.
+6. `sarif`: SARIF 2.1.0.
+7. `bundle`: a Gatecheck bundle. `list` also accepts a name containing `gatecheck`. `validate` requires the word `bundle` for this fallback. A real bundle is still detected from its contents when the name is `project.gcb`.
+8. Coverage, when the name contains `lcov`, `clover`, `cobertura`, or `coverage`, or ends in `.info`.
 
-The match is case sensitive. `Grype-report.json` and `CycloneDX.json` are rejected. An earlier word wins, so `semgrep-coverage.json` is Semgrep.
+The filename match is case sensitive. `Grype-report.json` is not a filename match. A Grype report is still recognized from its contents when `descriptor.name` is `grype`. An earlier word still wins on an ambiguous file, so `semgrep-coverage.json` is Semgrep when the contents do not say otherwise.
 
-Coverage format, in this order: the name contains `lcov` or ends in `.info` (LCOV); the name contains `clover` (Clover XML); the name ends in `.xml` (Cobertura XML). A name that only contains `coverage`, such as `coverage.json`, is selected as coverage and then fails.
+An empty Grype document such as `{"matches":[]}` does not identify itself. The filename is what selects it. The same is true of `{"results":[]}` and `[]`.
 
-From standard input, `list` requires `-i` / `--input-type`. The value is matched as the filename `stdin:<value>`, so the same words work, including the coverage words. `list-all` and `validate` do not read standard input. `validate` requires a file path.
+Coverage format when the name is the only signal, in this order: the name contains `lcov` or ends in `.info` (LCOV); the name contains `clover` (Clover XML); the name ends in `.xml` (Cobertura XML). A name that only contains `coverage`, such as `coverage.json`, is selected as coverage and then fails.
 
-`list-all` lists a file only when the name contains `grype`, `semgrep`, `gitleaks`, `syft`, `cyclonedx`, `bundle`, or `gatecheck`. Coverage files are skipped with a warning. There is no `--input-type` on `list-all`.
+From standard input, `list` requires `-i` / `--input-type`, so the command does not wait on a terminal. The value is matched as the filename `stdin:<value>`, and only when the contents are ambiguous. Clear contents win over `--input-type`. `list-all` and `validate` do not read standard input. `validate` requires a file path.
 
-Inside a bundle, `validate` uses the stored label, which is the base name of the file that was added. Labels that do not match a type are skipped. Syft labels inside a bundle are skipped.
+`list-all` lists a file when the contents or the name identify Grype, Semgrep, Gitleaks, Syft, CycloneDX, SARIF, or a bundle. Coverage files are skipped with a warning. There is no `--input-type` on `list-all`.
+
+Inside a bundle, `validate` uses the same content rules on each stored file, and falls back to the label. The label is the base name of the file that was added. Labels that still do not match are skipped. Syft JSON inside a bundle is skipped.
 
 ## Config
 
@@ -78,7 +96,7 @@ gatecheck config convert --file gatecheck.yaml --output toml
 
 `config convert` reads `-f` / `--file` (default `gatecheck.yaml`). The extension selects the decoder: `.yaml`, `.yml`, `.json`, or `.toml`.
 
-A partial file is fine. Omitted fields keep the default. Unknown keys are ignored. With no config, `validate` uses the built-in default: every rule disabled, coverage thresholds `0`. Grype, CycloneDX, Semgrep, Gitleaks, coverage, and bundle reports pass under that default. A Syft filename still returns an error.
+A partial file is fine. Omitted fields keep the default. Unknown keys are ignored. With no config, `validate` uses the built-in default: every rule disabled, coverage thresholds `0`. Grype, CycloneDX, SARIF, Semgrep, Gitleaks, coverage, and bundle reports pass under that default. Syft JSON still returns an error. An old config with no `sarif` section leaves those limits disabled.
 
 `GATECHECK_CONFIG_FILENAME` is the same setting as `validate --config` / `-f`.
 
@@ -95,6 +113,11 @@ Field names below are the ones `config init` emits. In YAML they are case sensit
 
 `gitleaks.limitEnabled: true` fails validation when the report contains any finding. There is no count.
 
+`sarif` is for any SARIF 2.1.0 report. Semgrep's own JSON still uses `semgrep`. `semgrep --sarif` uses `sarif`.
+
+- `severityLimit` has `critical`, `high`, `medium`, and `low`. Each has `enabled` and `limit`, with the same count rule as Grype. The severity comes from the SARIF property `security-severity` when a result or its rule has one. The value is a number from 0 to 10, or a numeric string. 9.0 and above is critical, 7.0 to 8.9 is high, 4.0 to 6.9 is medium, above 0 and below 4.0 is low, and 0 is none. A result property wins over the same property on the rule. When neither is set, gatecheck uses the SARIF level. A missing result level uses the rule's `defaultConfiguration.level`, then `warning`. `error` is high, `warning` is medium, `note` is low, and `none` is ignored.
+- `ruleLimit` and `ruleRiskAcceptance` each have `enabled` and `rules`. A rule entry is `id` plus an optional `metadata.tags` list. `id` is compared without regard to case. `ruleLimit` denies those ids. `ruleRiskAcceptance` removes them.
+
 `coverage.lineThreshold`, `functionThreshold`, and `branchThreshold` are ratios from 0 to 1: covered lines, functions, or branches divided by the total. The report fails when its ratio is less than the threshold. A ratio equal to the threshold passes. `0.8` is 80 percent. `80` fails a report whose real line coverage is 0.8, because 0.8 is less than 80. There is no `enabled` flag. The default `0` allows any coverage, because a ratio is never less than 0. `list` prints these numbers as percents in the table footer. The config still wants the ratio.
 
 Grype and CycloneDX rules run in this order. A failure returns immediately, except where a rule only removes findings.
@@ -107,7 +130,20 @@ Grype and CycloneDX rules run in this order. A failure returns immediately, exce
 6. EPSS limit.
 7. Severity limit.
 
-Semgrep drops findings whose severity limit is disabled, then applies impact risk acceptance, then the severity counts. Coverage runs all three checks and reports each failure. A bundle is validated when its filename contains `bundle`. Each label is checked on its own. The command exits 1 if any label fails a threshold.
+Semgrep drops findings whose severity limit is disabled, then applies impact risk acceptance, then the severity counts. That impact rule does not apply to `semgrep --sarif`. That file uses the `sarif` rules.
+
+SARIF runs in this order.
+
+1. Rule limit, when enabled. A denied rule fails even when its severity limit is disabled.
+2. Disabled severities are dropped. `none` has no limit field and stays in the report, but the severity rule does not count it.
+3. Rule risk acceptance removes matching ids.
+4. Severity limit.
+
+These SARIF results are not counted: `kind` of `pass` or `notApplicable`, `level` of `none`, a non-empty `suppressions` array, and `baselineState` of `absent`. SARIF has no EPSS or KEV rules.
+
+Any CycloneDX JSON BOM uses the `cyclonedx` rules, including a BOM from Grype, Trivy, Syft, or another tool. The severity is the highest rating. A rating with a score and no severity word uses CVSS ranges. A CVSS v2 method does not produce critical. `important` counts as high, and `moderate` counts as medium. `negligible` counts as none. Empty ratings use a top-level `severity` string when the producer set one, otherwise `unknown`. `unknown`, `none`, and `info` are not counted by the critical, high, medium, or low limits. The id is the vulnerability `id`, or the `bom-ref` when `id` is empty.
+
+Coverage runs all three checks and reports each failure. A bundle is validated when its contents are a Gatecheck bundle, or when the filename contains `bundle` and the contents do not identify another type. Each stored file is checked on its own. The command exits 1 if any file fails a threshold.
 
 ## validate
 
@@ -139,13 +175,13 @@ grype image:tag -o json | gatecheck ls --input-type grype
 gatecheck list-all grype-report.json semgrep-report.json
 ```
 
-`list` opens the first filename only. Further filenames are ignored. `--markdown` prints a markdown table. A Grype, CycloneDX, Semgrep, or Gitleaks report with no findings prints one sentence and no table, with or without `--markdown`: `No grype vulnerabilities`, `No cyclonedx vulnerabilities`, `No semgrep findings`, or `No gitleaks findings`. `--epss` adds EPSS score and percentile columns for Grype and CycloneDX. Other report types still list, and those columns are omitted. `--epss-url` empty uses `https://epss.cyentia.com`. `--epss-filename` reads that CSV instead of calling the API.
+`list` opens the first filename only. Further filenames are ignored. `--markdown` prints a markdown table. A Grype, CycloneDX, SARIF, Semgrep, or Gitleaks report with no findings prints one sentence and no table, with or without `--markdown`: `No grype vulnerabilities`, `No cyclonedx vulnerabilities`, `No sarif findings`, `No semgrep findings`, or `No gitleaks findings`. `--epss` adds EPSS score and percentile columns for Grype and CycloneDX. Other report types still list, and those columns are omitted. `--epss-url` empty uses `https://epss.cyentia.com`. `--epss-filename` reads that CSV instead of calling the API.
 
-`list-all` prints each filename, then its table, or that sentence when the report has no findings. A file whose name is not a supported `list-all` type is skipped with a warning. A missing file is skipped. A list error is logged and the command continues. The command exits 0. `--epss` adds EPSS data only for filenames that contain `grype` or `cyclonedx`. There is no `--epss-filename` flag, and `GATECHECK_EPSS_FILENAME` is not read. `GATECHECK_EPSS_URL` overrides the API. `--epss-cache-dir` and `--epss-no-cache` are accepted.
+`list-all` prints each filename, then its table, or that sentence when the report has no findings. A file whose contents and name are not a supported `list-all` type is skipped with a warning. A missing file is skipped. A list error is logged and the command continues. The command exits 0. `--epss` adds EPSS data for Grype and CycloneDX, including a file whose name does not contain those words when the contents do. There is no `--epss-filename` flag, and `GATECHECK_EPSS_FILENAME` is not read. `GATECHECK_EPSS_URL` overrides the API. `--epss-cache-dir` and `--epss-no-cache` are accepted.
 
 ## bundle
 
-Use a name that contains `bundle`, such as `gatecheck-bundle.tar.gz`. `validate` treats the file as a bundle only when the name contains `bundle`. `list` does that too, and also when the name contains `gatecheck`. A bundle is a gzipped tar plus a JSON manifest.
+A bundle is a gzipped tar plus a JSON manifest named `gatecheck-manifest.json`. `list` and `validate` treat the file as a bundle when the contents are that archive. The filename is the fallback: `validate` requires the word `bundle`, and `list` also accepts a name containing `gatecheck`. A name such as `project.gcb` still works when the file is a real bundle. A name that contains `bundle`, such as `gatecheck-bundle.tar.gz`, still works when the contents are ambiguous.
 
 ```shell
 gatecheck bundle create gatecheck-bundle.tar.gz grype-report.json --tag ci
@@ -154,7 +190,7 @@ gatecheck bundle remove gatecheck-bundle.tar.gz semgrep-report.json
 gatecheck list gatecheck-bundle.tar.gz
 ```
 
-The stored label is the base name of the target file (`reports/grype-report.json` is stored as `grype-report.json`). Later validation uses that label to pick the type, so the file name needs a word such as `grype` or `semgrep`. Repeat `-t` / `--tag` for more than one tag. When the flag is omitted, `GATECHECK_BUNDLE_TAG` is read as a comma-separated list. `bundle add` requires an existing bundle. `bundle remove` takes the label, not a path that is opened. A label that is not in the bundle is logged and the command exits 0. There is no `bundle list` subcommand. `gatecheck list` prints label, SHA-256 digest, tags, and size.
+The stored label is the base name of the target file (`reports/grype-report.json` is stored as `grype-report.json`). Later validation uses the file contents to pick the type, and the label when the contents are ambiguous. Repeat `-t` / `--tag` for more than one tag. When the flag is omitted, `GATECHECK_BUNDLE_TAG` is read as a comma-separated list. `bundle add` requires an existing bundle. `bundle remove` takes the label, not a path that is opened. A label that is not in the bundle is logged and the command exits 0. There is no `bundle list` subcommand. `gatecheck list` prints label, SHA-256 digest, tags, and size.
 
 ## download
 
@@ -199,11 +235,11 @@ Create the config with `gatecheck config init > gatecheck.yaml` and set real thr
 
 ## Common mistakes
 
-- The filename has no lowercase type word (`scan.json`, `Grype.json`, `project.gcb`), so the type cannot be detected. Use names such as `grype-report.json`, and a bundle name that contains `bundle`.
+- The contents do not identify a type and the filename has no lowercase type word (`scan.json`, `Grype.json`). A real bundle named `project.gcb` is still recognized from its contents. An empty document such as `{"matches":[]}` still needs a name such as `grype-report.json`, or `--input-type grype` on standard input.
 - Coverage thresholds are ratios. Set `coverage.lineThreshold` to `0.8` for 80 percent, not `80` or `80.0`.
 - `validate` takes the report as its positional argument. The config is `--config` / `-f`. `gatecheck validate gatecheck.yaml grype-report.json` tries to open the config as a report. `config convert` uses `--file` / `-f`, which is a different flag.
-- `list` on a pipe needs `--input-type`. `validate` needs a filesystem path.
+- `list` on a pipe needs `--input-type`. Clear contents still win over that flag. `validate` needs a filesystem path.
 - `list` ignores every filename after the first. Use `list-all` for several files. `list-all` skips coverage files such as `lcov.info`. List those with `gatecheck list lcov.info`.
-- A Syft filename is recognized and then returns an error. Use CycloneDX output from Syft when you want `validate` to score it.
+- Native Syft JSON is recognized and then returns an error. Use CycloneDX output from Syft when you want `validate` to score it. That BOM is CycloneDX even when the filename contains `syft`.
 - `gatecheck semgrep --version` reaches osemgrep without `--experimental`, and osemgrep then tries to run `pysemgrep`. Pass the flag: `gatecheck semgrep --experimental --version`.
 - `--audit` still exits 255 when the report, the config, or a named EPSS or KEV file cannot be opened.

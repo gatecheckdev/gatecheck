@@ -32,37 +32,41 @@ func Validate(config *Config, reportSrc io.Reader, targetFilename string, option
 		f(options)
 	}
 
-	switch {
-	case strings.Contains(targetFilename, "grype"):
-		slog.Debug("validate grype report", "filename", targetFilename)
+	content, err := readReport(reportSrc)
+	if err != nil {
+		return err
+	}
+	kind := resolveKind(content, targetFilename, false)
+	reportSrc = bytes.NewReader(content)
+	slog.Debug("validate", "filename", targetFilename, "filetype", kind)
+
+	switch kind {
+	case artifacts.KindGrype:
 		return validateGrypeReportWithFetch(reportSrc, config, options)
 
-	case strings.Contains(targetFilename, "cyclonedx"):
-		slog.Debug("validate", "filename", targetFilename, "filetype", "cyclonedx")
+	case artifacts.KindCycloneDX:
 		return validateCyclonedxReportWithFetch(reportSrc, config, options)
 
-	case strings.Contains(targetFilename, "semgrep"):
-		slog.Debug("validate", "filename", targetFilename, "filetype", "semgrep")
+	case artifacts.KindSemgrep:
 		return validateSemgrepReport(reportSrc, config)
 
-	case strings.Contains(targetFilename, "gitleaks"):
-		slog.Debug("validate", "filename", targetFilename, "filetype", "gitleaks")
+	case artifacts.KindGitleaks:
 		return validateGitleaksReport(reportSrc, config)
 
-	case strings.Contains(targetFilename, "syft"):
-		slog.Debug("validate", "filename", targetFilename, "filetype", "syft")
+	case artifacts.KindSyft:
 		return errors.New("syft validation not supported yet")
 
-	case strings.Contains(targetFilename, "bundle"):
-		slog.Debug("validate", "filename", targetFilename, "filetype", "bundle")
+	case artifacts.KindSARIF:
+		return validateSarifReport(reportSrc, config)
+
+	case artifacts.KindBundle:
 		return validateBundle(reportSrc, config, options)
 
-	case artifacts.IsCoverageReport(targetFilename):
-		slog.Debug("validate", "filename", targetFilename, "filetype", "coverage")
-		return validateCoverage(reportSrc, targetFilename, config)
+	case artifacts.KindLCOV, artifacts.KindClover, artifacts.KindCobertura, artifacts.KindCoverage:
+		return validateCoverage(reportSrc, kind, targetFilename, config)
 
 	default:
-		slog.Error("unsupported file type, cannot be determined from filename", "filename", targetFilename)
+		slog.Error("unsupported file type, cannot be determined from content or filename", "filename", targetFilename)
 		return errors.New("failed to validate artifact, See log for details")
 	}
 }
@@ -183,7 +187,7 @@ func ruleCyclonedxCVEDeny(config *Config, report *artifacts.CyclonedxReportMin) 
 	}
 	for _, cve := range config.Cyclonedx.CVELimit.CVEs {
 		contains := slices.ContainsFunc(report.Vulnerabilities, func(vulerability artifacts.CyclonedxVulnerability) bool {
-			return strings.EqualFold(vulerability.ID, cve.ID)
+			return strings.EqualFold(vulerability.Identity(), cve.ID)
 		})
 
 		if contains {
@@ -230,11 +234,11 @@ func ruleCyclonedxCVEAllow(config *Config, report *artifacts.CyclonedxReportMin)
 
 	vulnerabilities := slices.DeleteFunc(report.Vulnerabilities, func(vulnerability artifacts.CyclonedxVulnerability) bool {
 		allowed := slices.ContainsFunc(config.Cyclonedx.CVERiskAcceptance.CVEs, func(cve configCVE) bool {
-			return strings.EqualFold(cve.ID, vulnerability.ID)
+			return strings.EqualFold(cve.ID, vulnerability.Identity())
 		})
 		if allowed {
 			slog.Info("CVE explicitly allowed, removing from subsequent rules",
-				"id", vulnerability.ID, "severity", vulnerability.HighestSeverity())
+				"id", vulnerability.Identity(), "severity", vulnerability.HighestSeverity())
 		}
 		return allowed
 	})
@@ -286,13 +290,13 @@ func ruleCyclonedxKEVLimit(config *Config, report *artifacts.CyclonedxReportMin,
 	// Check if vulnerability is in the KEV Catalog
 	for _, vulnerability := range report.Vulnerabilities {
 		inKEVCatalog := slices.ContainsFunc(catalog.Vulnerabilities, func(kevVul kev.Vulnerability) bool {
-			return strings.EqualFold(kevVul.CveID, vulnerability.ID)
+			return strings.EqualFold(kevVul.CveID, vulnerability.Identity())
 		})
 
 		if inKEVCatalog {
-			badCVEs = append(badCVEs, vulnerability.ID)
+			badCVEs = append(badCVEs, vulnerability.Identity())
 			slog.Warn("cve found in kev catalog",
-				"cve_id", vulnerability.ID)
+				"cve_id", vulnerability.Identity())
 		}
 	}
 	if len(badCVEs) > 0 {
@@ -356,16 +360,16 @@ func ruleCyclonedxEPSSAllow(config *Config, report *artifacts.CyclonedxReportMin
 		"epss_risk_acceptance_score", config.Cyclonedx.EPSSRiskAcceptance.Score,
 	)
 	vulnerabilities := slices.DeleteFunc(report.Vulnerabilities, func(vulnerability artifacts.CyclonedxVulnerability) bool {
-		epssCVE, ok := data.CVEs[vulnerability.ID]
+		epssCVE, ok := data.CVEs[vulnerability.Identity()]
 		if !ok {
-			slog.Debug("no epss score", "cve_id", vulnerability.ID, "severity", vulnerability.HighestSeverity())
+			slog.Debug("no epss score", "cve_id", vulnerability.Identity(), "severity", vulnerability.HighestSeverity())
 			return false
 		}
 		riskAccepted := config.Cyclonedx.EPSSRiskAcceptance.Score > epssCVE.EPSSValue()
 		if riskAccepted {
 			slog.Info(
 				"risk accepted reason: epss score",
-				"cve_id", vulnerability.ID,
+				"cve_id", vulnerability.Identity(),
 				"severity", vulnerability.HighestSeverity(),
 				"epss_score", epssCVE.EPSS,
 			)
@@ -439,7 +443,7 @@ func ruleCyclonedxEPSSLimit(config *Config, report *artifacts.CyclonedxReportMin
 	)
 
 	for _, vulnerability := range report.Vulnerabilities {
-		epssCVE, ok := data.CVEs[vulnerability.ID]
+		epssCVE, ok := data.CVEs[vulnerability.Identity()]
 		if !ok {
 			continue
 		}
@@ -448,7 +452,7 @@ func ruleCyclonedxEPSSLimit(config *Config, report *artifacts.CyclonedxReportMin
 			badCVEs = append(badCVEs, epssCVE)
 			slog.Warn(
 				"epss score limit violation",
-				"cve_id", vulnerability.ID,
+				"cve_id", vulnerability.Identity(),
 				"severity", vulnerability.HighestSeverity(),
 				"epss_score", epssCVE.EPSS,
 			)
@@ -686,8 +690,8 @@ func validateGitleaksReport(r io.Reader, config *Config) error {
 	return validateGitleaksRules(config, report)
 }
 
-func validateCoverage(src io.Reader, targetFilename string, config *Config) error {
-	coverageFormat, err := artifacts.GetCoverageMode(targetFilename)
+func validateCoverage(src io.Reader, kind artifacts.ReportKind, targetFilename string, config *Config) error {
+	coverageFormat, err := coverageMode(kind, targetFilename)
 	if err != nil {
 		return err
 	}
@@ -750,22 +754,27 @@ func validateBundle(r io.Reader, config *Config, options *fetchOptions) error {
 
 	var errs error
 	for fileLabel, descriptor := range bundle.Manifest().Files {
-		slog.Info("gatecheck bundle validation", "file_label", fileLabel, "digest", descriptor.Digest)
-		switch {
-		case strings.Contains(fileLabel, "grype"):
-			err := validateGrypeFrom(bytes.NewBuffer(bundle.FileBytes(fileLabel)), config, catalog, epssData)
+		content := bundle.FileBytes(fileLabel)
+		kind := resolveKind(content, fileLabel, false)
+		slog.Info("gatecheck bundle validation", "file_label", fileLabel, "digest", descriptor.Digest, "filetype", kind)
+		switch kind {
+		case artifacts.KindGrype:
+			err := validateGrypeFrom(bytes.NewBuffer(content), config, catalog, epssData)
 			errs = errors.Join(errs, err)
-		case strings.Contains(fileLabel, "cyclonedx"):
-			err := validateCyclonedxFrom(bytes.NewBuffer(bundle.FileBytes(fileLabel)), config, catalog, epssData)
+		case artifacts.KindCycloneDX:
+			err := validateCyclonedxFrom(bytes.NewBuffer(content), config, catalog, epssData)
 			errs = errors.Join(errs, err)
-		case strings.Contains(fileLabel, "semgrep"):
-			err := validateSemgrepReport(bytes.NewBuffer(bundle.FileBytes(fileLabel)), config)
+		case artifacts.KindSemgrep:
+			err := validateSemgrepReport(bytes.NewBuffer(content), config)
 			errs = errors.Join(errs, err)
-		case strings.Contains(fileLabel, "gitleaks"):
-			err := validateGitleaksReport(bytes.NewBuffer(bundle.FileBytes(fileLabel)), config)
+		case artifacts.KindGitleaks:
+			err := validateGitleaksReport(bytes.NewBuffer(content), config)
 			errs = errors.Join(errs, err)
-		case artifacts.IsCoverageReport(fileLabel):
-			err := validateCoverage(bytes.NewBuffer(bundle.FileBytes(fileLabel)), fileLabel, config)
+		case artifacts.KindSARIF:
+			err := validateSarifReport(bytes.NewBuffer(content), config)
+			errs = errors.Join(errs, err)
+		case artifacts.KindLCOV, artifacts.KindClover, artifacts.KindCobertura, artifacts.KindCoverage:
+			err := validateCoverage(bytes.NewBuffer(content), kind, fileLabel, config)
 			errs = errors.Join(errs, err)
 		}
 	}
@@ -873,6 +882,121 @@ func validateSemgrepRules(config *Config, report *artifacts.SemgrepReportMin) er
 		return newValidationErr("Semgrep: Severity Limit Exceeded")
 	}
 
+	return nil
+}
+
+func validateSarifReport(r io.Reader, config *Config) error {
+	slog.Debug("validate sarif report")
+	report := &artifacts.SarifReport{}
+	if err := json.NewDecoder(r).Decode(report); err != nil {
+		slog.Error("decode sarif report for validation", "error", err)
+		return errors.New("cannot run SARIF validation: Report decoding failed, See log for details")
+	}
+	findings, err := report.Findings()
+	if err != nil {
+		slog.Error("read sarif report for validation", "error", err)
+		return errors.New("cannot run SARIF validation: Report decoding failed, See log for details")
+	}
+	return validateSarifRules(config, findings)
+}
+
+func removeIgnoredSarifFindings(config *Config, findings []artifacts.SarifFinding) []artifacts.SarifFinding {
+	limits := map[string]configLimit{
+		"critical": config.Sarif.SeverityLimit.Critical,
+		"high":     config.Sarif.SeverityLimit.High,
+		"medium":   config.Sarif.SeverityLimit.Medium,
+		"low":      config.Sarif.SeverityLimit.Low,
+	}
+	return slices.DeleteFunc(findings, func(finding artifacts.SarifFinding) bool {
+		limit, ok := limits[finding.Severity]
+		return ok && !limit.Enabled
+	})
+}
+
+func ruleSarifDeny(config *Config, findings []artifacts.SarifFinding) bool {
+	if !config.Sarif.RuleLimit.Enabled {
+		slog.Debug("rule id limits not enabled", "artifact", "sarif", "count_denied", len(config.Sarif.RuleLimit.Rules))
+		return true
+	}
+	for _, rule := range config.Sarif.RuleLimit.Rules {
+		if rule.ID == "" {
+			continue
+		}
+		contains := slices.ContainsFunc(findings, func(finding artifacts.SarifFinding) bool {
+			return strings.EqualFold(finding.RuleID, rule.ID)
+		})
+		if contains {
+			slog.Error("rule matched to Deny List", "artifact", "sarif", "id", rule.ID, "metadata", fmt.Sprintf("%+v", rule))
+			return false
+		}
+	}
+	return true
+}
+
+func ruleSarifAllow(config *Config, findings []artifacts.SarifFinding) []artifacts.SarifFinding {
+	slog.Debug("rule id risk acceptance rule", "artifact", "sarif",
+		"enabled", config.Sarif.RuleRiskAcceptance.Enabled,
+		"risk_accepted_rules", len(config.Sarif.RuleRiskAcceptance.Rules),
+	)
+	if !config.Sarif.RuleRiskAcceptance.Enabled {
+		return findings
+	}
+	return slices.DeleteFunc(findings, func(finding artifacts.SarifFinding) bool {
+		allowed := slices.ContainsFunc(config.Sarif.RuleRiskAcceptance.Rules, func(rule configRule) bool {
+			return rule.ID != "" && strings.EqualFold(rule.ID, finding.RuleID)
+		})
+		if allowed {
+			slog.Info("rule explicitly allowed, removing from subsequent rules",
+				"id", finding.RuleID, "severity", finding.Severity)
+		}
+		return allowed
+	})
+}
+
+func ruleSarifSeverityLimit(config *Config, findings []artifacts.SarifFinding) bool {
+	validationPass := true
+	limits := map[string]configLimit{
+		"critical": config.Sarif.SeverityLimit.Critical,
+		"high":     config.Sarif.SeverityLimit.High,
+		"medium":   config.Sarif.SeverityLimit.Medium,
+		"low":      config.Sarif.SeverityLimit.Low,
+	}
+	for _, severity := range []string{"critical", "high", "medium", "low"} {
+		configuredLimit := limits[severity]
+		matches := make([]artifacts.SarifFinding, 0)
+		for _, finding := range findings {
+			if strings.EqualFold(finding.Severity, severity) {
+				matches = append(matches, finding)
+			}
+		}
+		matchCount := len(matches)
+		if !configuredLimit.Enabled {
+			slog.Debug("severity limit not enabled", "artifact", "sarif", "severity", severity, "reported", matchCount)
+			continue
+		}
+		if matchCount > int(configuredLimit.Limit) {
+			slog.Error("severity limit exceeded", "artifact", "sarif", "severity", severity, "report", matchCount, "limit", configuredLimit.Limit)
+			for _, match := range matches {
+				slog.Info("finding detected", "rule_id", match.RuleID, "severity", match.Severity, "location", match.Location())
+			}
+			validationPass = false
+			continue
+		}
+		slog.Info("severity limit valid", "artifact", "sarif", "severity", severity, "reported", matchCount, "limit", configuredLimit.Limit)
+	}
+	return validationPass
+}
+
+func validateSarifRules(config *Config, findings []artifacts.SarifFinding) error {
+	slog.Info("validating sarif rules", "findings", len(findings))
+	if !ruleSarifDeny(config, findings) {
+		return newValidationErr("SARIF: Rule explicitly denied")
+	}
+	findings = removeIgnoredSarifFindings(config, findings)
+	findings = ruleSarifAllow(config, findings)
+	if !ruleSarifSeverityLimit(config, findings) {
+		return newValidationErr("SARIF: Severity Limit Exceeded")
+	}
 	return nil
 }
 

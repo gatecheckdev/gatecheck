@@ -50,6 +50,8 @@ func TestEmptyReportPrintsALine(t *testing.T) {
 		{name: "semgrep markdown", filename: "semgrep.json", src: `{"results":[]}`, markdown: true, want: "No semgrep findings\n"},
 		{name: "gitleaks", filename: "gitleaks.json", src: `[]`, want: "No gitleaks findings\n"},
 		{name: "gitleaks markdown", filename: "gitleaks.json", src: `[]`, markdown: true, want: "No gitleaks findings\n"},
+		{name: "sarif", filename: "report.json", src: `{"version":"2.1.0","runs":[]}`, want: "No sarif findings\n"},
+		{name: "sarif markdown", filename: "grype.json", src: `{"version":"2.1.0","runs":[]}`, markdown: true, want: "No sarif findings\n"},
 	}
 
 	for _, tc := range cases {

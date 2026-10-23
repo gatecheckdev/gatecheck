@@ -67,11 +67,13 @@ gatecheck list [FILE]
 
 Aliases: `ls`, `print`.
 
-Prints a table for one report. The first filename is the one that is opened. Further filenames are ignored. Use `list-all` for more than one file. A Grype, CycloneDX, Semgrep, or Gitleaks report with no findings prints one sentence and no table: `No grype vulnerabilities`, `No cyclonedx vulnerabilities`, `No semgrep findings`, or `No gitleaks findings`. `--markdown` prints that same sentence.
+Prints a table for one report. The first filename is the one that is opened. Further filenames are ignored. Use `list-all` for more than one file. A Grype, CycloneDX, SARIF, Semgrep, or Gitleaks report with no findings prints one sentence and no table: `No grype vulnerabilities`, `No cyclonedx vulnerabilities`, `No sarif findings`, `No semgrep findings`, or `No gitleaks findings`. `--markdown` prints that same sentence.
+
+The report type comes from the file contents. See [Supported Reports](./supported-reports.md).
 
 With no filename, the command reads standard input and `--input-type` is required.
 
-- `-i`, `--input-type`: type word used when reading standard input. It is matched with the same rules as a filename. `grype`, `cyclonedx`, `semgrep`, `gitleaks`, `syft`, `bundle`, and the coverage words all work. See [Supported Reports](./supported-reports.md).
+- `-i`, `--input-type`: type word used when reading standard input and the contents are ambiguous. It is matched with the same rules as a filename. `grype`, `cyclonedx`, `sarif`, `semgrep`, `gitleaks`, `syft`, `bundle`, and the coverage words all work. Clear contents win over this flag. See [Supported Reports](./supported-reports.md).
 - `--markdown`: print a markdown table.
 - `--epss`: add EPSS score and percentile columns. This changes the table for Grype and CycloneDX. Other report types still list, and the EPSS data is not shown. With no local file, gatecheck downloads the current EPSS CSV and caches it until the published date changes. Requests send a User-Agent with the gatecheck version and project URL.
 - `--epss-filename`: read that CSV instead of calling the API. `GATECHECK_EPSS_FILENAME` is the same setting.
@@ -91,10 +93,10 @@ grype bkimminich/juice-shop:latest -o json | gatecheck ls --input-type grype
 gatecheck list-all [FILE...]
 ```
 
-Prints each filename, then its table, or one sentence when that report has no findings. A file whose name is not a supported `list-all` type is skipped with a warning. A missing file is skipped. A list error is logged and the command continues. The command exits 0 after the last file.
+Prints each filename, then its table, or one sentence when that report has no findings. A file whose contents and name are not a supported `list-all` type is skipped with a warning. Coverage files are in that skipped set. A missing file is skipped. A list error is logged and the command continues. The command exits 0 after the last file.
 
 - `--markdown`: print markdown tables.
-- `--epss`: download EPSS data and add it for filenames that contain `grype` or `cyclonedx`. The download happens per file and is cached until the published date changes. There is no `--epss-filename` flag. `GATECHECK_EPSS_URL` overrides the API. `GATECHECK_EPSS_FILENAME` is not read by this command. Requests send a User-Agent with the gatecheck version and project URL.
+- `--epss`: download EPSS data and add it for Grype and CycloneDX reports. The type comes from the file contents, then the filename. The download happens per file and is cached until the published date changes. There is no `--epss-filename` flag. `GATECHECK_EPSS_URL` overrides the API. `GATECHECK_EPSS_FILENAME` is not read by this command. Requests send a User-Agent with the gatecheck version and project URL.
 - `--epss-cache-dir`: cache directory for that download. `GATECHECK_EPSS_CACHE_DIR` is the same setting.
 - `--epss-no-cache`: download on every run. `GATECHECK_EPSS_CACHE=off` does the same.
 

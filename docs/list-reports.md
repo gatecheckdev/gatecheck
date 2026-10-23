@@ -20,7 +20,7 @@ gatecheck ls grype-scan-report.json
 
 ![Screenshot Example List](assets/screenshot-grype-list.png)
 
-The filename (or `--input-type`) has to contain the lowercase report word. `grype-scan-report.json` works. See [Supported Reports](./supported-reports.md).
+The report type comes from the file contents. The filename, or `--input-type` on standard input, is used when the contents are ambiguous. `grype-scan-report.json` still works. See [Supported Reports](./supported-reports.md).
 
 `--markdown` prints a markdown table instead of the plain text table.
 
@@ -37,12 +37,13 @@ Columns:
 - CycloneDX: CVE id, severity, package, link. With `--epss`: CVE id, severity, EPSS score, EPSS percentile, affected packages, link.
 - Semgrep: check id, OWASP ids, severity, impact, link. Runtime errors from the report are logged as warnings.
 - Gitleaks: rule id, file, commit, start line.
+- SARIF: rule id, severity, location, tool. A result that passed, is suppressed, or has level `none` is left out.
 - Coverage: lines, functions, and branches covered, with a percent in the footer. The percent is only for display. The config file uses a ratio. See [Configuration](./configuration.md).
 - Bundle: label, SHA-256 digest, tags, size.
 
-A Grype, CycloneDX, Semgrep, or Gitleaks report with no findings prints one sentence and no table. The lines are `No grype vulnerabilities`, `No cyclonedx vulnerabilities`, `No semgrep findings`, and `No gitleaks findings`. `--markdown` prints that same line.
+A Grype, CycloneDX, SARIF, Semgrep, or Gitleaks report with no findings prints one sentence and no table. The lines are `No grype vulnerabilities`, `No cyclonedx vulnerabilities`, `No sarif findings`, `No semgrep findings`, and `No gitleaks findings`. `--markdown` prints that same line.
 
-`list` opens the first filename only. `list-all` walks every filename, prints the name, then the table or that sentence, and skips files it does not support. Coverage files are in that skipped set. `--epss` on `list-all` always uses the API (`GATECHECK_EPSS_URL` to override it).
+`list` opens the first filename only. `list-all` walks every filename, prints the name, then the table or that sentence, and skips files it does not support. Coverage files are in that skipped set. `--epss` on `list-all` adds EPSS columns for Grype and CycloneDX, including a file whose name does not contain those words when the contents do. It always uses the API (`GATECHECK_EPSS_URL` to override it).
 
 ```shell
 gatecheck list-all grype-scan-report.json semgrep-report.json

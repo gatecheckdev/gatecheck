@@ -28,6 +28,7 @@ type Config struct {
 	Cyclonedx reportWithCVEs       `json:"cyclonedx" toml:"cyclonedx" yaml:"cyclonedx"`
 	Semgrep   configSemgrepReport  `json:"semgrep"   toml:"semgrep"   yaml:"semgrep"`
 	Gitleaks  configGitleaksReport `json:"gitleaks"  toml:"gitleaks"  yaml:"gitleaks"`
+	Sarif     configSarifReport    `json:"sarif"     toml:"sarif"     yaml:"sarif"`
 	Coverage  configCoverageReport `json:"coverage"  toml:"coverage"  yaml:"coverage"`
 }
 
@@ -63,6 +64,29 @@ type configCoverageReport struct {
 
 type configGitleaksReport struct {
 	LimitEnabled bool `json:"limitEnabled" toml:"limitEnabled" yaml:"limitEnabled"`
+}
+
+type configSarifReport struct {
+	SeverityLimit      configServerityLimit     `json:"severityLimit"      toml:"severityLimit"      yaml:"severityLimit"`
+	RuleLimit          configRuleLimit          `json:"ruleLimit"          toml:"ruleLimit"          yaml:"ruleLimit"`
+	RuleRiskAcceptance configRuleRiskAcceptance `json:"ruleRiskAcceptance" toml:"ruleRiskAcceptance" yaml:"ruleRiskAcceptance"`
+}
+
+type configRuleLimit struct {
+	Enabled bool         `json:"enabled" toml:"enabled" yaml:"enabled"`
+	Rules   []configRule `json:"rules"   toml:"rules"   yaml:"rules"`
+}
+
+type configRuleRiskAcceptance struct {
+	Enabled bool         `json:"enabled" toml:"enabled" yaml:"enabled"`
+	Rules   []configRule `json:"rules"   toml:"rules"   yaml:"rules"`
+}
+
+type configRule struct {
+	ID       string `json:"id" toml:"id" yaml:"id"`
+	Metadata struct {
+		Tags []string `json:"tags" toml:"tags" yaml:"tags"`
+	} `json:"metadata" toml:"metadata" yaml:"metadata"`
 }
 
 type configSemgrepReport struct {
@@ -237,6 +261,34 @@ func NewDefaultConfig() *Config {
 		},
 		Gitleaks: configGitleaksReport{
 			LimitEnabled: false,
+		},
+		Sarif: configSarifReport{
+			SeverityLimit: configServerityLimit{
+				Critical: configLimit{
+					Enabled: false,
+					Limit:   0,
+				},
+				High: configLimit{
+					Enabled: false,
+					Limit:   0,
+				},
+				Medium: configLimit{
+					Enabled: false,
+					Limit:   0,
+				},
+				Low: configLimit{
+					Enabled: false,
+					Limit:   0,
+				},
+			},
+			RuleLimit: configRuleLimit{
+				Enabled: false,
+				Rules:   make([]configRule, 0),
+			},
+			RuleRiskAcceptance: configRuleRiskAcceptance{
+				Enabled: false,
+				Rules:   make([]configRule, 0),
+			},
 		},
 		Coverage: configCoverageReport{
 			LineThreshold:     0,

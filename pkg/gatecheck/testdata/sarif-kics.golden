@@ -1,0 +1,7 @@
++---------------+----------+------------+------+
+| SARIF RULE ID | SEVERITY |  LOCATION  | TOOL |
++---------------+----------+------------+------+
+| 611ab018      | critical | main.tf:12 | KICS |
+| 4a8c5d22      | medium   | main.tf:30 | KICS |
+| note-rule     | low      | main.tf:2  | KICS |
++---------------+----------+------------+------+
