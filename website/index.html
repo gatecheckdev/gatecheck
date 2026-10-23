@@ -6,264 +6,459 @@
     <title>Gatecheck</title>
     <meta
       name="description"
-      content="Gatecheck fails the CI build when Grype, Semgrep, Gitleaks, CycloneDX, or coverage results cross the thresholds in your config."
+      content="Gatecheck reads a scanner report, compares it with the thresholds in a config file, and exits non-zero when one is crossed. One binary. Stateless. Nothing to host."
     />
     <link rel="canonical" href="https://gatecheck.dev/" />
-    <meta name="color-scheme" content="dark light" />
-    <meta name="theme-color" content="#090a0d" media="(prefers-color-scheme: dark)" />
-    <meta name="theme-color" content="#f4f5f7" media="(prefers-color-scheme: light)" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="theme-color" content="#12163A" />
     <meta property="og:title" content="Gatecheck" />
     <meta
       property="og:description"
-      content="Fail the CI build when security scan results cross your thresholds."
+      content="Fail the build when scan results cross your limits. One binary. Stateless. Nothing to host."
     />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://gatecheck.dev/" />
-    <meta property="og:image" content="https://static.gatecheck.dev/gatecheck-logo-splash-dark.png" />
+    <meta property="og:image" content="https://gatecheck.dev/brand/logo-square-light.png" />
+    <meta property="og:image:width" content="1000" />
+    <meta property="og:image:height" content="1000" />
     <meta name="twitter:card" content="summary" />
     <meta name="twitter:title" content="Gatecheck" />
     <meta
       name="twitter:description"
-      content="Fail the CI build when security scan results cross your thresholds."
+      content="Fail the build when scan results cross your limits. One binary. Stateless. Nothing to host."
     />
-    <link rel="icon" href="mark-on-light.png" />
-    <link rel="icon" href="mark-on-dark.png" media="(prefers-color-scheme: dark)" />
-    <link rel="icon" href="mark-on-light.png" media="(prefers-color-scheme: light)" />
+    <meta name="twitter:image" content="https://gatecheck.dev/brand/logo-square-light.png" />
+    <link rel="icon" href="brand/logo-square-light.png" type="image/png" />
+    <link rel="apple-touch-icon" href="brand/logo-square-light.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&amp;family=Inter:wght@400;500;600;700&amp;display=swap"
+      rel="stylesheet"
+    />
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
-    <a class="skip" href="#content">Skip to content</a>
+    <a class="skip" href="#top">Skip to content</a>
     <header class="site-header">
-      <div class="wrap">
-        <a class="brand" href="#content">
-          <picture>
-            <source srcset="mark-on-light.png" media="(prefers-color-scheme: light)" />
-            <img src="mark-on-dark.png" alt="" width="904" height="791" />
-          </picture>
+      <nav class="nav wrap" aria-label="Main">
+        <a class="brand" href="#top" aria-label="gatecheck home">
+          <svg aria-hidden="true" width="38" height="34" viewBox="40 40 920 820" fill="none" stroke-linecap="round" stroke-linejoin="round">
+            <g stroke="#FFFFFF" stroke-width="40">
+              <path d="M65 820V500A435 435 0 0 1 935 500V820" />
+              <path d="M197 820V500A303 303 0 0 1 803 500V820" />
+              <path d="M65 518H197" />
+              <path d="M803 518H935" />
+              <path d="M437 748H565" />
+            </g>
+            <path d="M398 524L500 650L772 258" stroke="#4BB0FF" stroke-width="64" />
+          </svg>
           gatecheck
         </a>
-        <nav class="nav" aria-label="Primary">
+        <div class="nav-links">
+          <a href="#checks">Checks</a>
+          <a href="#ci">CI</a>
           <a href="https://docs.gatecheck.dev">Docs</a>
-          <a href="https://github.com/gatecheckdev/gatecheck">GitHub</a>
-        </nav>
-      </div>
+          <a href="https://github.com/gatecheckdev/gatecheck/releases">Releases</a>
+          <a class="github-link" href="https://github.com/gatecheckdev/gatecheck">
+            <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.770 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22" />
+            </svg>
+            GitHub
+            <span class="stars" id="star-count" hidden></span>
+          </a>
+        </div>
+      </nav>
     </header>
 
-    <main id="content">
-      <div class="wrap">
-        <section class="hero" aria-labelledby="pitch">
-          <h1 id="pitch">Fail the build when security scan results cross your thresholds.</h1>
+    <main>
+      <section class="hero wrap" id="top">
+        <div class="hero-copy">
+          <a class="release-badge" href="https://github.com/gatecheckdev/gatecheck/releases">
+            <span class="release-version">v0.8.1</span>
+            Latest release · Apache-2.0
+          </a>
+          <h1>Fail the build when scan results cross <span class="accent">your</span> limits.</h1>
           <p class="lede">
-            Gatecheck reads a scanner report, compares it with the limits in a config file, and
-            exits non-zero when a limit is crossed. One binary. Nothing to host.
+            Gatecheck reads a scanner report, compares it with the thresholds in a config file, and
+            exits non-zero when one is crossed. One binary. Stateless. Nothing to host.
           </p>
-          <div class="install">
-            <p class="visually-hidden" id="install-label">Install command</p>
-            <code aria-labelledby="install-label"
-              ><span class="prompt">$</span> go install github.com/gatecheckdev/gatecheck/cmd/gatecheck@latest</code
-            >
-            <button
-              type="button"
-              class="copy"
-              data-copy="go install github.com/gatecheckdev/gatecheck/cmd/gatecheck@latest"
-              data-label="Copy"
-              aria-label="Copy install command"
-            >
-              Copy
-            </button>
-          </div>
-          <div class="actions">
-            <a class="button" href="https://docs.gatecheck.dev">Docs</a>
-            <a class="button" href="https://github.com/gatecheckdev/gatecheck">GitHub</a>
-          </div>
-          <p class="note">
-            Needs Go 1.23 or newer. Prebuilt binaries for Linux, macOS, and Windows are on the
-            <a href="https://github.com/gatecheckdev/gatecheck/releases">releases page</a>.
-          </p>
-        </section>
 
-        <section class="example" aria-labelledby="example-title">
-          <h2 id="example-title" class="visually-hidden">Example</h2>
-          <figure>
-            <div class="term">
-              <div class="term-bar">shell</div>
-              <pre><span class="prompt">$</span> gatecheck list grype-report.json
-+----------------+-----------------------+------------------+--------------------------------------------------------------+
-| GRYPE SEVERITY |        PACKAGE        |     VERSION      |                             LINK                             |
-+----------------+-----------------------+------------------+--------------------------------------------------------------+
-| Critical       | vm2                   | 3.9.17           | https://github.com/advisories/GHSA-cchq-frgv-rjh5            |
-| Critical       | vm2                   | 3.9.17           | https://github.com/advisories/GHSA-whpj-8f3w-67p5            |
-| Critical       | marsdb                | 0.6.11           | https://github.com/advisories/GHSA-5mrr-rgp6-x4gr            |
-| Critical       | jsonwebtoken          | 0.1.0            | https://github.com/advisories/GHSA-c7hr-j4mj-j2w6            |
-<span class="dim">…</span>
-<span class="prompt">$</span> gatecheck validate -f gatecheck.yaml grype-report.json
-<span class="dim">01:38:49</span> <span class="err">ERR</span> grype severity limit exceeded <span class="dim">severity=critical report=8 limit=0</span>
-<span class="dim">01:38:49</span> <span class="inf">INF</span> vulnerability detected <span class="dim">id=GHSA-whpj-8f3w-67p5 severity=Critical</span>
-<span class="dim">01:38:49</span> <span class="inf">INF</span> vulnerability detected <span class="dim">id=GHSA-2jcg-qqmg-46q6 severity=Critical</span>
-<span class="dim">01:38:49</span> <span class="inf">INF</span> vulnerability detected <span class="dim">id=GHSA-g644-9gfx-q4q4 severity=Critical</span>
-<span class="dim">…</span>
-<span class="dim">01:38:49</span> <span class="err">ERR</span> grype severity limit exceeded <span class="dim">severity=high report=14 limit=5</span>
-<span class="err">Error: validation failure: Grype: Severity Limit Exceeded</span></pre>
+          <div class="install-block">
+            <div class="install">
+              <div class="install-tabs" role="tablist" aria-label="Install method">
+                <button class="install-tab" id="tab-go" type="button" role="tab" aria-selected="true" aria-controls="install-panel" data-tab="go">
+                  go install
+                </button>
+                <button class="install-tab" id="tab-bin" type="button" role="tab" aria-selected="false" aria-controls="install-panel" data-tab="bin" tabindex="-1">
+                  Prebuilt binary
+                </button>
+              </div>
+              <div class="install-row" id="install-panel" role="tabpanel" aria-labelledby="tab-go">
+                <code class="install-command"><span class="prompt">$ </span><span id="install-command">go install github.com/gatecheckdev/gatecheck/cmd/gatecheck@latest</span></code>
+                <button class="copy-btn" id="copy-install" type="button" aria-label="Copy install command">
+                  <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="9" y="9" width="13" height="13" rx="2"></rect>
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                  </svg>
+                  <span id="copy-label" aria-live="polite">Copy</span>
+                </button>
+              </div>
             </div>
-            <figcaption>
-              The table is the top of <code>gatecheck list</code> on the Grype fixture in
-              <code>test/</code>. The log is a trimmed <code>gatecheck validate -f</code> of that
-              same file, with the critical limit at 0 and the high limit at 5. The command exits 1.
-            </figcaption>
-          </figure>
-        </section>
+            <p class="install-note" data-note="go">Needs Go 1.23 or newer.</p>
+            <p class="install-note" data-note="bin" hidden>
+              Downloads the macOS arm64 archive for v0.8.1. Linux, macOS, and Windows archives are on the
+              <a href="https://github.com/gatecheckdev/gatecheck/releases/tag/v0.8.1">releases page</a>.
+            </p>
+          </div>
 
-        <section class="section" aria-labelledby="how-title">
-          <h2 id="how-title">How it works</h2>
-          <ol class="steps">
-            <li class="step">
-              <p class="step-num">01</p>
-              <h3>A scanner writes a report</h3>
-              <p>
-                Grype, CycloneDX, Semgrep, Gitleaks, or a coverage file. Gatecheck picks the type
-                from the filename.
-              </p>
-            </li>
-            <li class="step">
-              <p class="step-num">02</p>
-              <h3>You set the thresholds</h3>
-              <p>
-                <code>gatecheck config init</code> prints a config with the limits off. Turn on the
-                ones you mean to enforce.
-              </p>
-              <pre>grype:
+          <div class="actions">
+            <a class="btn btn-primary" href="https://docs.gatecheck.dev">
+              Read the docs
+              <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M5 12h14"></path>
+                <path d="m13 6 6 6-6 6"></path>
+              </svg>
+            </a>
+            <a class="btn btn-secondary" href="https://github.com/gatecheckdev/gatecheck">View on GitHub</a>
+          </div>
+        </div>
+
+        <figure class="readout">
+          <div class="readout-head">
+            <span>gatecheck validate -f gatecheck.yaml grype-report.json</span>
+          </div>
+          <div class="bars">
+            <div class="bar-row">
+              <span>critical</span>
+              <div class="bar-track">
+                <div class="bar-fill bar-fill-critical"></div>
+                <div class="bar-mark bar-mark-critical"></div>
+              </div>
+              <span class="bar-value">8 / limit 0</span>
+            </div>
+            <div class="bar-row">
+              <span>high</span>
+              <div class="bar-track">
+                <div class="bar-fill bar-fill-high"></div>
+                <div class="bar-mark bar-mark-high"></div>
+              </div>
+              <span class="bar-value">14 / limit 5</span>
+            </div>
+            <div class="bar-row">
+              <span class="bar-label-off">medium</span>
+              <div class="bar-off"></div>
+              <span class="bar-value-off">limit off</span>
+            </div>
+            <div class="bar-row">
+              <span class="bar-label-off">low</span>
+              <div class="bar-off"></div>
+              <span class="bar-value-off">limit off</span>
+            </div>
+          </div>
+          <pre class="log"><span class="err">ERR</span> grype severity limit exceeded severity=critical report=8 limit=0
+<span class="inf">INF</span> vulnerability detected id=GHSA-whpj-8f3w-67p5 severity=Critical
+<span class="inf">INF</span> vulnerability detected id=GHSA-2jcg-qqmg-46q6 severity=Critical
+<span class="prompt">…</span>
+<span class="err">ERR</span> grype severity limit exceeded severity=high report=14 limit=5
+Error: validation failure: Grype: Severity Limit Exceeded</pre>
+          <figcaption class="figcap">
+            <span>Grype fixture from <code>test/</code>, trimmed</span>
+            <span class="exit-tag">exit 1 · build blocked</span>
+          </figcaption>
+        </figure>
+      </section>
+
+      <section class="strip" aria-label="Supported reports">
+        <div class="strip-inner wrap">
+          <span class="strip-label">reads</span>
+          <span>Grype</span>
+          <span>CycloneDX</span>
+          <span>Semgrep</span>
+          <span>Gitleaks</span>
+          <span>LCOV</span>
+          <span>Clover</span>
+          <span>Cobertura</span>
+          <span class="strip-label">enriches with</span>
+          <span>EPSS</span>
+          <span>CISA KEV</span>
+        </div>
+      </section>
+
+      <section class="how wrap" aria-labelledby="how-title">
+        <div class="section-head">
+          <h2 class="section-title section-title-narrow" id="how-title">A report goes in. An exit code comes out.</h2>
+          <p class="section-blurb section-blurb-how">
+            No server, no database, no account. Gatecheck runs in the job, reads files, and returns 0 or 1.
+          </p>
+        </div>
+        <div class="steps">
+          <div class="step">
+            <span class="kicker">01 — report</span>
+            <h3>A scanner writes a report</h3>
+            <p>Grype, CycloneDX, Semgrep, Gitleaks, or a coverage file. Gatecheck picks the type from the filename.</p>
+            <div class="codebox">$ grype app:latest -o json &gt; <span class="bright">grype-report.json</span></div>
+          </div>
+          <div class="step">
+            <span class="kicker">02 — thresholds</span>
+            <h3>You set the limits</h3>
+            <p><code class="bright">gatecheck config init</code> prints a config with every limit off. Turn on the ones you mean to enforce.</p>
+            <pre class="yaml">grype:
   severityLimit:
     critical:
-      enabled: true
-      limit: 0
+      enabled: <span class="on">true</span>
+      limit: <span class="on">0</span>
     high:
-      enabled: true
-      limit: 5</pre>
-            </li>
-            <li class="step">
-              <p class="step-num">03</p>
-              <h3>CI passes or fails</h3>
-              <p>
-                <code>gatecheck validate -f gatecheck.yaml grype-report.json</code> exits 1 when a
-                limit is crossed, and 0 when the report is inside it.
-              </p>
-            </li>
-          </ol>
-        </section>
-
-        <section class="section" aria-labelledby="reports-title">
-          <h2 id="reports-title">What it checks</h2>
-          <p class="section-intro">
-            <code>list</code> (alias <code>ls</code>) prints a table.
-            <code>download epss</code> and <code>download kev</code> print the datasets to stdout.
-            Command details are in the <a href="https://docs.gatecheck.dev">docs</a>.
-          </p>
-          <ul class="cards">
-            <li class="card">
-              <h3>Grype</h3>
-              <p>Severity counts, a CVE deny list, and a list of accepted CVEs.</p>
-            </li>
-            <li class="card">
-              <h3>CycloneDX</h3>
-              <p>The same CVE checks for vulnerabilities in a CycloneDX SBOM.</p>
-            </li>
-            <li class="card">
-              <h3>Semgrep</h3>
-              <p>Limits for error, warning, and info findings.</p>
-            </li>
-            <li class="card">
-              <h3>Gitleaks</h3>
-              <p>Fail when the report contains secrets.</p>
-            </li>
-            <li class="card">
-              <h3>Coverage</h3>
-              <p>Line, function, and branch thresholds for LCOV, Clover, and Cobertura.</p>
-            </li>
-            <li class="card">
-              <h3>Bundles</h3>
-              <p>
-                <code>bundle create</code> and <code>bundle add</code> pack reports into one
-                gzipped archive with a manifest.
-              </p>
-            </li>
-            <li class="card">
-              <h3>EPSS</h3>
-              <p>
-                FIRST scores on <code>list --epss</code> for Grype and CycloneDX, and a score limit
-                during validate.
-              </p>
-            </li>
-            <li class="card">
-              <h3>KEV</h3>
-              <p>Fail validate when a CVE is in the CISA known-exploited catalog.</p>
-            </li>
-          </ul>
-        </section>
-
-        <section class="section" aria-labelledby="ci-title">
-          <h2 id="ci-title">In CI</h2>
-          <p class="section-intro">
-            A non-zero exit fails the job. The report filename has to contain the type, such as
-            <code>grype</code> or <code>semgrep</code>.
-          </p>
-          <div class="snippet">
-            <pre id="ci-step">- name: Validate the Grype report
-  run: gatecheck validate -f gatecheck.yaml grype-report.json</pre>
-            <button
-              type="button"
-              class="copy"
-              data-copy-target="#ci-step"
-              data-label="Copy"
-              aria-label="Copy CI step"
-            >
-              Copy
-            </button>
+      enabled: <span class="on">true</span>
+      limit: <span class="on">5</span></pre>
           </div>
-        </section>
-      </div>
+          <div class="step">
+            <span class="kicker">03 — verdict</span>
+            <h3>CI passes or fails</h3>
+            <p><code class="bright">gatecheck validate</code> exits 1 when a limit is crossed and 0 when the report is inside it.</p>
+            <div class="verdict">
+              <div class="verdict-row"><span>inside every limit</span><span class="pass">exit 0 · pass</span></div>
+              <div class="verdict-row"><span>a limit crossed</span><span class="fail">exit 1 · fail</span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="checks wrap" id="checks" aria-labelledby="checks-title">
+        <div class="section-head">
+          <h2 class="section-title" id="checks-title">What it checks</h2>
+          <p class="section-blurb section-blurb-checks">
+            <code class="bright">gatecheck ls</code> prints any report as a table. Every command takes <code class="bright">--help</code>.
+          </p>
+        </div>
+        <div class="check-grid">
+          <div class="check">
+            <span class="eyebrow">VULNERABILITIES</span>
+            <h3>Grype</h3>
+            <p>Severity counts, a CVE deny list, and a list of accepted CVEs.</p>
+          </div>
+          <div class="check">
+            <span class="eyebrow">SBOM</span>
+            <h3>CycloneDX</h3>
+            <p>The same CVE checks for vulnerabilities listed in a CycloneDX SBOM.</p>
+          </div>
+          <div class="check">
+            <span class="eyebrow">STATIC ANALYSIS</span>
+            <h3>Semgrep</h3>
+            <p>Separate limits for error, warning, and info findings.</p>
+          </div>
+          <div class="check">
+            <span class="eyebrow">SECRETS</span>
+            <h3>Gitleaks</h3>
+            <p>Fail the job when the report contains any secrets.</p>
+          </div>
+          <div class="check">
+            <span class="eyebrow">TESTS</span>
+            <h3>Coverage</h3>
+            <p>Line, function, and branch thresholds for LCOV, Clover, and Cobertura.</p>
+          </div>
+          <div class="check">
+            <span class="eyebrow">EXPLOIT LIKELIHOOD</span>
+            <h3>EPSS</h3>
+            <p>FIRST scores on <code>ls --epss</code> for Grype and CycloneDX, and a score limit during validate.</p>
+          </div>
+          <div class="check">
+            <span class="eyebrow">KNOWN EXPLOITED</span>
+            <h3>KEV</h3>
+            <p>Fail validate when a CVE appears in the CISA known-exploited catalog.</p>
+          </div>
+          <div class="check">
+            <span class="eyebrow">DATASETS</span>
+            <h3>Offline data</h3>
+            <p><code>download epss</code> and <code>download kev</code> print the datasets to stdout.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="bundles wrap" aria-labelledby="bundle-title">
+        <div class="bundle-panel">
+          <div class="bundle-copy">
+            <span class="kicker">bundle</span>
+            <h2 id="bundle-title">Keep every report from a run in one archive.</h2>
+            <p>
+              <code class="bright">bundle create</code> and <code class="bright">bundle add</code> pack scan reports into a
+              single gzipped tarball with a manifest of what is inside, so the evidence travels with the build.
+            </p>
+          </div>
+          <pre class="bundle-pre"><span class="prompt">$</span> gatecheck bundle create gatecheck-bundle.tar.gz grype-report.json
+<span class="prompt">$</span> gatecheck bundle add gatecheck-bundle.tar.gz semgrep-report.json
+<span class="prompt">$</span> gatecheck bundle add gatecheck-bundle.tar.gz gitleaks-report.json
+<span class="prompt">$</span> gatecheck ls gatecheck-bundle.tar.gz</pre>
+        </div>
+      </section>
+
+      <section class="ci wrap" id="ci" aria-labelledby="ci-title">
+        <div class="ci-layout">
+          <div class="ci-copy">
+            <h2 class="section-title" id="ci-title">One step in any pipeline.</h2>
+            <p>
+              A non-zero exit fails the job, so it works with GitHub Actions, GitLab CI, or anything else that runs a
+              shell. The report filename has to contain its type, such as <code class="bright">grype</code> or
+              <code class="bright">semgrep</code>.
+            </p>
+            <ul class="points">
+              <li>
+                <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4BB0FF" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg>
+                Single static binary for Linux, macOS, and Windows
+              </li>
+              <li>
+                <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4BB0FF" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg>
+                Stateless: no server to provision or keep running
+              </li>
+              <li>
+                <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4BB0FF" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg>
+                Config lives in your repo next to the pipeline
+              </li>
+            </ul>
+          </div>
+          <figure class="workflow">
+            <div class="workflow-head">
+              <span>.github/workflows/security.yaml</span>
+            </div>
+            <pre class="workflow-pre">- <span class="key">name:</span> Scan the image
+  <span class="key">run:</span> grype app:latest -o json &gt; grype-report.json
+
+- <span class="key">name:</span> Validate the Grype report
+  <span class="key">run:</span> <span class="accent">gatecheck validate -f gatecheck.yaml grype-report.json</span></pre>
+          </figure>
+        </div>
+      </section>
+
+      <section class="cta">
+        <div class="cta-inner wrap">
+          <svg role="img" aria-label="gatecheck logo" width="132" height="118" viewBox="40 40 920 820" fill="none" stroke-linecap="round" stroke-linejoin="round">
+            <g stroke="#FFFFFF" stroke-width="34">
+              <path d="M65 820V500A435 435 0 0 1 935 500V820" />
+              <path d="M197 820V500A303 303 0 0 1 803 500V820" />
+              <path d="M65 518H197" />
+              <path d="M803 518H935" />
+              <path d="M437 748H565" />
+            </g>
+            <path d="M398 524L500 650L772 258" stroke="#4BB0FF" stroke-width="62" />
+          </svg>
+          <h2>Put a gate in front of your next deploy.</h2>
+          <p>Start with <code class="bright">gatecheck config init &gt; gatecheck.yaml</code> and turn on one limit.</p>
+          <div class="actions">
+            <a class="btn btn-primary" href="https://docs.gatecheck.dev">Get started</a>
+            <a class="btn btn-secondary" href="https://github.com/gatecheckdev/gatecheck/releases">Download v0.8.1</a>
+          </div>
+        </div>
+      </section>
     </main>
 
     <footer class="site-footer">
-      <div class="wrap">
-        <p>© 2022 Clarity Innovations Inc. · <a href="https://www.apache.org/licenses/LICENSE-2.0">Apache-2.0</a></p>
+      <div class="footer-inner wrap">
+        <span class="footer-brand">
+          <svg aria-hidden="true" width="26" height="23" viewBox="40 40 920 820" fill="none" stroke-linecap="round" stroke-linejoin="round">
+            <g stroke="#FFFFFF" stroke-width="48">
+              <path d="M65 820V500A435 435 0 0 1 935 500V820" />
+              <path d="M197 820V500A303 303 0 0 1 803 500V820" />
+              <path d="M65 518H197" />
+              <path d="M803 518H935" />
+              <path d="M437 748H565" />
+            </g>
+            <path d="M398 524L500 650L772 258" stroke="#4BB0FF" stroke-width="72" />
+          </svg>
+          <span><span class="footer-name">gatecheck</span> · Apache-2.0</span>
+        </span>
         <nav class="footer-links" aria-label="Footer">
-          <a href="https://github.com/gatecheckdev/gatecheck">GitHub</a>
           <a href="https://docs.gatecheck.dev">Docs</a>
-          <a href="https://github.com/gatecheckdev/gatecheck/releases">Releases</a>
+          <a href="https://github.com/gatecheckdev/gatecheck/blob/main/CHANGELOG.md">Changelog</a>
+          <a href="https://github.com/gatecheckdev/gatecheck/blob/main/CONTRIBUTING.md">Contributing</a>
+          <a href="https://github.com/gatecheckdev/gatecheck/issues">Issues</a>
+          <a href="https://github.com/gatecheckdev/gatecheck">GitHub</a>
         </nav>
       </div>
     </footer>
-    <p id="copy-status" class="visually-hidden" role="status"></p>
+
     <script>
       (function () {
-        var status = document.getElementById("copy-status");
-        document.querySelectorAll("[data-copy], [data-copy-target]").forEach(function (btn) {
+        var cmds = {
+          go: "go install github.com/gatecheckdev/gatecheck/cmd/gatecheck@latest",
+          bin: 'gh release download v0.8.1 --repo gatecheckdev/gatecheck --pattern "*darwin_arm64*"'
+        };
+        var tab = "go";
+        var copied = false;
+        var timer = 0;
+        var commandEl = document.getElementById("install-command");
+        var copyLabel = document.getElementById("copy-label");
+        var panel = document.getElementById("install-panel");
+        var tabs = Array.prototype.slice.call(document.querySelectorAll("[data-tab]"));
+        var notes = document.querySelectorAll("[data-note]");
+
+        function render() {
+          commandEl.textContent = cmds[tab];
+          tabs.forEach(function (btn) {
+            var on = btn.getAttribute("data-tab") === tab;
+            btn.setAttribute("aria-selected", on ? "true" : "false");
+            btn.tabIndex = on ? 0 : -1;
+            if (on) panel.setAttribute("aria-labelledby", btn.id);
+          });
+          notes.forEach(function (el) {
+            el.hidden = el.getAttribute("data-note") !== tab;
+          });
+          copyLabel.textContent = copied ? "Copied" : "Copy";
+        }
+
+        tabs.forEach(function (btn) {
           btn.addEventListener("click", function () {
-            var text = btn.getAttribute("data-copy");
-            if (!text && btn.getAttribute("data-copy-target")) {
-              var source = document.querySelector(btn.getAttribute("data-copy-target"));
-              text = source ? source.textContent.replace(/^\n+|\n+$/g, "") : "";
-            }
-            if (!text) return;
-            var label = btn.getAttribute("data-label") || "Copy";
-            function done() {
-              btn.textContent = "Copied";
-              if (status) status.textContent = "Copied to clipboard";
-              window.setTimeout(function () {
-                btn.textContent = label;
-                if (status) status.textContent = "";
-              }, 1600);
-            }
-            if (navigator.clipboard && navigator.clipboard.writeText) {
-              navigator.clipboard.writeText(text).then(done, function () {
-                btn.textContent = "Copy failed";
-                window.setTimeout(function () {
-                  btn.textContent = label;
-                }, 1600);
-              });
-            }
+            tab = btn.getAttribute("data-tab");
+            copied = false;
+            window.clearTimeout(timer);
+            render();
           });
         });
+
+        document.querySelector(".install-tabs").addEventListener("keydown", function (event) {
+          if (event.key !== "ArrowRight" && event.key !== "ArrowLeft") return;
+          event.preventDefault();
+          tab = tab === "go" ? "bin" : "go";
+          copied = false;
+          window.clearTimeout(timer);
+          render();
+          document.querySelector('[data-tab="' + tab + '"]').focus();
+        });
+
+        document.getElementById("copy-install").addEventListener("click", function () {
+          var text = cmds[tab];
+          function show(label) {
+            copied = label === "Copied";
+            copyLabel.textContent = label;
+            window.clearTimeout(timer);
+            timer = window.setTimeout(function () {
+              copied = false;
+              render();
+            }, 1600);
+          }
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(
+              function () {
+                show("Copied");
+              },
+              function () {
+                show("Copy failed");
+              }
+            );
+          } else {
+            show("Copy failed");
+          }
+        });
+
+        var stars = document.getElementById("star-count");
+        fetch("https://api.github.com/repos/gatecheckdev/gatecheck")
+          .then(function (response) {
+            return response.ok ? response.json() : Promise.reject();
+          })
+          .then(function (data) {
+            if (!data || typeof data.stargazers_count !== "number") return;
+            stars.textContent = "★ " + data.stargazers_count.toLocaleString("en-US");
+            stars.hidden = false;
+          })
+          .catch(function () {});
       })();
     </script>
   </body>
