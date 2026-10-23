@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"slices"
 	"strings"
 
 	"github.com/gatecheckdev/gatecheck/internal/fetch"
@@ -124,9 +125,11 @@ func (o Options) userAgent() string {
 	return "gatecheck (+https://github.com/gatecheckdev/gatecheck)"
 }
 
+var defaultTools = []string{"grype", "syft", "gitleaks", "semgrep", "trivy"}
+
 func canonicalTools(csv string) ([]string, error) {
 	if strings.TrimSpace(csv) == "" {
-		return []string{"grype", "syft", "gitleaks", "semgrep"}, nil
+		return append([]string(nil), defaultTools...), nil
 	}
 	var out []string
 	seen := map[string]bool{}
@@ -138,10 +141,8 @@ func canonicalTools(csv string) ([]string, error) {
 		if name == "osemgrep" {
 			name = "semgrep"
 		}
-		switch name {
-		case "grype", "syft", "gitleaks", "semgrep":
-		default:
-			return nil, fmt.Errorf("unknown tool %q (supported: grype, syft, gitleaks, semgrep)", name)
+		if !slices.Contains(defaultTools, name) {
+			return nil, fmt.Errorf("unknown tool %q (supported: %s)", name, strings.Join(defaultTools, ", "))
 		}
 		if seen[name] {
 			continue
@@ -177,6 +178,12 @@ func installTool(ctx context.Context, opts Options, tool string) error {
 		return installGitHub(ctx, opts, "gitleaks", "gitleaks/gitleaks", GitleaksVersion, asset)
 	case "semgrep":
 		return installSemgrep(ctx, opts)
+	case "trivy":
+		asset, err := trivyAsset(TrivyVersion, opts.platform())
+		if err != nil {
+			return err
+		}
+		return installGitHub(ctx, opts, "trivy", "aquasecurity/trivy", TrivyVersion, asset)
 	default:
 		return fmt.Errorf("unknown tool %q", tool)
 	}
@@ -415,6 +422,8 @@ func pinnedVersion(tool string) string {
 		return GitleaksVersion
 	case "semgrep":
 		return SemgrepVersion
+	case "trivy":
+		return TrivyVersion
 	default:
 		return "-"
 	}

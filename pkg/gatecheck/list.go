@@ -95,6 +95,14 @@ func List(dst io.Writer, src io.Reader, inputFilename string, options ...ListOpt
 		slog.Debug("list", "filename", inputFilename, "filetype", "gitleaks")
 		err = listGitleaks(table, src)
 
+	case strings.Contains(inputFilename, "trivy"):
+		slog.Debug("list", "filename", inputFilename, "filetype", "trivy")
+		if o.epssData != nil {
+			err = listTrivyWithEPSS(table, src, o.epssData)
+		} else {
+			err = ListTrivyReport(table, src)
+		}
+
 	case strings.Contains(inputFilename, "syft"):
 		slog.Debug("list", "filename", inputFilename, "filetype", "syft")
 		slog.Warn("syft decoder is not supported yet")

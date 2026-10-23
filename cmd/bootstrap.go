@@ -39,7 +39,7 @@ func newBootstrapCommand() *cobra.Command {
 			})
 		},
 	}
-	cmd.Flags().String("tools", "", "comma-separated scanners to install (default grype,syft,gitleaks,semgrep)")
+	cmd.Flags().String("tools", "", "comma-separated scanners to install (default grype,syft,gitleaks,semgrep,trivy)")
 	cmd.Flags().Bool("force", false, "reinstall even when the pinned version is already present")
 	cmd.Flags().Bool("list", false, "print pinned versions, installed versions, and paths")
 	return cmd

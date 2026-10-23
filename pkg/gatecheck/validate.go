@@ -49,6 +49,10 @@ func Validate(config *Config, reportSrc io.Reader, targetFilename string, option
 		slog.Debug("validate", "filename", targetFilename, "filetype", "gitleaks")
 		return validateGitleaksReport(reportSrc, config)
 
+	case strings.Contains(targetFilename, "trivy"):
+		slog.Debug("validate", "filename", targetFilename, "filetype", "trivy")
+		return validateTrivyReportWithFetch(reportSrc, config, options)
+
 	case strings.Contains(targetFilename, "syft"):
 		slog.Debug("validate", "filename", targetFilename, "filetype", "syft")
 		return errors.New("syft validation not supported yet")
@@ -600,7 +604,7 @@ func loadDataFromFileOrAPI(epssData *epss.Data, options *fetchOptions) error {
 }
 
 func LoadCatalogAndData(config *Config, catalog *kev.Catalog, epssData *epss.Data, options *fetchOptions) error {
-	if config.Grype.KEVLimitEnabled || config.Cyclonedx.KEVLimitEnabled {
+	if config.Grype.KEVLimitEnabled || config.Cyclonedx.KEVLimitEnabled || config.Trivy.KEVLimitEnabled {
 		if err := loadCatalogFromFileOrAPI(catalog, options); err != nil {
 			return err
 		}
@@ -608,8 +612,9 @@ func LoadCatalogAndData(config *Config, catalog *kev.Catalog, epssData *epss.Dat
 
 	grypeEPSSNeeded := config.Grype.EPSSLimit.Enabled || config.Grype.EPSSRiskAcceptance.Enabled
 	cyclonedxEPSSNeeded := config.Cyclonedx.EPSSLimit.Enabled || config.Cyclonedx.EPSSRiskAcceptance.Enabled
+	trivyEPSSNeeded := config.Trivy.EPSSLimit.Enabled || config.Trivy.EPSSRiskAcceptance.Enabled
 
-	if grypeEPSSNeeded || cyclonedxEPSSNeeded {
+	if grypeEPSSNeeded || cyclonedxEPSSNeeded || trivyEPSSNeeded {
 		if err := loadDataFromFileOrAPI(epssData, options); err != nil {
 			return err
 		}
@@ -763,6 +768,9 @@ func validateBundle(r io.Reader, config *Config, options *fetchOptions) error {
 			errs = errors.Join(errs, err)
 		case strings.Contains(fileLabel, "gitleaks"):
 			err := validateGitleaksReport(bytes.NewBuffer(bundle.FileBytes(fileLabel)), config)
+			errs = errors.Join(errs, err)
+		case strings.Contains(fileLabel, "trivy"):
+			err := validateTrivyFrom(bytes.NewBuffer(bundle.FileBytes(fileLabel)), config, catalog, epssData)
 			errs = errors.Join(errs, err)
 		case artifacts.IsCoverageReport(fileLabel):
 			err := validateCoverage(bytes.NewBuffer(bundle.FileBytes(fileLabel)), fileLabel, config)

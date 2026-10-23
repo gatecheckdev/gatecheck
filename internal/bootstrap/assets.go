@@ -134,6 +134,84 @@ func gitleaksOSArch(goos, arch string) bool {
 	}
 }
 
+func trivyAsset(version string, p Platform) (githubAsset, error) {
+	osName, archName, ok := trivyOSArch(p)
+	if !ok {
+		return githubAsset{}, unsupported("trivy", p)
+	}
+	ext := "tar.gz"
+	if p.GOOS == "windows" {
+		ext = "zip"
+	}
+	asset := fmt.Sprintf("trivy_%s_%s-%s.%s", version, osName, archName, ext)
+	return githubAsset{
+		Asset:    asset,
+		Checksum: fmt.Sprintf("trivy_%s_checksums.txt", version),
+		Binary:   exeName("trivy", p.GOOS),
+		DestName: exeName("trivy", p.GOOS),
+	}, nil
+}
+
+func trivyOSArch(p Platform) (string, string, bool) {
+	var osName string
+	switch p.GOOS {
+	case "linux":
+		osName = "Linux"
+	case "darwin":
+		osName = "macOS"
+	case "windows":
+		osName = "windows"
+	case "freebsd":
+		osName = "FreeBSD"
+	default:
+		return "", "", false
+	}
+
+	var archName string
+	switch p.GOARCH {
+	case "amd64":
+		archName = "64bit"
+	case "386":
+		archName = "32bit"
+	case "arm":
+		if p.GOARM != "" && p.GOARM != "7" {
+			return "", "", false
+		}
+		archName = "ARM"
+	case "arm64":
+		archName = "ARM64"
+	case "ppc64le":
+		archName = "PPC64LE"
+	case "s390x":
+		archName = "s390x"
+	default:
+		return "", "", false
+	}
+
+	switch p.GOOS {
+	case "linux":
+		switch p.GOARCH {
+		case "386", "amd64", "arm", "arm64", "ppc64le", "s390x":
+			return osName, archName, true
+		default:
+			return "", "", false
+		}
+	case "darwin":
+		if p.GOARCH == "amd64" || p.GOARCH == "arm64" {
+			return osName, archName, true
+		}
+	case "windows":
+		if p.GOARCH == "amd64" {
+			return osName, archName, true
+		}
+	case "freebsd":
+		if p.GOARCH == "amd64" {
+			return osName, archName, true
+		}
+	}
+	return "", "", false
+}
+
 func exeName(name, goos string) string {
 	if goos == "windows" && !strings.HasSuffix(strings.ToLower(name), ".exe") {
 		return name + ".exe"

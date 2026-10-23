@@ -12,7 +12,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var supportedTypes = []string{"grype", "semgrep", "gitleaks", "syft", "cyclonedx", "bundle", "gatecheck"}
+var supportedTypes = []string{"grype", "semgrep", "gitleaks", "syft", "cyclonedx", "bundle", "gatecheck", "trivy"}
 
 var listCmd = &cobra.Command{
 	Use:     "list",
@@ -121,7 +121,7 @@ var listAllCmd = &cobra.Command{
 			}
 			opts = append(opts, displayOpt)
 
-			if epss && slices.ContainsFunc([]string{"grype", "cyclonedx"}, supportedFunc) {
+			if epss && slices.ContainsFunc([]string{"grype", "cyclonedx", "trivy"}, supportedFunc) {
 				epssOpt, err := gatecheck.WithEPSS(epssFile, epssURL, epssCacheOptions()...)
 				if err != nil {
 					slog.Error("epss fetch failure, skip", "filename", filename, "error", err)
@@ -157,7 +157,7 @@ func newListAllCommand() *cobra.Command {
 }
 
 func newListCommand() *cobra.Command {
-	listCmd.Flags().StringP("input-type", "i", "", "the input filetype if using STDIN [grype|semgrep|gitleaks|syft|bundle]")
+	listCmd.Flags().StringP("input-type", "i", "", "the input filetype if using STDIN [grype|semgrep|gitleaks|syft|bundle|trivy]")
 	listCmd.Flags().Bool("markdown", false, "print as a markdown table")
 	listCmd.Flags().Bool("epss", false, "List with EPSS data")
 	RuntimeConfig.EPSSURL.SetupCobra(listCmd)

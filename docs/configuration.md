@@ -82,6 +82,33 @@ cyclonedx:
     cveRiskAcceptance:
         enabled: false
         cves: []
+trivy:
+    severityLimit:
+        critical:
+            enabled: false
+            limit: 0
+        high:
+            enabled: false
+            limit: 0
+        medium:
+            enabled: false
+            limit: 0
+        low:
+            enabled: false
+            limit: 0
+    epssLimit:
+        enabled: false
+        score: 0
+    kevLimitEnabled: false
+    cveLimit:
+        enabled: false
+        cves: []
+    epssRiskAcceptance:
+        enabled: false
+        score: 0
+    cveRiskAcceptance:
+        enabled: false
+        cves: []
 semgrep:
     severityLimit:
         error:
@@ -110,9 +137,9 @@ coverage:
 
 `version` is the string `"1"`. `metadata.tags` is a list of strings. Neither one changes validation.
 
-## Grype and CycloneDX
+## Grype, CycloneDX, and Trivy
 
-`grype` and `cyclonedx` use the same fields.
+`grype`, `cyclonedx`, and `trivy` use the same fields. Trivy scores vulnerability entries. Misconfigurations, secrets, and licenses in the Trivy JSON are ignored. A Trivy id matches `VulnerabilityID` and each `VendorIDs` entry.
 
 `severityLimit` has `critical`, `high`, `medium`, and `low`. Each has `enabled` and `limit`. `limit` is a count. The report fails when the number of findings at that severity is greater than `limit`. `enabled: true` and `limit: 0` allows none. `enabled: false` skips that severity.
 

@@ -26,5 +26,5 @@ This file is for agents changing the gatecheck repository. To use the gatecheck 
 - Check `gatecheck <command> --help` before describing a flag. `docs/cli-reference.md` matches the CLI on main.
 - Report type detection is a lowercase substring of the filename. See `docs/supported-reports.md`.
 - Coverage thresholds and EPSS scores are ratios from 0 to 1.
-- Exit codes from `cmd/gatecheck`: 0 success, 1 threshold failure (`gatecheck.ErrValidationFailure`), 255 any other error (`os.Exit(-1)`). `grype`, `syft`, `gitleaks`, `semgrep`, and `osemgrep` return the scanner's status. A missing scanner still exits 255.
+- Exit codes from `cmd/gatecheck`: 0 success, 1 threshold failure (`gatecheck.ErrValidationFailure`), 255 any other error (`os.Exit(-1)`). `grype`, `syft`, `gitleaks`, `semgrep`, `osemgrep`, and `trivy` return the scanner's status. A missing scanner still exits 255.
 - Do not add copyright notices.

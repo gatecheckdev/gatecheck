@@ -37,10 +37,11 @@ Columns:
 - CycloneDX: CVE id, severity, package, link. With `--epss`: CVE id, severity, EPSS score, EPSS percentile, affected packages, link.
 - Semgrep: check id, OWASP ids, severity, impact, link. Runtime errors from the report are logged as warnings.
 - Gitleaks: rule id, file, commit, start line.
+- Trivy: severity, package, version, link. With `--epss`: CVE id, severity, EPSS score, EPSS percentile, package, version, link. Misconfigurations are omitted.
 - Coverage: lines, functions, and branches covered, with a percent in the footer. The percent is only for display. The config file uses a ratio. See [Configuration](./configuration.md).
 - Bundle: label, SHA-256 digest, tags, size.
 
-A Grype, CycloneDX, Semgrep, or Gitleaks report with no findings prints one sentence and no table. The lines are `No grype vulnerabilities`, `No cyclonedx vulnerabilities`, `No semgrep findings`, and `No gitleaks findings`. `--markdown` prints that same line.
+A Grype, CycloneDX, Semgrep, Gitleaks, or Trivy report with no findings prints one sentence and no table. The lines are `No grype vulnerabilities`, `No cyclonedx vulnerabilities`, `No semgrep findings`, `No gitleaks findings`, and `No trivy vulnerabilities`. `--markdown` prints that same line.
 
 `list` opens the first filename only. `list-all` walks every filename, prints the name, then the table or that sentence, and skips files it does not support. Coverage files are in that skipped set. `--epss` on `list-all` always uses the API (`GATECHECK_EPSS_URL` to override it).
 
