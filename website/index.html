@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Gatecheck</title>
+    <meta
+      name="description"
+      content="Gatecheck fails the CI build when Grype, Semgrep, Gitleaks, CycloneDX, or coverage results cross the thresholds in your config."
+    />
+    <link rel="canonical" href="https://gatecheck.dev/" />
+    <meta name="color-scheme" content="dark light" />
+    <meta name="theme-color" content="#090a0d" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#f4f5f7" media="(prefers-color-scheme: light)" />
+    <meta property="og:title" content="Gatecheck" />
+    <meta
+      property="og:description"
+      content="Fail the CI build when security scan results cross your thresholds."
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://gatecheck.dev/" />
+    <meta property="og:image" content="https://static.gatecheck.dev/gatecheck-logo-splash-dark.png" />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="Gatecheck" />
+    <meta
+      name="twitter:description"
+      content="Fail the CI build when security scan results cross your thresholds."
+    />
+    <link rel="icon" href="mark-on-light.png" />
+    <link rel="icon" href="mark-on-dark.png" media="(prefers-color-scheme: dark)" />
+    <link rel="icon" href="mark-on-light.png" media="(prefers-color-scheme: light)" />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <a class="skip" href="#content">Skip to content</a>
+    <header class="site-header">
+      <div class="wrap">
+        <a class="brand" href="#content">
+          <picture>
+            <source srcset="mark-on-light.png" media="(prefers-color-scheme: light)" />
+            <img src="mark-on-dark.png" alt="" width="904" height="791" />
+          </picture>
+          gatecheck
+        </a>
+        <nav class="nav" aria-label="Primary">
+          <a href="https://docs.gatecheck.dev">Docs</a>
+          <a href="https://github.com/gatecheckdev/gatecheck">GitHub</a>
+        </nav>
+      </div>
+    </header>
+
+    <main id="content">
+      <div class="wrap">
+        <section class="hero" aria-labelledby="pitch">
+          <h1 id="pitch">Fail the build when security scan results cross your thresholds.</h1>
+          <p class="lede">
+            Gatecheck reads a scanner report, compares it with the limits in a config file, and
+            exits non-zero when a limit is crossed. One binary. Nothing to host.
+          </p>
+          <div class="install">
+            <p class="visually-hidden" id="install-label">Install command</p>
+            <code aria-labelledby="install-label"
+              ><span class="prompt">$</span> go install github.com/gatecheckdev/gatecheck/cmd/gatecheck@latest</code
+            >
+            <button
+              type="button"
+              class="copy"
+              data-copy="go install github.com/gatecheckdev/gatecheck/cmd/gatecheck@latest"
+              data-label="Copy"
+              aria-label="Copy install command"
+            >
+              Copy
+            </button>
+          </div>
+          <div class="actions">
+            <a class="button" href="https://docs.gatecheck.dev">Docs</a>
+            <a class="button" href="https://github.com/gatecheckdev/gatecheck">GitHub</a>
+          </div>
+          <p class="note">
+            Needs Go 1.23 or newer. Prebuilt binaries for Linux, macOS, and Windows are on the
+            <a href="https://github.com/gatecheckdev/gatecheck/releases">releases page</a>.
+          </p>
+        </section>
+
+        <section class="example" aria-labelledby="example-title">
+          <h2 id="example-title" class="visually-hidden">Example</h2>
+          <figure>
+            <div class="term">
+              <div class="term-bar">shell</div>
+              <pre><span class="prompt">$</span> gatecheck list grype-report.json
++----------------+-----------------------+------------------+--------------------------------------------------------------+
+| GRYPE SEVERITY |        PACKAGE        |     VERSION      |                             LINK                             |
++----------------+-----------------------+------------------+--------------------------------------------------------------+
+| Critical       | vm2                   | 3.9.17           | https://github.com/advisories/GHSA-cchq-frgv-rjh5            |
+| Critical       | vm2                   | 3.9.17           | https://github.com/advisories/GHSA-whpj-8f3w-67p5            |
+| Critical       | marsdb                | 0.6.11           | https://github.com/advisories/GHSA-5mrr-rgp6-x4gr            |
+| Critical       | jsonwebtoken          | 0.1.0            | https://github.com/advisories/GHSA-c7hr-j4mj-j2w6            |
+<span class="dim">…</span>
+<span class="prompt">$</span> gatecheck validate -f gatecheck.yaml grype-report.json
+<span class="dim">01:38:49</span> <span class="err">ERR</span> grype severity limit exceeded <span class="dim">severity=critical report=8 limit=0</span>
+<span class="dim">01:38:49</span> <span class="inf">INF</span> vulnerability detected <span class="dim">id=GHSA-whpj-8f3w-67p5 severity=Critical</span>
+<span class="dim">01:38:49</span> <span class="inf">INF</span> vulnerability detected <span class="dim">id=GHSA-2jcg-qqmg-46q6 severity=Critical</span>
+<span class="dim">01:38:49</span> <span class="inf">INF</span> vulnerability detected <span class="dim">id=GHSA-g644-9gfx-q4q4 severity=Critical</span>
+<span class="dim">…</span>
+<span class="dim">01:38:49</span> <span class="err">ERR</span> grype severity limit exceeded <span class="dim">severity=high report=14 limit=5</span>
+<span class="err">Error: validation failure: Grype: Severity Limit Exceeded</span></pre>
+            </div>
+            <figcaption>
+              The table is the top of <code>gatecheck list</code> on the Grype fixture in
+              <code>test/</code>. The log is a trimmed <code>gatecheck validate -f</code> of that
+              same file, with the critical limit at 0 and the high limit at 5. The command exits 1.
+            </figcaption>
+          </figure>
+        </section>
+
+        <section class="section" aria-labelledby="how-title">
+          <h2 id="how-title">How it works</h2>
+          <ol class="steps">
+            <li class="step">
+              <p class="step-num">01</p>
+              <h3>A scanner writes a report</h3>
+              <p>
+                Grype, CycloneDX, Semgrep, Gitleaks, or a coverage file. Gatecheck picks the type
+                from the filename.
+              </p>
+            </li>
+            <li class="step">
+              <p class="step-num">02</p>
+              <h3>You set the thresholds</h3>
+              <p>
+                <code>gatecheck config init</code> prints a config with the limits off. Turn on the
+                ones you mean to enforce.
+              </p>
+              <pre>grype:
+  severityLimit:
+    critical:
+      enabled: true
+      limit: 0
+    high:
+      enabled: true
+      limit: 5</pre>
+            </li>
+            <li class="step">
+              <p class="step-num">03</p>
+              <h3>CI passes or fails</h3>
+              <p>
+                <code>gatecheck validate -f gatecheck.yaml grype-report.json</code> exits 1 when a
+                limit is crossed, and 0 when the report is inside it.
+              </p>
+            </li>
+          </ol>
+        </section>
+
+        <section class="section" aria-labelledby="reports-title">
+          <h2 id="reports-title">What it checks</h2>
+          <p class="section-intro">
+            <code>list</code> (alias <code>ls</code>) prints a table.
+            <code>download epss</code> and <code>download kev</code> print the datasets to stdout.
+            Command details are in the <a href="https://docs.gatecheck.dev">docs</a>.
+          </p>
+          <ul class="cards">
+            <li class="card">
+              <h3>Grype</h3>
+              <p>Severity counts, a CVE deny list, and a list of accepted CVEs.</p>
+            </li>
+            <li class="card">
+              <h3>CycloneDX</h3>
+              <p>The same CVE checks for vulnerabilities in a CycloneDX SBOM.</p>
+            </li>
+            <li class="card">
+              <h3>Semgrep</h3>
+              <p>Limits for error, warning, and info findings.</p>
+            </li>
+            <li class="card">
+              <h3>Gitleaks</h3>
+              <p>Fail when the report contains secrets.</p>
+            </li>
+            <li class="card">
+              <h3>Coverage</h3>
+              <p>Line, function, and branch thresholds for LCOV, Clover, and Cobertura.</p>
+            </li>
+            <li class="card">
+              <h3>Bundles</h3>
+              <p>
+                <code>bundle create</code> and <code>bundle add</code> pack reports into one
+                gzipped archive with a manifest.
+              </p>
+            </li>
+            <li class="card">
+              <h3>EPSS</h3>
+              <p>
+                FIRST scores on <code>list --epss</code> for Grype and CycloneDX, and a score limit
+                during validate.
+              </p>
+            </li>
+            <li class="card">
+              <h3>KEV</h3>
+              <p>Fail validate when a CVE is in the CISA known-exploited catalog.</p>
+            </li>
+          </ul>
+        </section>
+
+        <section class="section" aria-labelledby="ci-title">
+          <h2 id="ci-title">In CI</h2>
+          <p class="section-intro">
+            A non-zero exit fails the job. The report filename has to contain the type, such as
+            <code>grype</code> or <code>semgrep</code>.
+          </p>
+          <div class="snippet">
+            <pre id="ci-step">- name: Validate the Grype report
+  run: gatecheck validate -f gatecheck.yaml grype-report.json</pre>
+            <button
+              type="button"
+              class="copy"
+              data-copy-target="#ci-step"
+              data-label="Copy"
+              aria-label="Copy CI step"
+            >
+              Copy
+            </button>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <div class="wrap">
+        <p>© 2022 Clarity Innovations Inc. · <a href="https://www.apache.org/licenses/LICENSE-2.0">Apache-2.0</a></p>
+        <nav class="footer-links" aria-label="Footer">
+          <a href="https://github.com/gatecheckdev/gatecheck">GitHub</a>
+          <a href="https://docs.gatecheck.dev">Docs</a>
+          <a href="https://github.com/gatecheckdev/gatecheck/releases">Releases</a>
+        </nav>
+      </div>
+    </footer>
+    <p id="copy-status" class="visually-hidden" role="status"></p>
+    <script>
+      (function () {
+        var status = document.getElementById("copy-status");
+        document.querySelectorAll("[data-copy], [data-copy-target]").forEach(function (btn) {
+          btn.addEventListener("click", function () {
+            var text = btn.getAttribute("data-copy");
+            if (!text && btn.getAttribute("data-copy-target")) {
+              var source = document.querySelector(btn.getAttribute("data-copy-target"));
+              text = source ? source.textContent.replace(/^\n+|\n+$/g, "") : "";
+            }
+            if (!text) return;
+            var label = btn.getAttribute("data-label") || "Copy";
+            function done() {
+              btn.textContent = "Copied";
+              if (status) status.textContent = "Copied to clipboard";
+              window.setTimeout(function () {
+                btn.textContent = label;
+                if (status) status.textContent = "";
+              }, 1600);
+            }
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+              navigator.clipboard.writeText(text).then(done, function () {
+                btn.textContent = "Copy failed";
+                window.setTimeout(function () {
+                  btn.textContent = label;
+                }, 1600);
+              });
+            }
+          });
+        });
+      })();
+    </script>
+  </body>
+</html>
