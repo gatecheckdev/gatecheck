@@ -326,6 +326,7 @@ func (d *ConfigDecoder) Decode(config *Config) error {
 	if err != nil {
 		return err
 	}
+	defer func() { _ = f.Close() }()
 
 	var decoder interface {
 		Decode(any) error
