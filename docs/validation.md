@@ -66,7 +66,7 @@ When `limitEnabled` is true, any finding in the report fails validation. There i
 
 ## Coverage
 
-Line, function, and branch coverage are each `covered / total`. The config thresholds are those ratios, from 0 to 1. The check fails when the report's ratio is less than the threshold. A ratio equal to the threshold passes. All three checks run, and each failure is reported.
+Line, function, and branch coverage are each `covered / total`. The config thresholds are those ratios, from 0 to 1. The check fails when the report's ratio is less than the threshold. A ratio equal to the threshold passes. All three checks run, and each failure is reported. A report with no records of a kind, such as LCOV without branch records, has no ratio for it. `list` prints `N/A`, and `validate` skips that threshold with a warning.
 
 `0.8` means 80 percent. `80.0` fails a normal report, because `0.8 < 80`.
 

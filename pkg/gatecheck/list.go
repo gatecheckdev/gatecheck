@@ -176,12 +176,22 @@ func listCoverage(table *tablewriter.Table, kind artifacts.ReportKind, inputFile
 		return err
 	}
 
-	lineCoverageStr := fmt.Sprintf("%0.2f%%", (float32(report.CoveredLines)/float32(report.TotalLines))*100)
-	funcCoverageStr := fmt.Sprintf("%0.2f%%", (float32(report.CoveredFunctions)/float32(report.TotalFunctions))*100)
-	branchCoverageStr := fmt.Sprintf("%0.2f%%", (float32(report.CoveredBranches)/float32(report.TotalBranches))*100)
-	table.Footer([]string{lineCoverageStr, funcCoverageStr, branchCoverageStr})
+	table.Footer([]string{
+		coveragePercent(report.CoveredLines, report.TotalLines),
+		coveragePercent(report.CoveredFunctions, report.TotalFunctions),
+		coveragePercent(report.CoveredBranches, report.TotalBranches),
+	})
 
 	return nil
+}
+
+// coveragePercent prints "n/a" when the report has no records of that kind.
+func coveragePercent(covered, total int) string {
+	ratio, ok := coverageRatio(covered, total)
+	if !ok {
+		return "n/a"
+	}
+	return fmt.Sprintf("%0.2f%%", ratio*100)
 }
 
 func ListGrypeReport(table *tablewriter.Table, src io.Reader) error {
@@ -279,15 +289,10 @@ func ListCyclonedx(table *tablewriter.Table, src io.Reader) error {
 	catLess := format.NewCatagoricLess([]string{"critical", "high", "medium", "low", "info", "none", "unknown"})
 	matrix := format.NewSortableMatrix(make([][]string, 0), 1, catLess)
 
-	link := "-"
 	for idx, vul := range report.Vulnerabilities {
 		severity := vul.HighestSeverity()
 		pkgs := report.AffectedPackages(idx)
-		if len(vul.Advisories) > 0 {
-			link = vul.Advisories[0].URL
-		}
-		// get the affected vulnerability
-		matrix.Append([]string{vul.Identity(), severity, pkgs, link})
+		matrix.Append([]string{vul.Identity(), severity, pkgs, vul.Link()})
 	}
 
 	if len(report.Vulnerabilities) == 0 {
@@ -323,10 +328,7 @@ func listCyclonedxWithEPSS(table *tablewriter.Table, src io.Reader, epssData *ep
 			score = cve.EPSS
 			prctl = cve.Percentile
 		}
-		link := "-"
-		if len(item.Advisories) > 0 {
-			link = item.Advisories[0].URL
-		}
+		link := item.Link()
 		row := []string{
 			item.Identity(),
 			item.HighestSeverity(),

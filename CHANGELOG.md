@@ -24,6 +24,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - A CycloneDX file with `grype` in the name was read as Grype, so its vulnerabilities were ignored. Fixes #80.
+- CycloneDX `list` showed the previous row's link for a vulnerability with no advisories. Each row now uses its own advisory URL, then `source.url`, then the first `references[].source.url`, and `-` when there is none. Fixes #81.
+- Coverage `list` printed `NaN%` when a report had no records of a kind, such as LCOV without branch records. It now prints `N/A`. `validate` skips that threshold and logs a warning instead of passing it silently. Fixes #82.
 
 ## [0.9.0] - 2026-10-23
 

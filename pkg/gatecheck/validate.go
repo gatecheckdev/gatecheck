@@ -710,38 +710,45 @@ func validateCoverage(src io.Reader, kind artifacts.ReportKind, targetFilename s
 		return err
 	}
 
-	lineCoverage := float32(report.CoveredLines) / float32(report.TotalLines)
-	functionCoverage := float32(report.CoveredFunctions) / float32(report.TotalFunctions)
-	branchCoverage := float32(report.CoveredBranches) / float32(report.TotalBranches)
-
-	slog.Info(
-		"validate coverage",
-		"line_coverage", lineCoverage,
-		"function_coverage", functionCoverage,
-		"branch_coverage", branchCoverage,
-	)
+	checks := []struct {
+		name      string
+		covered   int
+		total     int
+		threshold float32
+	}{
+		{"line", report.CoveredLines, report.TotalLines, config.Coverage.LineThreshold},
+		{"function", report.CoveredFunctions, report.TotalFunctions, config.Coverage.FunctionThreshold},
+		{"branch", report.CoveredBranches, report.TotalBranches, config.Coverage.BranchThreshold},
+	}
 
 	var errs error
 
-	if lineCoverage < config.Coverage.LineThreshold {
-		slog.Error("line coverage below threshold", "line_coverage", lineCoverage, "threshold", config.Coverage.LineThreshold)
-		coverageErr := newValidationErr("Coverage: Line coverage below threshold")
-		errs = errors.Join(errs, coverageErr)
-	}
-
-	if functionCoverage < config.Coverage.FunctionThreshold {
-		slog.Error("function coverage below threshold", "function_coverage", functionCoverage, "threshold", config.Coverage.FunctionThreshold)
-		coverageErr := newValidationErr("Coverage: Function coverage below threshold")
-		errs = errors.Join(errs, coverageErr)
-	}
-
-	if branchCoverage < config.Coverage.BranchThreshold {
-		slog.Error("branch coverage below threshold", "branch_coverage", branchCoverage, "threshold", config.Coverage.BranchThreshold)
-		coverageErr := newValidationErr("Coverage: Branch coverage below threshold")
-		errs = errors.Join(errs, coverageErr)
+	for _, check := range checks {
+		ratio, ok := coverageRatio(check.covered, check.total)
+		if !ok {
+			if check.threshold > 0 {
+				slog.Warn("no "+check.name+" records in coverage report, threshold not checked", "threshold", check.threshold)
+			}
+			continue
+		}
+		slog.Info("validate coverage", check.name+"_coverage", ratio, "threshold", check.threshold)
+		if ratio < check.threshold {
+			slog.Error(check.name+" coverage below threshold", check.name+"_coverage", ratio, "threshold", check.threshold)
+			label := strings.ToUpper(check.name[:1]) + check.name[1:]
+			errs = errors.Join(errs, newValidationErr("Coverage: "+label+" coverage below threshold"))
+		}
 	}
 
 	return errs
+}
+
+// coverageRatio returns false when total is zero, so a report with no records
+// of a kind is not applicable rather than NaN.
+func coverageRatio(covered, total int) (float32, bool) {
+	if total <= 0 {
+		return 0, false
+	}
+	return float32(covered) / float32(total), true
 }
 
 func validateBundle(r io.Reader, config *Config, options *fetchOptions) error {
