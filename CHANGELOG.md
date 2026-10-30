@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [UNRELEASED]
 
+## [0.10.0] - 2026-10-30
+
 ### Added
 
 - `list` and `validate` read SARIF 2.1.0 from any tool, including KICS, Checkov, Bandit, govulncheck, and `semgrep --sarif`. Severity limits use `security-severity` when it is set, and the SARIF level otherwise. `sarif.ruleLimit` denies rule ids and `sarif.ruleRiskAcceptance` allows them. A SARIF report with no findings prints `No sarif findings`.
