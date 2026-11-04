@@ -13,6 +13,7 @@ Report type comes from the file contents. The filename is the fallback when the 
 - [Supported reports](https://docs.gatecheck.dev/supported-reports.html): how file contents and filenames select the report type
 - [Configuration](https://docs.gatecheck.dev/configuration.html): config keys and threshold units
 - [Validation](https://docs.gatecheck.dev/validation.html): rule order and exit codes
+- [VEX](https://docs.gatecheck.dev/vex.html): skip findings an OpenVEX or CycloneDX VEX file marks not exploitable
 - [List reports](https://docs.gatecheck.dev/list-reports.html): tables, standard input, and EPSS columns
 - [Bundles](https://docs.gatecheck.dev/gatecheck-bundle.html): create, add, and remove
 - [Examples](https://docs.gatecheck.dev/examples.html): config, bundle, audit, and standard input

@@ -11,8 +11,26 @@ type GrypeReportMin struct {
 }
 
 type GrypeMatch struct {
-	Artifact      GrypeArtifact      `json:"artifact"`
-	Vulnerability GrypeVulnerability `json:"vulnerability"`
+	Artifact               GrypeArtifact               `json:"artifact"`
+	Vulnerability          GrypeVulnerability          `json:"vulnerability"`
+	RelatedVulnerabilities []GrypeRelatedVulnerability `json:"relatedVulnerabilities"`
+}
+
+// GrypeRelatedVulnerability is another id for the same vulnerability, such as
+// the CVE behind a GHSA.
+type GrypeRelatedVulnerability struct {
+	ID string `json:"id"`
+}
+
+// IDs returns the vulnerability id followed by related ids.
+func (m GrypeMatch) IDs() []string {
+	ids := []string{m.Vulnerability.ID}
+	for _, related := range m.RelatedVulnerabilities {
+		if related.ID != "" && !containsFold(ids, related.ID) {
+			ids = append(ids, related.ID)
+		}
+	}
+	return ids
 }
 
 type GrypeDescriptor struct {
@@ -23,6 +41,7 @@ type GrypeDescriptor struct {
 type GrypeArtifact struct {
 	Name    string `json:"name"`
 	Version string `json:"version"`
+	PURL    string `json:"purl"`
 }
 
 type GrypeVulnerability struct {

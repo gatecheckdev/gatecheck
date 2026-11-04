@@ -66,6 +66,42 @@ type OSVFinding struct {
 	Package  string
 	Version  string
 	Link     string
+	// PURL is built from the ecosystem, name, and version. It is empty for an
+	// ecosystem with no package URL type here.
+	PURL string
+}
+
+var osvPURLTypes = map[string]string{
+	"go":        "golang",
+	"npm":       "npm",
+	"pypi":      "pypi",
+	"crates.io": "cargo",
+	"maven":     "maven",
+	"rubygems":  "gem",
+	"nuget":     "nuget",
+	"packagist": "composer",
+	"pub":       "pub",
+	"hex":       "hex",
+}
+
+// osvPURL builds a package URL for an osv-scanner package.
+func osvPURL(info OSVPackageInfo) string {
+	purlType, ok := osvPURLTypes[strings.ToLower(info.Ecosystem)]
+	if !ok || info.Name == "" {
+		return ""
+	}
+	name := info.Name
+	if purlType == "maven" {
+		name = strings.Replace(name, ":", "/", 1)
+	}
+	if purlType == "pypi" {
+		name = strings.ToLower(strings.ReplaceAll(name, "_", "-"))
+	}
+	purl := "pkg:" + purlType + "/" + name
+	if info.Version != "" {
+		purl += "@" + info.Version
+	}
+	return purl
 }
 
 // Findings returns one entry per vulnerability group.
@@ -143,6 +179,7 @@ func findingFromGroup(pkg OSVPackage, group OSVGroup) (OSVFinding, bool) {
 		Package:  pkg.Package.Name,
 		Version:  pkg.Package.Version,
 		Link:     osvLink(ids[0]),
+		PURL:     osvPURL(pkg.Package),
 	}, true
 }
 
@@ -159,6 +196,7 @@ func findingFromVuln(pkg OSVPackage, vuln OSVVulnerability) OSVFinding {
 		Package:  pkg.Package.Name,
 		Version:  pkg.Package.Version,
 		Link:     link,
+		PURL:     osvPURL(pkg.Package),
 	}
 }
 

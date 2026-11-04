@@ -181,6 +181,8 @@ Opening the report, the config, and any `--epss-filename` or `--kev-filename` ha
 
 `--epss-filename` is the EPSS CSV used when an EPSS rule is enabled. `--kev-filename` is the CISA KEV JSON used when `kevLimitEnabled` is true. `--epss-cache-dir` and `--epss-no-cache` apply when that CSV is downloaded. `validate` has no `--epss-url` or `--kev-url` flag. `GATECHECK_EPSS_URL` and `GATECHECK_KEV_URL` still override those APIs when the matching file is not set. The defaults are the same URLs `download` uses.
 
+`--vex FILE` (repeatable), `GATECHECK_VEX` (comma-separated, used when the flag is absent), and the config's `vex.files` name OpenVEX or CycloneDX VEX documents. Grype, CycloneDX, Trivy, and osv-scanner findings that a VEX file marks `not_affected` or `fixed` (OpenVEX), or `not_affected`, `false_positive`, `resolved`, or `resolved_with_pedigree` (CycloneDX `analysis.state`), are removed right after the `cveLimit` deny list, so they skip the KEV, EPSS, and severity rules. Ids match the finding's id or aliases. A statement that lists subcomponents or `affects` refs matches only those package URLs. The OpenVEX product itself is not checked. When several statements match, the latest timestamp wins.
+
 EPSS data is loaded only when an EPSS limit or EPSS risk acceptance rule is enabled. KEV data is loaded only when `kevLimitEnabled` is true for Grype, CycloneDX, Trivy, or osv-scanner. With no local EPSS file, gatecheck downloads the current CSV and caches it until the published date changes.
 
 ## list
@@ -229,6 +231,7 @@ A non-empty flag wins. An empty flag falls through to the environment variable, 
 | Variable | Commands | Same as |
 | --- | --- | --- |
 | `GATECHECK_CONFIG_FILENAME` | `validate` | `--config` |
+| `GATECHECK_VEX` | `validate` | `--vex`, comma-separated |
 | `GATECHECK_EPSS_FILENAME` | `list`, `validate` | `--epss-filename` |
 | `GATECHECK_EPSS_URL` | `download epss`, `list`, `list-all`, `validate` | `--epss-url` on commands that have that flag |
 | `GATECHECK_EPSS_CACHE_DIR` | `download epss`, `list`, `list-all`, `validate` | `--epss-cache-dir` |

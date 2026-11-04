@@ -106,6 +106,7 @@ func validateTrivyRules(config *Config, findings []artifacts.TrivyFinding, catal
 	}
 	findings = removeIgnoredTrivySeverities(config, findings, data)
 	findings = ruleTrivyCVEAllow(config, findings)
+	findings = ruleTrivyVEX(config, findings)
 	if !ruleTrivyKEVLimit(config, findings, catalog) {
 		return newValidationErr("Trivy: CVE matched to KEV Catalog")
 	}

@@ -114,6 +114,7 @@ gatecheck validate [FILE]
 - `--epss-no-cache`: download on every run. `GATECHECK_EPSS_CACHE=off` does the same.
 - `--kev-filename`: CISA KEV JSON to use when a KEV rule is enabled.
 - `-a`, `--audit`: print the error from the check and exit 0. A missing report, a missing config, or a bad flag still exits 255.
+- `--vex`: OpenVEX or CycloneDX VEX file. Findings it marks not exploitable are skipped. Repeat the flag for more files. `GATECHECK_VEX` is a comma-separated list used when the flag is absent. Files in the config's `vex.files` are read too. A VEX file that cannot be read exits 255. See [VEX](./vex.md).
 
 `validate` has no `--epss-url` or `--kev-url` flag. `GATECHECK_EPSS_URL` and `GATECHECK_KEV_URL` still override those APIs when the matching file flag is empty. The defaults are the same URLs `download` uses.
 
@@ -305,6 +306,7 @@ Prints help for a command. `gatecheck validate --help` does the same.
 | Variable | Commands | Same as |
 | --- | --- | --- |
 | `GATECHECK_CONFIG_FILENAME` | `validate` | `--config` |
+| `GATECHECK_VEX` | `validate` | `--vex`, comma-separated |
 | `GATECHECK_EPSS_FILENAME` | `list`, `validate` | `--epss-filename` |
 | `GATECHECK_EPSS_URL` | `download epss`, `list`, `list-all`, `validate` | `--epss-url` on `download epss` and `list` |
 | `GATECHECK_EPSS_CACHE_DIR` | `download epss`, `list`, `list-all`, `validate` | `--epss-cache-dir` |

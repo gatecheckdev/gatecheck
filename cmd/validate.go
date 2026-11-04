@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"strings"
 
 	"github.com/gatecheckdev/gatecheck/pkg/gatecheck"
 	"github.com/spf13/cobra"
@@ -59,6 +60,11 @@ var validateCmd = &cobra.Command{
 			gatecheck.WithKEVFile(RuntimeConfig.kevFile),
 		}
 		opts = append(opts, epssCacheOptions()...)
+		vexFiles, _ := cmd.Flags().GetStringSlice("vex")
+		if env := strings.TrimSpace(os.Getenv("GATECHECK_VEX")); len(vexFiles) == 0 && env != "" {
+			vexFiles = strings.Split(env, ",")
+		}
+		opts = append(opts, gatecheck.WithVEXFiles(vexFiles...))
 		err := gatecheck.Validate(
 			RuntimeConfig.gatecheckConfig,
 			RuntimeConfig.targetFile,
@@ -85,6 +91,7 @@ func newValidateCommand() *cobra.Command {
 	RuntimeConfig.EPSSNoCache.SetupCobra(validateCmd)
 	RuntimeConfig.KEVFilename.SetupCobra(validateCmd)
 	RuntimeConfig.Audit.SetupCobra(validateCmd)
+	validateCmd.Flags().StringSlice("vex", nil, "OpenVEX or CycloneDX VEX file; findings it marks not_affected, fixed, false_positive, or resolved are skipped (repeatable, env GATECHECK_VEX)")
 
 	return validateCmd
 }

@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `gatecheck bootstrap --tools gosec,hadolint,zizmor` installs pinned gosec 2.30.0, hadolint 2.15.1, and zizmor 1.32.0. `gatecheck gosec`, `gatecheck hadolint`, and `gatecheck zizmor` run them. Their SARIF output is gated with the `sarif` config section. They are not part of the default install. zizmor publishes no checksum file, so its asset digests are pinned in gatecheck.
 - `gatecheck bootstrap --list` shows every supported tool.
+- `validate --vex FILE`, `GATECHECK_VEX`, and the config's `vex.files` read OpenVEX and CycloneDX VEX documents. Grype, CycloneDX, Trivy, and osv-scanner findings marked `not_affected`, `fixed`, `false_positive`, or `resolved` are skipped before the KEV, EPSS, and severity rules. A statement that names packages matches by package URL. The latest statement wins. Fixes #102.
 
 ## [0.10.0] - 2026-10-30
 

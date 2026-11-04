@@ -11,6 +11,7 @@ import (
 	"path"
 
 	"github.com/gatecheckdev/gatecheck/pkg/format"
+	"github.com/gatecheckdev/gatecheck/pkg/vex"
 	"github.com/pelletier/go-toml/v2"
 	"github.com/spf13/viper"
 	"gopkg.in/yaml.v3"
@@ -32,6 +33,9 @@ type Config struct {
 	Gitleaks   configGitleaksReport `json:"gitleaks"    toml:"gitleaks"    yaml:"gitleaks"`
 	Sarif      configSarifReport    `json:"sarif"       toml:"sarif"       yaml:"sarif"`
 	Coverage   configCoverageReport `json:"coverage"    toml:"coverage"    yaml:"coverage"`
+	VEX        configVEX            `json:"vex"         toml:"vex"         yaml:"vex"`
+
+	vexDoc *vex.Document
 }
 
 func (c *Config) String() string {
@@ -243,6 +247,7 @@ func NewDefaultConfig() *Config {
 			FunctionThreshold: 0,
 			BranchThreshold:   0,
 		},
+		VEX: configVEX{Files: []string{}},
 	}
 }
 

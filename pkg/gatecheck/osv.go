@@ -105,6 +105,7 @@ func validateOSVRules(config *Config, findings []artifacts.OSVFinding, catalog *
 	}
 	findings = removeIgnoredOSVSeverities(config, findings, data)
 	findings = ruleOSVCVEAllow(config, findings)
+	findings = ruleOSVVEX(config, findings)
 	if !ruleOSVKEVLimit(config, findings, catalog) {
 		return newValidationErr("osv-scanner: CVE matched to KEV Catalog")
 	}

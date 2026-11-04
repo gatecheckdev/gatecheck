@@ -178,6 +178,8 @@ coverage:
     lineThreshold: 0
     functionThreshold: 0
     branchThreshold: 0
+vex:
+    files: []
 ```
 
 ## version and metadata
@@ -197,6 +199,10 @@ osv-scanner counts one finding per vulnerability group. Aliases of that group ar
 `kevLimitEnabled` fails the report when any remaining CVE is in the CISA catalog.
 
 `cveLimit` and `cveRiskAcceptance` each have `enabled` and `cves`. A CVE entry is `id` plus an optional `metadata.tags` list. `id` is compared without regard to case.
+
+## VEX
+
+`vex.files` lists OpenVEX or CycloneDX VEX documents. `validate` reads them along with any `--vex` files, and skips the Grype, CycloneDX, Trivy, and osv-scanner findings they mark as not exploitable. Relative paths are read from the working directory. See [VEX](./vex.md).
 
 ```yaml
 grype:

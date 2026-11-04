@@ -29,7 +29,10 @@ type TrivyVulnerability struct {
 	Severity         string   `json:"Severity"`
 	Title            string   `json:"Title"`
 	PrimaryURL       string   `json:"PrimaryURL"`
-	DataSource       *struct {
+	PkgIdentifier    struct {
+		PURL string `json:"PURL"`
+	} `json:"PkgIdentifier"`
+	DataSource *struct {
 		ID   string `json:"ID"`
 		Name string `json:"Name"`
 		URL  string `json:"URL"`
@@ -43,6 +46,7 @@ type TrivyFinding struct {
 	Package  string
 	Version  string
 	Link     string
+	PURL     string
 }
 
 // Findings returns package vulnerabilities. Other Trivy result classes are skipped.
@@ -76,6 +80,7 @@ func (r *TrivyReportMin) Findings() []TrivyFinding {
 				Package:  vuln.PkgName,
 				Version:  vuln.InstalledVersion,
 				Link:     link,
+				PURL:     vuln.PkgIdentifier.PURL,
 			})
 		}
 	}

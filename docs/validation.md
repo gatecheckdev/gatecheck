@@ -29,7 +29,7 @@ Rules run in this order. A failure returns immediately, except where a rule only
 
 1. **CVE limit.** `cveLimit`, when enabled, fails if any listed id is in the report. Ids are compared without regard to case.
 2. **Disabled Grype, Trivy, and osv-scanner severities.** Grype, Trivy, and osv-scanner drop findings whose severity limit is disabled. If the EPSS limit is also enabled, a finding at a disabled severity stays in the report when it has an EPSS score greater than or equal to that limit. CycloneDX leaves findings at a disabled severity in the report, so they still go through the KEV and EPSS rules.
-3. **CVE risk acceptance.** Matching ids are removed and skip the remaining rules.
+3. **CVE risk acceptance and VEX.** Matching ids are removed and skip the remaining rules. Findings that a VEX file passed with `--vex`, `GATECHECK_VEX`, or `vex.files` marks `not_affected`, `fixed`, `false_positive`, or `resolved` are removed too. See [VEX](./vex.md).
 4. **KEV limit.** When `kevLimitEnabled` is true, a CVE that is in the catalog fails the report. The catalog is `--kev-filename` or, with no file, the CISA feed. `GATECHECK_KEV_URL` overrides the feed. There is no `--kev-url` flag on `validate`.
 5. **EPSS risk acceptance.** A CVE is removed when the configured `score` is greater than that CVE's EPSS score. A CVE with no EPSS row is kept. A CVE whose score is equal to the configured score is kept.
 6. **EPSS limit.** A CVE fails when its EPSS score is greater than `score`. A CVE with no EPSS row passes this rule. A score equal to the limit passes. Data comes from `--epss-filename` or `GATECHECK_EPSS_FILENAME`, or from the API. `GATECHECK_EPSS_URL` overrides the API. There is no `--epss-url` flag on `validate`.

@@ -24,6 +24,8 @@ type fetchOptions struct {
 	epssCacheOn     bool
 	epssCacheDir    string
 	epssCacheDirSet bool
+
+	vexFiles []string
 }
 
 func defaultOptions() *fetchOptions {

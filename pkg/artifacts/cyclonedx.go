@@ -20,6 +20,27 @@ type CyclonedxComponent struct {
 	BOMRef  string `json:"bom-ref"`
 	Name    string `json:"name"`
 	Version string `json:"version"`
+	PURL    string `json:"purl"`
+}
+
+// AffectedPURLs returns the package URLs of the components a vulnerability
+// affects. A ref that is itself a package URL is returned as-is.
+func (r CyclonedxReportMin) AffectedPURLs(v CyclonedxVulnerability) []string {
+	var out []string
+	for _, affected := range v.Affects {
+		found := false
+		for _, component := range r.Components {
+			if component.BOMRef == affected.Ref && component.PURL != "" {
+				out = append(out, component.PURL)
+				found = true
+				break
+			}
+		}
+		if !found && strings.HasPrefix(affected.Ref, "pkg:") {
+			out = append(out, affected.Ref)
+		}
+	}
+	return out
 }
 
 type CyclonedxVulnerability struct {

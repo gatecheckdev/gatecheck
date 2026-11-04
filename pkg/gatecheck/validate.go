@@ -36,6 +36,15 @@ func Validate(config *Config, reportSrc io.Reader, targetFilename string, option
 	if err != nil {
 		return err
 	}
+	vexDoc, err := loadVEX(config, options)
+	if err != nil {
+		return err
+	}
+	if vexDoc != nil {
+		withVEX := *config
+		withVEX.vexDoc = vexDoc
+		config = &withVEX
+	}
 	kind := resolveKind(content, targetFilename, false)
 	reportSrc = bytes.NewReader(content)
 	slog.Debug("validate", "filename", targetFilename, "filetype", kind)
@@ -836,8 +845,9 @@ func validateGrypeRules(config *Config, report *artifacts.GrypeReportMin, catalo
 	// Ignore any CVEs that don't meet the vulnerability threshold or the EPPS threshold
 	removeIgnoredSeverityCVEs(config, report, data)
 
-	// 2. CVE Allowance - remove from matches
+	// 2. CVE Allowance and VEX - remove from matches
 	ruleGrypeCVEAllow(config, report)
+	ruleGrypeVEX(config, report)
 
 	// 3. KEV Catalog Limit - fail matching
 	if !ruleGrypeKEVLimit(config, report, catalog) {
@@ -866,8 +876,9 @@ func validateCyclonedxRules(config *Config, report *artifacts.CyclonedxReportMin
 		return newValidationErr("CycloneDx: CVE explicitly denied")
 	}
 
-	// 2. CVE Allowance - remove from matches
+	// 2. CVE Allowance and VEX - remove from matches
 	ruleCyclonedxCVEAllow(config, report)
+	ruleCyclonedxVEX(config, report)
 
 	// 3. KEV Catalog Limit - fail matching
 	if !ruleCyclonedxKEVLimit(config, report, catalog) {
