@@ -45,4 +45,4 @@ The table columns are label, digest, tags, and size.
 gatecheck validate --config gatecheck.yaml gatecheck-bundle.tar.gz
 ```
 
-Each stored file is checked on its own with the same rules as a standalone file. Files that do not match a supported type are skipped, including Syft JSON. A Grype failure and a Semgrep failure in the same bundle are both reported, and the command exits 1.
+Each stored file is checked on its own with the same rules as a standalone file. Files that do not match a supported type are skipped. Syft JSON is checked with the license rules. A Grype failure and a Semgrep failure in the same bundle are both reported, and the command exits 1.

@@ -54,7 +54,7 @@ The managed binary wins when it is present. `gatecheck grype`, `gatecheck syft`,
 
 A platform with no release asset for a requested GitHub-hosted tool fails that tool and the command exits 255. A platform with no semgrep wheel prints a skip message on stderr and continues. Current pins are Grype `0.121.0`, Syft `1.55.0`, Gitleaks `8.30.1`, semgrep `1.182.1`, Trivy `0.76.1`, osv-scanner `2.7.0`, gosec `2.30.0`, hadolint `2.15.1`, and zizmor `1.32.0`, in `internal/bootstrap/versions.go`.
 
-Syft is installed so it can write CycloneDX (`syft -o cyclonedx-json`). That BOM is listed and validated as CycloneDX. Native Syft JSON is recognized from `descriptor.name` or the schema URL, and `list` and `validate` then return an error. A filename containing `syft` does the same when the contents are ambiguous. CycloneDX is a report format, and coverage tools are left to the language toolchain.
+Syft is installed so it can write CycloneDX (`syft -o cyclonedx-json`). That BOM is listed and validated as CycloneDX. Native Syft JSON is recognized from `descriptor.name` or the schema URL. `list` prints its packages and licenses, and `validate` runs the license rules on it. CycloneDX is a report format, and coverage tools are left to the language toolchain.
 
 ## Report type
 
@@ -66,7 +66,7 @@ Content rules, in this order:
 2. `bomFormat` of `CycloneDX` is CycloneDX JSON. This wins when the name contains `grype` or `syft`, and it wins when the tool that wrote the BOM was Grype, Syft, Trivy, or another tool. CycloneDX XML is not read.
 3. SARIF 2.1.0. The top-level `version` is the string `2.1.0` and `runs` is an array. A `$schema` that mentions SARIF is enough when `runs` is missing or null. Another version returns an error when the name says `sarif`.
 4. Grype JSON. `descriptor.name` is `grype`, or `matches` is a non-empty array of objects with `vulnerability` and `artifact`.
-5. Syft JSON. `descriptor.name` is `syft`, or `schema.url` points at the Syft schema. `list` and `validate` then return an error. Syft JSON is not implemented. A Syft CycloneDX BOM is CycloneDX, not Syft.
+5. Syft JSON. `descriptor.name` is `syft`, or `schema.url` points at the Syft schema. `list` prints packages and licenses, and `validate` runs the license rules. A Syft CycloneDX BOM is CycloneDX, not Syft.
 6. Semgrep JSON. `results` is an array of objects with `check_id`, or `results` and `errors` are both arrays. Semgrep's SARIF output is SARIF, not this type.
 7. Gitleaks JSON. A non-empty array of objects with `RuleID` and one of `File`, `Commit`, or `Fingerprint`.
 8. Trivy JSON. `SchemaVersion` is a number, and `ArtifactType` is set or `Results` is an array. Vulnerability entries are listed and validated. Misconfigurations, secrets, and licenses are ignored. A CycloneDX BOM from Trivy is CycloneDX.
@@ -98,7 +98,7 @@ From standard input, `list` requires `-i` / `--input-type`, so the command does 
 
 `list-all` lists a file when the contents or the name identify Grype, Semgrep, Gitleaks, Syft, CycloneDX, SARIF, Trivy, osv-scanner, or a bundle. Coverage files are skipped with a warning. There is no `--input-type` on `list-all`.
 
-Inside a bundle, `validate` uses the same content rules on each stored file, and falls back to the label. The label is the base name of the file that was added. Labels that still do not match are skipped. Syft JSON inside a bundle is skipped.
+Inside a bundle, `validate` uses the same content rules on each stored file, and falls back to the label. The label is the base name of the file that was added. Labels that still do not match are skipped. Syft JSON inside a bundle is checked with the license rules.
 
 ## Config
 
@@ -112,7 +112,7 @@ gatecheck config convert --file gatecheck.yaml --output toml
 
 `config convert` reads `-f` / `--file` (default `gatecheck.yaml`). The extension selects the decoder: `.yaml`, `.yml`, `.json`, or `.toml`.
 
-A partial file is fine. Omitted fields keep the default. Unknown keys are ignored. With no config, `validate` uses the built-in default: every rule disabled, coverage thresholds `0`. Grype, CycloneDX, Trivy, osv-scanner, SARIF, Semgrep, Gitleaks, coverage, and bundle reports pass under that default. Syft JSON still returns an error. An old config with no `sarif` section leaves those limits disabled.
+A partial file is fine. Omitted fields keep the default. Unknown keys are ignored. With no config, `validate` uses the built-in default: every rule disabled, coverage thresholds `0`. Grype, CycloneDX, Trivy, osv-scanner, SARIF, Semgrep, Gitleaks, coverage, and bundle reports pass under that default. Syft JSON passes too, since the license rules are off by default. An old config with no `sarif` section leaves those limits disabled.
 
 `GATECHECK_CONFIG_FILENAME` is the same setting as `validate --config` / `-f`.
 
@@ -135,13 +135,17 @@ Field names below are the ones `config init` emits. In YAML they are case sensit
 - `severityLimit` has `critical`, `high`, `medium`, and `low`. Each has `enabled` and `limit`, with the same count rule as Grype. The severity comes from the SARIF property `security-severity` when a result or its rule has one. The value is a number from 0 to 10, or a numeric string. 9.0 and above is critical, 7.0 to 8.9 is high, 4.0 to 6.9 is medium, above 0 and below 4.0 is low, and 0 is none. A result property wins over the same property on the rule. When neither is set, gatecheck uses the SARIF level. A missing result level uses the rule's `defaultConfiguration.level`, then `warning`. `error` is high, `warning` is medium, `note` is low, and `none` is ignored.
 - `ruleLimit` and `ruleRiskAcceptance` each have `enabled` and `rules`. A rule entry is `id` plus an optional `metadata.tags` list. `id` is compared without regard to case. `ruleLimit` denies those ids. `ruleRiskAcceptance` removes them.
 
+`license` gates package licenses in Syft JSON and CycloneDX BOMs. `enabled` turns it on. `deny` and `allow` are case-insensitive glob patterns such as `GPL-*`, which matches `GPL-3.0-only` but not `LGPL-2.1-only`. A non-empty `allow` fails every license outside it. `denyUnknown` fails packages with no license, `NOASSERTION`, or `NONE`. `packageRiskAcceptance` entries skip a package by `purl` (type, namespace, and name, plus version when given) or by `name`. SPDX expressions are evaluated: `OR` passes when either side passes, `AND` needs both, and `X WITH Y` is denied when `X` is denied unless `allow` names the full `X WITH Y`. Several license entries on one package must all pass. Syft licenses are `spdxExpression`, then `value`. CycloneDX licenses are `expression`, `license.id`, then `license.name`, and nested components are included. A CycloneDX BOM runs both the license and vulnerability rules, and reports both failures.
+
+`vex.files` lists OpenVEX or CycloneDX VEX documents, read along with `--vex`.
+
 `coverage.lineThreshold`, `functionThreshold`, and `branchThreshold` are ratios from 0 to 1: covered lines, functions, or branches divided by the total. The report fails when its ratio is less than the threshold. A ratio equal to the threshold passes. `0.8` is 80 percent. `80` fails a report whose real line coverage is 0.8, because 0.8 is less than 80. There is no `enabled` flag. The default `0` allows any coverage, because a ratio is never less than 0. `list` prints these numbers as percents in the table footer. The config still wants the ratio. A report with no records of a kind, such as LCOV without branch records, has no ratio for it. `list` prints `N/A`, and `validate` skips that threshold with a warning.
 
 Grype, CycloneDX, Trivy, and osv-scanner rules run in this order. A failure returns immediately, except where a rule only removes findings. Trivy counts vulnerability entries only. osv-scanner counts one finding per group.
 
 1. CVE limit, when enabled.
 2. Disabled Grype, Trivy, and osv-scanner severities are dropped. If the EPSS limit is also enabled, a finding at a disabled severity stays when its EPSS score is greater than or equal to that limit. CycloneDX leaves findings at a disabled severity in the report.
-3. CVE risk acceptance removes matching ids.
+3. CVE risk acceptance removes matching ids. VEX statements that mark a finding not exploitable remove it here too.
 4. KEV limit, when `kevLimitEnabled` is true.
 5. EPSS risk acceptance.
 6. EPSS limit.
@@ -260,6 +264,6 @@ Create the config with `gatecheck config init > gatecheck.yaml` and set real thr
 - `validate` takes the report as its positional argument. The config is `--config` / `-f`. `gatecheck validate gatecheck.yaml grype-report.json` tries to open the config as a report. `config convert` uses `--file` / `-f`, which is a different flag.
 - `list` on a pipe needs `--input-type`. Clear contents still win over that flag. `validate` needs a filesystem path.
 - `list` ignores every filename after the first. Use `list-all` for several files. `list-all` skips coverage files such as `lcov.info`. List those with `gatecheck list lcov.info`.
-- Native Syft JSON is recognized and then returns an error. Use CycloneDX output from Syft when you want `validate` to score it. That BOM is CycloneDX even when the filename contains `syft`.
+- Native Syft JSON gets only the license rules. Use CycloneDX output when you also want vulnerabilities scored. That BOM is CycloneDX even when the filename contains `syft`.
 - `gatecheck semgrep --version` reaches osemgrep without `--experimental`, and osemgrep then tries to run `pysemgrep`. Pass the flag: `gatecheck semgrep --experimental --version`.
 - `--audit` still exits 255 when the report, the config, or a named EPSS or KEV file cannot be opened.

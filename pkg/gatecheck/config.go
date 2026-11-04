@@ -34,6 +34,7 @@ type Config struct {
 	Sarif      configSarifReport    `json:"sarif"       toml:"sarif"       yaml:"sarif"`
 	Coverage   configCoverageReport `json:"coverage"    toml:"coverage"    yaml:"coverage"`
 	VEX        configVEX            `json:"vex"         toml:"vex"         yaml:"vex"`
+	License    configLicense        `json:"license"     toml:"license"     yaml:"license"`
 
 	vexDoc *vex.Document
 }
@@ -247,7 +248,8 @@ func NewDefaultConfig() *Config {
 			FunctionThreshold: 0,
 			BranchThreshold:   0,
 		},
-		VEX: configVEX{Files: []string{}},
+		VEX:     configVEX{Files: []string{}},
+		License: defaultConfigLicense(),
 	}
 }
 

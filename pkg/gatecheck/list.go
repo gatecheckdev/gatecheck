@@ -116,8 +116,7 @@ func List(dst io.Writer, src io.Reader, inputFilename string, options ...ListOpt
 		}
 
 	case artifacts.KindSyft:
-		slog.Warn("syft decoder is not supported yet")
-		return errors.New("syft not implemented yet")
+		err = listSyft(table, src)
 
 	case artifacts.KindSARIF:
 		err = ListSarif(table, src)

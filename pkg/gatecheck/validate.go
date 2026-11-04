@@ -69,7 +69,7 @@ func Validate(config *Config, reportSrc io.Reader, targetFilename string, option
 		return validateOSVReportWithFetch(reportSrc, config, options)
 
 	case artifacts.KindSyft:
-		return errors.New("syft validation not supported yet")
+		return validateSyftReport(reportSrc, config)
 
 	case artifacts.KindSARIF:
 		return validateSarifReport(reportSrc, config)
@@ -803,6 +803,9 @@ func validateBundle(r io.Reader, config *Config, options *fetchOptions) error {
 		case artifacts.KindSARIF:
 			err := validateSarifReport(bytes.NewBuffer(content), config)
 			errs = errors.Join(errs, err)
+		case artifacts.KindSyft:
+			err := validateSyftReport(bytes.NewBuffer(content), config)
+			errs = errors.Join(errs, err)
 		case artifacts.KindLCOV, artifacts.KindClover, artifacts.KindCobertura, artifacts.KindCoverage:
 			err := validateCoverage(bytes.NewBuffer(content), kind, fileLabel, config)
 			errs = errors.Join(errs, err)
@@ -871,6 +874,11 @@ func validateGrypeRules(config *Config, report *artifacts.GrypeReportMin, catalo
 }
 
 func validateCyclonedxRules(config *Config, report *artifacts.CyclonedxReportMin, catalog *kev.Catalog, data *epss.Data) error {
+	licenseErr := ruleLicense(config, "cyclonedx", cyclonedxPackages(report.Components))
+	return errors.Join(licenseErr, validateCyclonedxVulnerabilities(config, report, catalog, data))
+}
+
+func validateCyclonedxVulnerabilities(config *Config, report *artifacts.CyclonedxReportMin, catalog *kev.Catalog, data *epss.Data) error {
 	// 1. Deny List - Fail Matching
 	if !ruleCyclonedxCVEDeny(config, report) {
 		return newValidationErr("CycloneDx: CVE explicitly denied")

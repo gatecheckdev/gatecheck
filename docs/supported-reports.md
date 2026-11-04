@@ -8,7 +8,7 @@ Content rules, in this order:
 2. `bomFormat` of `CycloneDX` is CycloneDX JSON. This wins when the name contains `grype`, `syft`, `trivy`, or `osv`, and it wins when the tool that wrote the BOM was Grype, Syft, Trivy, or another tool.
 3. SARIF 2.1.0. The top-level `version` is the string `2.1.0` and `runs` is an array. A `$schema` that mentions SARIF is enough when `runs` is missing or null. gosec (`-fmt sarif`), hadolint (`-f sarif`), and zizmor (`--format sarif`) write this type, and `gatecheck bootstrap --tools gosec,hadolint,zizmor` installs them.
 4. Grype JSON. `descriptor.name` is `grype`, or `matches` is a non-empty array of objects with `vulnerability` and `artifact`.
-5. Syft JSON. `descriptor.name` is `syft`, or `schema.url` points at the Syft schema. `list` and `validate` then return an error. Syft JSON is not implemented. A Syft CycloneDX BOM is CycloneDX, not Syft.
+5. Syft JSON. `descriptor.name` is `syft`, or `schema.url` points at the Syft schema. `list` prints its packages and licenses. `validate` runs the license rules. A Syft CycloneDX BOM is CycloneDX, not Syft.
 6. Semgrep JSON. `results` is an array of objects with `check_id`, or `results` and `errors` are both arrays. Semgrep's SARIF output is SARIF, not this type.
 7. Gitleaks JSON. A non-empty array of objects with `RuleID` and one of `File`, `Commit`, or `Fingerprint`.
 8. Trivy JSON (`--format json`). `SchemaVersion` is a number, and `ArtifactType` is set or `Results` is an array. Vulnerability entries are listed and validated. Misconfigurations, secrets, and licenses in the same file are ignored.
@@ -52,7 +52,7 @@ grype bkimminich/juice-shop:latest -o json | gatecheck list --input-type grype
 
 `list-all` lists a file when the contents or the name identify Grype, Semgrep, Gitleaks, Syft, CycloneDX, SARIF, Trivy, osv-scanner, or a bundle. Coverage files are skipped with a warning. There is no `--input-type` flag on `list-all`.
 
-Inside a bundle, `validate` uses the same content rules on each stored file, and falls back to the label. The label is the base name of the file you added. Labels that still do not match are skipped. Syft JSON inside a bundle is skipped.
+Inside a bundle, `validate` uses the same content rules on each stored file, and falls back to the label. The label is the base name of the file you added. Labels that still do not match are skipped. Syft JSON inside a bundle is checked with the license rules.
 
 What each command can do:
 
@@ -66,5 +66,5 @@ What each command can do:
 | Trivy | yes | yes | yes |
 | osv-scanner | yes | yes | yes |
 | LCOV, Clover, Cobertura | yes | yes | yes |
-| Syft JSON | error | error | the file is stored, and validation skips that label |
+| Syft JSON | yes, packages and licenses | yes, license rules | yes |
 | Bundle | when the contents are a bundle, or the name contains `bundle` or `gatecheck` | when the contents are a bundle, or the name contains `bundle` | yes, as an ordinary file |

@@ -156,7 +156,7 @@ Coverage files (LCOV, Clover, Cobertura) come from the language toolchain. Boots
 
 CycloneDX is a report format. Syft writes it with `-o cyclonedx-json`, and Grype can write a CycloneDX vulnerability report. Those are the files `list` and `validate` score. Any other tool's CycloneDX JSON BOM is scored the same way. There is no separate CycloneDX scanner.
 
-Syft's own JSON is still rejected. `list` and `validate` return an error for that document. A filename that contains `syft` does the same when the contents are ambiguous. Syft is installed so it can write CycloneDX.
+Syft's own JSON (`-o syft-json`) is a package list. `list` prints its packages and licenses, and `validate` checks them with the license rules. See [License gating](./licenses.md). Syft also writes CycloneDX, which gets the same license rules plus the vulnerability rules when the BOM has vulnerabilities.
 
 Trivy JSON (`trivy fs --format json`, `trivy image --format json`, and the other Trivy scanners' JSON output) is a report type. The contents identify it. A filename containing `trivy` is the fallback when the contents are ambiguous. A CycloneDX BOM stays CycloneDX even when the name contains `trivy`. Misconfigurations, secrets, and licenses are ignored. Trivy SARIF is a SARIF report.
 

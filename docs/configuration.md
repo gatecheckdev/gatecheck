@@ -180,6 +180,12 @@ coverage:
     branchThreshold: 0
 vex:
     files: []
+license:
+    enabled: false
+    deny: []
+    allow: []
+    denyUnknown: false
+    packageRiskAcceptance: []
 ```
 
 ## version and metadata
@@ -274,6 +280,23 @@ sarif:
 ```
 
 See [Validation](./validation.md) for which results are counted and the order of the rules.
+
+## License
+
+`license` gates the package licenses in Syft JSON and CycloneDX BOMs.
+
+```yaml
+license:
+  enabled: true
+  deny: [GPL-*, AGPL-*]
+  allow: []
+  denyUnknown: false
+  packageRiskAcceptance:
+    - name: busybox
+    - purl: pkg:apk/alpine/apk-tools
+```
+
+`deny` and `allow` are case-insensitive glob patterns. A non-empty `allow` fails every license that matches none of its patterns. `denyUnknown` fails packages with no declared license. `packageRiskAcceptance` entries match by `purl`, or by `name` when there is no purl. SPDX expressions with `AND`, `OR`, and `WITH` are evaluated. See [License gating](./licenses.md).
 
 ## Coverage
 

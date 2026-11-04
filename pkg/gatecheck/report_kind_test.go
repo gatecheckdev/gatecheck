@@ -325,13 +325,14 @@ func TestTrivyAndOSVContentWinsOverFilename(t *testing.T) {
 	}
 }
 
-func TestSyftJSONStillErrors(t *testing.T) {
+func TestSyftJSONListsAndValidates(t *testing.T) {
 	src := []byte(`{"descriptor":{"name":"syft"},"artifacts":[]}`)
-	if err := List(&bytes.Buffer{}, bytes.NewReader(src), "scan.json"); err == nil || !strings.Contains(err.Error(), "syft") {
-		t.Fatal(err)
+	var out bytes.Buffer
+	if err := List(&out, bytes.NewReader(src), "scan.json"); err != nil || !strings.Contains(out.String(), "No syft packages") {
+		t.Fatalf("list: %v %q", err, out.String())
 	}
-	if err := Validate(NewDefaultConfig(), bytes.NewReader(src), "bom.syft.json"); err == nil || !strings.Contains(err.Error(), "syft") {
-		t.Fatal(err)
+	if err := Validate(NewDefaultConfig(), bytes.NewReader(src), "bom.syft.json"); err != nil {
+		t.Fatalf("validate with license rules off: %v", err)
 	}
 }
 

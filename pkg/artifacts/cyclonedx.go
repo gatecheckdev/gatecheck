@@ -21,6 +21,10 @@ type CyclonedxComponent struct {
 	Name    string `json:"name"`
 	Version string `json:"version"`
 	PURL    string `json:"purl"`
+	Type    string `json:"type"`
+	// Licenses are the declared licenses.
+	Licenses   []CyclonedxLicenseChoice `json:"licenses"`
+	Components []CyclonedxComponent     `json:"components"`
 }
 
 // AffectedPURLs returns the package URLs of the components a vulnerability

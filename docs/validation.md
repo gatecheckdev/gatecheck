@@ -9,7 +9,7 @@ Pass the config with `--config` or `-f`, or with `GATECHECK_CONFIG_FILENAME`. Th
 
 The report type comes from the file contents, and from the filename when the contents are ambiguous. See [Supported Reports](./supported-reports.md).
 
-With no config, gatecheck uses the default: every rule disabled, coverage thresholds `0`. Grype, CycloneDX, Trivy, osv-scanner, SARIF, Semgrep, Gitleaks, coverage, and bundle reports pass under that default. Syft JSON still returns an error. An old config with no `sarif` section leaves those limits disabled.
+With no config, gatecheck uses the default: every rule disabled, coverage thresholds `0`. Grype, CycloneDX, Trivy, osv-scanner, SARIF, Semgrep, Gitleaks, coverage, and bundle reports pass under that default. Syft JSON passes too, since the license rules are off by default. An old config with no `sarif` section leaves those limits disabled.
 
 ## Exit status
 
@@ -40,6 +40,10 @@ Any CycloneDX JSON BOM uses the `cyclonedx` rules, including a BOM from Grype, T
 EPSS scores in the config are ratios from 0 to 1.
 
 When a rule needs EPSS scores and `--epss-filename` is not set, gatecheck downloads the current EPSS file and caches it until the published date changes. Requests send a User-Agent with the gatecheck version and project URL.
+
+## Licenses
+
+Syft JSON and CycloneDX BOMs are checked against the `license` section of the config: deny patterns, an optional allow list, packages with no license, and per-package risk acceptance. For a CycloneDX BOM the license rules run alongside the vulnerability rules above, and both failures are reported. See [License gating](./licenses.md).
 
 ## Semgrep
 
@@ -74,4 +78,4 @@ Line, function, and branch coverage are each `covered / total`. The config thres
 
 ## Bundles
 
-A bundle is validated when its contents are a Gatecheck bundle, or when the filename contains `bundle` and the contents do not identify another type. Each stored file is validated with the rules above. The file contents pick the type, and the label is the fallback. Labels that still do not match are skipped, including Syft JSON. Failures are combined, and the command exits 1 if any label fails a threshold.
+A bundle is validated when its contents are a Gatecheck bundle, or when the filename contains `bundle` and the contents do not identify another type. Each stored file is validated with the rules above. The file contents pick the type, and the label is the fallback. Labels that still do not match are skipped. Syft JSON in a bundle is checked with the license rules. Failures are combined, and the command exits 1 if any label fails a threshold.

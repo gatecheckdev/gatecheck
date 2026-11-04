@@ -1,0 +1,589 @@
+{
+ "bomFormat": "CycloneDX",
+ "specVersion": "1.7",
+ "components": [
+  {
+   "bom-ref": "pkg:apk/alpine/alpine-baselayout@3.6.5-r0?arch=aarch64&distro=alpine-3.20.10&package-id=8d645c7d2c9ab6eb",
+   "type": "library",
+   "name": "alpine-baselayout",
+   "version": "3.6.5-r0",
+   "purl": "pkg:apk/alpine/alpine-baselayout@3.6.5-r0?arch=aarch64&distro=alpine-3.20.10",
+   "licenses": [
+    {
+     "license": {
+      "id": "GPL-2.0-only"
+     }
+    }
+   ]
+  },
+  {
+   "bom-ref": "pkg:apk/alpine/alpine-baselayout-data@3.6.5-r0?arch=aarch64&distro=alpine-3.20.10&package-id=977c0e9c1bdcda77&upstream=alpine-baselayout",
+   "type": "library",
+   "name": "alpine-baselayout-data",
+   "version": "3.6.5-r0",
+   "purl": "pkg:apk/alpine/alpine-baselayout-data@3.6.5-r0?arch=aarch64&distro=alpine-3.20.10&upstream=alpine-baselayout",
+   "licenses": [
+    {
+     "license": {
+      "id": "GPL-2.0-only"
+     }
+    }
+   ]
+  },
+  {
+   "bom-ref": "pkg:apk/alpine/alpine-keys@2.4-r1?arch=aarch64&distro=alpine-3.20.10&package-id=7dd8dd3195a50a7c",
+   "type": "library",
+   "name": "alpine-keys",
+   "version": "2.4-r1",
+   "purl": "pkg:apk/alpine/alpine-keys@2.4-r1?arch=aarch64&distro=alpine-3.20.10",
+   "licenses": [
+    {
+     "license": {
+      "id": "MIT"
+     }
+    }
+   ]
+  },
+  {
+   "bom-ref": "pkg:apk/alpine/apk-tools@2.14.4-r1?arch=aarch64&distro=alpine-3.20.10&package-id=aa9849d247add51e",
+   "type": "library",
+   "name": "apk-tools",
+   "version": "2.14.4-r1",
+   "purl": "pkg:apk/alpine/apk-tools@2.14.4-r1?arch=aarch64&distro=alpine-3.20.10",
+   "licenses": [
+    {
+     "license": {
+      "id": "GPL-2.0-only"
+     }
+    }
+   ]
+  },
+  {
+   "bom-ref": "pkg:apk/alpine/busybox@1.36.1-r31?arch=aarch64&distro=alpine-3.20.10&package-id=a6a0537c11acf05d",
+   "type": "library",
+   "name": "busybox",
+   "version": "1.36.1-r31",
+   "purl": "pkg:apk/alpine/busybox@1.36.1-r31?arch=aarch64&distro=alpine-3.20.10",
+   "licenses": [
+    {
+     "license": {
+      "id": "GPL-2.0-only"
+     }
+    }
+   ]
+  },
+  {
+   "bom-ref": "pkg:apk/alpine/busybox-binsh@1.36.1-r31?arch=aarch64&distro=alpine-3.20.10&package-id=3f5c5e6b53d979db&upstream=busybox",
+   "type": "library",
+   "name": "busybox-binsh",
+   "version": "1.36.1-r31",
+   "purl": "pkg:apk/alpine/busybox-binsh@1.36.1-r31?arch=aarch64&distro=alpine-3.20.10&upstream=busybox",
+   "licenses": [
+    {
+     "license": {
+      "id": "GPL-2.0-only"
+     }
+    }
+   ]
+  },
+  {
+   "bom-ref": "pkg:apk/alpine/ca-certificates-bundle@20260413-r0?arch=aarch64&distro=alpine-3.20.10&package-id=8d8969ab763f5c88&upstream=ca-certificates",
+   "type": "library",
+   "name": "ca-certificates-bundle",
+   "version": "20260413-r0",
+   "purl": "pkg:apk/alpine/ca-certificates-bundle@20260413-r0?arch=aarch64&distro=alpine-3.20.10&upstream=ca-certificates",
+   "licenses": [
+    {
+     "expression": "MPL-2.0 AND MIT"
+    }
+   ]
+  },
+  {
+   "bom-ref": "pkg:apk/alpine/libcrypto3@3.3.7-r0?arch=aarch64&distro=alpine-3.20.10&package-id=07354995b7aa075a&upstream=openssl",
+   "type": "library",
+   "name": "libcrypto3",
+   "version": "3.3.7-r0",
+   "purl": "pkg:apk/alpine/libcrypto3@3.3.7-r0?arch=aarch64&distro=alpine-3.20.10&upstream=openssl",
+   "licenses": [
+    {
+     "license": {
+      "id": "Apache-2.0"
+     }
+    }
+   ]
+  },
+  {
+   "bom-ref": "pkg:apk/alpine/libssl3@3.3.7-r0?arch=aarch64&distro=alpine-3.20.10&package-id=c9c2a9d7c134be14&upstream=openssl",
+   "type": "library",
+   "name": "libssl3",
+   "version": "3.3.7-r0",
+   "purl": "pkg:apk/alpine/libssl3@3.3.7-r0?arch=aarch64&distro=alpine-3.20.10&upstream=openssl",
+   "licenses": [
+    {
+     "license": {
+      "id": "Apache-2.0"
+     }
+    }
+   ]
+  },
+  {
+   "bom-ref": "pkg:apk/alpine/musl@1.2.5-r3?arch=aarch64&distro=alpine-3.20.10&package-id=6dcdd7dc29c063ea",
+   "type": "library",
+   "name": "musl",
+   "version": "1.2.5-r3",
+   "purl": "pkg:apk/alpine/musl@1.2.5-r3?arch=aarch64&distro=alpine-3.20.10",
+   "licenses": [
+    {
+     "license": {
+      "id": "MIT"
+     }
+    }
+   ]
+  },
+  {
+   "bom-ref": "pkg:apk/alpine/musl-utils@1.2.5-r3?arch=aarch64&distro=alpine-3.20.10&package-id=ff0cffffebef70f2&upstream=musl",
+   "type": "library",
+   "name": "musl-utils",
+   "version": "1.2.5-r3",
+   "purl": "pkg:apk/alpine/musl-utils@1.2.5-r3?arch=aarch64&distro=alpine-3.20.10&upstream=musl",
+   "licenses": [
+    {
+     "expression": "MIT AND BSD-2-Clause AND GPL-2.0-or-later"
+    }
+   ]
+  },
+  {
+   "bom-ref": "pkg:apk/alpine/scanelf@1.3.7-r2?arch=aarch64&distro=alpine-3.20.10&package-id=79597b43a49073ac&upstream=pax-utils",
+   "type": "library",
+   "name": "scanelf",
+   "version": "1.3.7-r2",
+   "purl": "pkg:apk/alpine/scanelf@1.3.7-r2?arch=aarch64&distro=alpine-3.20.10&upstream=pax-utils",
+   "licenses": [
+    {
+     "license": {
+      "id": "GPL-2.0-only"
+     }
+    }
+   ]
+  },
+  {
+   "bom-ref": "pkg:apk/alpine/ssl_client@1.36.1-r31?arch=aarch64&distro=alpine-3.20.10&package-id=08e4498c1dfeec93&upstream=busybox",
+   "type": "library",
+   "name": "ssl_client",
+   "version": "1.36.1-r31",
+   "purl": "pkg:apk/alpine/ssl_client@1.36.1-r31?arch=aarch64&distro=alpine-3.20.10&upstream=busybox",
+   "licenses": [
+    {
+     "license": {
+      "id": "GPL-2.0-only"
+     }
+    }
+   ]
+  },
+  {
+   "bom-ref": "pkg:apk/alpine/zlib@1.3.2-r0?arch=aarch64&distro=alpine-3.20.10&package-id=ba8a89789a796fe2",
+   "type": "library",
+   "name": "zlib",
+   "version": "1.3.2-r0",
+   "purl": "pkg:apk/alpine/zlib@1.3.2-r0?arch=aarch64&distro=alpine-3.20.10",
+   "licenses": [
+    {
+     "license": {
+      "id": "Zlib"
+     }
+    }
+   ]
+  },
+  {
+   "bom-ref": "os:alpine@3.20.10",
+   "type": "operating-system",
+   "name": "alpine",
+   "version": "3.20.10"
+  },
+  {
+   "bom-ref": "f0db0f411c110503",
+   "type": "file",
+   "name": "/bin/busybox"
+  },
+  {
+   "bom-ref": "f525f0a1036978a5",
+   "type": "file",
+   "name": "/etc/apk/keys/alpine-devel@lists.alpinelinux.org-524d27bb.rsa.pub"
+  },
+  {
+   "bom-ref": "3ba45d1d547b1424",
+   "type": "file",
+   "name": "/etc/apk/keys/alpine-devel@lists.alpinelinux.org-58199dcc.rsa.pub"
+  },
+  {
+   "bom-ref": "7723c5097858eb68",
+   "type": "file",
+   "name": "/etc/apk/keys/alpine-devel@lists.alpinelinux.org-616a9724.rsa.pub"
+  },
+  {
+   "bom-ref": "90dcfe46d4dcc5ec",
+   "type": "file",
+   "name": "/etc/apk/keys/alpine-devel@lists.alpinelinux.org-616adfeb.rsa.pub"
+  },
+  {
+   "bom-ref": "e5835d981b2fee6b",
+   "type": "file",
+   "name": "/etc/apk/keys/alpine-devel@lists.alpinelinux.org-616ae350.rsa.pub"
+  },
+  {
+   "bom-ref": "b2256fb4f656b7eb",
+   "type": "file",
+   "name": "/etc/busybox-paths.d/busybox"
+  },
+  {
+   "bom-ref": "55d8bde864a2e4d0",
+   "type": "file",
+   "name": "/etc/crontabs/root"
+  },
+  {
+   "bom-ref": "063e6cd8b0d3cf42",
+   "type": "file",
+   "name": "/etc/fstab"
+  },
+  {
+   "bom-ref": "70019bb68bf73d23",
+   "type": "file",
+   "name": "/etc/group"
+  },
+  {
+   "bom-ref": "61556d6a3233f99e",
+   "type": "file",
+   "name": "/etc/hostname"
+  },
+  {
+   "bom-ref": "f3e5bbc7933fc706",
+   "type": "file",
+   "name": "/etc/hosts"
+  },
+  {
+   "bom-ref": "0b9fb05c533a6bde",
+   "type": "file",
+   "name": "/etc/inittab"
+  },
+  {
+   "bom-ref": "a1fc9d67313ac16f",
+   "type": "file",
+   "name": "/etc/logrotate.d/acpid"
+  },
+  {
+   "bom-ref": "bbf768273e89d6cc",
+   "type": "file",
+   "name": "/etc/modprobe.d/aliases.conf"
+  },
+  {
+   "bom-ref": "9724c527f80e835f",
+   "type": "file",
+   "name": "/etc/modprobe.d/blacklist.conf"
+  },
+  {
+   "bom-ref": "5e0a5e2924fe7c18",
+   "type": "file",
+   "name": "/etc/modprobe.d/i386.conf"
+  },
+  {
+   "bom-ref": "840ba917e6477e6f",
+   "type": "file",
+   "name": "/etc/modprobe.d/kms.conf"
+  },
+  {
+   "bom-ref": "0b52b21de82aa4de",
+   "type": "file",
+   "name": "/etc/modules"
+  },
+  {
+   "bom-ref": "ca01744f6abf62a8",
+   "type": "file",
+   "name": "/etc/motd"
+  },
+  {
+   "bom-ref": "f65cd89eebd66906",
+   "type": "file",
+   "name": "/etc/network/if-up.d/dad"
+  },
+  {
+   "bom-ref": "85c2de71aeb0d590",
+   "type": "file",
+   "name": "/etc/nsswitch.conf"
+  },
+  {
+   "bom-ref": "e945200420ea2216",
+   "type": "file",
+   "name": "/etc/passwd"
+  },
+  {
+   "bom-ref": "38d7d6b2e8357c74",
+   "type": "file",
+   "name": "/etc/profile"
+  },
+  {
+   "bom-ref": "44b090735cce19f9",
+   "type": "file",
+   "name": "/etc/profile.d/20locale.sh"
+  },
+  {
+   "bom-ref": "cf2f98bc3fd3886c",
+   "type": "file",
+   "name": "/etc/profile.d/README"
+  },
+  {
+   "bom-ref": "7ac2ee07f58f98ff",
+   "type": "file",
+   "name": "/etc/profile.d/color_prompt.sh.disabled"
+  },
+  {
+   "bom-ref": "5748aaf4f7b0f49d",
+   "type": "file",
+   "name": "/etc/protocols"
+  },
+  {
+   "bom-ref": "bb7a6c1456671f60",
+   "type": "file",
+   "name": "/etc/securetty"
+  },
+  {
+   "bom-ref": "65bacafb62664e4a",
+   "type": "file",
+   "name": "/etc/services"
+  },
+  {
+   "bom-ref": "d9e66d863bf2cfb5",
+   "type": "file",
+   "name": "/etc/shadow"
+  },
+  {
+   "bom-ref": "6b6c83f6ddd83cc2",
+   "type": "file",
+   "name": "/etc/shells"
+  },
+  {
+   "bom-ref": "3cccc320c5389e49",
+   "type": "file",
+   "name": "/etc/ssl/certs/ca-certificates.crt"
+  },
+  {
+   "bom-ref": "dcfd59e518c93e1f",
+   "type": "file",
+   "name": "/etc/ssl/ct_log_list.cnf"
+  },
+  {
+   "bom-ref": "c72980d672658959",
+   "type": "file",
+   "name": "/etc/ssl/ct_log_list.cnf.dist"
+  },
+  {
+   "bom-ref": "e75f6024e3c25f7b",
+   "type": "file",
+   "name": "/etc/ssl/openssl.cnf"
+  },
+  {
+   "bom-ref": "e83e69311924a1cd",
+   "type": "file",
+   "name": "/etc/ssl/openssl.cnf.dist"
+  },
+  {
+   "bom-ref": "269b36ee85799405",
+   "type": "file",
+   "name": "/etc/sysctl.conf"
+  },
+  {
+   "bom-ref": "63be7584820e3b87",
+   "type": "file",
+   "name": "/etc/udhcpc/udhcpc.conf"
+  },
+  {
+   "bom-ref": "ff161ad11e2d1be4",
+   "type": "file",
+   "name": "/lib/apk/db/installed"
+  },
+  {
+   "bom-ref": "d3c74e83e59cdd93",
+   "type": "file",
+   "name": "/lib/ld-musl-aarch64.so.1"
+  },
+  {
+   "bom-ref": "f5f63b6d871d6edf",
+   "type": "file",
+   "name": "/lib/libapk.so.2.14.0"
+  },
+  {
+   "bom-ref": "809b5bd9e0a0bf1c",
+   "type": "file",
+   "name": "/lib/libcrypto.so.3"
+  },
+  {
+   "bom-ref": "70a12d60ca0001dd",
+   "type": "file",
+   "name": "/lib/libssl.so.3"
+  },
+  {
+   "bom-ref": "8c8d7f41ff1caa14",
+   "type": "file",
+   "name": "/lib/libz.so.1.3.2"
+  },
+  {
+   "bom-ref": "13708919fd945ffa",
+   "type": "file",
+   "name": "/lib/sysctl.d/00-alpine.conf"
+  },
+  {
+   "bom-ref": "b8e9653ba4dfcefa",
+   "type": "file",
+   "name": "/sbin/apk"
+  },
+  {
+   "bom-ref": "72c345c75405efa9",
+   "type": "file",
+   "name": "/sbin/ldconfig"
+  },
+  {
+   "bom-ref": "45178d0710b10089",
+   "type": "file",
+   "name": "/usr/bin/getconf"
+  },
+  {
+   "bom-ref": "b1c82795b6a29b56",
+   "type": "file",
+   "name": "/usr/bin/getent"
+  },
+  {
+   "bom-ref": "d7ba18c69a1c9f75",
+   "type": "file",
+   "name": "/usr/bin/iconv"
+  },
+  {
+   "bom-ref": "5a1e9dd654491ff5",
+   "type": "file",
+   "name": "/usr/bin/ldd"
+  },
+  {
+   "bom-ref": "61c72a83cf3de1a5",
+   "type": "file",
+   "name": "/usr/bin/scanelf"
+  },
+  {
+   "bom-ref": "fd31193927548c38",
+   "type": "file",
+   "name": "/usr/bin/ssl_client"
+  },
+  {
+   "bom-ref": "596094337a9d5cb5",
+   "type": "file",
+   "name": "/usr/lib/engines-3/afalg.so"
+  },
+  {
+   "bom-ref": "cbc84813407d7d65",
+   "type": "file",
+   "name": "/usr/lib/engines-3/capi.so"
+  },
+  {
+   "bom-ref": "c5e52c7c8018e26f",
+   "type": "file",
+   "name": "/usr/lib/engines-3/loader_attic.so"
+  },
+  {
+   "bom-ref": "d183a9f039c01937",
+   "type": "file",
+   "name": "/usr/lib/engines-3/padlock.so"
+  },
+  {
+   "bom-ref": "9263c6bc54fc0212",
+   "type": "file",
+   "name": "/usr/lib/ossl-modules/legacy.so"
+  },
+  {
+   "bom-ref": "4e940b86ce8bb587",
+   "type": "file",
+   "name": "/usr/share/apk/keys/alpine-devel@lists.alpinelinux.org-4a6a0840.rsa.pub"
+  },
+  {
+   "bom-ref": "7e4862f880e4dc3f",
+   "type": "file",
+   "name": "/usr/share/apk/keys/alpine-devel@lists.alpinelinux.org-5243ef4b.rsa.pub"
+  },
+  {
+   "bom-ref": "521e0bfb89da8540",
+   "type": "file",
+   "name": "/usr/share/apk/keys/alpine-devel@lists.alpinelinux.org-524d27bb.rsa.pub"
+  },
+  {
+   "bom-ref": "22210e7bad097cc5",
+   "type": "file",
+   "name": "/usr/share/apk/keys/alpine-devel@lists.alpinelinux.org-5261cecb.rsa.pub"
+  },
+  {
+   "bom-ref": "c73224490842bf10",
+   "type": "file",
+   "name": "/usr/share/apk/keys/alpine-devel@lists.alpinelinux.org-58199dcc.rsa.pub"
+  },
+  {
+   "bom-ref": "51f6c7c6354786d4",
+   "type": "file",
+   "name": "/usr/share/apk/keys/alpine-devel@lists.alpinelinux.org-58cbb476.rsa.pub"
+  },
+  {
+   "bom-ref": "bbd7e11715b9fee7",
+   "type": "file",
+   "name": "/usr/share/apk/keys/alpine-devel@lists.alpinelinux.org-58e4f17d.rsa.pub"
+  },
+  {
+   "bom-ref": "1ce1d7eb06117f2e",
+   "type": "file",
+   "name": "/usr/share/apk/keys/alpine-devel@lists.alpinelinux.org-5e69ca50.rsa.pub"
+  },
+  {
+   "bom-ref": "9072f026ca8de515",
+   "type": "file",
+   "name": "/usr/share/apk/keys/alpine-devel@lists.alpinelinux.org-60ac2099.rsa.pub"
+  },
+  {
+   "bom-ref": "5350974c1c023b5b",
+   "type": "file",
+   "name": "/usr/share/apk/keys/alpine-devel@lists.alpinelinux.org-6165ee59.rsa.pub"
+  },
+  {
+   "bom-ref": "c53e2e504a30e422",
+   "type": "file",
+   "name": "/usr/share/apk/keys/alpine-devel@lists.alpinelinux.org-61666e3f.rsa.pub"
+  },
+  {
+   "bom-ref": "074513a088daabef",
+   "type": "file",
+   "name": "/usr/share/apk/keys/alpine-devel@lists.alpinelinux.org-616a9724.rsa.pub"
+  },
+  {
+   "bom-ref": "7fee1900710c0dec",
+   "type": "file",
+   "name": "/usr/share/apk/keys/alpine-devel@lists.alpinelinux.org-616abc23.rsa.pub"
+  },
+  {
+   "bom-ref": "a8b8a8115eca1204",
+   "type": "file",
+   "name": "/usr/share/apk/keys/alpine-devel@lists.alpinelinux.org-616ac3bc.rsa.pub"
+  },
+  {
+   "bom-ref": "8480185278908e6a",
+   "type": "file",
+   "name": "/usr/share/apk/keys/alpine-devel@lists.alpinelinux.org-616adfeb.rsa.pub"
+  },
+  {
+   "bom-ref": "41ca39bf7e8b0808",
+   "type": "file",
+   "name": "/usr/share/apk/keys/alpine-devel@lists.alpinelinux.org-616ae350.rsa.pub"
+  },
+  {
+   "bom-ref": "1b9a22727b486aa3",
+   "type": "file",
+   "name": "/usr/share/apk/keys/alpine-devel@lists.alpinelinux.org-616db30d.rsa.pub"
+  },
+  {
+   "bom-ref": "58a73c2f639ded8c",
+   "type": "file",
+   "name": "/usr/share/udhcpc/default.script"
+  }
+ ]
+}

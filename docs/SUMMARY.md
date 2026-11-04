@@ -10,6 +10,7 @@
   - [Gatecheck Bundle](./gatecheck-bundle.md)
   - [Validation](./validation.md)
     - [VEX](./vex.md)
+    - [License gating](./licenses.md)
   - [Examples](./examples.md)
 - [Supported Reports](./supported-reports.md)
 - [Configuration](./configuration.md)
