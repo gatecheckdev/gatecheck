@@ -19,7 +19,7 @@ Logs go to stderr. Tables, `config init`, downloads, and this guide go to stdout
 - `completion bash|fish|powershell|zsh` prints a shell completion script.
 - `help [command]` prints the same text as `<command> --help`.
 
-Global flags, on every command: `-v` / `--verbose` (debug logs) and `--silent` (errors only). They cannot be set together. `-h` / `--help` is also global. The scanner commands pass every argument through, including `--help`, so `gatecheck grype --help` is Grype's help.
+Global flags, on every command: `-v` / `--verbose` (debug logs), `--silent` (warnings and errors), `--log-level debug|info|warn|error` (default `info`), and `--log-format text|json` (default `text`). Only one of `--verbose`, `--silent`, and `--log-level` can be set. `-h` / `--help` is also global. The scanner commands pass every argument through, including `--help`, so `gatecheck grype --help` is Grype's help.
 
 ## Scanners
 
@@ -50,9 +50,9 @@ gatecheck zizmor --format sarif .github/workflows > zizmor.sarif
 
 `gatecheck semgrep scan` and `gatecheck osemgrep scan` insert `--experimental` after `scan` when that flag is absent. Other osemgrep commands need `--experimental` from the caller. `gatecheck semgrep --experimental --version` prints the osemgrep version. When the program that runs is the Python `semgrep` on `PATH`, the flag is left alone. `gatecheck osemgrep` looks for the managed binary, then `osemgrep` on `PATH`.
 
-The managed binary wins when it is present. `gatecheck grype`, `gatecheck syft`, `gatecheck gitleaks`, `gatecheck trivy`, `gatecheck osv-scanner`, `gatecheck gosec`, `gatecheck hadolint`, and `gatecheck zizmor` otherwise run that name on `PATH`. `gatecheck semgrep` tries `semgrep` and then `osemgrep` on `PATH`. If none exist, the command prints `gatecheck: <name> is not installed; run `gatecheck bootstrap`` and exits 255. A scanner's own exit status is returned as-is.
+The managed binary wins when it is present. `gatecheck grype`, `gatecheck syft`, `gatecheck gitleaks`, `gatecheck trivy`, `gatecheck osv-scanner`, `gatecheck gosec`, `gatecheck hadolint`, and `gatecheck zizmor` otherwise run that name on `PATH`. `gatecheck semgrep` tries `semgrep` and then `osemgrep` on `PATH`. If none exist, the command prints `gatecheck: <name> is not installed; run `gatecheck bootstrap`` and exits 2. A scanner's own exit status is returned as-is.
 
-A platform with no release asset for a requested GitHub-hosted tool fails that tool and the command exits 255. A platform with no semgrep wheel prints a skip message on stderr and continues. Current pins are Grype `0.121.0`, Syft `1.55.0`, Gitleaks `8.30.1`, semgrep `1.182.1`, Trivy `0.76.1`, osv-scanner `2.7.0`, gosec `2.30.0`, hadolint `2.15.1`, and zizmor `1.32.0`, in `internal/bootstrap/versions.go`.
+A platform with no release asset for a requested GitHub-hosted tool fails that tool and the command exits 2. A platform with no semgrep wheel prints a skip message on stderr and continues. Current pins are Grype `0.121.0`, Syft `1.55.0`, Gitleaks `8.30.1`, semgrep `1.182.1`, Trivy `0.76.1`, osv-scanner `2.7.0`, gosec `2.30.0`, hadolint `2.15.1`, and zizmor `1.32.0`, in `internal/bootstrap/versions.go`.
 
 Syft is installed so it can write CycloneDX (`syft -o cyclonedx-json`). That BOM is listed and validated as CycloneDX. Native Syft JSON is recognized from `descriptor.name` or the schema URL. `list` prints its packages and licenses, and `validate` runs the license rules on it. CycloneDX is a report format, and coverage tools are left to the language toolchain.
 
@@ -112,7 +112,7 @@ gatecheck config convert --file gatecheck.yaml --output toml
 
 `config convert` reads `-f` / `--file` (default `gatecheck.yaml`). The extension selects the decoder: `.yaml`, `.yml`, `.json`, or `.toml`.
 
-A partial file is fine. Omitted fields keep the default. Unknown keys are ignored. With no config, `validate` uses the built-in default: every rule disabled, coverage thresholds `0`. Grype, CycloneDX, Trivy, osv-scanner, SARIF, Semgrep, Gitleaks, coverage, and bundle reports pass under that default. Syft JSON passes too, since the license rules are off by default. An old config with no `sarif` section leaves those limits disabled.
+A partial file is fine. Omitted fields keep the default. Unknown keys, such as a misspelled `severityLimt`, are named in a warning on stderr, and the rest of the file is still used. With no config, `validate` uses the built-in default: every rule disabled, coverage thresholds `0`. Grype, CycloneDX, Trivy, osv-scanner, SARIF, Semgrep, Gitleaks, coverage, and bundle reports pass under that default. Syft JSON passes too, since the license rules are off by default. An old config with no `sarif` section leaves those limits disabled.
 
 `GATECHECK_CONFIG_FILENAME` is the same setting as `validate --config` / `-f`.
 
@@ -139,7 +139,7 @@ Field names below are the ones `config init` emits. In YAML they are case sensit
 
 `vex.files` lists OpenVEX or CycloneDX VEX documents, read along with `--vex`.
 
-`coverage.lineThreshold`, `functionThreshold`, and `branchThreshold` are ratios from 0 to 1: covered lines, functions, or branches divided by the total. The report fails when its ratio is less than the threshold. A ratio equal to the threshold passes. `0.8` is 80 percent. `80` fails a report whose real line coverage is 0.8, because 0.8 is less than 80. There is no `enabled` flag. The default `0` allows any coverage, because a ratio is never less than 0. `list` prints these numbers as percents in the table footer. The config still wants the ratio. A report with no records of a kind, such as LCOV without branch records, has no ratio for it. `list` prints `N/A`, and `validate` skips that threshold with a warning.
+`coverage.lineThreshold`, `functionThreshold`, and `branchThreshold` are ratios from 0 to 1: covered lines, functions, or branches divided by the total. The report fails when its ratio is less than the threshold. A ratio equal to the threshold passes. `0.8` is 80 percent. A threshold over 1 is read as a percent, so `80` means `0.8`, and a warning says so. There is no `enabled` flag. The default `0` allows any coverage, because a ratio is never less than 0. `list` prints these numbers as percents in the table footer. The config still wants the ratio. A report with no records of a kind, such as LCOV without branch records, has no ratio for it. `list` prints `N/A`, and `validate` skips that threshold with a warning.
 
 Grype, CycloneDX, Trivy, and osv-scanner rules run in this order. A failure returns immediately, except where a rule only removes findings. Trivy counts vulnerability entries only. osv-scanner counts one finding per group.
 
@@ -173,17 +173,18 @@ gatecheck validate --config gatecheck.yaml grype-report.json
 gatecheck validate --audit --config gatecheck.yaml gatecheck-bundle.tar.gz
 ```
 
-The report path is the only positional argument, and it is required. Pass the config with `--config` or `-f`.
+The report path is the positional argument. With no path, `--input-type` is required and the report is read from stdin. Pass the config with `--config` or `-f`. With no config, a warning says every rule is disabled.
 
-Exit status:
+Exit status, for `validate` and every other gatecheck command:
 
-- `0`: the report passed. With `--audit` / `-a`, a check error is printed and the process also exits 0.
+- `0`: success. With `--audit` / `-a`, a threshold failure is printed to stderr and the process still exits 0.
 - `1`: a threshold failed and `--audit` is off. The error text starts with `validation failure:`.
-- `255`: the report or config could not be opened, the config extension is not supported, the command line was rejected, or another check error occurred with `--audit` off.
+- `2`: usage error, a file that could not be opened or written, or a report, config, or VEX file that could not be decoded. `--audit` does not change this.
+- `3`: EPSS or KEV data could not be downloaded or read. `--audit` does not change this.
 
-Opening the report, the config, and any `--epss-filename` or `--kev-filename` happens before the audit check. A missing file still exits 255 when `--audit` is set.
+`--format table|markdown|json` also prints the result to stdout. JSON is `{"report": "...", "passed": false, "failures": ["Grype: Severity Limit Exceeded"]}`, plus `"error"` when the check stopped on something else. Without `--format`, stdout is empty.
 
-`--epss-filename` is the EPSS CSV used when an EPSS rule is enabled. `--kev-filename` is the CISA KEV JSON used when `kevLimitEnabled` is true. `--epss-cache-dir` and `--epss-no-cache` apply when that CSV is downloaded. `validate` has no `--epss-url` or `--kev-url` flag. `GATECHECK_EPSS_URL` and `GATECHECK_KEV_URL` still override those APIs when the matching file is not set. The defaults are the same URLs `download` uses.
+`--epss-filename` is the EPSS CSV used when an EPSS rule is enabled. `--kev-filename` is the CISA KEV JSON used when `kevLimitEnabled` is true. `--epss-url` and `--kev-url` change the feeds. `--epss-cache-dir` and `--epss-no-cache` apply when that CSV is downloaded.
 
 `--vex FILE` (repeatable), `GATECHECK_VEX` (comma-separated, used when the flag is absent), and the config's `vex.files` name OpenVEX or CycloneDX VEX documents. Grype, CycloneDX, Trivy, and osv-scanner findings that a VEX file marks `not_affected` or `fixed` (OpenVEX), or `not_affected`, `false_positive`, `resolved`, or `resolved_with_pedigree` (CycloneDX `analysis.state`), are removed right after the `cveLimit` deny list, so they skip the KEV, EPSS, and severity rules. Ids match the finding's id or aliases. A statement that lists subcomponents or `affects` refs matches only those package URLs. The OpenVEX product itself is not checked. When several statements match, the latest timestamp wins.
 
@@ -193,14 +194,15 @@ EPSS data is loaded only when an EPSS limit or EPSS risk acceptance rule is enab
 
 ```shell
 gatecheck list grype-report.json
-gatecheck list --markdown --epss grype-report.json
+gatecheck list --format markdown --epss grype-report.json
+gatecheck list --format json trivy-report.json
 grype image:tag -o json | gatecheck ls --input-type grype
 gatecheck list-all grype-report.json semgrep-report.json
 ```
 
-`list` opens the first filename only. Further filenames are ignored. `--markdown` prints a markdown table. A Grype, CycloneDX, SARIF, Semgrep, Gitleaks, Trivy, or osv-scanner report with no findings prints one sentence and no table, with or without `--markdown`: `No grype vulnerabilities`, `No cyclonedx vulnerabilities`, `No sarif findings`, `No semgrep findings`, `No gitleaks findings`, `No trivy vulnerabilities`, or `No osv-scanner vulnerabilities`. `--epss` adds EPSS score and percentile columns for Grype, CycloneDX, Trivy, and osv-scanner. Other report types still list, and those columns are omitted. `--epss-url` empty uses `https://epss.cyentia.com`. `--epss-filename` reads that CSV instead of calling the API.
+`list` takes one filename, or stdin with `--input-type`. `--format table|markdown|json` picks the output, and `--markdown` is the same as `--format markdown`. JSON is `{"columns": [...], "rows": [{column: value}], "footer": {...}}`. A Grype, CycloneDX, SARIF, Semgrep, Gitleaks, Trivy, osv-scanner, or Syft report with nothing in it prints one sentence and no table: `No grype vulnerabilities`, `No cyclonedx vulnerabilities`, `No sarif findings`, `No semgrep findings`, `No gitleaks findings`, `No trivy vulnerabilities`, `No osv-scanner vulnerabilities`, or `No syft packages`. In JSON that is `{"columns": [], "rows": [], "message": "..."}`. Syft JSON lists package, version, type, and licenses. `--epss` adds EPSS score and percentile columns for Grype, CycloneDX, Trivy, and osv-scanner. Other report types still list, and those columns are omitted. `--epss-url` empty uses `https://epss.cyentia.com`. `--epss-filename` reads that CSV instead of calling the API.
 
-`list-all` prints each filename, then its table, or that sentence when the report has no findings. A file whose contents and name are not a supported `list-all` type is skipped with a warning. A missing file is skipped. A list error is logged and the command continues. The command exits 0. `--epss` adds EPSS data for Grype, CycloneDX, Trivy, and osv-scanner, including a file whose name does not contain those words when the contents do. There is no `--epss-filename` flag, and `GATECHECK_EPSS_FILENAME` is not read. `GATECHECK_EPSS_URL` overrides the API. `--epss-cache-dir` and `--epss-no-cache` are accepted.
+`list-all` prints each filename, then its table, or that sentence when the report has nothing in it. With `--format json` it prints one array of `{"file": ..., "report": ...}`. A file whose contents and name are not a supported `list-all` type is skipped with a warning. A file that cannot be read or listed is logged, the rest are still listed, and the command then exits 2. `--epss` adds EPSS data for Grype, CycloneDX, Trivy, and osv-scanner, loaded once per run. `--epss-filename`, `--epss-url`, `--epss-cache-dir`, and `--epss-no-cache` work as on `list`.
 
 ## bundle
 
@@ -213,7 +215,7 @@ gatecheck bundle remove gatecheck-bundle.tar.gz semgrep-report.json
 gatecheck list gatecheck-bundle.tar.gz
 ```
 
-The stored label is the base name of the target file (`reports/grype-report.json` is stored as `grype-report.json`). Later validation uses the file contents to pick the type, and the label when the contents are ambiguous. Repeat `-t` / `--tag` for more than one tag. When the flag is omitted, `GATECHECK_BUNDLE_TAG` is read as a comma-separated list. `bundle add` requires an existing bundle. `bundle remove` takes the label, not a path that is opened. A label that is not in the bundle is logged and the command exits 0. There is no `bundle list` subcommand. `gatecheck list` prints label, SHA-256 digest, tags, and size.
+The stored label is the base name of the target file (`reports/grype-report.json` is stored as `grype-report.json`). Later validation uses the file contents to pick the type, and the label when the contents are ambiguous. Repeat `-t` / `--tag` for more than one tag. When the flag is omitted, `GATECHECK_BUNDLE_TAG` is read as a comma-separated list. `bundle create` replaces an existing file. `bundle add` requires an existing bundle. `bundle remove` takes the label, not a path that is opened. A label that is not in the bundle exits 2 and leaves the bundle unchanged. There is no `bundle list` subcommand. `gatecheck list` prints label, SHA-256 digest, tags, and size.
 
 ## download
 
@@ -230,23 +232,25 @@ EPSS requests send a User-Agent with the gatecheck version and `https://github.c
 
 ## Environment variables
 
-A non-empty flag wins. An empty flag falls through to the environment variable, then to the default.
-
 | Variable | Commands | Same as |
 | --- | --- | --- |
 | `GATECHECK_CONFIG_FILENAME` | `validate` | `--config` |
+| `GATECHECK_AUDIT` | `validate` | `--audit` |
 | `GATECHECK_VEX` | `validate` | `--vex`, comma-separated |
-| `GATECHECK_EPSS_FILENAME` | `list`, `validate` | `--epss-filename` |
-| `GATECHECK_EPSS_URL` | `download epss`, `list`, `list-all`, `validate` | `--epss-url` on commands that have that flag |
+| `GATECHECK_EPSS_FILENAME` | `list`, `list-all`, `validate` | `--epss-filename` |
+| `GATECHECK_EPSS_URL` | `download epss`, `list`, `list-all`, `validate` | `--epss-url` |
 | `GATECHECK_EPSS_CACHE_DIR` | `download epss`, `list`, `list-all`, `validate` | `--epss-cache-dir` |
 | `GATECHECK_EPSS_CACHE` | `download epss`, `list`, `list-all`, `validate` | `--epss-no-cache` when the value is `off` |
-| `GATECHECK_KEV_URL` | `download kev`, `validate` | `--kev-url` on `download kev` |
+| `GATECHECK_KEV_FILENAME` | `validate` | `--kev-filename` |
+| `GATECHECK_KEV_URL` | `download kev`, `validate` | `--kev-url` |
 | `GATECHECK_BUNDLE_TAG` | `bundle create`, `bundle add` | `--tag`, as a comma-separated list |
+| `GATECHECK_VERBOSE` | every command | `--verbose` |
+| `GATECHECK_SILENT` | every command | `--silent` |
+| `GATECHECK_LOG_LEVEL` | every command | `--log-level` |
+| `GATECHECK_LOG_FORMAT` | every command | `--log-format` |
 | `GATECHECK_HOME` | `bootstrap`, `grype`, `syft`, `gitleaks`, `semgrep`, `osemgrep`, `trivy`, `osv-scanner`, `gosec`, `hadolint`, `zizmor` | data directory; binaries are in `bin` under it |
 
-`GATECHECK_EPSS_CACHE` also disables the cache for `0`, `false`, `no`, `disabled`, `disable`, and `none`.
-
-`GATECHECK_EPSS_FILE`, `GATECHECK_KEV_FILE`, and `GATECHECK_CLI_AUDIT` are not read. There is no `GATECHECK_KEV_FILENAME`. The KEV filename setting is bound to `GATECHECK_EPSS_FILENAME`, so that variable also selects the KEV file. Pass a local catalog with `--kev-filename`. `GATECHECK_VERBOSE`, `GATECHECK_SILENT`, and `GATECHECK_AUDIT` are not parsed as booleans. Use `--verbose`, `--silent`, and `--audit`. A non-empty value in those three variables can panic.
+A flag on the command line wins over its variable. An empty variable counts as unset. `GATECHECK_AUDIT`, `GATECHECK_VERBOSE`, and `GATECHECK_SILENT` take `true`, `false`, `1`, `0`, `t`, or `f`, and any other value exits 2. `GATECHECK_EPSS_CACHE` also disables the cache for `0`, `false`, `no`, `disabled`, `disable`, and `none`.
 
 ## Minimal CI
 
@@ -260,10 +264,10 @@ Create the config with `gatecheck config init > gatecheck.yaml` and set real thr
 ## Common mistakes
 
 - The contents do not identify a type and the filename has no lowercase type word (`scan.json`, `Grype.json`). A real bundle named `project.gcb` is still recognized from its contents. An empty document such as `{"matches":[]}` still needs a name such as `grype-report.json`, or `--input-type grype` on standard input.
-- Coverage thresholds are ratios. Set `coverage.lineThreshold` to `0.8` for 80 percent, not `80` or `80.0`.
+- Coverage thresholds are ratios. Set `coverage.lineThreshold` to `0.8` for 80 percent. A value over 1, such as `80`, is read as a percent with a warning.
 - `validate` takes the report as its positional argument. The config is `--config` / `-f`. `gatecheck validate gatecheck.yaml grype-report.json` tries to open the config as a report. `config convert` uses `--file` / `-f`, which is a different flag.
-- `list` on a pipe needs `--input-type`. Clear contents still win over that flag. `validate` needs a filesystem path.
-- `list` ignores every filename after the first. Use `list-all` for several files. `list-all` skips coverage files such as `lcov.info`. List those with `gatecheck list lcov.info`.
+- `list` and `validate` on a pipe need `--input-type`. Clear contents still win over that flag.
+- `list` takes one filename, and a second one exits 2. Use `list-all` for several files. `list-all` skips coverage files such as `lcov.info`. List those with `gatecheck list lcov.info`.
 - Native Syft JSON gets only the license rules. Use CycloneDX output when you also want vulnerabilities scored. That BOM is CycloneDX even when the filename contains `syft`.
 - `gatecheck semgrep --version` reaches osemgrep without `--experimental`, and osemgrep then tries to run `pysemgrep`. Pass the flag: `gatecheck semgrep --experimental --version`.
-- `--audit` still exits 255 when the report, the config, or a named EPSS or KEV file cannot be opened.
+- `--audit` only hides threshold failures. It still exits 2 when the report, the config, or a named EPSS, KEV, or VEX file cannot be opened, and 3 when EPSS or KEV data cannot be loaded.

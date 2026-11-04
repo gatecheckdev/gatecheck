@@ -23,11 +23,12 @@ Logs go to standard error. Tables, downloaded data, and `config init` go to stan
 
 Exit status:
 
-- `0` when the command succeeds. With `validate --audit`, an error returned by the check also exits 0.
+- `0` when the command succeeds. With `validate --audit`, a threshold failure also exits 0.
 - `1` when a report misses a configured threshold and `--audit` is off.
-- `255` for a missing file, a rejected command line, or a check error when `--audit` is off.
-- The scanner commands return that program's own status. A scanner that is neither installed nor on `PATH` exits 255.
+- `2` for a rejected command line, a file that could not be read or written, or a report, config, or VEX file that could not be decoded. `--audit` does not change this.
+- `3` when EPSS or KEV data could not be downloaded or read. `--audit` does not change this.
+- The scanner commands return that program's own status. A scanner that is neither installed nor on `PATH` exits 2.
 
 [Validation](./validation.md) lists which `validate` failures are which status.
 
-`--verbose` (`-v`) prints debug logs. `--silent` hides debug, info, and warning logs, and errors are still printed. The two flags cannot be used together. They are available on every command.
+`--verbose` (`-v`) prints debug logs. `--silent` prints only warnings and errors. `--log-level debug|info|warn|error` sets the level directly, and only one of those three flags can be set. `--log-format json` writes one JSON object per log line instead of text. They are available on every command, and `GATECHECK_VERBOSE`, `GATECHECK_SILENT`, `GATECHECK_LOG_LEVEL`, and `GATECHECK_LOG_FORMAT` set them from the environment.

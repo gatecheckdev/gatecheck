@@ -52,14 +52,3 @@ and latest versions and does not download.`,
 	command.Flags().BoolVarP(&yes, "yes", "y", false, "do not ask for confirmation")
 	return command
 }
-
-func addCommandOnce(root *cobra.Command, command *cobra.Command) {
-	for _, existing := range root.Commands() {
-		if existing.Name() == command.Name() {
-			return
-		}
-	}
-	root.AddCommand(command)
-}
-
-var updateCmd = newUpdateCommand()

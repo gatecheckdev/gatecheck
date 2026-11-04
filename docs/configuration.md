@@ -14,7 +14,7 @@ gatecheck config convert --file gatecheck.yaml --output json
 
 `config convert` reads `--file` / `-f` (default `gatecheck.yaml`) and writes the other format to standard output.
 
-A partial file is fine. Omitted fields keep the default. Keys the decoder does not know are ignored.
+A partial file is fine. Omitted fields keep the default. Keys gatecheck does not read are named in a warning when `validate` or `config convert` loads the file, and the rest of the file is still used.
 
 `GATECHECK_CONFIG_FILENAME` is the same setting as `validate --config`.
 
@@ -306,7 +306,7 @@ license:
 - function coverage is covered functions divided by total functions
 - branch coverage is covered branches divided by total branches
 
-The report fails when its ratio is less than the threshold. `0.8` is 80 percent. `80.0` fails a report whose real line coverage is 0.8, because 0.8 is less than 80.
+The report fails when its ratio is less than the threshold. `0.8` is 80 percent. A threshold over 1 is read as a percent: `80` means `0.8`, and `validate` logs a warning. Write the ratio to avoid the warning.
 
 There is no `enabled` flag. The default `0` allows any coverage, because a ratio is never less than 0.
 

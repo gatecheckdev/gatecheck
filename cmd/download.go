@@ -5,35 +5,33 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var downloadCmd = &cobra.Command{
-	Use:   "download",
-	Short: "output data from supported APIs",
-}
-
-var downloadEPSSCmd = &cobra.Command{
-	Use:   "epss",
-	Short: "download epss data from FIRST API as csv to STDOUT",
-	RunE: func(cmd *cobra.Command, args []string) error {
-		url := RuntimeConfig.EPSSURL.Value().(string)
-		opts := append([]gatecheck.Option{gatecheck.WithEPSSURL(url)}, epssCacheOptions()...)
-		return gatecheck.DownloadEPSS(cmd.OutOrStdout(), opts...)
-	},
-}
-
-var downloadKEVCmd = &cobra.Command{
-	Use:   "kev",
-	Short: "download kev catalog from CISA as json to STDOUT",
-	RunE: func(cmd *cobra.Command, args []string) error {
-		url := RuntimeConfig.KEVURL.Value().(string)
-		return gatecheck.DownloadKEV(cmd.OutOrStdout(), gatecheck.WithKEVURL(url))
-	},
-}
-
 func newDownloadCommand() *cobra.Command {
-	RuntimeConfig.EPSSURL.SetupCobra(downloadEPSSCmd)
-	RuntimeConfig.EPSSCacheDir.SetupCobra(downloadEPSSCmd)
-	RuntimeConfig.EPSSNoCache.SetupCobra(downloadEPSSCmd)
-	RuntimeConfig.KEVURL.SetupCobra(downloadKEVCmd)
-	downloadCmd.AddCommand(downloadEPSSCmd, downloadKEVCmd)
+	downloadCmd := &cobra.Command{
+		Use:   "download",
+		Short: "output data from supported APIs",
+	}
+
+	epssCmd := &cobra.Command{
+		Use:   "epss",
+		Short: "download epss data from FIRST API as csv to STDOUT",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			opts := append([]gatecheck.Option{gatecheck.WithEPSSURL(stringSetting(cmd, "epss-url", "GATECHECK_EPSS_URL"))}, epssCacheOptions(cmd)...)
+			return gatecheck.DownloadEPSS(cmd.OutOrStdout(), opts...)
+		},
+	}
+	addEPSSFlags(epssCmd, false)
+
+	kevCmd := &cobra.Command{
+		Use:   "kev",
+		Short: "download kev catalog from CISA as json to STDOUT",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			return gatecheck.DownloadKEV(cmd.OutOrStdout(), gatecheck.WithKEVURL(stringSetting(cmd, "kev-url", "GATECHECK_KEV_URL")))
+		},
+	}
+	kevCmd.Flags().String("kev-url", "", `CISA KEV JSON URL; "" uses the official feed (env GATECHECK_KEV_URL)`)
+
+	downloadCmd.AddCommand(epssCmd, kevCmd)
 	return downloadCmd
 }

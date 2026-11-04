@@ -55,21 +55,42 @@ func WithEPSS(epssFile *os.File, epssURL string, optionFuncs ...optionFunc) (fun
 	}
 
 	if epssFile == nil {
-		err := epss.FetchData(data, options.epssDownloadOptions()...)
-		return f, err
+		if err := epss.FetchData(data, options.epssDownloadOptions()...); err != nil {
+			return f, fmt.Errorf("%w: %w", ErrExternalData, err)
+		}
+		return f, nil
 	}
 
-	err := epss.ParseEPSSDataCSV(epssFile, data)
+	if err := epss.ParseEPSSDataCSV(epssFile, data); err != nil {
+		return f, fmt.Errorf("%w: %w", ErrExternalData, err)
+	}
+	return f, nil
+}
 
-	return f, err
+// ListFormats are the values WithDisplayFormat accepts. "" and "ascii" are the table.
+var ListFormats = []string{"table", "markdown", "json"}
+
+func normalizeDisplayFormat(name string) string {
+	switch strings.ToLower(strings.TrimSpace(name)) {
+	case "markdown", "md":
+		return "markdown"
+	case "json":
+		return "json"
+	default:
+		return "table"
+	}
 }
 
 func List(dst io.Writer, src io.Reader, inputFilename string, options ...ListOptionFunc) error {
-	table := format.NewTable(dst)
 	var err error
 	o := &listOptions{}
 	for _, f := range options {
 		f(o)
+	}
+	displayFormat := normalizeDisplayFormat(o.displayFormat)
+	table := format.NewTable(dst)
+	if displayFormat == "json" {
+		table = format.NewJSONTable(dst)
 	}
 
 	content, err := readReport(src)
@@ -126,6 +147,11 @@ func List(dst io.Writer, src io.Reader, inputFilename string, options ...ListOpt
 		if err = archive.UntarGzipBundle(src, bundle); err != nil {
 			return err
 		}
+		if displayFormat == "json" {
+			enc := json.NewEncoder(dst)
+			enc.SetIndent("", "  ")
+			return enc.Encode(bundle.Manifest())
+		}
 		_, err = fmt.Fprintln(dst, bundle.Content())
 		return err
 
@@ -139,14 +165,16 @@ func List(dst io.Writer, src io.Reader, inputFilename string, options ...ListOpt
 	if err != nil {
 		var empty emptyReport
 		if errors.As(err, &empty) {
+			if displayFormat == "json" {
+				return format.WriteEmptyJSON(dst, string(empty))
+			}
 			_, err = fmt.Fprintln(dst, string(empty))
 			return err
 		}
 		return err
 	}
 
-	switch strings.ToLower(strings.TrimSpace(o.displayFormat)) {
-	case "markdown", "md":
+	if displayFormat == "markdown" {
 		format.SetMarkdown(table)
 	}
 

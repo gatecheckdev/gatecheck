@@ -21,7 +21,7 @@ vex:
     - .vex/app.openvex.json
 ```
 
-Relative paths are read from the working directory. A file that is missing, is not JSON, or is neither format is an error, and `validate` exits 255 without checking the report.
+Relative paths are read from the working directory. A file that is missing, is not JSON, or is neither format is an error, and `validate` exits 2 without checking the report, even with `--audit`.
 
 ## Which statuses skip a finding
 

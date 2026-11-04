@@ -72,7 +72,7 @@ Published assets:
 - Trivy: macOS amd64 and arm64; Linux 386, amd64, armv7, arm64, ppc64le, and s390x; Windows amd64; FreeBSD amd64.
 - gosec: macOS amd64 and arm64; Linux amd64, arm64, ppc64le, and s390x; Windows amd64 and arm64.
 
-A platform with no asset fails that tool. The message looks like `grype has no published release asset for windows/arm64`. Other requested tools still install. The command exits 255 when any requested tool failed this way, or when a download or checksum check failed.
+A platform with no asset fails that tool. The message looks like `grype has no published release asset for windows/arm64`. Other requested tools still install. The command exits 2 when any requested tool failed this way, or when a download or checksum check failed.
 
 ## osv-scanner
 
@@ -142,7 +142,7 @@ Arguments, standard input, standard output, standard error, and the scanner's ex
 
 The managed binary is used when it is present. Otherwise gatecheck looks on `PATH`: `grype`, `syft`, `gitleaks`, `trivy`, `osv-scanner`, `gosec`, `hadolint`, or `zizmor` for those commands; `semgrep` and then `osemgrep` for `gatecheck semgrep`; `osemgrep` only for `gatecheck osemgrep`. `--experimental` is inserted only when the program that will run is named `osemgrep`. A Python `semgrep` on `PATH` is left unchanged.
 
-When neither copy exists, the command prints one line and exits 255:
+When neither copy exists, the command prints one line and exits 2:
 
 ```
 gatecheck: grype is not installed; run `gatecheck bootstrap`

@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"log/slog"
+	"io"
 	"os"
 	"path"
 
@@ -9,100 +9,90 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var bundleCmd = &cobra.Command{
-	Use:   "bundle",
-	Short: "create and manage a gatecheck bundle",
-}
-
-var bundleCreateCmd = &cobra.Command{
-	Use:     "create BUNDLE_FILE TARGET_FILE",
-	Short:   "create a new bundle with a new file",
-	Aliases: []string{"init"},
-	Args:    cobra.ExactArgs(2),
-	PreRunE: func(cmd *cobra.Command, args []string) error {
-		bundleFilename := args[0]
-		targetFilename := args[1]
-
-		bundleFile, err := os.OpenFile(bundleFilename, os.O_CREATE|os.O_WRONLY, 0o644)
-		if err != nil {
-			return err
-		}
-		targetFile, err := os.Open(targetFilename)
-		if err != nil {
-			return err
-		}
-
-		RuntimeConfig.bundleFile = bundleFile
-		RuntimeConfig.targetFile = targetFile
-		RuntimeConfig.BundleTagValue = RuntimeConfig.BundleTag.Value().([]string)
-		return nil
-	},
-	RunE: func(cmd *cobra.Command, args []string) error {
-		targetFilename := args[1]
-		label := path.Base(targetFilename)
-		bf, tf := RuntimeConfig.bundleFile, RuntimeConfig.targetFile
-		tags := RuntimeConfig.BundleTagValue
-		return gatecheck.CreateBundle(bf, tf, label, tags)
-	},
-}
-
-var bundleAddCmd = &cobra.Command{
-	Use:   "add BUNDLE_FILE TARGET_FILE",
-	Short: "add a file to a bundle",
-	Args:  cobra.ExactArgs(2),
-	PreRunE: func(cmd *cobra.Command, args []string) error {
-		bundleFilename := args[0]
-		targetFilename := args[1]
-
-		bundleFile, err := os.OpenFile(bundleFilename, os.O_RDWR, 0o644)
-		if err != nil {
-			return err
-		}
-		targetFile, err := os.Open(targetFilename)
-		if err != nil {
-			return err
-		}
-
-		RuntimeConfig.bundleFile = bundleFile
-		RuntimeConfig.targetFile = targetFile
-		RuntimeConfig.BundleTagValue = RuntimeConfig.BundleTag.Value().([]string)
-		return nil
-	},
-	RunE: func(cmd *cobra.Command, args []string) error {
-		targetFilename := args[1]
-		slog.Info("bundle tag", "environment", os.Getenv("GATECHECK_BUNDLE_TAG"))
-		label := path.Base(targetFilename)
-		bf, tf := RuntimeConfig.bundleFile, RuntimeConfig.targetFile
-		tags := RuntimeConfig.BundleTagValue
-		return gatecheck.AppendToBundle(bf, tf, label, tags)
-	},
-}
-
-var bundleRemoveCmd = &cobra.Command{
-	Use:     "remove BUNDLE_FILE TARGET_FILE",
-	Short:   "remove a file from a bundle by label",
-	Aliases: []string{"rm"},
-	Args:    cobra.ExactArgs(2),
-	PreRunE: func(cmd *cobra.Command, args []string) error {
-		bundleFilename := args[0]
-
-		bundleFile, err := os.OpenFile(bundleFilename, os.O_RDWR, 0o644)
-		if err != nil {
-			return err
-		}
-		RuntimeConfig.bundleFile = bundleFile
-		return nil
-	},
-	RunE: func(cmd *cobra.Command, args []string) error {
-		label := args[1]
-		return gatecheck.RemoveFromBundle(RuntimeConfig.bundleFile, label)
-	},
-}
-
 func newBundleCommand() *cobra.Command {
-	RuntimeConfig.BundleTag.SetupCobra(bundleCreateCmd)
-	RuntimeConfig.BundleTag.SetupCobra(bundleAddCmd)
+	bundleCmd := &cobra.Command{
+		Use:   "bundle",
+		Short: "create and manage a gatecheck bundle",
+	}
 
-	bundleCmd.AddCommand(bundleCreateCmd, bundleAddCmd, bundleRemoveCmd)
+	createCmd := &cobra.Command{
+		Use:     "create BUNDLE_FILE TARGET_FILE",
+		Short:   "create a new bundle with one file, replacing BUNDLE_FILE if it exists",
+		Aliases: []string{"init"},
+		Args:    cobra.ExactArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			target, err := os.Open(args[1])
+			if err != nil {
+				return err
+			}
+			defer func() { _ = target.Close() }()
+			bundleFile, err := os.OpenFile(args[0], os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o644)
+			if err != nil {
+				return err
+			}
+			err = gatecheck.CreateBundle(bundleFile, target, path.Base(args[1]), stringSliceSetting(cmd, "tag", "GATECHECK_BUNDLE_TAG"))
+			return closeAfter(bundleFile, err)
+		},
+	}
+
+	addCmd := &cobra.Command{
+		Use:   "add BUNDLE_FILE TARGET_FILE",
+		Short: "add a file to a bundle",
+		Args:  cobra.ExactArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			target, err := os.Open(args[1])
+			if err != nil {
+				return err
+			}
+			defer func() { _ = target.Close() }()
+			bundleFile, err := os.OpenFile(args[0], os.O_RDWR, 0o644)
+			if err != nil {
+				return err
+			}
+			err = gatecheck.AppendToBundle(bundleFile, target, path.Base(args[1]), stringSliceSetting(cmd, "tag", "GATECHECK_BUNDLE_TAG"))
+			return closeAfter(bundleFile, truncateAtOffset(bundleFile, err))
+		},
+	}
+
+	removeCmd := &cobra.Command{
+		Use:     "remove BUNDLE_FILE LABEL",
+		Short:   "remove a file from a bundle by label",
+		Aliases: []string{"rm"},
+		Args:    cobra.ExactArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			bundleFile, err := os.OpenFile(args[0], os.O_RDWR, 0o644)
+			if err != nil {
+				return err
+			}
+			err = gatecheck.RemoveFromBundle(bundleFile, args[1])
+			return closeAfter(bundleFile, truncateAtOffset(bundleFile, err))
+		},
+	}
+
+	for _, c := range []*cobra.Command{createCmd, addCmd} {
+		c.Flags().StringSliceP("tag", "t", nil, "tags for the added file, repeatable or comma-separated (env GATECHECK_BUNDLE_TAG)")
+	}
+	bundleCmd.AddCommand(createCmd, addCmd, removeCmd)
 	return bundleCmd
+}
+
+// truncateAtOffset drops bytes left over from a longer old bundle after it
+// was rewritten in place.
+func truncateAtOffset(f *os.File, err error) error {
+	if err != nil {
+		return err
+	}
+	offset, err := f.Seek(0, io.SeekCurrent)
+	if err != nil {
+		return err
+	}
+	return f.Truncate(offset)
+}
+
+func closeAfter(f *os.File, err error) error {
+	closeErr := f.Close()
+	if err != nil {
+		return err
+	}
+	return closeErr
 }

@@ -2,25 +2,13 @@
 package main
 
 import (
-	"errors"
 	"fmt"
-	"log/slog"
 	"os"
 	"runtime"
-	"time"
-
-	"github.com/lmittmann/tint"
 
 	"github.com/gatecheckdev/gatecheck/cmd"
 	"github.com/gatecheckdev/gatecheck/pkg/epss"
 	"github.com/gatecheckdev/gatecheck/pkg/gatecheck"
-)
-
-const (
-	exitSystemFail     int = -1
-	exitOk             int = 0
-	exitValidationFail int = 1
-	exitFileAccessFail int = 2
 )
 
 // GatecheckVersion see CHANGELOG.md
@@ -49,27 +37,9 @@ func run() int {
 		Compiler:       runtime.Compiler,
 	}
 	epss.SetVersion(cliVersion)
-
-	// Colorized logging output for the CLI
-	logHandler := tint.NewTextHandler(os.Stderr, &tint.Options{Level: cmd.LogLeveler, TimeFormat: time.TimeOnly})
-	slog.SetDefault(slog.New(logHandler))
-
-	command := cmd.NewGatecheckCommand()
-
-	err := command.Execute()
-	return status(err)
+	return status(cmd.NewGatecheckCommand().Execute())
 }
 
 func status(err error) int {
-	if err == nil {
-		return exitOk
-	}
-	var coder interface{ ExitCode() int }
-	if errors.As(err, &coder) {
-		return coder.ExitCode()
-	}
-	if errors.Is(err, gatecheck.ErrValidationFailure) {
-		return exitValidationFail
-	}
-	return exitSystemFail
+	return cmd.ExitCode(err)
 }

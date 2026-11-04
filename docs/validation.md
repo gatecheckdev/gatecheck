@@ -5,19 +5,26 @@ gatecheck validate --config gatecheck.yaml grype-report.json
 gatecheck validate --config gatecheck.yaml gatecheck-bundle.tar.gz
 ```
 
-Pass the config with `--config` or `-f`, or with `GATECHECK_CONFIG_FILENAME`. The only positional argument is the report path, and it is required.
+Pass the config with `--config` or `-f`, or with `GATECHECK_CONFIG_FILENAME`. The positional argument is the report path. With no path, `--input-type` names the report type and the report is read from standard input:
+
+```shell
+grype dir:. -o json | gatecheck validate --config gatecheck.yaml --input-type grype
+```
+
+`--format table`, `markdown`, or `json` also prints the result to standard output. Keys in the config that gatecheck does not read are named in a warning, so a typo such as `severityLimt` does not silently disable a rule.
 
 The report type comes from the file contents, and from the filename when the contents are ambiguous. See [Supported Reports](./supported-reports.md).
 
-With no config, gatecheck uses the default: every rule disabled, coverage thresholds `0`. Grype, CycloneDX, Trivy, osv-scanner, SARIF, Semgrep, Gitleaks, coverage, and bundle reports pass under that default. Syft JSON passes too, since the license rules are off by default. An old config with no `sarif` section leaves those limits disabled.
+With no config, gatecheck warns and uses the default: every rule disabled, coverage thresholds `0`. Grype, CycloneDX, Trivy, osv-scanner, SARIF, Semgrep, Gitleaks, coverage, and bundle reports pass under that default. Syft JSON passes too, since the license rules are off by default. An old config with no `sarif` section leaves those limits disabled.
 
 ## Exit status
 
 - `0`: the report passed.
 - `1`: a threshold failed. The error text starts with `validation failure:`.
-- `255`: the report or config could not be opened, the config extension is not supported, or the command line was rejected.
+- `2`: the report, config, VEX, EPSS, or KEV file could not be opened or decoded, the report type is not supported, the config extension is not supported, or the command line was rejected.
+- `3`: EPSS or KEV data could not be downloaded or read.
 
-`--audit` (`-a`) prints whatever error the check returns and exits 0. That covers a failed threshold, an unknown report, a Syft file, a decode error, and a failed EPSS or KEV fetch. Opening the report, the config, and any `--epss-filename` or `--kev-filename` happens before the check. A missing file still exits 255.
+`--audit` (`-a`) prints a threshold failure and exits 0. It does not hide anything else: those errors still exit 2 or 3. `GATECHECK_AUDIT=true` is the same setting, and `--audit=false` overrides it.
 
 ## Grype, CycloneDX, Trivy, and osv-scanner
 
@@ -30,9 +37,9 @@ Rules run in this order. A failure returns immediately, except where a rule only
 1. **CVE limit.** `cveLimit`, when enabled, fails if any listed id is in the report. Ids are compared without regard to case.
 2. **Disabled Grype, Trivy, and osv-scanner severities.** Grype, Trivy, and osv-scanner drop findings whose severity limit is disabled. If the EPSS limit is also enabled, a finding at a disabled severity stays in the report when it has an EPSS score greater than or equal to that limit. CycloneDX leaves findings at a disabled severity in the report, so they still go through the KEV and EPSS rules.
 3. **CVE risk acceptance and VEX.** Matching ids are removed and skip the remaining rules. Findings that a VEX file passed with `--vex`, `GATECHECK_VEX`, or `vex.files` marks `not_affected`, `fixed`, `false_positive`, or `resolved` are removed too. See [VEX](./vex.md).
-4. **KEV limit.** When `kevLimitEnabled` is true, a CVE that is in the catalog fails the report. The catalog is `--kev-filename` or, with no file, the CISA feed. `GATECHECK_KEV_URL` overrides the feed. There is no `--kev-url` flag on `validate`.
+4. **KEV limit.** When `kevLimitEnabled` is true, a CVE that is in the catalog fails the report. The catalog is `--kev-filename` (`GATECHECK_KEV_FILENAME`) or, with no file, the CISA feed. `--kev-url` (`GATECHECK_KEV_URL`) changes the feed. Grype ids are compared without regard to case, and a Grype match's related CVE ids are checked too.
 5. **EPSS risk acceptance.** A CVE is removed when the configured `score` is greater than that CVE's EPSS score. A CVE with no EPSS row is kept. A CVE whose score is equal to the configured score is kept.
-6. **EPSS limit.** A CVE fails when its EPSS score is greater than `score`. A CVE with no EPSS row passes this rule. A score equal to the limit passes. Data comes from `--epss-filename` or `GATECHECK_EPSS_FILENAME`, or from the API. `GATECHECK_EPSS_URL` overrides the API. There is no `--epss-url` flag on `validate`.
+6. **EPSS limit.** A CVE fails when its EPSS score is greater than `score`. A CVE with no EPSS row passes this rule. A score equal to the limit passes. Data comes from `--epss-filename` or `GATECHECK_EPSS_FILENAME`, or from the API. `--epss-url` (`GATECHECK_EPSS_URL`) changes the API.
 7. **Severity limit.** For each enabled severity, the report fails when the count is greater than `limit`. `limit: 0` allows none. Counts that are equal to the limit pass. Grype, CycloneDX, Trivy, and osv-scanner severities are `critical`, `high`, `medium`, and `low`. `negligible` and `unknown` have no limit field.
 
 Any CycloneDX JSON BOM uses the `cyclonedx` rules, including a BOM from Grype, Trivy, Syft, or another tool. The severity is the highest rating. A rating with a score and no severity word uses CVSS ranges. A CVSS v2 method does not produce critical. `important` counts as high, and `moderate` counts as medium. `negligible` counts as none. Empty ratings use a top-level `severity` string when the producer set one, otherwise `unknown`. `unknown`, `none`, and `info` are not counted by the critical, high, medium, or low limits. The id is the vulnerability `id`, or the `bom-ref` when `id` is empty.
@@ -72,7 +79,7 @@ When `limitEnabled` is true, any finding in the report fails validation. There i
 
 Line, function, and branch coverage are each `covered / total`. The config thresholds are those ratios, from 0 to 1. The check fails when the report's ratio is less than the threshold. A ratio equal to the threshold passes. All three checks run, and each failure is reported. A report with no records of a kind, such as LCOV without branch records, has no ratio for it. `list` prints `N/A`, and `validate` skips that threshold with a warning.
 
-`0.8` means 80 percent. `80.0` fails a normal report, because `0.8 < 80`.
+`0.8` means 80 percent. A threshold over 1 is read as a percent, so `80` means `0.8`, and a warning is logged.
 
 `list` prints coverage as a percent. The config value stays a ratio.
 

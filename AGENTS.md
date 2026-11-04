@@ -14,7 +14,7 @@ This file is for agents changing the gatecheck repository. To use the gatecheck 
 
 ## Layout
 
-- `cmd/`: Cobra commands. `cmd/gatecheck` is `main`. `new<Name>Command` wires flags. Command behavior that is not flag parsing lives in `pkg/gatecheck`.
+- `cmd/`: Cobra commands. `cmd/gatecheck` is `main`. `new<Name>Command` builds the command and its flags. Command behavior that is not flag parsing lives in `pkg/gatecheck`.
 - `internal/fetch`: download and SHA-256 checks. `internal/bootstrap`: scanner install and passthrough. Pinned versions are the constants in `internal/bootstrap/versions.go`.
 - `pkg/`: report decoding, validation, bundles, EPSS, and KEV.
 - `docs/`: mdBook source for docs.gatecheck.dev. `docs/agent-guide.md` is the agent guide embedded by `docs/embed.go`.
@@ -26,5 +26,7 @@ This file is for agents changing the gatecheck repository. To use the gatecheck 
 - Check `gatecheck <command> --help` before describing a flag. `docs/cli-reference.md` matches the CLI on main.
 - Report type is detected from file contents. A lowercase filename substring is the fallback when the contents are ambiguous. See `docs/supported-reports.md`.
 - Coverage thresholds and EPSS scores are ratios from 0 to 1.
-- Exit codes from `cmd/gatecheck`: 0 success, 1 threshold failure (`gatecheck.ErrValidationFailure`), 255 any other error (`os.Exit(-1)`). `grype`, `syft`, `gitleaks`, `semgrep`, `osemgrep`, `trivy`, and `osv-scanner` return the scanner's status. A missing scanner still exits 255.
+- Exit codes come from `cmd.ExitCode`: 0 success, 1 threshold failure (`gatecheck.ErrValidationFailure`), 3 EPSS or KEV data failure (`gatecheck.ErrExternalData`), 2 any other error. The scanner passthrough commands return the scanner's status. A missing scanner exits 2.
+- `cmd.NewGatecheckCommand` builds a new command tree on each call. Keep command state in the command's flags, not package variables. Settings are read flag, then `GATECHECK_*` environment variable, then default, through the helpers in `cmd/settings.go`.
+- Tests in `cmd/cli_test.go` run the real command tree. Add a case there for a new flag or exit path.
 - Do not add copyright notices.

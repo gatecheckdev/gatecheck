@@ -15,6 +15,7 @@ import (
 )
 
 func TestUpdateCommandFlags(t *testing.T) {
+	updateCmd := newUpdateCommand()
 	if updateCmd.Name() != "update" {
 		t.Fatalf("name %s", updateCmd.Name())
 	}
@@ -119,36 +120,21 @@ func resetUpdateCommand(t *testing.T) {
 	t.Helper()
 	updateAPIBase = ""
 	updateExecutable = ""
-	if err := updateCmd.Flags().Set("check", "false"); err != nil {
-		t.Fatal(err)
-	}
-	if err := updateCmd.Flags().Set("version", ""); err != nil {
-		t.Fatal(err)
-	}
-	if err := updateCmd.Flags().Set("yes", "false"); err != nil {
-		t.Fatal(err)
-	}
 	t.Cleanup(func() {
 		updateAPIBase = ""
 		updateExecutable = ""
-		_ = updateCmd.Flags().Set("check", "false")
-		_ = updateCmd.Flags().Set("version", "")
-		_ = updateCmd.Flags().Set("yes", "false")
-		updateCmd.SetArgs(nil)
 	})
 }
 
 func executeUpdate(t *testing.T, stdin string, args ...string) (string, string, error) {
 	t.Helper()
-	addCommandOnce(gatecheckCmd, updateCmd)
 	out := &bytes.Buffer{}
 	errBuf := &bytes.Buffer{}
-	root := updateCmd.Root()
+	root := NewGatecheckCommand()
 	root.SetOut(out)
 	root.SetErr(errBuf)
 	root.SetIn(strings.NewReader(stdin))
 	root.SetArgs(append([]string{"update"}, args...))
 	err := root.Execute()
-	t.Cleanup(func() { root.SetArgs([]string{}) })
 	return out.String(), errBuf.String(), err
 }

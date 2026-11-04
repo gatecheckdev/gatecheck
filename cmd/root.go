@@ -1,117 +1,117 @@
-// Package cmd contains the CLI code for Gatecheck
+// Package cmd contains the CLI code for Gatecheck.
 //
-// # Organization Methodology
-//
-// The goal for this package is readability, ease of maintainence, and
-// seperation of concerns for easier testing and debugging.
-//
-// new<cmd name>Command functions should only build the command structure
-// to include flag, cli options, and viper bindings.
-// sub commands can also be included here as determined by the complexity
-// of the command.
-//
-// run<Cmd/sub cmd name> functions are specific to cobra's runE functions
-// it handles parsing arguments, opening files, and early returning errors.
-// These commands eventually result in calls to functions in the package
-// github.com/gatecheckdev/gatecheck/pkg/gatecheck
-
-// The root file contains common helper functions used by other commands.
-// Major commands can be in seperate files for ease of readability.
+// NewGatecheckCommand builds a fresh command tree on every call, so commands
+// hold no state between runs. Each new<Name>Command function wires flags and
+// reads settings in the order flag, then environment variable, then default.
+// Command behavior that is not flag parsing lives in
+// github.com/gatecheckdev/gatecheck/pkg/gatecheck.
 package cmd
 
 import (
-	"log/slog"
-	"sync"
+	"errors"
+	"fmt"
 
 	"github.com/gatecheckdev/gatecheck/pkg/gatecheck"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
-var (
-	ApplicationMetadata gatecheck.ApplicationMetadata
-	LogLeveler          *slog.LevelVar = &slog.LevelVar{}
+// ApplicationMetadata is the build information printed by version. main sets it.
+var ApplicationMetadata gatecheck.ApplicationMetadata
+
+// Exit codes.
+const (
+	ExitOK = 0
+	// ExitValidation means a report failed a configured threshold.
+	ExitValidation = 1
+	// ExitUsage means a bad command line, a file that could not be read or
+	// written, or a report or config that could not be decoded.
+	ExitUsage = 2
+	// ExitFetch means EPSS or KEV data could not be downloaded or read.
+	ExitFetch = 3
 )
 
-var gatecheckCmd = &cobra.Command{
-	Use:   "gatecheck",
-	Short: "Report validation tool",
-	PersistentPreRun: func(cmd *cobra.Command, args []string) {
-		verbose := RuntimeConfig.Verbose.Value().(bool)
-		silent := RuntimeConfig.Silent.Value().(bool)
-
-		switch {
-		case verbose:
-			LogLeveler.Set(slog.LevelDebug)
-			slog.Debug("debug logging enabled")
-		case silent:
-			LogLeveler.Set(slog.LevelError)
-			slog.Debug("silent logging enabled")
-		}
-	},
-	RunE: func(cmd *cobra.Command, args []string) error {
-		versionFlag, _ := cmd.Flags().GetBool("version")
-		if versionFlag {
-			return versionCmd.RunE(cmd, args)
-		}
-		return nil
-	},
+// ExitCode maps an error returned by the command tree to a process status.
+// Scanner passthrough commands return the scanner's own status.
+func ExitCode(err error) int {
+	if err == nil {
+		return ExitOK
+	}
+	var coder interface{ ExitCode() int }
+	if errors.As(err, &coder) {
+		return coder.ExitCode()
+	}
+	switch {
+	case errors.Is(err, gatecheck.ErrValidationFailure):
+		return ExitValidation
+	case errors.Is(err, gatecheck.ErrExternalData):
+		return ExitFetch
+	default:
+		return ExitUsage
+	}
 }
 
-var versionCmd = &cobra.Command{
-	Use:   "version",
-	Short: "print version and build information",
-	RunE: func(cmd *cobra.Command, args []string) error {
-		_, err := ApplicationMetadata.WriteTo(cmd.OutOrStdout())
-		return err
-	},
-}
-
-var setupOnce sync.Once
-
-// NewGatecheckCommand the root for all CLI commands
+// NewGatecheckCommand returns a new root command and its subcommands.
 func NewGatecheckCommand() *cobra.Command {
-	setupOnce.Do(func() {
-		RuntimeConfig.Verbose.SetupCobra(gatecheckCmd)
-		RuntimeConfig.Silent.SetupCobra(gatecheckCmd)
-
-		gatecheckCmd.MarkFlagsMutuallyExclusive("verbose", "silent")
-		gatecheckCmd.Flags().Bool("version", false, "print version and build information")
-
-		_ = viper.BindEnv("cli.audit", "GATECHECK_CLI_AUDIT")
-
-		_ = viper.BindEnv("cli.list.epss-file", "GATECHECK_EPSS_FILE")
-		_ = viper.BindEnv("cli.validate.epss-file", "GATECHECK_EPSS_FILE")
-
-		_ = viper.BindEnv("cli.validate.kev-file", "GATECHECK_KEV_FILE")
-
-		_ = viper.BindEnv("api.epss-url", "GATECHECK_EPSS_URL")
-		_ = viper.BindEnv("api.kev-url", "GATECHECK_KEV_URL")
-
-		gatecheckCmd.SilenceUsage = true
-
-		gatecheckCmd.AddCommand(
-			versionCmd,
-			newConfigCommand(),
-			newListCommand(),
-			newListAllCommand(),
-			newBundleCommand(),
-			newValidateCommand(),
-			newDownloadCommand(),
-			newAgentGuideCommand(),
-			newBootstrapCommand(),
-			newPassthroughCommand("grype", "Run the managed grype scanner"),
-			newPassthroughCommand("syft", "Run the managed syft scanner"),
-			newPassthroughCommand("gitleaks", "Run the managed gitleaks scanner"),
-			newPassthroughCommand("semgrep", "Run osemgrep from the managed semgrep wheel"),
-			newPassthroughCommand("osemgrep", "Run osemgrep from the managed semgrep wheel"),
-			newPassthroughCommand("trivy", "Run the managed trivy scanner"),
-			newPassthroughCommand("osv-scanner", "Run the managed osv-scanner"),
-			newPassthroughCommand("gosec", "Run the managed gosec scanner"),
-			newPassthroughCommand("hadolint", "Run the managed hadolint linter"),
-			newPassthroughCommand("zizmor", "Run the managed zizmor scanner"),
-		)
-		addCommandOnce(gatecheckCmd, updateCmd)
+	root := &cobra.Command{
+		Use:           "gatecheck",
+		Short:         "Report validation tool",
+		SilenceUsage:  true,
+		SilenceErrors: false,
+		Args:          cobra.NoArgs,
+		PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
+			return setupLogging(cmd)
+		},
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			if show, _ := cmd.Flags().GetBool("version"); show {
+				_, err := ApplicationMetadata.WriteTo(cmd.OutOrStdout())
+				return err
+			}
+			return nil
+		},
+	}
+	addLoggingFlags(root)
+	root.Flags().Bool("version", false, "print version and build information")
+	root.SetFlagErrorFunc(func(cmd *cobra.Command, err error) error {
+		return fmt.Errorf("%w\nRun '%s --help' for usage", err, cmd.CommandPath())
 	})
-	return gatecheckCmd
+
+	root.AddCommand(
+		newVersionCommand(),
+		newConfigCommand(),
+		newListCommand(),
+		newListAllCommand(),
+		newBundleCommand(),
+		newValidateCommand(),
+		newDownloadCommand(),
+		newAgentGuideCommand(),
+		newBootstrapCommand(),
+		newUpdateCommand(),
+	)
+	for _, tool := range []struct{ name, short string }{
+		{"grype", "Run the managed grype scanner"},
+		{"syft", "Run the managed syft scanner"},
+		{"gitleaks", "Run the managed gitleaks scanner"},
+		{"semgrep", "Run osemgrep from the managed semgrep wheel"},
+		{"osemgrep", "Run osemgrep from the managed semgrep wheel"},
+		{"trivy", "Run the managed trivy scanner"},
+		{"osv-scanner", "Run the managed osv-scanner"},
+		{"gosec", "Run the managed gosec scanner"},
+		{"hadolint", "Run the managed hadolint linter"},
+		{"zizmor", "Run the managed zizmor scanner"},
+	} {
+		root.AddCommand(newPassthroughCommand(tool.name, tool.short))
+	}
+	return root
+}
+
+func newVersionCommand() *cobra.Command {
+	return &cobra.Command{
+		Use:   "version",
+		Short: "print version and build information",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			_, err := ApplicationMetadata.WriteTo(cmd.OutOrStdout())
+			return err
+		},
+	}
 }

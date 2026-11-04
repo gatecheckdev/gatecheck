@@ -9,11 +9,12 @@ import (
 	"log/slog"
 	"os"
 	"path"
+	"sort"
+	"strings"
 
 	"github.com/gatecheckdev/gatecheck/pkg/format"
 	"github.com/gatecheckdev/gatecheck/pkg/vex"
 	"github.com/pelletier/go-toml/v2"
-	"github.com/spf13/viper"
 	"gopkg.in/yaml.v3"
 )
 
@@ -42,17 +43,21 @@ type Config struct {
 func (c *Config) String() string {
 	buf := new(bytes.Buffer)
 	_ = json.NewEncoder(buf).Encode(c)
-
-	v := viper.New()
-	v.SetConfigType("json")
-	_ = v.ReadConfig(buf)
+	var tree map[string]any
+	_ = json.Unmarshal(buf.Bytes(), &tree)
+	rows := map[string]string{}
+	flattenConfig("", tree, rows)
+	keys := make([]string, 0, len(rows))
+	for key := range rows {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
 
 	contentBuf := new(bytes.Buffer)
 	table := format.NewTable(contentBuf)
 	table.Header([]string{"config key", "value"})
-
-	for _, key := range v.AllKeys() {
-		if err := table.Append([]string{key, fmt.Sprintf("%v", v.Get(key))}); err != nil {
+	for _, key := range keys {
+		if err := table.Append([]string{key, rows[key]}); err != nil {
 			slog.Error("append config row", "error", err)
 			return contentBuf.String()
 		}
@@ -61,6 +66,21 @@ func (c *Config) String() string {
 		slog.Error("render config table", "error", err)
 	}
 	return contentBuf.String()
+}
+
+func flattenConfig(prefix string, value any, out map[string]string) {
+	switch v := value.(type) {
+	case map[string]any:
+		for key, child := range v {
+			name := strings.ToLower(key)
+			if prefix != "" {
+				name = prefix + "." + name
+			}
+			flattenConfig(name, child, out)
+		}
+	default:
+		out[prefix] = fmt.Sprintf("%v", v)
+	}
 }
 
 type configCoverageReport struct {
@@ -156,7 +176,7 @@ type configCVE struct {
 	ID       string `json:"id" toml:"id" yaml:"id"`
 	Metadata struct {
 		Tags []string `json:"tags" toml:"tags" yaml:"tags"`
-	}
+	} `json:"metadata" toml:"metadata" yaml:"metadata"`
 }
 
 type configLimit struct {
@@ -253,102 +273,155 @@ func NewDefaultConfig() *Config {
 	}
 }
 
+// WriteDefaultConfig writes the default config, tagged as generated.
 func WriteDefaultConfig(w io.Writer, format string) error {
 	config := NewDefaultConfig()
 	config.Metadata.Tags = append(config.Metadata.Tags, "auto generated from CLI")
 	return EncodeConfigTo(w, config, format)
 }
 
-func EncodeConfigTo(w io.Writer, config *Config, format string) error {
-	var encoder interface {
-		Encode(any) error
+// ConfigFormat returns the canonical config format for a name or extension:
+// "json", "yaml", or "toml". "yml" and a leading dot are accepted.
+func ConfigFormat(name string) (string, error) {
+	switch strings.ToLower(strings.TrimPrefix(strings.TrimSpace(name), ".")) {
+	case "json":
+		return "json", nil
+	case "yaml", "yml":
+		return "yaml", nil
+	case "toml":
+		return "toml", nil
+	default:
+		return "", fmt.Errorf("unsupported config format %q, must be json, toml, yaml, or yml", name)
 	}
+}
 
-	slog.Debug("encode config file", "format", format)
-	switch format {
+// EncodeConfigTo writes config in format (json, yaml, yml, or toml, with or
+// without a leading dot). JSON and YAML are indented by two spaces.
+func EncodeConfigTo(w io.Writer, config *Config, format string) error {
+	canonical, err := ConfigFormat(format)
+	if err != nil {
+		return err
+	}
+	slog.Debug("encode config file", "format", canonical)
+	switch canonical {
 	case "json":
 		enc := json.NewEncoder(w)
 		enc.SetIndent("", "  ")
-		encoder = enc
-	case "yaml", "yml":
+		return enc.Encode(config)
+	case "yaml":
 		enc := yaml.NewEncoder(w)
 		enc.SetIndent(2)
-		encoder = enc
-	case "toml":
-		encoder = toml.NewEncoder(w)
+		if err := enc.Encode(config); err != nil {
+			return err
+		}
+		return enc.Close()
 	default:
-		return fmt.Errorf("unsupported format '%s'", format)
+		enc := toml.NewEncoder(w)
+		enc.SetIndentTables(true)
+		return enc.Encode(config)
 	}
-
-	return encoder.Encode(config)
 }
 
+// ConfigEncoder writes a config in the format named by a file extension.
 type ConfigEncoder struct {
 	writer io.Writer
 	ext    string
 }
 
+// NewConfigEncoder takes ".json", ".yaml", ".yml", or ".toml". The dot is optional.
 func NewConfigEncoder(w io.Writer, ext string) *ConfigEncoder {
-	return &ConfigEncoder{
-		writer: w,
-		ext:    ext,
-	}
+	return &ConfigEncoder{writer: w, ext: ext}
 }
 
 func (e *ConfigEncoder) Encode(config *Config) error {
-	var encoder interface {
-		Encode(any) error
-	}
-
-	switch e.ext {
-	case ".json":
-		encoder = json.NewEncoder(e.writer)
-	case ".toml":
-		encoder = toml.NewEncoder(e.writer)
-	case ".yaml", ".yml":
-		encoder = yaml.NewEncoder(e.writer)
-	default:
-		return errors.New("invalid file extension, only json, toml, yaml or yml supported")
-	}
-
-	return encoder.Encode(config)
-
+	return EncodeConfigTo(e.writer, config, e.ext)
 }
 
+// ConfigDecoder reads a config file. The extension picks the format.
 type ConfigDecoder struct {
 	filename string
 }
 
 func NewConfigDecoder(filename string) *ConfigDecoder {
-	return &ConfigDecoder{
-		filename: filename,
-	}
+	return &ConfigDecoder{filename: filename}
 }
 
-func (d *ConfigDecoder) Decode(config *Config) error {
-	ext := path.Ext(d.filename)
+// ErrUnknownConfigKeys means a config file has keys gatecheck does not read.
+var ErrUnknownConfigKeys = errors.New("config has unknown keys")
 
-	slog.Debug("decode", "filename", d.filename, "extension", ext)
-	f, err := os.Open(d.filename)
+// Decode reads the file into config. Keys gatecheck does not know are
+// skipped. When there are any, Decode fills config and then returns an error
+// wrapping ErrUnknownConfigKeys, so the caller can warn and go on.
+func (d *ConfigDecoder) Decode(config *Config) error {
+	slog.Debug("decode config", "filename", d.filename)
+	canonical, err := ConfigFormat(path.Ext(d.filename))
+	if err != nil {
+		return fmt.Errorf("%s: %w", d.filename, err)
+	}
+	content, err := os.ReadFile(d.filename)
 	if err != nil {
 		return err
 	}
-	defer func() { _ = f.Close() }()
+	return DecodeConfig(content, canonical, config)
+}
 
-	var decoder interface {
-		Decode(any) error
+// DecodeConfig reads content in format into config. See ConfigDecoder.Decode
+// for how unknown keys are reported.
+func DecodeConfig(content []byte, format string, config *Config) error {
+	canonical, err := ConfigFormat(format)
+	if err != nil {
+		return err
 	}
-
-	switch ext {
-	case ".json":
-		decoder = json.NewDecoder(f)
-	case ".toml":
-		decoder = toml.NewDecoder(f)
-	case ".yaml", ".yml":
-		decoder = yaml.NewDecoder(f)
+	var loose error
+	switch canonical {
+	case "json":
+		loose = json.Unmarshal(content, config)
+	case "yaml":
+		loose = yaml.Unmarshal(content, config)
 	default:
-		return errors.New("invalid file extension, only json, toml, yaml or yml supported")
+		loose = toml.Unmarshal(content, config)
 	}
+	if loose != nil {
+		return loose
+	}
+	if unknown := unknownConfigKeys(content, canonical); unknown != "" {
+		return fmt.Errorf("%w: %s", ErrUnknownConfigKeys, unknown)
+	}
+	return nil
+}
 
-	return decoder.Decode(config)
+// unknownConfigKeys decodes content strictly into a scratch config and returns
+// the decoder's description of the unknown keys, or "".
+func unknownConfigKeys(content []byte, format string) string {
+	scratch := &Config{}
+	var err error
+	switch format {
+	case "json":
+		dec := json.NewDecoder(bytes.NewReader(content))
+		dec.DisallowUnknownFields()
+		err = dec.Decode(scratch)
+	case "yaml":
+		dec := yaml.NewDecoder(bytes.NewReader(content))
+		dec.KnownFields(true)
+		err = dec.Decode(scratch)
+		if errors.Is(err, io.EOF) {
+			err = nil
+		}
+	default:
+		dec := toml.NewDecoder(bytes.NewReader(content))
+		dec.DisallowUnknownFields()
+		err = dec.Decode(scratch)
+		var strict *toml.StrictMissingError
+		if errors.As(err, &strict) {
+			keys := make([]string, 0, len(strict.Errors))
+			for _, e := range strict.Errors {
+				keys = append(keys, strings.Join(e.Key(), "."))
+			}
+			return strings.Join(keys, ", ")
+		}
+	}
+	if err == nil {
+		return ""
+	}
+	return strings.TrimSpace(err.Error())
 }

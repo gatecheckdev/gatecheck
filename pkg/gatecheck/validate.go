@@ -21,6 +21,9 @@ import (
 
 var ErrValidationFailure = errors.New("validation failure")
 
+// ErrExternalData means EPSS or KEV data could not be downloaded or read.
+var ErrExternalData = errors.New("cannot load EPSS or KEV data")
+
 func newValidationErr(details string) error {
 	return fmt.Errorf("%w: %s", ErrValidationFailure, details)
 }
@@ -274,7 +277,7 @@ func ruleGrypeKEVLimit(config *Config, report *artifacts.GrypeReportMin, catalog
 	// Check if vulnerability is in the KEV Catalog
 	for _, vulnerability := range report.Matches {
 		inKEVCatalog := slices.ContainsFunc(catalog.Vulnerabilities, func(kevVul kev.Vulnerability) bool {
-			return kevVul.CveID == vulnerability.Vulnerability.ID
+			return slices.ContainsFunc(vulnerability.IDs(), func(id string) bool { return strings.EqualFold(kevVul.CveID, id) })
 		})
 		if inKEVCatalog {
 			badCVEs = append(badCVEs, vulnerability.Vulnerability.ID)
@@ -646,7 +649,7 @@ func validateGrypeReportWithFetch(r io.Reader, config *Config, options *fetchOpt
 
 	if err := LoadCatalogAndData(config, catalog, epssData, options); err != nil {
 		slog.Error("validate grype report: load epss data from file or api", "error", err)
-		return errors.New("cannot run Grype validation: Cannot load external validation data, see log for details")
+		return fmt.Errorf("%w: Grype validation: %w", ErrExternalData, err)
 	}
 
 	return validateGrypeFrom(r, config, catalog, epssData)
@@ -671,7 +674,7 @@ func validateCyclonedxReportWithFetch(r io.Reader, config *Config, options *fetc
 
 	if err := LoadCatalogAndData(config, catalog, epssData, options); err != nil {
 		slog.Error("validate cyclonedx report: load epss data from file or api", "error", err)
-		return errors.New("cannot run Cyclonedx validation: Cannot load external validation data, See log for details")
+		return fmt.Errorf("%w: Cyclonedx validation: %w", ErrExternalData, err)
 	}
 	return validateCyclonedxFrom(r, config, catalog, epssData)
 }
@@ -733,6 +736,7 @@ func validateCoverage(src io.Reader, kind artifacts.ReportKind, targetFilename s
 	var errs error
 
 	for _, check := range checks {
+		check.threshold = coverageThreshold(check.name, check.threshold)
 		ratio, ok := coverageRatio(check.covered, check.total)
 		if !ok {
 			if check.threshold > 0 {
@@ -749,6 +753,16 @@ func validateCoverage(src io.Reader, kind artifacts.ReportKind, targetFilename s
 	}
 
 	return errs
+}
+
+// coverageThreshold reads a threshold over 1 as a percent, so 80 means 0.8.
+func coverageThreshold(name string, threshold float32) float32 {
+	if threshold <= 1 {
+		return threshold
+	}
+	ratio := threshold / 100
+	slog.Warn("coverage threshold is over 1, reading it as a percent", "kind", name, "threshold", threshold, "ratio", ratio)
+	return ratio
 }
 
 // coverageRatio returns false when total is zero, so a report with no records
@@ -772,8 +786,8 @@ func validateBundle(r io.Reader, config *Config, options *fetchOptions) error {
 	epssData := new(epss.Data)
 
 	if err := LoadCatalogAndData(config, catalog, epssData, options); err != nil {
-		slog.Error("validate cyclonedx report: load epss data from file or api", "error", err)
-		return errors.New("cannot run Cyclonedx validation: Cannot load external validation data, See log for details")
+		slog.Error("validate bundle: load epss data from file or api", "error", err)
+		return fmt.Errorf("%w: bundle validation: %w", ErrExternalData, err)
 	}
 
 	var errs error

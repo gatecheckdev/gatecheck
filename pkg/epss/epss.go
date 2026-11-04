@@ -179,7 +179,12 @@ func ParseEPSSDataCSV(r io.Reader, data *Data) error {
 		slog.Warn("data model does not match supported model", "want", dataModel, "got", data.ModelVersion)
 	}
 
-	scoreDate, err := time.Parse(modelDateLayout, strings.ReplaceAll(parts[1], "score_date:", ""))
+	rawDate := strings.ReplaceAll(parts[1], "score_date:", "")
+	scoreDate, err := time.Parse(modelDateLayout, rawDate)
+	if err != nil {
+		// Older FIRST files write the offset as +0000.
+		scoreDate, err = time.Parse("2006-01-02T15:04:05-0700", rawDate)
+	}
 	if err != nil {
 		return fmt.Errorf("failed to parse EPSS CSV, invalid date format in metadata header '%s'", scanner.Text())
 	}

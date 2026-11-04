@@ -3,6 +3,7 @@ package gatecheck
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"log/slog"
 	"slices"
@@ -83,7 +84,7 @@ func validateOSVReportWithFetch(r io.Reader, config *Config, options *fetchOptio
 	epssData := new(epss.Data)
 	if err := LoadCatalogAndData(config, catalog, epssData, options); err != nil {
 		slog.Error("validate osv-scanner report: load epss data from file or api", "error", err)
-		return errors.New("cannot run osv-scanner validation: Cannot load external validation data, see log for details")
+		return fmt.Errorf("%w: osv-scanner validation: %w", ErrExternalData, err)
 	}
 	return validateOSVFrom(r, config, catalog, epssData)
 }

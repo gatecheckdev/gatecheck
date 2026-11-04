@@ -3,6 +3,7 @@ package gatecheck
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"log/slog"
 	"slices"
@@ -83,7 +84,7 @@ func validateTrivyReportWithFetch(r io.Reader, config *Config, options *fetchOpt
 	epssData := new(epss.Data)
 	if err := LoadCatalogAndData(config, catalog, epssData, options); err != nil {
 		slog.Error("validate trivy report: load epss data from file or api", "error", err)
-		return errors.New("cannot run Trivy validation: Cannot load external validation data, see log for details")
+		return fmt.Errorf("%w: Trivy validation: %w", ErrExternalData, err)
 	}
 	return validateTrivyFrom(r, config, catalog, epssData)
 }

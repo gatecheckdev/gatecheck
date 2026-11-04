@@ -1,11 +1,16 @@
 package gatecheck
 
 import (
+	"errors"
+	"fmt"
 	"io"
 	"log/slog"
 
 	"github.com/gatecheckdev/gatecheck/pkg/archive"
 )
+
+// ErrBundleLabelNotFound means RemoveFromBundle was asked for a label the bundle does not have.
+var ErrBundleLabelNotFound = errors.New("bundle has no file with label")
 
 // CreateBundle create a new bundle with a file
 //
@@ -71,6 +76,9 @@ func RemoveFromBundle(bundleRWS io.ReadWriteSeeker, label string) error {
 	bundle := archive.NewBundle()
 	if err := archive.UntarGzipBundle(bundleRWS, bundle); err != nil {
 		return err
+	}
+	if _, ok := bundle.Manifest().Files[label]; !ok {
+		return fmt.Errorf("%w: %q", ErrBundleLabelNotFound, label)
 	}
 	bundle.Remove(label)
 	// Seek errors are unlikely so just capture for edge cases

@@ -17,18 +17,6 @@ import (
 func TestEPSSDownloadCommandCachesAndKeepsFlags(t *testing.T) {
 	t.Setenv("GATECHECK_EPSS_CACHE", "")
 	t.Setenv("GATECHECK_EPSS_CACHE_DIR", "")
-	t.Cleanup(func() {
-		if p, ok := RuntimeConfig.EPSSNoCache.FlagValueP.(*bool); ok && p != nil {
-			*p = false
-		}
-		if p, ok := RuntimeConfig.EPSSCacheDir.FlagValueP.(*string); ok && p != nil {
-			*p = ""
-		}
-		if p, ok := RuntimeConfig.EPSSURL.FlagValueP.(*string); ok && p != nil {
-			*p = ""
-		}
-	})
-
 	var gets atomic.Int32
 	payload := gzipCSV(t, "#model_version:v2025.03.14,score_date:2026-10-22T00:00:00Z\ncve,epss,percentile\nCVE-2024-1234,0.42,0.84\n")
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

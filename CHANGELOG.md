@@ -7,13 +7,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [UNRELEASED]
 
+This release reworks the CLI settings layer and changes exit codes. See Changed. Fixes #73.
+
 ### Added
+
+- `--log-level debug|info|warn|error` and `--log-format text|json` on every command, with `GATECHECK_LOG_LEVEL` and `GATECHECK_LOG_FORMAT`. Text logs are colored only on a terminal, and `NO_COLOR` turns color off.
+- `validate --format table|markdown|json` prints the result to stdout. `list` and `list-all` take `--format table|markdown|json`. `list-all --format json` is one array keyed by file.
+- `validate --input-type`, and `validate` reads stdin when FILE is omitted and `--input-type` is set.
+- `validate --epss-url` and `--kev-url`. `list-all --epss-filename` and `--epss-url`.
+- `GATECHECK_KEV_FILENAME` sets `--kev-filename`.
+- `validate` warns when there is no config, and when the config has keys gatecheck does not read. `config convert` warns about those keys too.
 
 - `gatecheck bootstrap --tools gosec,hadolint,zizmor` installs pinned gosec 2.30.0, hadolint 2.15.1, and zizmor 1.32.0. `gatecheck gosec`, `gatecheck hadolint`, and `gatecheck zizmor` run them. Their SARIF output is gated with the `sarif` config section. They are not part of the default install. zizmor publishes no checksum file, so its asset digests are pinned in gatecheck.
 - `gatecheck bootstrap --list` shows every supported tool.
 - The `license` config section fails Syft JSON and CycloneDX SBOMs whose package licenses match `deny` patterns, fall outside a non-empty `allow` list, or are missing when `denyUnknown` is set. SPDX `AND`, `OR`, and `WITH` expressions are evaluated. `packageRiskAcceptance` skips packages by purl or name. Fixes #103.
 - `list` prints the packages and licenses in Syft JSON, and `validate` and bundles check Syft JSON with the license rules. Both used to return an error.
 - `validate --vex FILE`, `GATECHECK_VEX`, and the config's `vex.files` read OpenVEX and CycloneDX VEX documents. Grype, CycloneDX, Trivy, and osv-scanner findings marked `not_affected`, `fixed`, `false_positive`, or `resolved` are skipped before the KEV, EPSS, and severity rules. A statement that names packages matches by package URL. The latest statement wins. Fixes #102.
+
+### Changed
+
+- Exit codes: 2 for usage errors, files that cannot be read or written, and reports, configs, or VEX files that cannot be decoded; 3 when EPSS or KEV data cannot be loaded. These used to be 255. A missing scanner for a passthrough command also exits 2.
+- `--audit` only turns a threshold failure into exit 0. Unsupported reports, decode errors, and EPSS or KEV failures now fail in audit mode too.
+- `--silent` keeps warnings. It used to show errors only. Use `--log-level error` for the old behavior.
+- Coverage thresholds over 1 are read as percents, so `80` means `0.8`, with a warning.
+- `config init` and `config convert` indent JSON and YAML by two spaces, and indent TOML tables. JSON config files write `metadata` for CVE entries instead of `Metadata`. Both spellings are read.
+- `list-all` exits 2 when a file cannot be read or listed. It still lists the other files first. It loads EPSS data once per run instead of once per file.
+- `bundle remove` of a label that is not in the bundle exits 2 and leaves the bundle unchanged.
+- Each run builds a new command tree. configkit and Viper are gone. Settings are read flag, then environment variable, then default.
+
+### Fixed
+
+- `GATECHECK_VERBOSE`, `GATECHECK_SILENT`, and `GATECHECK_AUDIT` panicked on any value. They now take booleans, and a bad value is a usage error.
+- `--audit=false` lost to `GATECHECK_AUDIT=true`. A flag now wins over its variable.
+- The KEV file setting read `GATECHECK_EPSS_FILENAME`, so setting that variable made `validate` read the EPSS CSV as KEV.
+- `bundle create` did not truncate an existing file, and `bundle add` and `bundle remove` could leave old bytes after a shorter bundle.
+- The Grype KEV rule compared ids with case. It now ignores case and also checks a match's related CVE ids.
+- EPSS CSV files with a `+0000` offset in the `score_date` header failed to parse.
+- Config files are closed after reading. The EPSS and KEV files passed to `validate` and `list` are closed when the command ends.
 
 ## [0.10.0] - 2026-10-30
 

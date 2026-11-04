@@ -27,7 +27,7 @@ The bundle file has to exist already.
 gatecheck bundle remove gatecheck-bundle.tar.gz semgrep-report.json
 ```
 
-`bundle rm` is the same command. The second argument is the label. A label that is not in the bundle is logged, and the command exits 0.
+`bundle rm` is the same command. The second argument is the label. A label that is not in the bundle is an error. The bundle is left unchanged and the command exits 2.
 
 ## Inspect
 

@@ -1,6 +1,7 @@
 package gatecheck
 
 import (
+	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -131,7 +132,10 @@ func DownloadEPSS(w io.Writer, optionFuncs ...optionFunc) error {
 		f(options)
 	}
 
-	return epss.DownloadData(w, options.epssDownloadOptions()...)
+	if err := epss.DownloadData(w, options.epssDownloadOptions()...); err != nil {
+		return fmt.Errorf("%w: %w", ErrExternalData, err)
+	}
+	return nil
 }
 
 func DownloadKEV(w io.Writer, optionFuncs ...optionFunc) error {
@@ -140,5 +144,8 @@ func DownloadKEV(w io.Writer, optionFuncs ...optionFunc) error {
 		f(options)
 	}
 
-	return kev.DownloadData(w, kev.WithClient(options.kevClient), kev.WithURL(options.kevURL))
+	if err := kev.DownloadData(w, kev.WithClient(options.kevClient), kev.WithURL(options.kevURL)); err != nil {
+		return fmt.Errorf("%w: %w", ErrExternalData, err)
+	}
+	return nil
 }

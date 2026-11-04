@@ -34,7 +34,7 @@ gatecheck validate --config gatecheck.yaml gatecheck-bundle.tar.gz
 gatecheck validate --audit --config gatecheck.yaml grype-report.json
 ```
 
-A threshold failure is printed and the process exits 0. A missing report still exits 255.
+A threshold failure is printed and the process exits 0. A missing report still exits 2, and an EPSS or KEV download failure still exits 3.
 
 ## Bootstrap a scanner
 
