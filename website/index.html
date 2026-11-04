@@ -75,7 +75,7 @@
       <section class="hero wrap" id="top">
         <div class="hero-copy">
           <a class="release-badge" href="https://github.com/gatecheckdev/gatecheck/releases">
-            <span class="release-version">v0.9.0</span>
+            <span class="release-version">v0.11.0</span>
             Latest release · Apache-2.0
           </a>
           <h1>Fail the build when scan results cross <span class="accent">your</span> limits.</h1>
@@ -107,8 +107,8 @@
             </div>
             <p class="install-note" data-note="go">Needs Go 1.26 or newer.</p>
             <p class="install-note" data-note="bin" hidden>
-              Downloads the macOS arm64 archive for v0.9.0. Linux, macOS, and Windows archives are on the
-              <a href="https://github.com/gatecheckdev/gatecheck/releases/tag/v0.9.0">releases page</a>.
+              Downloads the macOS arm64 archive for v0.11.0. Linux, macOS, and Windows archives are on the
+              <a href="https://github.com/gatecheckdev/gatecheck/releases/tag/v0.11.0">releases page</a>.
             </p>
           </div>
 
@@ -173,15 +173,22 @@ Error: validation failure: Grype: Severity Limit Exceeded</pre>
         <div class="strip-inner wrap">
           <span class="strip-label">reads</span>
           <span>Grype</span>
+          <span>Trivy</span>
+          <span>osv-scanner</span>
           <span>CycloneDX</span>
+          <span>Syft</span>
+          <span>SARIF</span>
           <span>Semgrep</span>
           <span>Gitleaks</span>
+          <span>trufflehog</span>
+          <span>Scorecard</span>
           <span>LCOV</span>
           <span>Clover</span>
           <span>Cobertura</span>
           <span class="strip-label">enriches with</span>
           <span>EPSS</span>
           <span>CISA KEV</span>
+          <span>VEX</span>
         </div>
       </section>
 
@@ -189,15 +196,15 @@ Error: validation failure: Grype: Severity Limit Exceeded</pre>
         <div class="section-head">
           <h2 class="section-title section-title-narrow" id="how-title">A report goes in. An exit code comes out.</h2>
           <p class="section-blurb section-blurb-how">
-            No server, no database, no account. Gatecheck runs in the job, reads files, and returns 0 or 1.
+            No server, no database, no account. Gatecheck runs in the job, reads files, and returns an exit code.
           </p>
         </div>
         <div class="steps">
           <div class="step">
             <span class="kicker">01 — report</span>
             <h3>A scanner writes a report</h3>
-            <p>Grype, CycloneDX, Semgrep, Gitleaks, or a coverage file. Gatecheck picks the type from the filename.</p>
-            <div class="codebox">$ grype app:latest -o json &gt; <span class="bright">grype-report.json</span></div>
+            <p>Grype, Trivy, a SARIF tool, an SBOM, a secrets scan, or a coverage file. Gatecheck reads the type from the contents. <code class="bright">gatecheck bootstrap</code> installs pinned, checksum-verified scanners.</p>
+            <div class="codebox">$ gatecheck grype app:latest -o json &gt; <span class="bright">grype-report.json</span></div>
           </div>
           <div class="step">
             <span class="kicker">02 — thresholds</span>
@@ -215,7 +222,7 @@ Error: validation failure: Grype: Severity Limit Exceeded</pre>
           <div class="step">
             <span class="kicker">03 — verdict</span>
             <h3>CI passes or fails</h3>
-            <p><code class="bright">gatecheck validate</code> exits 1 when a limit is crossed and 0 when the report is inside it.</p>
+            <p><code class="bright">gatecheck validate</code> exits 1 when a limit is crossed and 0 when the report is inside it. A bad input exits 2, and missing EPSS or KEV data exits 3, even with <code style="white-space: nowrap">--audit</code>.</p>
             <div class="verdict">
               <div class="verdict-row"><span>inside every limit</span><span class="pass">exit 0 · pass</span></div>
               <div class="verdict-row"><span>a limit crossed</span><span class="fail">exit 1 · fail</span></div>
@@ -234,23 +241,28 @@ Error: validation failure: Grype: Severity Limit Exceeded</pre>
         <div class="check-grid">
           <div class="check">
             <span class="eyebrow">VULNERABILITIES</span>
-            <h3>Grype</h3>
+            <h3>Grype, Trivy, osv&#8209;scanner</h3>
             <p>Severity counts, a CVE deny list, and a list of accepted CVEs.</p>
           </div>
           <div class="check">
             <span class="eyebrow">SBOM</span>
-            <h3>CycloneDX</h3>
-            <p>The same CVE checks for vulnerabilities listed in a CycloneDX SBOM.</p>
+            <h3>CycloneDX and Syft</h3>
+            <p>The same CVE checks for CycloneDX vulnerabilities, and license gating for SBOM packages: deny GPL, require an allow list, or fail unknown licenses.</p>
           </div>
           <div class="check">
             <span class="eyebrow">STATIC ANALYSIS</span>
-            <h3>Semgrep</h3>
-            <p>Separate limits for error, warning, and info findings.</p>
+            <h3>Semgrep and SARIF</h3>
+            <p>Severity limits and rule allow and deny lists for any SARIF tool, such as gosec, hadolint, zizmor, KICS, or Checkov.</p>
           </div>
           <div class="check">
             <span class="eyebrow">SECRETS</span>
-            <h3>Gitleaks</h3>
-            <p>Fail the job when the report contains any secrets.</p>
+            <h3>Gitleaks and trufflehog</h3>
+            <p>Fail the job when a report contains a secret, or only when trufflehog verified it is live.</p>
+          </div>
+          <div class="check">
+            <span class="eyebrow">SUPPLY CHAIN</span>
+            <h3>OpenSSF Scorecard</h3>
+            <p>A minimum aggregate score, and minimums for single checks such as Token-Permissions.</p>
           </div>
           <div class="check">
             <span class="eyebrow">TESTS</span>
@@ -258,19 +270,14 @@ Error: validation failure: Grype: Severity Limit Exceeded</pre>
             <p>Line, function, and branch thresholds for LCOV, Clover, and Cobertura.</p>
           </div>
           <div class="check">
-            <span class="eyebrow">EXPLOIT LIKELIHOOD</span>
-            <h3>EPSS</h3>
-            <p>FIRST scores on <code>ls --epss</code> for Grype and CycloneDX, and a score limit during validate.</p>
+            <span class="eyebrow">EXPLOITS</span>
+            <h3>EPSS and KEV</h3>
+            <p>FIRST EPSS scores on <code style="white-space: nowrap">ls --epss</code> and as a limit, and a fail on any CVE in the CISA known-exploited catalog. <code>download epss</code> and <code>download kev</code> save the data for offline runs.</p>
           </div>
           <div class="check">
-            <span class="eyebrow">KNOWN EXPLOITED</span>
-            <h3>KEV</h3>
-            <p>Fail validate when a CVE appears in the CISA known-exploited catalog.</p>
-          </div>
-          <div class="check">
-            <span class="eyebrow">DATASETS</span>
-            <h3>Offline data</h3>
-            <p><code>download epss</code> and <code>download kev</code> print the datasets to stdout.</p>
+            <span class="eyebrow">ACCEPTED RISK</span>
+            <h3>VEX</h3>
+            <p>Skip findings an OpenVEX or CycloneDX VEX document marks not affected, so risk decisions live in a file other tools read too.</p>
           </div>
         </div>
       </section>
@@ -298,8 +305,8 @@ Error: validation failure: Grype: Severity Limit Exceeded</pre>
             <h2 class="section-title" id="ci-title">One step in any pipeline.</h2>
             <p>
               A non-zero exit fails the job, so it works with GitHub Actions, GitLab CI, or anything else that runs a
-              shell. The report filename has to contain its type, such as <code class="bright">grype</code> or
-              <code class="bright">semgrep</code>.
+              shell. The report type comes from its contents, and <code class="bright">--format json</code> gives
+              the result to the next step.
             </p>
             <ul class="points">
               <li>
@@ -320,8 +327,11 @@ Error: validation failure: Grype: Severity Limit Exceeded</pre>
             <div class="workflow-head">
               <span>.github/workflows/security.yaml</span>
             </div>
-            <pre class="workflow-pre">- <span class="key">name:</span> Scan the image
-  <span class="key">run:</span> grype app:latest -o json &gt; grype-report.json
+            <pre class="workflow-pre">- <span class="key">name:</span> Install pinned scanners
+  <span class="key">run:</span> gatecheck bootstrap --tools grype
+
+- <span class="key">name:</span> Scan the image
+  <span class="key">run:</span> gatecheck grype app:latest -o json &gt; grype-report.json
 
 - <span class="key">name:</span> Validate the Grype report
   <span class="key">run:</span> <span class="accent">gatecheck validate -f gatecheck.yaml grype-report.json</span></pre>
@@ -345,7 +355,7 @@ Error: validation failure: Grype: Severity Limit Exceeded</pre>
           <p>Start with <code class="bright">gatecheck config init &gt; gatecheck.yaml</code> and turn on one limit.</p>
           <div class="actions">
             <a class="btn btn-primary" href="https://docs.gatecheck.dev">Get started</a>
-            <a class="btn btn-secondary" href="https://github.com/gatecheckdev/gatecheck/releases">Download v0.9.0</a>
+            <a class="btn btn-secondary" href="https://github.com/gatecheckdev/gatecheck/releases">Download v0.11.0</a>
           </div>
         </div>
       </section>
@@ -380,7 +390,7 @@ Error: validation failure: Grype: Severity Limit Exceeded</pre>
       (function () {
         var cmds = {
           go: "go install github.com/gatecheckdev/gatecheck/cmd/gatecheck@latest",
-          bin: 'gh release download v0.9.0 --repo gatecheckdev/gatecheck --pattern "*darwin_arm64*"'
+          bin: 'gh release download v0.11.0 --repo gatecheckdev/gatecheck --pattern "*darwin_arm64*"'
         };
         var tab = "go";
         var copied = false;
