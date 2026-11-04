@@ -643,16 +643,135 @@ func TestListInstalled(t *testing.T) {
 	if !strings.HasPrefix(text, "TOOL         PINNED     INSTALLED  PATH\n") {
 		t.Fatalf("header %q", text)
 	}
-	for _, version := range []string{GrypeVersion, SyftVersion, GitleaksVersion, SemgrepVersion, TrivyVersion, OSVScannerVersion} {
+	for _, version := range []string{GrypeVersion, SyftVersion, GitleaksVersion, SemgrepVersion, TrivyVersion, OSVScannerVersion, GosecVersion, HadolintVersion, ZizmorVersion} {
 		if !strings.Contains(text, version) {
 			t.Fatalf("missing %s in %s", version, text)
 		}
 	}
-	if strings.Count(text, "\n") != 7 {
+	if strings.Count(text, "\n") != 10 {
 		t.Fatalf("lines %q", text)
 	}
 	if !strings.Contains(text, "osv-scanner  "+OSVScannerVersion) {
 		t.Fatalf("osv-scanner row %q", text)
+	}
+}
+
+func TestDefaultToolsSkipOptional(t *testing.T) {
+	tools, err := canonicalTools("")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, name := range optionalTools {
+		for _, tool := range tools {
+			if tool == name {
+				t.Fatalf("%s is in the default install", name)
+			}
+		}
+	}
+	picked, err := canonicalTools("zizmor, GOSEC,hadolint")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Join(picked, ",") != "zizmor,gosec,hadolint" {
+		t.Fatalf("picked %v", picked)
+	}
+}
+
+func TestInstallZizmorPinnedChecksum(t *testing.T) {
+	p := Platform{GOOS: "linux", GOARCH: "amd64"}
+	archiveBody := tarGz(t, map[string]string{"zizmor": "zizmor-binary"})
+	asset, err := zizmorAsset(ZizmorVersion, p)
+	if err != nil {
+		t.Fatal(err)
+	}
+	sum := sha256.Sum256(archiveBody)
+	original := zizmorChecksums[asset.Asset]
+	zizmorChecksums[asset.Asset] = hex.EncodeToString(sum[:])
+	t.Cleanup(func() { zizmorChecksums[asset.Asset] = original })
+
+	var requests []string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requests = append(requests, r.URL.Path)
+		if r.URL.Path == "/zizmorcore/zizmor/releases/download/v"+ZizmorVersion+"/"+asset.Asset {
+			_, _ = w.Write(archiveBody)
+			return
+		}
+		http.NotFound(w, r)
+	}))
+	t.Cleanup(srv.Close)
+
+	home := t.TempDir()
+	opts := Options{
+		Home:       home,
+		ToolsCSV:   "zizmor",
+		Client:     srv.Client(),
+		GitHubBase: srv.URL,
+		Platform:   p,
+		Stdout:     ioDiscard(),
+		Stderr:     ioDiscard(),
+	}
+	if err := Bootstrap(context.Background(), opts); err != nil {
+		t.Fatal(err)
+	}
+	got, err := os.ReadFile(filepath.Join(home, "bin", "zizmor"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(got) != "zizmor-binary" {
+		t.Fatalf("binary %q", got)
+	}
+	if len(requests) != 1 {
+		t.Fatalf("expected only the asset download, got %v", requests)
+	}
+
+	zizmorChecksums[asset.Asset] = strings.Repeat("ab", 32)
+	opts.Home = t.TempDir()
+	err = Bootstrap(context.Background(), opts)
+	if !errors.Is(err, fetch.ErrChecksumMismatch) {
+		t.Fatalf("expected checksum mismatch, got %v", err)
+	}
+}
+
+func TestInstallHadolintRawBinary(t *testing.T) {
+	p := Platform{GOOS: "darwin", GOARCH: "arm64"}
+	body := []byte("hadolint-binary")
+	asset, err := hadolintAsset(HadolintVersion, p)
+	if err != nil {
+		t.Fatal(err)
+	}
+	sum := sha256.Sum256(body)
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		prefix := "/hadolint/hadolint/releases/download/v" + HadolintVersion + "/"
+		switch r.URL.Path {
+		case prefix + "checksums.sha256":
+			_, _ = fmt.Fprintf(w, "%x *%s\n", sum, asset.Asset)
+		case prefix + asset.Asset:
+			_, _ = w.Write(body)
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	t.Cleanup(srv.Close)
+
+	home := t.TempDir()
+	err = Bootstrap(context.Background(), Options{
+		Home:       home,
+		ToolsCSV:   "hadolint",
+		Client:     srv.Client(),
+		GitHubBase: srv.URL,
+		Platform:   p,
+		Stdout:     ioDiscard(),
+		Stderr:     ioDiscard(),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	got, err := os.ReadFile(filepath.Join(home, "bin", "hadolint"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(got) != "hadolint-binary" {
+		t.Fatalf("binary %q", got)
 	}
 }
 

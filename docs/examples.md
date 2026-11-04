@@ -50,6 +50,11 @@ gatecheck validate --config gatecheck.yaml trivy-report.json
 gatecheck bootstrap --tools osv-scanner
 gatecheck osv-scanner scan source --format json . > osv-scanner-report.json
 gatecheck validate --config gatecheck.yaml osv-scanner-report.json
+gatecheck bootstrap --tools gosec,hadolint,zizmor
+gatecheck gosec -fmt sarif -out gosec.sarif ./...
+gatecheck hadolint -f sarif Dockerfile > hadolint.sarif
+gatecheck zizmor --format sarif .github/workflows > zizmor.sarif
+gatecheck validate --config gatecheck.yaml gosec.sarif
 ```
 
 `gatecheck semgrep scan` adds `--experimental` when you omit it. That flag selects semgrep's experimental native CLI, osemgrep, which writes the same Semgrep JSON `list` and `validate` already accept. `gatecheck semgrep --experimental --version` prints the osemgrep version.

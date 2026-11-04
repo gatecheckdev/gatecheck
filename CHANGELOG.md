@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [UNRELEASED]
 
+### Added
+
+- `gatecheck bootstrap --tools gosec,hadolint,zizmor` installs pinned gosec 2.30.0, hadolint 2.15.1, and zizmor 1.32.0. `gatecheck gosec`, `gatecheck hadolint`, and `gatecheck zizmor` run them. Their SARIF output is gated with the `sarif` config section. They are not part of the default install. zizmor publishes no checksum file, so its asset digests are pinned in gatecheck.
+- `gatecheck bootstrap --list` shows every supported tool.
+
 ## [0.10.0] - 2026-10-30
 
 ### Added

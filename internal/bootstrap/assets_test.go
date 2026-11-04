@@ -220,3 +220,84 @@ func TestDetectLibc(t *testing.T) {
 		t.Fatalf("libc %q", got)
 	}
 }
+
+func TestOptionalScannerAssets(t *testing.T) {
+	t.Parallel()
+	gosecCases := []Platform{
+		{GOOS: "linux", GOARCH: "amd64"},
+		{GOOS: "linux", GOARCH: "s390x"},
+		{GOOS: "darwin", GOARCH: "arm64"},
+		{GOOS: "windows", GOARCH: "arm64"},
+	}
+	for _, p := range gosecCases {
+		got, err := gosecAsset(GosecVersion, p)
+		if err != nil {
+			t.Fatalf("gosec %s: %v", p, err)
+		}
+		want := fmt.Sprintf("gosec_%s_%s_%s.tar.gz", GosecVersion, p.GOOS, p.GOARCH)
+		if got.Asset != want || got.Checksum != fmt.Sprintf("gosec_%s_checksums.txt", GosecVersion) {
+			t.Fatalf("gosec %s %+v", p, got)
+		}
+		if got.Binary != exeName("gosec", p.GOOS) {
+			t.Fatalf("gosec binary %+v", got)
+		}
+	}
+	if _, err := gosecAsset(GosecVersion, Platform{GOOS: "linux", GOARCH: "386"}); err == nil {
+		t.Fatal("gosec linux/386 should fail")
+	}
+
+	hadolintCases := []struct {
+		p    Platform
+		want string
+	}{
+		{Platform{GOOS: "linux", GOARCH: "amd64"}, "hadolint-linux-x86_64"},
+		{Platform{GOOS: "linux", GOARCH: "arm64"}, "hadolint-linux-arm64"},
+		{Platform{GOOS: "darwin", GOARCH: "amd64"}, "hadolint-macos-x86_64"},
+		{Platform{GOOS: "darwin", GOARCH: "arm64"}, "hadolint-macos-arm64"},
+		{Platform{GOOS: "windows", GOARCH: "amd64"}, "hadolint-windows-x86_64.exe"},
+	}
+	for _, tc := range hadolintCases {
+		got, err := hadolintAsset(HadolintVersion, tc.p)
+		if err != nil {
+			t.Fatalf("hadolint %s: %v", tc.p, err)
+		}
+		if got.Asset != tc.want || !got.Raw || got.Checksum != "checksums.sha256" {
+			t.Fatalf("hadolint %s %+v", tc.p, got)
+		}
+		if got.DestName != exeName("hadolint", tc.p.GOOS) {
+			t.Fatalf("hadolint dest %+v", got)
+		}
+	}
+	if _, err := hadolintAsset(HadolintVersion, Platform{GOOS: "windows", GOARCH: "arm64"}); err == nil {
+		t.Fatal("hadolint windows/arm64 should fail")
+	}
+
+	zizmorCases := []struct {
+		p    Platform
+		want string
+	}{
+		{Platform{GOOS: "linux", GOARCH: "amd64"}, "zizmor-x86_64-unknown-linux-gnu.tar.gz"},
+		{Platform{GOOS: "linux", GOARCH: "arm64"}, "zizmor-aarch64-unknown-linux-gnu.tar.gz"},
+		{Platform{GOOS: "darwin", GOARCH: "amd64"}, "zizmor-x86_64-apple-darwin.tar.gz"},
+		{Platform{GOOS: "darwin", GOARCH: "arm64"}, "zizmor-aarch64-apple-darwin.tar.gz"},
+		{Platform{GOOS: "windows", GOARCH: "amd64"}, "zizmor-x86_64-pc-windows-msvc.zip"},
+	}
+	for _, tc := range zizmorCases {
+		got, err := zizmorAsset(ZizmorVersion, tc.p)
+		if err != nil {
+			t.Fatalf("zizmor %s: %v", tc.p, err)
+		}
+		if got.Asset != tc.want || len(got.SHA256) != 64 || got.Checksum != "" {
+			t.Fatalf("zizmor %s %+v", tc.p, got)
+		}
+		if got.Binary != exeName("zizmor", tc.p.GOOS) {
+			t.Fatalf("zizmor binary %+v", got)
+		}
+	}
+	if _, err := zizmorAsset(ZizmorVersion, Platform{GOOS: "windows", GOARCH: "arm64"}); err == nil {
+		t.Fatal("zizmor windows/arm64 should fail")
+	}
+	if len(zizmorChecksums) != len(zizmorCases) {
+		t.Fatalf("zizmor checksum pins %d, platforms %d", len(zizmorChecksums), len(zizmorCases))
+	}
+}

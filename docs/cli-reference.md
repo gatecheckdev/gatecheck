@@ -200,11 +200,11 @@ gatecheck download kev > kev.json
 gatecheck bootstrap
 ```
 
-Downloads Grype, Syft, Gitleaks, semgrep's experimental osemgrep CLI, Trivy, and osv-scanner into the gatecheck data directory. Each GitHub asset is checked against the project's SHA-256 checksum file. The semgrep wheel is checked against the digest in the PyPI JSON. A tool already at the pinned version is skipped. See [Bootstrap](./bootstrap.md).
+Downloads Grype, Syft, Gitleaks, semgrep's experimental osemgrep CLI, Trivy, and osv-scanner into the gatecheck data directory. gosec, hadolint, and zizmor are installed when named in `--tools`. Each GitHub asset is checked against the project's SHA-256 checksum file. zizmor publishes none, so its digests are compiled into gatecheck. The semgrep wheel is checked against the digest in the PyPI JSON. A tool already at the pinned version is skipped. See [Bootstrap](./bootstrap.md).
 
-- `--tools`: comma-separated scanners. Default `grype,syft,gitleaks,semgrep,trivy,osv-scanner`. `osemgrep` selects semgrep.
+- `--tools`: comma-separated scanners. Default `grype,syft,gitleaks,semgrep,trivy,osv-scanner`. Also accepts `gosec`, `hadolint`, and `zizmor`. `osemgrep` selects semgrep.
 - `--force`: download again when the pinned version is already installed.
-- `--list`: print pinned version, installed version, and path. This does not download.
+- `--list`: print pinned version, installed version, and path for every supported tool, or for the `--tools` set. This does not download.
 
 `GATECHECK_HOME` is the data directory. Binaries are in its `bin` subdirectory.
 
@@ -213,7 +213,7 @@ gatecheck bootstrap
 gatecheck bootstrap --list
 ```
 
-## gatecheck grype, syft, gitleaks, semgrep, osemgrep, trivy, osv-scanner
+## gatecheck grype, syft, gitleaks, semgrep, osemgrep, trivy, osv-scanner, gosec, hadolint, zizmor
 
 ```
 gatecheck grype [scanner arguments]
@@ -223,6 +223,9 @@ gatecheck semgrep [scanner arguments]
 gatecheck osemgrep [scanner arguments]
 gatecheck trivy [scanner arguments]
 gatecheck osv-scanner [scanner arguments]
+gatecheck gosec [scanner arguments]
+gatecheck hadolint [scanner arguments]
+gatecheck zizmor [scanner arguments]
 ```
 
 Runs the managed binary. Arguments and streams are passed through, and the process exits with the scanner's status. Flags after the command name are not parsed by gatecheck, so `gatecheck grype --help` is Grype's help.
@@ -308,4 +311,4 @@ Prints help for a command. `gatecheck validate --help` does the same.
 | `GATECHECK_EPSS_CACHE` | `download epss`, `list`, `list-all`, `validate` | `--epss-no-cache` when the value is `off` |
 | `GATECHECK_KEV_URL` | `download kev`, `validate` | `--kev-url` on `download kev` |
 | `GATECHECK_BUNDLE_TAG` | `bundle create`, `bundle add` | `--tag`, as a comma-separated list |
-| `GATECHECK_HOME` | `bootstrap`, `grype`, `syft`, `gitleaks`, `semgrep`, `osemgrep`, `trivy`, `osv-scanner` | data directory; binaries are in `bin` under it |
+| `GATECHECK_HOME` | `bootstrap`, `grype`, `syft`, `gitleaks`, `semgrep`, `osemgrep`, `trivy`, `osv-scanner`, `gosec`, `hadolint`, `zizmor` | data directory; binaries are in `bin` under it |

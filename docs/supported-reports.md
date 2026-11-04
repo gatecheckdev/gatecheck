@@ -6,7 +6,7 @@ Content rules, in this order:
 
 1. A gzipped tar that contains `gatecheck-manifest.json` is a Gatecheck bundle.
 2. `bomFormat` of `CycloneDX` is CycloneDX JSON. This wins when the name contains `grype`, `syft`, `trivy`, or `osv`, and it wins when the tool that wrote the BOM was Grype, Syft, Trivy, or another tool.
-3. SARIF 2.1.0. The top-level `version` is the string `2.1.0` and `runs` is an array. A `$schema` that mentions SARIF is enough when `runs` is missing or null.
+3. SARIF 2.1.0. The top-level `version` is the string `2.1.0` and `runs` is an array. A `$schema` that mentions SARIF is enough when `runs` is missing or null. gosec (`-fmt sarif`), hadolint (`-f sarif`), and zizmor (`--format sarif`) write this type, and `gatecheck bootstrap --tools gosec,hadolint,zizmor` installs them.
 4. Grype JSON. `descriptor.name` is `grype`, or `matches` is a non-empty array of objects with `vulnerability` and `artifact`.
 5. Syft JSON. `descriptor.name` is `syft`, or `schema.url` points at the Syft schema. `list` and `validate` then return an error. Syft JSON is not implemented. A Syft CycloneDX BOM is CycloneDX, not Syft.
 6. Semgrep JSON. `results` is an array of objects with `check_id`, or `results` and `errors` are both arrays. Semgrep's SARIF output is SARIF, not this type.

@@ -48,12 +48,16 @@ func Bootstrap(ctx context.Context, opts Options) error {
 		return err
 	}
 	opts.Home = home
+	if opts.List {
+		tools, err := selectTools(opts.ToolsCSV, supportedTools())
+		if err != nil {
+			return err
+		}
+		return writeList(opts.stdout(), home, tools)
+	}
 	tools, err := canonicalTools(opts.ToolsCSV)
 	if err != nil {
 		return err
-	}
-	if opts.List {
-		return writeList(opts.stdout(), home, tools)
 	}
 
 	var errs []error
@@ -127,10 +131,24 @@ func (o Options) userAgent() string {
 
 var defaultTools = []string{"grype", "syft", "gitleaks", "semgrep", "trivy", "osv-scanner"}
 
+// optionalTools are installed only when named in --tools. Each one scans a
+// single kind of source (Go code, Dockerfiles, GitHub workflows), so they are
+// left out of the default install.
+var optionalTools = []string{"gosec", "hadolint", "zizmor"}
+
+func supportedTools() []string {
+	return append(append([]string(nil), defaultTools...), optionalTools...)
+}
+
 func canonicalTools(csv string) ([]string, error) {
+	return selectTools(csv, defaultTools)
+}
+
+func selectTools(csv string, fallback []string) ([]string, error) {
 	if strings.TrimSpace(csv) == "" {
-		return append([]string(nil), defaultTools...), nil
+		return append([]string(nil), fallback...), nil
 	}
+	supported := supportedTools()
 	var out []string
 	seen := map[string]bool{}
 	for _, part := range strings.Split(csv, ",") {
@@ -141,8 +159,8 @@ func canonicalTools(csv string) ([]string, error) {
 		if name == "osemgrep" {
 			name = "semgrep"
 		}
-		if !slices.Contains(defaultTools, name) {
-			return nil, fmt.Errorf("unknown tool %q (supported: %s)", name, strings.Join(defaultTools, ", "))
+		if !slices.Contains(supported, name) {
+			return nil, fmt.Errorf("unknown tool %q (supported: %s)", name, strings.Join(supported, ", "))
 		}
 		if seen[name] {
 			continue
@@ -190,6 +208,24 @@ func installTool(ctx context.Context, opts Options, tool string) error {
 			return err
 		}
 		return installGitHub(ctx, opts, "osv-scanner", "google/osv-scanner", OSVScannerVersion, asset)
+	case "gosec":
+		asset, err := gosecAsset(GosecVersion, opts.platform())
+		if err != nil {
+			return err
+		}
+		return installGitHub(ctx, opts, "gosec", "securego/gosec", GosecVersion, asset)
+	case "hadolint":
+		asset, err := hadolintAsset(HadolintVersion, opts.platform())
+		if err != nil {
+			return err
+		}
+		return installGitHub(ctx, opts, "hadolint", "hadolint/hadolint", HadolintVersion, asset)
+	case "zizmor":
+		asset, err := zizmorAsset(ZizmorVersion, opts.platform())
+		if err != nil {
+			return err
+		}
+		return installGitHub(ctx, opts, "zizmor", "zizmorcore/zizmor", ZizmorVersion, asset)
 	default:
 		return fmt.Errorf("unknown tool %q", tool)
 	}
@@ -206,21 +242,10 @@ func installGitHub(ctx context.Context, opts Options, tool, repo, version string
 		return err
 	}
 
-	checksumURL := githubDownloadURL(opts.githubBase(), repo, version, asset.Checksum)
 	assetURL := githubDownloadURL(opts.githubBase(), repo, version, asset.Asset)
-	slog.Debug("download checksums", "tool", tool, "url", checksumURL)
-
-	body, err := fetch.Get(ctx, opts.client(), checksumURL, opts.userAgent(), 8<<20)
+	want, err := assetDigest(ctx, opts, tool, repo, version, asset)
 	if err != nil {
-		return fmt.Errorf("%s: %w", tool, err)
-	}
-	sums, err := fetch.ParseChecksums(body)
-	if err != nil {
-		return fmt.Errorf("%s: %w", tool, err)
-	}
-	want, ok := fetch.LookupChecksum(sums, asset.Asset)
-	if !ok {
-		return fmt.Errorf("%s: checksum file has no entry for %s", tool, asset.Asset)
+		return err
 	}
 
 	archivePath := filepath.Join(binDir, ".download-"+asset.Asset)
@@ -257,6 +282,30 @@ func installGitHub(ctx context.Context, opts Options, tool, repo, version string
 	}
 	_, _ = fmt.Fprintf(opts.stdout(), "installed %s %s %s\n", tool, version, dest)
 	return nil
+}
+
+// assetDigest returns the pinned SHA-256 for asset, or reads it from the
+// release's checksum file.
+func assetDigest(ctx context.Context, opts Options, tool, repo, version string, asset githubAsset) (string, error) {
+	if asset.SHA256 != "" {
+		slog.Debug("use pinned checksum", "tool", tool, "asset", asset.Asset)
+		return asset.SHA256, nil
+	}
+	checksumURL := githubDownloadURL(opts.githubBase(), repo, version, asset.Checksum)
+	slog.Debug("download checksums", "tool", tool, "url", checksumURL)
+	body, err := fetch.Get(ctx, opts.client(), checksumURL, opts.userAgent(), 8<<20)
+	if err != nil {
+		return "", fmt.Errorf("%s: %w", tool, err)
+	}
+	sums, err := fetch.ParseChecksums(body)
+	if err != nil {
+		return "", fmt.Errorf("%s: %w", tool, err)
+	}
+	want, ok := fetch.LookupChecksum(sums, asset.Asset)
+	if !ok {
+		return "", fmt.Errorf("%s: checksum file has no entry for %s", tool, asset.Asset)
+	}
+	return want, nil
 }
 
 func githubDownloadURL(base, repo, version, asset string) string {
@@ -441,6 +490,12 @@ func pinnedVersion(tool string) string {
 		return TrivyVersion
 	case "osv-scanner":
 		return OSVScannerVersion
+	case "gosec":
+		return GosecVersion
+	case "hadolint":
+		return HadolintVersion
+	case "zizmor":
+		return ZizmorVersion
 	default:
 		return "-"
 	}

@@ -5,10 +5,13 @@
 ```shell
 gatecheck bootstrap
 gatecheck bootstrap --tools grype,syft
+gatecheck bootstrap --tools gosec,hadolint,zizmor
 gatecheck bootstrap --list
 ```
 
-Pinned versions are compiled into gatecheck. The current pins are Grype `0.121.0`, Syft `1.55.0`, Gitleaks `8.30.1`, semgrep `1.182.1`, Trivy `0.76.1`, and osv-scanner `2.7.0`. They live in `internal/bootstrap/versions.go`.
+Pinned versions are compiled into gatecheck. The current pins are Grype `0.121.0`, Syft `1.55.0`, Gitleaks `8.30.1`, semgrep `1.182.1`, Trivy `0.76.1`, osv-scanner `2.7.0`, gosec `2.30.0`, hadolint `2.15.1`, and zizmor `1.32.0`. They live in `internal/bootstrap/versions.go`.
+
+gosec, hadolint, and zizmor are not in the default install. Each one checks one kind of source (Go code, Dockerfiles, and GitHub Actions workflows), so you name them in `--tools` when you want them.
 
 ## Directory
 
@@ -22,7 +25,7 @@ Binaries go in `bin` under the gatecheck home.
 
 A second run that already has the pinned file and its version stamp prints `<tool> <version> already installed` and skips the download. `--force` downloads again. The stamp is written after the binary is in place.
 
-`--list` prints managed installs and does not download. `--force` is ignored while listing. A binary with no stamp shows `unknown`. A missing tool shows `-`.
+`--list` prints every supported tool, or only the ones named in `--tools`, and does not download. `--force` is ignored while listing. A binary with no stamp shows `unknown`. A missing tool shows `-`.
 
 ```
 TOOL         PINNED     INSTALLED  PATH
@@ -32,17 +35,20 @@ gitleaks     8.30.1     8.30.1     /home/ada/.local/share/gatecheck/bin/gitleaks
 semgrep      1.182.1    1.182.1    /home/ada/.local/share/gatecheck/bin/osemgrep
 trivy        0.76.1     0.76.1     /home/ada/.local/share/gatecheck/bin/trivy
 osv-scanner  2.7.0      2.7.0      /home/ada/.local/share/gatecheck/bin/osv-scanner
+gosec        2.30.0     -          -
+hadolint     2.15.1     2.15.1     /home/ada/.local/share/gatecheck/bin/hadolint
+zizmor       1.32.0     -          -
 ```
 
 ## Flags
 
-- `--tools`: comma-separated names. The default is `grype,syft,gitleaks,semgrep,trivy,osv-scanner`. Names are lowercased. `osemgrep` means `semgrep`. An unknown name is an error: `unknown tool "not-a-scanner" (supported: grype, syft, gitleaks, semgrep, trivy, osv-scanner)`.
+- `--tools`: comma-separated names. The default is `grype,syft,gitleaks,semgrep,trivy,osv-scanner`. `gosec`, `hadolint`, and `zizmor` are also accepted. Names are lowercased. `osemgrep` means `semgrep`. An unknown name is an error: `unknown tool "not-a-scanner" (supported: grype, syft, gitleaks, semgrep, trivy, osv-scanner, gosec, hadolint, zizmor)`.
 - `--force`: reinstall even when the pinned version is already present.
 - `--list`: print the table above.
 
 `bootstrap` takes no positional arguments.
 
-## Grype, Syft, Gitleaks, and Trivy
+## Grype, Syft, Gitleaks, Trivy, and gosec
 
 Each tool is a GitHub release asset. gatecheck downloads `<name>_<version>_checksums.txt`, looks up the asset's SHA-256, downloads the archive, and checks the digest before extracting the binary. The install is a write to a temporary file in the destination directory, then a rename.
 
@@ -52,6 +58,7 @@ Each tool is a GitHub release asset. gatecheck downloads `<name>_<version>_check
 | Syft | `anchore/syft` | `syft_<version>_<os>_<arch>.tar.gz`, or `.zip` on Windows |
 | Gitleaks | `gitleaks/gitleaks` | `gitleaks_<version>_<os>_<arch>.tar.gz`, or `.zip` on Windows |
 | Trivy | `aquasecurity/trivy` | `trivy_<version>_<OS>-<arch>.tar.gz`, or `.zip` on Windows |
+| gosec | `securego/gosec` | `gosec_<version>_<os>_<arch>.tar.gz`, on Windows too |
 
 Gitleaks names `amd64` as `x64`, `386` as `x32`, and `arm` as `armv6` or `armv7`.
 
@@ -63,6 +70,7 @@ Published assets:
 - Syft: macOS amd64 and arm64; Linux amd64, arm64, ppc64le, riscv64, and s390x; Windows amd64 and arm64.
 - Gitleaks: macOS x64 and arm64; Linux x64, x32, arm64, armv6, and armv7; Windows x64, x32, and arm64.
 - Trivy: macOS amd64 and arm64; Linux 386, amd64, armv7, arm64, ppc64le, and s390x; Windows amd64; FreeBSD amd64.
+- gosec: macOS amd64 and arm64; Linux amd64, arm64, ppc64le, and s390x; Windows amd64 and arm64.
 
 A platform with no asset fails that tool. The message looks like `grype has no published release asset for windows/arm64`. Other requested tools still install. The command exits 255 when any requested tool failed this way, or when a download or checksum check failed.
 
@@ -77,6 +85,18 @@ Asset names:
 - `osv-scanner_windows_amd64.exe` and `osv-scanner_windows_arm64.exe`
 
 Those six platforms are the published set. Anything else fails that tool with the same kind of message as a missing Grype asset.
+
+## hadolint
+
+hadolint also publishes a raw binary. gatecheck downloads `checksums.sha256` from the `hadolint/hadolint` release, checks the asset, and installs it as `hadolint`, or `hadolint.exe` on Windows.
+
+Asset names: `hadolint-linux-x86_64`, `hadolint-linux-arm64`, `hadolint-macos-x86_64`, `hadolint-macos-arm64`, and `hadolint-windows-x86_64.exe`. Windows arm64 has no asset.
+
+## zizmor
+
+zizmor publishes archives but no checksum file. The SHA-256 of each `zizmorcore/zizmor` asset for the pinned version is compiled into gatecheck next to the version in `internal/bootstrap/versions.go`. gatecheck checks the download against that digest before extracting `zizmor`, or `zizmor.exe` on Windows. Moving the zizmor pin means updating those digests too.
+
+Asset names: `zizmor-x86_64-unknown-linux-gnu.tar.gz`, `zizmor-aarch64-unknown-linux-gnu.tar.gz`, `zizmor-x86_64-apple-darwin.tar.gz`, `zizmor-aarch64-apple-darwin.tar.gz`, and `zizmor-x86_64-pc-windows-msvc.zip`. zizmor's Linux builds link glibc. Windows arm64 has no asset.
 
 ## Semgrep (osemgrep)
 
@@ -111,11 +131,16 @@ gatecheck gitleaks detect --report-format json --report-path gitleaks-report.jso
 gatecheck semgrep scan -e 'eval($X)' -l python --json t.py > semgrep-report.json
 gatecheck trivy fs --format json --output trivy-report.json .
 gatecheck osv-scanner scan source --format json . > osv-scanner-report.json
+gatecheck gosec -fmt sarif -out gosec.sarif ./...
+gatecheck hadolint -f sarif Dockerfile > hadolint.sarif
+gatecheck zizmor --format sarif .github/workflows > zizmor.sarif
 ```
+
+gosec, hadolint, and zizmor reports are read as SARIF. Gate them with the `sarif` section of the config. See [Supported reports](./supported-reports.md).
 
 Arguments, standard input, standard output, standard error, and the scanner's exit status are passed through. `gatecheck grype --help` is Grype's help. gatecheck does not parse flags after these command names.
 
-The managed binary is used when it is present. Otherwise gatecheck looks on `PATH`: `grype`, `syft`, `gitleaks`, `trivy`, or `osv-scanner` for those commands; `semgrep` and then `osemgrep` for `gatecheck semgrep`; `osemgrep` only for `gatecheck osemgrep`. `--experimental` is inserted only when the program that will run is named `osemgrep`. A Python `semgrep` on `PATH` is left unchanged.
+The managed binary is used when it is present. Otherwise gatecheck looks on `PATH`: `grype`, `syft`, `gitleaks`, `trivy`, `osv-scanner`, `gosec`, `hadolint`, or `zizmor` for those commands; `semgrep` and then `osemgrep` for `gatecheck semgrep`; `osemgrep` only for `gatecheck osemgrep`. `--experimental` is inserted only when the program that will run is named `osemgrep`. A Python `semgrep` on `PATH` is left unchanged.
 
 When neither copy exists, the command prints one line and exits 255:
 

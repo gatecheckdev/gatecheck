@@ -1,6 +1,6 @@
 # gatecheck
 
-Gatecheck reads a scanner report, compares it to thresholds in a config file, and exits non-zero when a threshold fails. It also prints a table of a report, packs reports into one bundle, and downloads EPSS and KEV data. `gatecheck bootstrap` installs Grype, Syft, Gitleaks, semgrep's experimental osemgrep CLI, Trivy, and osv-scanner, and the matching subcommands run them. Coverage reports still come from the language toolchain.
+Gatecheck reads a scanner report, compares it to thresholds in a config file, and exits non-zero when a threshold fails. It also prints a table of a report, packs reports into one bundle, and downloads EPSS and KEV data. `gatecheck bootstrap` installs Grype, Syft, Gitleaks, semgrep's experimental osemgrep CLI, Trivy, and osv-scanner, plus gosec, hadolint, and zizmor on request, and the matching subcommands run them. Coverage reports still come from the language toolchain.
 
 `gatecheck` with no arguments prints nothing and exits 0. `gatecheck --help` lists commands. `gatecheck agent-guide` (alias `llm`) prints this file.
 
@@ -14,7 +14,7 @@ Logs go to stderr. Tables, `config init`, downloads, and this guide go to stdout
 - `validate` compares one report, or one bundle, to a config.
 - `bundle create` (alias `init`), `bundle add`, and `bundle remove` (alias `rm`) manage a bundle.
 - `download epss` and `download kev` write upstream data to stdout.
-- `bootstrap` installs Grype, Syft, Gitleaks, osemgrep, Trivy, and osv-scanner. `grype`, `syft`, `gitleaks`, `semgrep`, `osemgrep`, `trivy`, and `osv-scanner` run those binaries.
+- `bootstrap` installs Grype, Syft, Gitleaks, osemgrep, Trivy, and osv-scanner. `--tools gosec,hadolint,zizmor` installs those too. `grype`, `syft`, `gitleaks`, `semgrep`, `osemgrep`, `trivy`, `osv-scanner`, `gosec`, `hadolint`, and `zizmor` run those binaries.
 - `update` (aliases `self-update`, `upgrade`) replaces this binary with a GitHub release after checking `checksums.txt`. `update --check` only prints the current and latest versions.
 - `completion bash|fish|powershell|zsh` prints a shell completion script.
 - `help [command]` prints the same text as `<command> --help`.
@@ -29,6 +29,8 @@ Trivy comes from the `aquasecurity/trivy` GitHub release. The asset names look l
 
 osv-scanner comes from the `google/osv-scanner` GitHub release as a raw binary, not an archive. Asset names look like `osv-scanner_linux_amd64`, `osv-scanner_darwin_arm64`, and `osv-scanner_windows_amd64.exe`. The checksum file is `osv-scanner_SHA256SUMS`. Published builds are amd64 and arm64 on Linux, macOS, and Windows. The installed name is `osv-scanner`, or `osv-scanner.exe` on Windows.
 
+gosec, hadolint, and zizmor are installed only when named in `--tools`. gosec comes from `securego/gosec` as `gosec_<version>_<os>_<arch>.tar.gz` (tar.gz on Windows too), checked against `gosec_<version>_checksums.txt`. hadolint comes from `hadolint/hadolint` as a raw binary such as `hadolint-linux-x86_64` or `hadolint-macos-arm64`, checked against `checksums.sha256`. zizmor comes from `zizmorcore/zizmor` as `zizmor-<arch>-<target>.tar.gz` (`.zip` on Windows). zizmor publishes no checksum file, so its digests are pinned in `internal/bootstrap/versions.go`. hadolint and zizmor have no Windows arm64 build. All three write SARIF, which `list` and `validate` read with the `sarif` config section.
+
 The directory is `$GATECHECK_HOME/bin` when `GATECHECK_HOME` is set. Otherwise it is `$XDG_DATA_HOME/gatecheck/bin`, or `~/.local/share/gatecheck/bin` on Linux, `~/Library/Application Support/gatecheck/bin` on macOS, and `%LOCALAPPDATA%\gatecheck\bin` on Windows.
 
 A tool already at the pinned version is left in place. `--force` downloads it again. `--tools grype,syft` limits the set. `osemgrep` in `--tools` means semgrep. `--list` prints pinned versions, installed versions, and paths, and does not download.
@@ -40,13 +42,17 @@ gatecheck grype dir:latest -o json > grype-report.json
 gatecheck semgrep scan --json --config auto .
 gatecheck trivy fs --format json --output trivy-report.json .
 gatecheck osv-scanner scan source --format json . > osv-scanner-report.json
+gatecheck bootstrap --tools gosec,hadolint,zizmor
+gatecheck gosec -fmt sarif -out gosec.sarif ./...
+gatecheck hadolint -f sarif Dockerfile > hadolint.sarif
+gatecheck zizmor --format sarif .github/workflows > zizmor.sarif
 ```
 
 `gatecheck semgrep scan` and `gatecheck osemgrep scan` insert `--experimental` after `scan` when that flag is absent. Other osemgrep commands need `--experimental` from the caller. `gatecheck semgrep --experimental --version` prints the osemgrep version. When the program that runs is the Python `semgrep` on `PATH`, the flag is left alone. `gatecheck osemgrep` looks for the managed binary, then `osemgrep` on `PATH`.
 
-The managed binary wins when it is present. `gatecheck grype`, `gatecheck syft`, `gatecheck gitleaks`, `gatecheck trivy`, and `gatecheck osv-scanner` otherwise run that name on `PATH`. `gatecheck semgrep` tries `semgrep` and then `osemgrep` on `PATH`. If none exist, the command prints `gatecheck: <name> is not installed; run `gatecheck bootstrap`` and exits 255. A scanner's own exit status is returned as-is.
+The managed binary wins when it is present. `gatecheck grype`, `gatecheck syft`, `gatecheck gitleaks`, `gatecheck trivy`, `gatecheck osv-scanner`, `gatecheck gosec`, `gatecheck hadolint`, and `gatecheck zizmor` otherwise run that name on `PATH`. `gatecheck semgrep` tries `semgrep` and then `osemgrep` on `PATH`. If none exist, the command prints `gatecheck: <name> is not installed; run `gatecheck bootstrap`` and exits 255. A scanner's own exit status is returned as-is.
 
-A platform with no Grype, Syft, Gitleaks, Trivy, or osv-scanner asset fails that tool and the command exits 255. A platform with no semgrep wheel prints a skip message on stderr and continues. Current pins are Grype `0.121.0`, Syft `1.55.0`, Gitleaks `8.30.1`, semgrep `1.182.1`, Trivy `0.76.1`, and osv-scanner `2.7.0`, in `internal/bootstrap/versions.go`.
+A platform with no release asset for a requested GitHub-hosted tool fails that tool and the command exits 255. A platform with no semgrep wheel prints a skip message on stderr and continues. Current pins are Grype `0.121.0`, Syft `1.55.0`, Gitleaks `8.30.1`, semgrep `1.182.1`, Trivy `0.76.1`, osv-scanner `2.7.0`, gosec `2.30.0`, hadolint `2.15.1`, and zizmor `1.32.0`, in `internal/bootstrap/versions.go`.
 
 Syft is installed so it can write CycloneDX (`syft -o cyclonedx-json`). That BOM is listed and validated as CycloneDX. Native Syft JSON is recognized from `descriptor.name` or the schema URL, and `list` and `validate` then return an error. A filename containing `syft` does the same when the contents are ambiguous. CycloneDX is a report format, and coverage tools are left to the language toolchain.
 
@@ -229,7 +235,7 @@ A non-empty flag wins. An empty flag falls through to the environment variable, 
 | `GATECHECK_EPSS_CACHE` | `download epss`, `list`, `list-all`, `validate` | `--epss-no-cache` when the value is `off` |
 | `GATECHECK_KEV_URL` | `download kev`, `validate` | `--kev-url` on `download kev` |
 | `GATECHECK_BUNDLE_TAG` | `bundle create`, `bundle add` | `--tag`, as a comma-separated list |
-| `GATECHECK_HOME` | `bootstrap`, `grype`, `syft`, `gitleaks`, `semgrep`, `osemgrep`, `trivy`, `osv-scanner` | data directory; binaries are in `bin` under it |
+| `GATECHECK_HOME` | `bootstrap`, `grype`, `syft`, `gitleaks`, `semgrep`, `osemgrep`, `trivy`, `osv-scanner`, `gosec`, `hadolint`, `zizmor` | data directory; binaries are in `bin` under it |
 
 `GATECHECK_EPSS_CACHE` also disables the cache for `0`, `false`, `no`, `disabled`, `disable`, and `none`.
 

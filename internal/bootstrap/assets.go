@@ -12,6 +12,9 @@ type githubAsset struct {
 	DestName string
 	// Raw means the release asset is the binary itself, not an archive.
 	Raw bool
+	// SHA256 is a pinned digest for releases that publish no checksum file.
+	// When it is set, Checksum is not downloaded.
+	SHA256 string
 }
 
 func grypeAsset(version string, p Platform) (githubAsset, error) {
@@ -244,6 +247,105 @@ func osvOSArch(p Platform) (string, string, bool) {
 	default:
 		return "", "", false
 	}
+}
+
+func gosecAsset(version string, p Platform) (githubAsset, error) {
+	if !gosecSupported(p) {
+		return githubAsset{}, unsupported("gosec", p)
+	}
+	// gosec ships tar.gz archives on every platform, Windows included.
+	return githubAsset{
+		Asset:    fmt.Sprintf("gosec_%s_%s_%s.tar.gz", version, p.GOOS, p.GOARCH),
+		Checksum: fmt.Sprintf("gosec_%s_checksums.txt", version),
+		Binary:   exeName("gosec", p.GOOS),
+		DestName: exeName("gosec", p.GOOS),
+	}, nil
+}
+
+func gosecSupported(p Platform) bool {
+	switch p.GOOS {
+	case "darwin", "windows":
+		return p.GOARCH == "amd64" || p.GOARCH == "arm64"
+	case "linux":
+		switch p.GOARCH {
+		case "amd64", "arm64", "ppc64le", "s390x":
+			return true
+		default:
+			return false
+		}
+	default:
+		return false
+	}
+}
+
+func hadolintAsset(_ string, p Platform) (githubAsset, error) {
+	var osName string
+	switch p.GOOS {
+	case "linux":
+		osName = "linux"
+	case "darwin":
+		osName = "macos"
+	case "windows":
+		osName = "windows"
+	default:
+		return githubAsset{}, unsupported("hadolint", p)
+	}
+	var arch string
+	switch p.GOARCH {
+	case "amd64":
+		arch = "x86_64"
+	case "arm64":
+		arch = "arm64"
+	default:
+		return githubAsset{}, unsupported("hadolint", p)
+	}
+	if p.GOOS == "windows" && arch != "x86_64" {
+		return githubAsset{}, unsupported("hadolint", p)
+	}
+	asset := fmt.Sprintf("hadolint-%s-%s", osName, arch)
+	if p.GOOS == "windows" {
+		asset += ".exe"
+	}
+	return githubAsset{
+		Asset:    asset,
+		Checksum: "checksums.sha256",
+		Binary:   asset,
+		DestName: exeName("hadolint", p.GOOS),
+		Raw:      true,
+	}, nil
+}
+
+func zizmorAsset(_ string, p Platform) (githubAsset, error) {
+	var arch string
+	switch p.GOARCH {
+	case "amd64":
+		arch = "x86_64"
+	case "arm64":
+		arch = "aarch64"
+	default:
+		return githubAsset{}, unsupported("zizmor", p)
+	}
+	var asset string
+	switch p.GOOS {
+	case "darwin":
+		asset = fmt.Sprintf("zizmor-%s-apple-darwin.tar.gz", arch)
+	case "linux":
+		asset = fmt.Sprintf("zizmor-%s-unknown-linux-gnu.tar.gz", arch)
+	case "windows":
+		asset = fmt.Sprintf("zizmor-%s-pc-windows-msvc.zip", arch)
+	default:
+		return githubAsset{}, unsupported("zizmor", p)
+	}
+	sum, ok := zizmorChecksums[asset]
+	if !ok {
+		return githubAsset{}, unsupported("zizmor", p)
+	}
+	return githubAsset{
+		Asset:    asset,
+		Binary:   exeName("zizmor", p.GOOS),
+		DestName: exeName("zizmor", p.GOOS),
+		SHA256:   sum,
+	}, nil
 }
 
 func exeName(name, goos string) string {
