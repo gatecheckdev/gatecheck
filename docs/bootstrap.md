@@ -6,12 +6,13 @@
 gatecheck bootstrap
 gatecheck bootstrap --tools grype,syft
 gatecheck bootstrap --tools gosec,hadolint,zizmor
+gatecheck bootstrap --tools scorecard,trufflehog,cosign
 gatecheck bootstrap --list
 ```
 
-Pinned versions are compiled into gatecheck. The current pins are Grype `0.121.0`, Syft `1.55.0`, Gitleaks `8.30.1`, semgrep `1.182.1`, Trivy `0.76.1`, osv-scanner `2.7.0`, gosec `2.30.0`, hadolint `2.15.1`, and zizmor `1.32.0`. They live in `internal/bootstrap/versions.go`.
+Pinned versions are compiled into gatecheck. The current pins are Grype `0.121.0`, Syft `1.55.0`, Gitleaks `8.30.1`, semgrep `1.182.1`, Trivy `0.76.1`, osv-scanner `2.7.0`, gosec `2.30.0`, hadolint `2.15.1`, zizmor `1.32.0`, OpenSSF Scorecard `5.6.0`, trufflehog `3.99.8`, and cosign `3.1.4`. They live in `internal/bootstrap/versions.go`.
 
-gosec, hadolint, and zizmor are not in the default install. Each one checks one kind of source (Go code, Dockerfiles, and GitHub Actions workflows), so you name them in `--tools` when you want them.
+gosec, hadolint, zizmor, scorecard, trufflehog, and cosign are not in the default install. gosec, hadolint, and zizmor each check one kind of source (Go code, Dockerfiles, and GitHub Actions workflows). scorecard rates a repository's supply-chain practices, trufflehog is a second secrets scanner, and cosign verifies signatures. Name them in `--tools` when you want them.
 
 ## Directory
 
@@ -38,17 +39,20 @@ osv-scanner  2.7.0      2.7.0      /home/ada/.local/share/gatecheck/bin/osv-scan
 gosec        2.30.0     -          -
 hadolint     2.15.1     2.15.1     /home/ada/.local/share/gatecheck/bin/hadolint
 zizmor       1.32.0     -          -
+scorecard    5.6.0      -          -
+trufflehog   3.99.8     3.99.8     /home/ada/.local/share/gatecheck/bin/trufflehog
+cosign       3.1.4      -          -
 ```
 
 ## Flags
 
-- `--tools`: comma-separated names. The default is `grype,syft,gitleaks,semgrep,trivy,osv-scanner`. `gosec`, `hadolint`, and `zizmor` are also accepted. Names are lowercased. `osemgrep` means `semgrep`. An unknown name is an error: `unknown tool "not-a-scanner" (supported: grype, syft, gitleaks, semgrep, trivy, osv-scanner, gosec, hadolint, zizmor)`.
+- `--tools`: comma-separated names. The default is `grype,syft,gitleaks,semgrep,trivy,osv-scanner`. `gosec`, `hadolint`, `zizmor`, `scorecard`, `trufflehog`, and `cosign` are also accepted. Names are lowercased. `osemgrep` means `semgrep`. An unknown name is an error: `unknown tool "not-a-scanner" (supported: grype, syft, gitleaks, semgrep, trivy, osv-scanner, gosec, hadolint, zizmor, scorecard, trufflehog, cosign)`.
 - `--force`: reinstall even when the pinned version is already present.
 - `--list`: print the table above.
 
 `bootstrap` takes no positional arguments.
 
-## Grype, Syft, Gitleaks, Trivy, and gosec
+## Grype, Syft, Gitleaks, Trivy, gosec, scorecard, and trufflehog
 
 Each tool is a GitHub release asset. gatecheck downloads `<name>_<version>_checksums.txt`, looks up the asset's SHA-256, downloads the archive, and checks the digest before extracting the binary. The install is a write to a temporary file in the destination directory, then a rename.
 
@@ -59,6 +63,8 @@ Each tool is a GitHub release asset. gatecheck downloads `<name>_<version>_check
 | Gitleaks | `gitleaks/gitleaks` | `gitleaks_<version>_<os>_<arch>.tar.gz`, or `.zip` on Windows |
 | Trivy | `aquasecurity/trivy` | `trivy_<version>_<OS>-<arch>.tar.gz`, or `.zip` on Windows |
 | gosec | `securego/gosec` | `gosec_<version>_<os>_<arch>.tar.gz`, on Windows too |
+| scorecard | `ossf/scorecard` | `scorecard_<version>_<os>_<arch>.tar.gz`, on Windows too. The checksum file is `scorecard_checksums.txt`. |
+| trufflehog | `trufflesecurity/trufflehog` | `trufflehog_<version>_<os>_<arch>.tar.gz`, on Windows too |
 
 Gitleaks names `amd64` as `x64`, `386` as `x32`, and `arm` as `armv6` or `armv7`.
 
@@ -71,6 +77,7 @@ Published assets:
 - Gitleaks: macOS x64 and arm64; Linux x64, x32, arm64, armv6, and armv7; Windows x64, x32, and arm64.
 - Trivy: macOS amd64 and arm64; Linux 386, amd64, armv7, arm64, ppc64le, and s390x; Windows amd64; FreeBSD amd64.
 - gosec: macOS amd64 and arm64; Linux amd64, arm64, ppc64le, and s390x; Windows amd64 and arm64.
+- scorecard and trufflehog: amd64 and arm64 on macOS, Linux, and Windows.
 
 A platform with no asset fails that tool. The message looks like `grype has no published release asset for windows/arm64`. Other requested tools still install. The command exits 2 when any requested tool failed this way, or when a download or checksum check failed.
 
@@ -91,6 +98,20 @@ Those six platforms are the published set. Anything else fails that tool with th
 hadolint also publishes a raw binary. gatecheck downloads `checksums.sha256` from the `hadolint/hadolint` release, checks the asset, and installs it as `hadolint`, or `hadolint.exe` on Windows.
 
 Asset names: `hadolint-linux-x86_64`, `hadolint-linux-arm64`, `hadolint-macos-x86_64`, `hadolint-macos-arm64`, and `hadolint-windows-x86_64.exe`. Windows arm64 has no asset.
+
+## cosign
+
+cosign publishes raw binaries. gatecheck downloads `cosign_checksums.txt` from the `sigstore/cosign` release, checks the asset, and installs it as `cosign`, or `cosign.exe` on Windows. Assets: `cosign-darwin-amd64`, `cosign-darwin-arm64`, `cosign-linux-amd64`, `cosign-linux-arm64`, `cosign-linux-arm` (armv7), `cosign-linux-ppc64le`, `cosign-linux-s390x`, `cosign-linux-riscv64`, and `cosign-windows-amd64.exe`.
+
+cosign is a gate on its own: `cosign verify` and `cosign verify-blob` exit non-zero when a signature does not check out, and `gatecheck cosign` passes that status through. Put it in the pipeline before `validate`:
+
+```shell
+gatecheck cosign verify-blob --bundle app.tar.gz.sigstore.json \
+  --certificate-identity-regexp 'https://github.com/example/app/' \
+  --certificate-oidc-issuer https://token.actions.githubusercontent.com app.tar.gz
+gatecheck cosign verify --certificate-identity-regexp 'https://github.com/example/app/' \
+  --certificate-oidc-issuer https://token.actions.githubusercontent.com ghcr.io/example/app:1.2.3
+```
 
 ## zizmor
 
@@ -134,13 +155,17 @@ gatecheck osv-scanner scan source --format json . > osv-scanner-report.json
 gatecheck gosec -fmt sarif -out gosec.sarif ./...
 gatecheck hadolint -f sarif Dockerfile > hadolint.sarif
 gatecheck zizmor --format sarif .github/workflows > zizmor.sarif
+GITHUB_AUTH_TOKEN=... gatecheck scorecard --repo github.com/example/app --format json > scorecard-report.json
+gatecheck trufflehog git file://. --json > trufflehog-report.json
 ```
+
+scorecard and trufflehog JSON are their own report types, gated with the `scorecard` and `trufflehog` config sections. See [Supported reports](./supported-reports.md).
 
 gosec, hadolint, and zizmor reports are read as SARIF. Gate them with the `sarif` section of the config. See [Supported reports](./supported-reports.md).
 
 Arguments, standard input, standard output, standard error, and the scanner's exit status are passed through. `gatecheck grype --help` is Grype's help. gatecheck does not parse flags after these command names.
 
-The managed binary is used when it is present. Otherwise gatecheck looks on `PATH`: `grype`, `syft`, `gitleaks`, `trivy`, `osv-scanner`, `gosec`, `hadolint`, or `zizmor` for those commands; `semgrep` and then `osemgrep` for `gatecheck semgrep`; `osemgrep` only for `gatecheck osemgrep`. `--experimental` is inserted only when the program that will run is named `osemgrep`. A Python `semgrep` on `PATH` is left unchanged.
+The managed binary is used when it is present. Otherwise gatecheck looks on `PATH`: `grype`, `syft`, `gitleaks`, `trivy`, `osv-scanner`, `gosec`, `hadolint`, `zizmor`, `scorecard`, `trufflehog`, or `cosign` for those commands; `semgrep` and then `osemgrep` for `gatecheck semgrep`; `osemgrep` only for `gatecheck osemgrep`. `--experimental` is inserted only when the program that will run is named `osemgrep`. A Python `semgrep` on `PATH` is left unchanged.
 
 When neither copy exists, the command prints one line and exits 2:
 

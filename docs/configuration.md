@@ -27,165 +27,172 @@ This is what `gatecheck config init` prints.
 ```yaml
 version: "1"
 metadata:
-    tags: []
+  tags: []
 grype:
-    severityLimit:
-        critical:
-            enabled: false
-            limit: 0
-        high:
-            enabled: false
-            limit: 0
-        medium:
-            enabled: false
-            limit: 0
-        low:
-            enabled: false
-            limit: 0
-    epssLimit:
-        enabled: false
-        score: 0
-    kevLimitEnabled: false
-    cveLimit:
-        enabled: false
-        cves: []
-    epssRiskAcceptance:
-        enabled: false
-        score: 0
-    cveRiskAcceptance:
-        enabled: false
-        cves: []
-cyclonedx:
-    severityLimit:
-        critical:
-            enabled: false
-            limit: 0
-        high:
-            enabled: false
-            limit: 0
-        medium:
-            enabled: false
-            limit: 0
-        low:
-            enabled: false
-            limit: 0
-    epssLimit:
-        enabled: false
-        score: 0
-    kevLimitEnabled: false
-    cveLimit:
-        enabled: false
-        cves: []
-    epssRiskAcceptance:
-        enabled: false
-        score: 0
-    cveRiskAcceptance:
-        enabled: false
-        cves: []
-trivy:
-    severityLimit:
-        critical:
-            enabled: false
-            limit: 0
-        high:
-            enabled: false
-            limit: 0
-        medium:
-            enabled: false
-            limit: 0
-        low:
-            enabled: false
-            limit: 0
-    epssLimit:
-        enabled: false
-        score: 0
-    kevLimitEnabled: false
-    cveLimit:
-        enabled: false
-        cves: []
-    epssRiskAcceptance:
-        enabled: false
-        score: 0
-    cveRiskAcceptance:
-        enabled: false
-        cves: []
-osv-scanner:
-    severityLimit:
-        critical:
-            enabled: false
-            limit: 0
-        high:
-            enabled: false
-            limit: 0
-        medium:
-            enabled: false
-            limit: 0
-        low:
-            enabled: false
-            limit: 0
-    epssLimit:
-        enabled: false
-        score: 0
-    kevLimitEnabled: false
-    cveLimit:
-        enabled: false
-        cves: []
-    epssRiskAcceptance:
-        enabled: false
-        score: 0
-    cveRiskAcceptance:
-        enabled: false
-        cves: []
-semgrep:
-    severityLimit:
-        error:
-            enabled: false
-            limit: 0
-        warning:
-            enabled: false
-            limit: 0
-        info:
-            enabled: false
-            limit: 0
-    impactRiskAcceptance:
-        enabled: false
-        high: false
-        medium: false
-        low: false
-gitleaks:
-    limitEnabled: false
-sarif:
-    severityLimit:
-        critical:
-            enabled: false
-            limit: 0
-        high:
-            enabled: false
-            limit: 0
-        medium:
-            enabled: false
-            limit: 0
-        low:
-            enabled: false
-            limit: 0
-    ruleLimit:
-        enabled: false
-        rules: []
-    ruleRiskAcceptance:
-        enabled: false
-        rules: []
-coverage:
-    lineThreshold: 0
-    functionThreshold: 0
-    branchThreshold: 0
-vex:
-    files: []
-license:
+  severityLimit:
+    critical:
+      enabled: false
+      limit: 0
+    high:
+      enabled: false
+      limit: 0
+    medium:
+      enabled: false
+      limit: 0
+    low:
+      enabled: false
+      limit: 0
+  epssLimit:
     enabled: false
-    deny: []
-    allow: []
-    denyUnknown: false
-    packageRiskAcceptance: []
+    score: 0
+  kevLimitEnabled: false
+  cveLimit:
+    enabled: false
+    cves: []
+  epssRiskAcceptance:
+    enabled: false
+    score: 0
+  cveRiskAcceptance:
+    enabled: false
+    cves: []
+cyclonedx:
+  severityLimit:
+    critical:
+      enabled: false
+      limit: 0
+    high:
+      enabled: false
+      limit: 0
+    medium:
+      enabled: false
+      limit: 0
+    low:
+      enabled: false
+      limit: 0
+  epssLimit:
+    enabled: false
+    score: 0
+  kevLimitEnabled: false
+  cveLimit:
+    enabled: false
+    cves: []
+  epssRiskAcceptance:
+    enabled: false
+    score: 0
+  cveRiskAcceptance:
+    enabled: false
+    cves: []
+trivy:
+  severityLimit:
+    critical:
+      enabled: false
+      limit: 0
+    high:
+      enabled: false
+      limit: 0
+    medium:
+      enabled: false
+      limit: 0
+    low:
+      enabled: false
+      limit: 0
+  epssLimit:
+    enabled: false
+    score: 0
+  kevLimitEnabled: false
+  cveLimit:
+    enabled: false
+    cves: []
+  epssRiskAcceptance:
+    enabled: false
+    score: 0
+  cveRiskAcceptance:
+    enabled: false
+    cves: []
+osv-scanner:
+  severityLimit:
+    critical:
+      enabled: false
+      limit: 0
+    high:
+      enabled: false
+      limit: 0
+    medium:
+      enabled: false
+      limit: 0
+    low:
+      enabled: false
+      limit: 0
+  epssLimit:
+    enabled: false
+    score: 0
+  kevLimitEnabled: false
+  cveLimit:
+    enabled: false
+    cves: []
+  epssRiskAcceptance:
+    enabled: false
+    score: 0
+  cveRiskAcceptance:
+    enabled: false
+    cves: []
+semgrep:
+  severityLimit:
+    error:
+      enabled: false
+      limit: 0
+    warning:
+      enabled: false
+      limit: 0
+    info:
+      enabled: false
+      limit: 0
+  impactRiskAcceptance:
+    enabled: false
+    high: false
+    medium: false
+    low: false
+gitleaks:
+  limitEnabled: false
+sarif:
+  severityLimit:
+    critical:
+      enabled: false
+      limit: 0
+    high:
+      enabled: false
+      limit: 0
+    medium:
+      enabled: false
+      limit: 0
+    low:
+      enabled: false
+      limit: 0
+  ruleLimit:
+    enabled: false
+    rules: []
+  ruleRiskAcceptance:
+    enabled: false
+    rules: []
+coverage:
+  lineThreshold: 0
+  functionThreshold: 0
+  branchThreshold: 0
+vex:
+  files: []
+license:
+  enabled: false
+  deny: []
+  allow: []
+  denyUnknown: false
+  packageRiskAcceptance: []
+scorecard:
+  enabled: false
+  minScore: 0
+  checks: []
+trufflehog:
+  limitEnabled: false
+  verifiedOnly: false
 ```
 
 ## version and metadata
@@ -237,6 +244,35 @@ grype:
 ## Gitleaks
 
 `limitEnabled: true` fails validation when the report contains any finding. `false` skips the check. There is no count.
+
+## trufflehog
+
+`trufflehog` gates `trufflehog --json` output, a second secrets scanner next to Gitleaks.
+
+```yaml
+trufflehog:
+  limitEnabled: true
+  verifiedOnly: false
+```
+
+`limitEnabled: true` fails validation when the report has any finding. `verifiedOnly: true` counts only the secrets trufflehog verified as live, so unverified matches are logged and do not fail. Secret values in the report are never decoded, listed, or logged.
+
+## Scorecard
+
+`scorecard` gates an OpenSSF Scorecard report from `scorecard --format json`.
+
+```yaml
+scorecard:
+  enabled: true
+  minScore: 6
+  checks:
+    - name: Dangerous-Workflow
+      minScore: 10
+    - name: Token-Permissions
+      minScore: 5
+```
+
+Scores are 0 to 10. `minScore` fails the report when the aggregate score is lower. `0` lets any aggregate pass. Each `checks` entry fails the report when that check scores lower than its `minScore`. Check names are compared without regard to case. A check scored `-1` (inconclusive, such as `Signed-Releases` on a repo with no releases) is skipped with a warning, and so is a named check that is not in the report. A score equal to the minimum passes.
 
 ## SARIF
 

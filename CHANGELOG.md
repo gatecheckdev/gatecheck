@@ -11,6 +11,10 @@ This release reworks the CLI settings layer and changes exit codes. See Changed.
 
 ### Added
 
+- OpenSSF Scorecard JSON (`scorecard --format json`) is a report type. The `scorecard` config section fails a report whose aggregate score, or a named check's score, is below a minimum. Inconclusive checks are skipped with a warning.
+- trufflehog JSON (`--json`, one object per line) is a report type. `trufflehog.limitEnabled` fails on any finding, and `verifiedOnly` counts only verified secrets. `list` never prints secret values.
+- `gatecheck bootstrap --tools scorecard,trufflehog,cosign` installs pinned OpenSSF Scorecard 5.6.0, trufflehog 3.99.8, and cosign 3.1.4, and `gatecheck scorecard`, `gatecheck trufflehog`, and `gatecheck cosign` run them. A failed `gatecheck cosign verify` fails the CI step with cosign's status. Fixes #105.
+
 - `--log-level debug|info|warn|error` and `--log-format text|json` on every command, with `GATECHECK_LOG_LEVEL` and `GATECHECK_LOG_FORMAT`. Text logs are colored only on a terminal, and `NO_COLOR` turns color off.
 - `validate --format table|markdown|json` prints the result to stdout. `list` and `list-all` take `--format table|markdown|json`. `list-all --format json` is one array keyed by file.
 - `validate --input-type`, and `validate` reads stdin when FILE is omitted and `--input-type` is set.

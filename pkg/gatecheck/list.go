@@ -139,6 +139,12 @@ func List(dst io.Writer, src io.Reader, inputFilename string, options ...ListOpt
 	case artifacts.KindSyft:
 		err = listSyft(table, src)
 
+	case artifacts.KindScorecard:
+		err = listScorecard(table, src)
+
+	case artifacts.KindTrufflehog:
+		err = listTrufflehog(table, src)
+
 	case artifacts.KindSARIF:
 		err = ListSarif(table, src)
 

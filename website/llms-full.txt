@@ -1,6 +1,6 @@
 # gatecheck
 
-Gatecheck reads a scanner report, compares it to thresholds in a config file, and exits non-zero when a threshold fails. It also prints a table of a report, packs reports into one bundle, and downloads EPSS and KEV data. `gatecheck bootstrap` installs Grype, Syft, Gitleaks, semgrep's experimental osemgrep CLI, Trivy, and osv-scanner, plus gosec, hadolint, and zizmor on request, and the matching subcommands run them. Coverage reports still come from the language toolchain.
+Gatecheck reads a scanner report, compares it to thresholds in a config file, and exits non-zero when a threshold fails. It also prints a table of a report, packs reports into one bundle, and downloads EPSS and KEV data. `gatecheck bootstrap` installs Grype, Syft, Gitleaks, semgrep's experimental osemgrep CLI, Trivy, and osv-scanner, plus gosec, hadolint, zizmor, OpenSSF Scorecard, trufflehog, and cosign on request, and the matching subcommands run them. Coverage reports still come from the language toolchain.
 
 `gatecheck` with no arguments prints nothing and exits 0. `gatecheck --help` lists commands. `gatecheck agent-guide` (alias `llm`) prints this file.
 
@@ -14,7 +14,7 @@ Logs go to stderr. Tables, `config init`, downloads, and this guide go to stdout
 - `validate` compares one report, or one bundle, to a config.
 - `bundle create` (alias `init`), `bundle add`, and `bundle remove` (alias `rm`) manage a bundle.
 - `download epss` and `download kev` write upstream data to stdout.
-- `bootstrap` installs Grype, Syft, Gitleaks, osemgrep, Trivy, and osv-scanner. `--tools gosec,hadolint,zizmor` installs those too. `grype`, `syft`, `gitleaks`, `semgrep`, `osemgrep`, `trivy`, `osv-scanner`, `gosec`, `hadolint`, and `zizmor` run those binaries.
+- `bootstrap` installs Grype, Syft, Gitleaks, osemgrep, Trivy, and osv-scanner. `--tools gosec,hadolint,zizmor,scorecard,trufflehog,cosign` installs those too. `grype`, `syft`, `gitleaks`, `semgrep`, `osemgrep`, `trivy`, `osv-scanner`, `gosec`, `hadolint`, `zizmor`, `scorecard`, `trufflehog`, and `cosign` run those binaries.
 - `update` (aliases `self-update`, `upgrade`) replaces this binary with a GitHub release after checking `checksums.txt`. `update --check` only prints the current and latest versions.
 - `completion bash|fish|powershell|zsh` prints a shell completion script.
 - `help [command]` prints the same text as `<command> --help`.
@@ -31,6 +31,8 @@ osv-scanner comes from the `google/osv-scanner` GitHub release as a raw binary, 
 
 gosec, hadolint, and zizmor are installed only when named in `--tools`. gosec comes from `securego/gosec` as `gosec_<version>_<os>_<arch>.tar.gz` (tar.gz on Windows too), checked against `gosec_<version>_checksums.txt`. hadolint comes from `hadolint/hadolint` as a raw binary such as `hadolint-linux-x86_64` or `hadolint-macos-arm64`, checked against `checksums.sha256`. zizmor comes from `zizmorcore/zizmor` as `zizmor-<arch>-<target>.tar.gz` (`.zip` on Windows). zizmor publishes no checksum file, so its digests are pinned in `internal/bootstrap/versions.go`. hadolint and zizmor have no Windows arm64 build. All three write SARIF, which `list` and `validate` read with the `sarif` config section.
 
+scorecard (`ossf/scorecard`, `scorecard_<version>_<os>_<arch>.tar.gz`, checksums `scorecard_checksums.txt`) and trufflehog (`trufflesecurity/trufflehog`, `trufflehog_<version>_<os>_<arch>.tar.gz`, checksums `trufflehog_<version>_checksums.txt`) are also installed only when named, for amd64 and arm64 on macOS, Linux, and Windows. Their JSON is its own report type. cosign (`sigstore/cosign`) is a raw binary checked against `cosign_checksums.txt`, for macOS amd64 and arm64, Linux amd64, arm64, armv7, ppc64le, s390x, and riscv64, and Windows amd64. `gatecheck cosign verify` and `verify-blob` pass cosign's exit status through, so a bad signature fails the CI step.
+
 The directory is `$GATECHECK_HOME/bin` when `GATECHECK_HOME` is set. Otherwise it is `$XDG_DATA_HOME/gatecheck/bin`, or `~/.local/share/gatecheck/bin` on Linux, `~/Library/Application Support/gatecheck/bin` on macOS, and `%LOCALAPPDATA%\gatecheck\bin` on Windows.
 
 A tool already at the pinned version is left in place. `--force` downloads it again. `--tools grype,syft` limits the set. `osemgrep` in `--tools` means semgrep. `--list` prints pinned versions, installed versions, and paths, and does not download.
@@ -46,13 +48,15 @@ gatecheck bootstrap --tools gosec,hadolint,zizmor
 gatecheck gosec -fmt sarif -out gosec.sarif ./...
 gatecheck hadolint -f sarif Dockerfile > hadolint.sarif
 gatecheck zizmor --format sarif .github/workflows > zizmor.sarif
+gatecheck trufflehog git file://. --json > trufflehog-report.json
+GITHUB_AUTH_TOKEN=... gatecheck scorecard --repo github.com/example/app --format json > scorecard-report.json
 ```
 
 `gatecheck semgrep scan` and `gatecheck osemgrep scan` insert `--experimental` after `scan` when that flag is absent. Other osemgrep commands need `--experimental` from the caller. `gatecheck semgrep --experimental --version` prints the osemgrep version. When the program that runs is the Python `semgrep` on `PATH`, the flag is left alone. `gatecheck osemgrep` looks for the managed binary, then `osemgrep` on `PATH`.
 
-The managed binary wins when it is present. `gatecheck grype`, `gatecheck syft`, `gatecheck gitleaks`, `gatecheck trivy`, `gatecheck osv-scanner`, `gatecheck gosec`, `gatecheck hadolint`, and `gatecheck zizmor` otherwise run that name on `PATH`. `gatecheck semgrep` tries `semgrep` and then `osemgrep` on `PATH`. If none exist, the command prints `gatecheck: <name> is not installed; run `gatecheck bootstrap`` and exits 2. A scanner's own exit status is returned as-is.
+The managed binary wins when it is present. `gatecheck grype`, `gatecheck syft`, `gatecheck gitleaks`, `gatecheck trivy`, `gatecheck osv-scanner`, `gatecheck gosec`, `gatecheck hadolint`, `gatecheck zizmor`, `gatecheck scorecard`, `gatecheck trufflehog`, and `gatecheck cosign` otherwise run that name on `PATH`. `gatecheck semgrep` tries `semgrep` and then `osemgrep` on `PATH`. If none exist, the command prints `gatecheck: <name> is not installed; run `gatecheck bootstrap`` and exits 2. A scanner's own exit status is returned as-is.
 
-A platform with no release asset for a requested GitHub-hosted tool fails that tool and the command exits 2. A platform with no semgrep wheel prints a skip message on stderr and continues. Current pins are Grype `0.121.0`, Syft `1.55.0`, Gitleaks `8.30.1`, semgrep `1.182.1`, Trivy `0.76.1`, osv-scanner `2.7.0`, gosec `2.30.0`, hadolint `2.15.1`, and zizmor `1.32.0`, in `internal/bootstrap/versions.go`.
+A platform with no release asset for a requested GitHub-hosted tool fails that tool and the command exits 2. A platform with no semgrep wheel prints a skip message on stderr and continues. Current pins are Grype `0.121.0`, Syft `1.55.0`, Gitleaks `8.30.1`, semgrep `1.182.1`, Trivy `0.76.1`, osv-scanner `2.7.0`, gosec `2.30.0`, hadolint `2.15.1`, zizmor `1.32.0`, scorecard `5.6.0`, trufflehog `3.99.8`, and cosign `3.1.4`, in `internal/bootstrap/versions.go`.
 
 Syft is installed so it can write CycloneDX (`syft -o cyclonedx-json`). That BOM is listed and validated as CycloneDX. Native Syft JSON is recognized from `descriptor.name` or the schema URL. `list` prints its packages and licenses, and `validate` runs the license rules on it. CycloneDX is a report format, and coverage tools are left to the language toolchain.
 
@@ -71,9 +75,11 @@ Content rules, in this order:
 7. Gitleaks JSON. A non-empty array of objects with `RuleID` and one of `File`, `Commit`, or `Fingerprint`.
 8. Trivy JSON. `SchemaVersion` is a number, and `ArtifactType` is set or `Results` is an array. Vulnerability entries are listed and validated. Misconfigurations, secrets, and licenses are ignored. A CycloneDX BOM from Trivy is CycloneDX.
 9. osv-scanner JSON. `results` is a non-empty array of objects with a `packages` array. One finding per vulnerability group. Aliases of that group are not counted again. License-only packages are skipped. Semgrep is checked first, so a `check_id` stays Semgrep. `{"results":[]}` does not identify itself.
-10. LCOV text. A line starts with `SF:` and the file also has `DA:`, `LF:`, or `end_of_record`.
-11. Clover XML. An XML document with `clover=` or a `<clover` element.
-12. Cobertura XML. An XML document with `line-rate=`.
+10. OpenSSF Scorecard JSON (`scorecard --format json`). `scorecard.version` is set and `checks` is an array.
+11. trufflehog JSON (`trufflehog ... --json`). Each line is an object with `DetectorName` and `SourceMetadata`. One line is enough. Lines that are not findings are skipped.
+12. LCOV text. A line starts with `SF:` and the file also has `DA:`, `LF:`, or `end_of_record`.
+13. Clover XML. An XML document with `clover=` or a `<clover` element.
+14. Cobertura XML. An XML document with `line-rate=`.
 
 When none of those match, the filename is checked. The match is a lowercase substring, and the first match wins:
 
@@ -85,8 +91,10 @@ When none of those match, the filename is checked. The match is a lowercase subs
 6. `osv`: osv-scanner JSON. `osv-scanner-report.json` matches. `OSV-scanner.json` does not.
 7. `syft`: the name is recognized. `list` and `validate` then return an error.
 8. `sarif`: SARIF 2.1.0.
-9. `bundle`: a Gatecheck bundle. `list` also accepts a name containing `gatecheck`. `validate` requires the word `bundle` for this fallback. A real bundle is still detected from its contents when the name is `project.gcb`.
-10. Coverage, when the name contains `lcov`, `clover`, `cobertura`, or `coverage`, or ends in `.info`.
+9. `scorecard`
+10. `trufflehog`. Empty trufflehog output, from a scan that found nothing, needs this name.
+11. `bundle`: a Gatecheck bundle. `list` also accepts a name containing `gatecheck`. `validate` requires the word `bundle` for this fallback. A real bundle is still detected from its contents when the name is `project.gcb`.
+12. Coverage, when the name contains `lcov`, `clover`, `cobertura`, or `coverage`, or ends in `.info`.
 
 The filename match is case sensitive. `Grype-report.json` is not a filename match. A Grype report is still recognized from its contents when `descriptor.name` is `grype`. An earlier word still wins on an ambiguous file, so `semgrep-coverage.json` is Semgrep when the contents do not say otherwise.
 
@@ -136,6 +144,10 @@ Field names below are the ones `config init` emits. In YAML they are case sensit
 - `ruleLimit` and `ruleRiskAcceptance` each have `enabled` and `rules`. A rule entry is `id` plus an optional `metadata.tags` list. `id` is compared without regard to case. `ruleLimit` denies those ids. `ruleRiskAcceptance` removes them.
 
 `license` gates package licenses in Syft JSON and CycloneDX BOMs. `enabled` turns it on. `deny` and `allow` are case-insensitive glob patterns such as `GPL-*`, which matches `GPL-3.0-only` but not `LGPL-2.1-only`. A non-empty `allow` fails every license outside it. `denyUnknown` fails packages with no license, `NOASSERTION`, or `NONE`. `packageRiskAcceptance` entries skip a package by `purl` (type, namespace, and name, plus version when given) or by `name`. SPDX expressions are evaluated: `OR` passes when either side passes, `AND` needs both, and `X WITH Y` is denied when `X` is denied unless `allow` names the full `X WITH Y`. Several license entries on one package must all pass. Syft licenses are `spdxExpression`, then `value`. CycloneDX licenses are `expression`, `license.id`, then `license.name`, and nested components are included. A CycloneDX BOM runs both the license and vulnerability rules, and reports both failures.
+
+`trufflehog.limitEnabled: true` fails on any trufflehog finding. `trufflehog.verifiedOnly: true` counts only verified secrets. Secret values are never decoded or printed.
+
+`scorecard.enabled` turns on the Scorecard rules. `scorecard.minScore` (0 to 10) fails a lower aggregate score. `scorecard.checks` is a list of `name` and `minScore` for single checks, names compared without regard to case. Inconclusive checks (score `-1`) and missing checks are skipped with a warning.
 
 `vex.files` lists OpenVEX or CycloneDX VEX documents, read along with `--vex`.
 
@@ -248,7 +260,7 @@ EPSS requests send a User-Agent with the gatecheck version and `https://github.c
 | `GATECHECK_SILENT` | every command | `--silent` |
 | `GATECHECK_LOG_LEVEL` | every command | `--log-level` |
 | `GATECHECK_LOG_FORMAT` | every command | `--log-format` |
-| `GATECHECK_HOME` | `bootstrap`, `grype`, `syft`, `gitleaks`, `semgrep`, `osemgrep`, `trivy`, `osv-scanner`, `gosec`, `hadolint`, `zizmor` | data directory; binaries are in `bin` under it |
+| `GATECHECK_HOME` | `bootstrap`, `grype`, `syft`, `gitleaks`, `semgrep`, `osemgrep`, `trivy`, `osv-scanner`, `gosec`, `hadolint`, `zizmor`, `scorecard`, `trufflehog`, `cosign` | data directory; binaries are in `bin` under it |
 
 A flag on the command line wins over its variable. An empty variable counts as unset. `GATECHECK_AUDIT`, `GATECHECK_VERBOSE`, and `GATECHECK_SILENT` take `true`, `false`, `1`, `0`, `t`, or `f`, and any other value exits 2. `GATECHECK_EPSS_CACHE` also disables the cache for `0`, `false`, `no`, `disabled`, `disable`, and `none`.
 

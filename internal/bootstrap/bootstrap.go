@@ -134,7 +134,7 @@ var defaultTools = []string{"grype", "syft", "gitleaks", "semgrep", "trivy", "os
 // optionalTools are installed only when named in --tools. Each one scans a
 // single kind of source (Go code, Dockerfiles, GitHub workflows), so they are
 // left out of the default install.
-var optionalTools = []string{"gosec", "hadolint", "zizmor"}
+var optionalTools = []string{"gosec", "hadolint", "zizmor", "scorecard", "trufflehog", "cosign"}
 
 func supportedTools() []string {
 	return append(append([]string(nil), defaultTools...), optionalTools...)
@@ -226,6 +226,24 @@ func installTool(ctx context.Context, opts Options, tool string) error {
 			return err
 		}
 		return installGitHub(ctx, opts, "zizmor", "zizmorcore/zizmor", ZizmorVersion, asset)
+	case "scorecard":
+		asset, err := scorecardAsset(ScorecardVersion, opts.platform())
+		if err != nil {
+			return err
+		}
+		return installGitHub(ctx, opts, "scorecard", "ossf/scorecard", ScorecardVersion, asset)
+	case "trufflehog":
+		asset, err := trufflehogAsset(TrufflehogVersion, opts.platform())
+		if err != nil {
+			return err
+		}
+		return installGitHub(ctx, opts, "trufflehog", "trufflesecurity/trufflehog", TrufflehogVersion, asset)
+	case "cosign":
+		asset, err := cosignAsset(CosignVersion, opts.platform())
+		if err != nil {
+			return err
+		}
+		return installGitHub(ctx, opts, "cosign", "sigstore/cosign", CosignVersion, asset)
 	default:
 		return fmt.Errorf("unknown tool %q", tool)
 	}
@@ -496,6 +514,12 @@ func pinnedVersion(tool string) string {
 		return HadolintVersion
 	case "zizmor":
 		return ZizmorVersion
+	case "scorecard":
+		return ScorecardVersion
+	case "trufflehog":
+		return TrufflehogVersion
+	case "cosign":
+		return CosignVersion
 	default:
 		return "-"
 	}

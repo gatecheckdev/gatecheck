@@ -8,7 +8,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const inputTypes = "grype|cyclonedx|semgrep|gitleaks|trivy|osv|syft|sarif|bundle|lcov|clover|cobertura"
+const inputTypes = "grype|cyclonedx|semgrep|gitleaks|trivy|osv|syft|sarif|scorecard|trufflehog|bundle|lcov|clover|cobertura"
 
 // addEPSSFlags adds the EPSS source and cache flags. withFile adds --epss-filename.
 func addEPSSFlags(cmd *cobra.Command, withFile bool) {

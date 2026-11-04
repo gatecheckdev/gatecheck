@@ -61,6 +61,10 @@ func kindFromFilename(name string, listRules bool) artifacts.ReportKind {
 		return artifacts.KindSyft
 	case strings.Contains(name, "sarif"):
 		return artifacts.KindSARIF
+	case strings.Contains(name, "scorecard"):
+		return artifacts.KindScorecard
+	case strings.Contains(name, "trufflehog"):
+		return artifacts.KindTrufflehog
 	case strings.Contains(name, "bundle") || (listRules && strings.Contains(name, "gatecheck")):
 		return artifacts.KindBundle
 	case artifacts.IsCoverageReport(name):

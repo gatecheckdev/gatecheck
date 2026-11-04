@@ -19,10 +19,13 @@ const (
 	KindTrivy     ReportKind = "trivy"
 	KindOSV       ReportKind = "osv"
 	KindSARIF     ReportKind = "sarif"
-	KindBundle    ReportKind = "bundle"
-	KindLCOV      ReportKind = "lcov"
-	KindClover    ReportKind = "clover"
-	KindCobertura ReportKind = "cobertura"
+	KindScorecard ReportKind = "scorecard"
+	// KindTrufflehog is newline-delimited trufflehog --json output.
+	KindTrufflehog ReportKind = "trufflehog"
+	KindBundle     ReportKind = "bundle"
+	KindLCOV       ReportKind = "lcov"
+	KindClover     ReportKind = "clover"
+	KindCobertura  ReportKind = "cobertura"
 	// KindCoverage means the filename selected coverage, and the format is not known yet.
 	KindCoverage ReportKind = "coverage"
 )
@@ -67,7 +70,15 @@ func detectJSON(content []byte) ReportKind {
 
 	var head sniff
 	if err := json.Unmarshal(content, &head); err != nil {
+		// More than one object: newline-delimited JSON, such as trufflehog.
+		first, _, _ := bytes.Cut(content, []byte("\n"))
+		if isTrufflehogLine(bytes.TrimSpace(first)) {
+			return KindTrufflehog
+		}
 		return KindUnknown
+	}
+	if isTrufflehogLine(content) {
+		return KindTrufflehog
 	}
 	return classifyObject(head)
 }
@@ -90,6 +101,10 @@ type sniff struct {
 	Schema        struct {
 		URL string `json:"url"`
 	} `json:"schema"`
+	Scorecard struct {
+		Version string `json:"version"`
+	} `json:"scorecard"`
+	Checks json.RawMessage `json:"checks"`
 }
 
 func classifyObject(s sniff) ReportKind {
@@ -120,7 +135,14 @@ func classifyObject(s sniff) ReportKind {
 	if isOSV(s) {
 		return KindOSV
 	}
+	if isScorecard(s) {
+		return KindScorecard
+	}
 	return KindUnknown
+}
+
+func isScorecard(s sniff) bool {
+	return strings.TrimSpace(s.Scorecard.Version) != "" && isJSONArray(s.Checks)
 }
 
 func isTrivy(s sniff) bool {

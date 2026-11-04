@@ -18,7 +18,7 @@ Every setting is read in the same order: a flag on the command line, then its en
 - `1`: `validate` found a threshold failure.
 - `2`: a usage error, a file that could not be read or written, or a report, config, or VEX file that could not be decoded.
 - `3`: EPSS or KEV data could not be downloaded or read.
-- The scanner commands (`grype`, `syft`, `gitleaks`, `semgrep`, `osemgrep`, `trivy`, `osv-scanner`, `gosec`, `hadolint`, `zizmor`) return the scanner's own status.
+- The scanner commands (`grype`, `syft`, `gitleaks`, `semgrep`, `osemgrep`, `trivy`, `osv-scanner`, `gosec`, `hadolint`, `zizmor`, `scorecard`, `trufflehog`, `cosign`) return the scanner's own status.
 
 `validate --audit` turns status 1 into 0. It does not change 2 or 3.
 
@@ -223,9 +223,9 @@ gatecheck download kev > kev.json
 gatecheck bootstrap
 ```
 
-Downloads Grype, Syft, Gitleaks, semgrep's experimental osemgrep CLI, Trivy, and osv-scanner into the gatecheck data directory. gosec, hadolint, and zizmor are installed when named in `--tools`. Each GitHub asset is checked against the project's SHA-256 checksum file. zizmor publishes none, so its digests are compiled into gatecheck. The semgrep wheel is checked against the digest in the PyPI JSON. A tool already at the pinned version is skipped. See [Bootstrap](./bootstrap.md).
+Downloads Grype, Syft, Gitleaks, semgrep's experimental osemgrep CLI, Trivy, and osv-scanner into the gatecheck data directory. gosec, hadolint, zizmor, scorecard, trufflehog, and cosign are installed when named in `--tools`. Each GitHub asset is checked against the project's SHA-256 checksum file. zizmor publishes none, so its digests are compiled into gatecheck. The semgrep wheel is checked against the digest in the PyPI JSON. A tool already at the pinned version is skipped. See [Bootstrap](./bootstrap.md).
 
-- `--tools`: comma-separated scanners. Default `grype,syft,gitleaks,semgrep,trivy,osv-scanner`. Also accepts `gosec`, `hadolint`, and `zizmor`. `osemgrep` selects semgrep.
+- `--tools`: comma-separated scanners. Default `grype,syft,gitleaks,semgrep,trivy,osv-scanner`. Also accepts `gosec`, `hadolint`, `zizmor`, `scorecard`, `trufflehog`, and `cosign`. `osemgrep` selects semgrep.
 - `--force`: download again when the pinned version is already installed.
 - `--list`: print pinned version, installed version, and path for every supported tool, or for the `--tools` set. This does not download.
 
@@ -236,7 +236,7 @@ gatecheck bootstrap
 gatecheck bootstrap --list
 ```
 
-## gatecheck grype, syft, gitleaks, semgrep, osemgrep, trivy, osv-scanner, gosec, hadolint, zizmor
+## gatecheck grype, syft, gitleaks, semgrep, osemgrep, trivy, osv-scanner, gosec, hadolint, zizmor, scorecard, trufflehog, cosign
 
 ```
 gatecheck grype [scanner arguments]
@@ -249,6 +249,9 @@ gatecheck osv-scanner [scanner arguments]
 gatecheck gosec [scanner arguments]
 gatecheck hadolint [scanner arguments]
 gatecheck zizmor [scanner arguments]
+gatecheck scorecard [scanner arguments]
+gatecheck trufflehog [scanner arguments]
+gatecheck cosign [scanner arguments]
 ```
 
 Runs the managed binary. Arguments and streams are passed through, and the process exits with the scanner's status. Flags after the command name are not parsed by gatecheck, so `gatecheck grype --help` is Grype's help.
@@ -341,6 +344,6 @@ Prints help for a command. `gatecheck validate --help` does the same.
 | `GATECHECK_SILENT` | every command | `--silent` |
 | `GATECHECK_LOG_LEVEL` | every command | `--log-level` |
 | `GATECHECK_LOG_FORMAT` | every command | `--log-format` |
-| `GATECHECK_HOME` | `bootstrap`, `grype`, `syft`, `gitleaks`, `semgrep`, `osemgrep`, `trivy`, `osv-scanner`, `gosec`, `hadolint`, `zizmor` | data directory; binaries are in `bin` under it |
+| `GATECHECK_HOME` | `bootstrap`, `grype`, `syft`, `gitleaks`, `semgrep`, `osemgrep`, `trivy`, `osv-scanner`, `gosec`, `hadolint`, `zizmor`, `scorecard`, `trufflehog`, `cosign` | data directory; binaries are in `bin` under it |
 
 A flag on the command line wins over its variable. An empty variable counts as unset. `GATECHECK_AUDIT`, `GATECHECK_VERBOSE`, and `GATECHECK_SILENT` take `true`, `false`, `1`, `0`, `t`, or `f`, and any other value exits 2. `GATECHECK_EPSS_CACHE` also disables the cache for `0`, `false`, `no`, `disabled`, `disable`, and `none`.

@@ -36,6 +36,8 @@ type Config struct {
 	Coverage   configCoverageReport `json:"coverage"    toml:"coverage"    yaml:"coverage"`
 	VEX        configVEX            `json:"vex"         toml:"vex"         yaml:"vex"`
 	License    configLicense        `json:"license"     toml:"license"     yaml:"license"`
+	Scorecard  configScorecard      `json:"scorecard"   toml:"scorecard"   yaml:"scorecard"`
+	Trufflehog configTrufflehog     `json:"trufflehog"  toml:"trufflehog"  yaml:"trufflehog"`
 
 	vexDoc *vex.Document
 }
@@ -270,6 +272,9 @@ func NewDefaultConfig() *Config {
 		},
 		VEX:     configVEX{Files: []string{}},
 		License: defaultConfigLicense(),
+		Scorecard: configScorecard{
+			Checks: []configScorecardCheck{},
+		},
 	}
 }
 

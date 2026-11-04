@@ -301,3 +301,46 @@ func TestOptionalScannerAssets(t *testing.T) {
 		t.Fatalf("zizmor checksum pins %d, platforms %d", len(zizmorChecksums), len(zizmorCases))
 	}
 }
+
+func TestSupplyChainToolAssets(t *testing.T) {
+	t.Parallel()
+	sc, err := scorecardAsset(ScorecardVersion, Platform{GOOS: "windows", GOARCH: "arm64"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if sc.Asset != fmt.Sprintf("scorecard_%s_windows_arm64.tar.gz", ScorecardVersion) || sc.Checksum != "scorecard_checksums.txt" || sc.Binary != "scorecard.exe" {
+		t.Fatalf("scorecard %+v", sc)
+	}
+	th, err := trufflehogAsset(TrufflehogVersion, Platform{GOOS: "linux", GOARCH: "amd64"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if th.Asset != fmt.Sprintf("trufflehog_%s_linux_amd64.tar.gz", TrufflehogVersion) || th.Checksum != fmt.Sprintf("trufflehog_%s_checksums.txt", TrufflehogVersion) {
+		t.Fatalf("trufflehog %+v", th)
+	}
+	if _, err := trufflehogAsset(TrufflehogVersion, Platform{GOOS: "linux", GOARCH: "386"}); err == nil {
+		t.Fatal("trufflehog linux/386 should fail")
+	}
+	cases := map[Platform]string{
+		{GOOS: "linux", GOARCH: "amd64"}:   "cosign-linux-amd64",
+		{GOOS: "linux", GOARCH: "arm"}:     "cosign-linux-arm",
+		{GOOS: "linux", GOARCH: "s390x"}:   "cosign-linux-s390x",
+		{GOOS: "darwin", GOARCH: "arm64"}:  "cosign-darwin-arm64",
+		{GOOS: "windows", GOARCH: "amd64"}: "cosign-windows-amd64.exe",
+	}
+	for p, want := range cases {
+		got, err := cosignAsset(CosignVersion, p)
+		if err != nil {
+			t.Fatalf("cosign %s: %v", p, err)
+		}
+		if got.Asset != want || !got.Raw || got.Checksum != "cosign_checksums.txt" || got.DestName != exeName("cosign", p.GOOS) {
+			t.Fatalf("cosign %s %+v", p, got)
+		}
+	}
+	if _, err := cosignAsset(CosignVersion, Platform{GOOS: "windows", GOARCH: "arm64"}); err == nil {
+		t.Fatal("cosign windows/arm64 should fail")
+	}
+	if _, err := cosignAsset(CosignVersion, Platform{GOOS: "linux", GOARCH: "arm", GOARM: "6"}); err == nil {
+		t.Fatal("cosign armv6 should fail")
+	}
+}

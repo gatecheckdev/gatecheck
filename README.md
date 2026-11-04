@@ -44,7 +44,7 @@ gatecheck validate --config gatecheck.yaml grype-report.json
 
 `gatecheck agent-guide` (alias `llm`) prints a markdown guide for coding agents. The same text is `docs/agent-guide.md`.
 
-`gatecheck bootstrap` installs pinned Grype, Syft, Gitleaks, semgrep's experimental osemgrep CLI, Trivy, and osv-scanner. `gatecheck grype`, `gatecheck syft`, `gatecheck gitleaks`, `gatecheck semgrep`, `gatecheck osemgrep`, `gatecheck trivy`, and `gatecheck osv-scanner` run them. `gatecheck bootstrap --tools gosec,hadolint,zizmor` adds gosec, hadolint, and zizmor, whose SARIF output `validate` reads.
+`gatecheck bootstrap` installs pinned Grype, Syft, Gitleaks, semgrep's experimental osemgrep CLI, Trivy, and osv-scanner. `gatecheck grype`, `gatecheck syft`, `gatecheck gitleaks`, `gatecheck semgrep`, `gatecheck osemgrep`, `gatecheck trivy`, and `gatecheck osv-scanner` run them. `gatecheck bootstrap --tools gosec,hadolint,zizmor` adds gosec, hadolint, and zizmor, whose SARIF output `validate` reads. `--tools scorecard,trufflehog,cosign` adds OpenSSF Scorecard and trufflehog, whose JSON `validate` gates, and cosign for signature checks.
 
 ### Summarize Reports with List
 

@@ -348,6 +348,64 @@ func zizmorAsset(_ string, p Platform) (githubAsset, error) {
 	}, nil
 }
 
+// goreleaserAsset is the <name>_<version>_<os>_<arch>.tar.gz layout that
+// scorecard and trufflehog use on every platform, Windows included.
+func goreleaserAsset(name, version, checksum string, p Platform) (githubAsset, error) {
+	switch p.GOOS {
+	case "darwin", "linux", "windows":
+	default:
+		return githubAsset{}, unsupported(name, p)
+	}
+	if p.GOARCH != "amd64" && p.GOARCH != "arm64" {
+		return githubAsset{}, unsupported(name, p)
+	}
+	return githubAsset{
+		Asset:    fmt.Sprintf("%s_%s_%s_%s.tar.gz", name, version, p.GOOS, p.GOARCH),
+		Checksum: checksum,
+		Binary:   exeName(name, p.GOOS),
+		DestName: exeName(name, p.GOOS),
+	}, nil
+}
+
+func scorecardAsset(version string, p Platform) (githubAsset, error) {
+	return goreleaserAsset("scorecard", version, "scorecard_checksums.txt", p)
+}
+
+func trufflehogAsset(version string, p Platform) (githubAsset, error) {
+	return goreleaserAsset("trufflehog", version, fmt.Sprintf("trufflehog_%s_checksums.txt", version), p)
+}
+
+func cosignAsset(_ string, p Platform) (githubAsset, error) {
+	ok := false
+	switch p.GOOS {
+	case "darwin":
+		ok = p.GOARCH == "amd64" || p.GOARCH == "arm64"
+	case "linux":
+		switch p.GOARCH {
+		case "amd64", "arm64", "ppc64le", "s390x", "riscv64":
+			ok = true
+		case "arm":
+			ok = p.GOARM == "" || p.GOARM == "7"
+		}
+	case "windows":
+		ok = p.GOARCH == "amd64"
+	}
+	if !ok {
+		return githubAsset{}, unsupported("cosign", p)
+	}
+	asset := fmt.Sprintf("cosign-%s-%s", p.GOOS, p.GOARCH)
+	if p.GOOS == "windows" {
+		asset += ".exe"
+	}
+	return githubAsset{
+		Asset:    asset,
+		Checksum: "cosign_checksums.txt",
+		Binary:   asset,
+		DestName: exeName("cosign", p.GOOS),
+		Raw:      true,
+	}, nil
+}
+
 func exeName(name, goos string) string {
 	if goos == "windows" && !strings.HasSuffix(strings.ToLower(name), ".exe") {
 		return name + ".exe"

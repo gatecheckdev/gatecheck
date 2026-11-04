@@ -74,6 +74,12 @@ func Validate(config *Config, reportSrc io.Reader, targetFilename string, option
 	case artifacts.KindSyft:
 		return validateSyftReport(reportSrc, config)
 
+	case artifacts.KindScorecard:
+		return validateScorecardReport(reportSrc, config)
+
+	case artifacts.KindTrufflehog:
+		return validateTrufflehogReport(reportSrc, config)
+
 	case artifacts.KindSARIF:
 		return validateSarifReport(reportSrc, config)
 
@@ -819,6 +825,12 @@ func validateBundle(r io.Reader, config *Config, options *fetchOptions) error {
 			errs = errors.Join(errs, err)
 		case artifacts.KindSyft:
 			err := validateSyftReport(bytes.NewBuffer(content), config)
+			errs = errors.Join(errs, err)
+		case artifacts.KindScorecard:
+			err := validateScorecardReport(bytes.NewBuffer(content), config)
+			errs = errors.Join(errs, err)
+		case artifacts.KindTrufflehog:
+			err := validateTrufflehogReport(bytes.NewBuffer(content), config)
 			errs = errors.Join(errs, err)
 		case artifacts.KindLCOV, artifacts.KindClover, artifacts.KindCobertura, artifacts.KindCoverage:
 			err := validateCoverage(bytes.NewBuffer(content), kind, fileLabel, config)

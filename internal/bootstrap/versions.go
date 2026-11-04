@@ -23,6 +23,12 @@ const (
 	// ZizmorVersion is the zizmorcore/zizmor GitHub release. zizmor publishes
 	// no checksum file, so its digests are pinned in zizmorChecksums.
 	ZizmorVersion = "1.32.0"
+	// ScorecardVersion is the ossf/scorecard GitHub release.
+	ScorecardVersion = "5.6.0"
+	// TrufflehogVersion is the trufflesecurity/trufflehog GitHub release.
+	TrufflehogVersion = "3.99.8"
+	// CosignVersion is the sigstore/cosign GitHub release.
+	CosignVersion = "3.1.4"
 )
 
 // zizmorChecksums are the SHA-256 digests of the ZizmorVersion release assets.

@@ -98,6 +98,9 @@ func NewGatecheckCommand() *cobra.Command {
 		{"gosec", "Run the managed gosec scanner"},
 		{"hadolint", "Run the managed hadolint linter"},
 		{"zizmor", "Run the managed zizmor scanner"},
+		{"scorecard", "Run the managed OpenSSF Scorecard"},
+		{"trufflehog", "Run the managed trufflehog scanner"},
+		{"cosign", "Run the managed cosign"},
 	} {
 		root.AddCommand(newPassthroughCommand(tool.name, tool.short))
 	}

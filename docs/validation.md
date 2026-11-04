@@ -75,6 +75,14 @@ SARIF has no EPSS or KEV rules. A SARIF version other than 2.1.0 returns an erro
 
 When `limitEnabled` is true, any finding in the report fails validation. There is no numeric limit and no separate allow list.
 
+## trufflehog
+
+When `trufflehog.limitEnabled` is true, any finding fails validation. With `verifiedOnly: true`, only findings trufflehog verified as live count. Empty output, from a scan with no findings, passes when the file name contains `trufflehog`.
+
+## Scorecard
+
+When `scorecard.enabled` is true, the report fails when the aggregate score is less than `minScore`, or a listed check scores less than its own `minScore`. Inconclusive checks (score `-1`) and checks missing from the report are skipped with a warning. Every failing check is named in the error.
+
 ## Coverage
 
 Line, function, and branch coverage are each `covered / total`. The config thresholds are those ratios, from 0 to 1. The check fails when the report's ratio is less than the threshold. A ratio equal to the threshold passes. All three checks run, and each failure is reported. A report with no records of a kind, such as LCOV without branch records, has no ratio for it. `list` prints `N/A`, and `validate` skips that threshold with a warning.

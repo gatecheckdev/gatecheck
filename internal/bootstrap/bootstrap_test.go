@@ -643,12 +643,12 @@ func TestListInstalled(t *testing.T) {
 	if !strings.HasPrefix(text, "TOOL         PINNED     INSTALLED  PATH\n") {
 		t.Fatalf("header %q", text)
 	}
-	for _, version := range []string{GrypeVersion, SyftVersion, GitleaksVersion, SemgrepVersion, TrivyVersion, OSVScannerVersion, GosecVersion, HadolintVersion, ZizmorVersion} {
+	for _, version := range []string{GrypeVersion, SyftVersion, GitleaksVersion, SemgrepVersion, TrivyVersion, OSVScannerVersion, GosecVersion, HadolintVersion, ZizmorVersion, ScorecardVersion, TrufflehogVersion, CosignVersion} {
 		if !strings.Contains(text, version) {
 			t.Fatalf("missing %s in %s", version, text)
 		}
 	}
-	if strings.Count(text, "\n") != 10 {
+	if strings.Count(text, "\n") != 13 {
 		t.Fatalf("lines %q", text)
 	}
 	if !strings.Contains(text, "osv-scanner  "+OSVScannerVersion) {
