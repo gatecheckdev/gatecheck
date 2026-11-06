@@ -8,7 +8,7 @@ require (
 	github.com/dustin/go-humanize v1.1.0
 	github.com/easy-up/go-coverage v0.0.0-20241018034313-3de592d59a78
 	github.com/lmittmann/tint v1.2.1
-	github.com/olekukonko/ll v0.1.6
+	github.com/olekukonko/ll v0.1.9
 	github.com/olekukonko/tablewriter v1.1.5
 	github.com/pelletier/go-toml/v2 v2.4.3
 	github.com/spf13/cobra v1.10.2
@@ -20,6 +20,7 @@ require (
 	github.com/clipperhouse/displaywidth v0.10.0 // indirect
 	github.com/clipperhouse/uax29/v2 v2.6.0 // indirect
 	github.com/fatih/color v1.18.0 // indirect
+	github.com/goccy/go-json v0.10.5 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/kr/pretty v0.3.1 // indirect
 	github.com/mattn/go-colorable v0.1.14 // indirect
